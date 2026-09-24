@@ -1,0 +1,2 @@
+<script setup lang="ts">defineProps<{error:{statusCode:number,message:string}}>()</script>
+<template><main class="mx-auto flex min-h-screen max-w-lg items-center p-6 text-center"><div><p class="text-6xl font-bold">{{error.statusCode}}</p><h1 class="mt-3 text-2xl font-semibold">{{error.statusCode===404?'Page not found':'Something went wrong'}}</h1><p class="my-5 text-[var(--muted)]">{{error.message}}</p><button class="btn" @click="clearError({redirect:'/'})">Return home</button></div></main></template>

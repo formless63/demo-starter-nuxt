@@ -1,0 +1,1 @@
+Review the requested change for correctness, security, Nuxt boundaries, maintainability, accessibility, and test gaps. Prioritize actionable findings with exact locations; verify claims using relevant checks and state residual risks.

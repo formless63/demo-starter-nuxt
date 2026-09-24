@@ -1,0 +1,1 @@
+Upgrade the requested dependency using current official documentation and a stable release. Review migrations and transitive compatibility, update lockfile and stack notes, run affected checks, and document unavoidable workarounds.
