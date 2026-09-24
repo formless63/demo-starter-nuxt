@@ -1,0 +1,2 @@
+import { and,eq } from 'drizzle-orm'; import { project } from '../../database/schema'
+export default defineEventHandler(async event=>{const u=await requireUser(event); const [row]=await useDb().delete(project).where(and(eq(project.id,getRouterParam(event,'id')!),eq(project.ownerId,u.id))).returning({id:project.id}); if(!row) throw createError({statusCode:404,statusMessage:'Project not found'}); setResponseStatus(event,204); return null})

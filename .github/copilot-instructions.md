@@ -1,0 +1,1 @@
+Follow `/AGENTS.md` as the canonical repository guidance. Load only the relevant `.agents/context/` note and skill for the current task. Preserve Nuxt-native boundaries, server-side authorization, strict TypeScript, Bun commands, and secret hygiene.

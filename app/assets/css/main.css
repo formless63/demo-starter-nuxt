@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+:root { color-scheme: light; --surface: #fff; --ink: #172033; --muted: #667085; --line: #e4e7ec; --accent: #2563eb; }
+.dark { color-scheme: dark; --surface: #111827; --ink: #f3f4f6; --muted: #9ca3af; --line: #374151; --accent: #60a5fa; }
+body { margin: 0; background: var(--surface); color: var(--ink); font-family: ui-sans-serif, system-ui, sans-serif; }
+button, input, textarea { font: inherit; }
+.btn { display:inline-flex; align-items:center; gap:.5rem; border-radius:.5rem; padding:.6rem .9rem; font-weight:600; cursor:pointer; background:var(--accent); color:white; }
+.btn-secondary { background:transparent; color:var(--ink); border:1px solid var(--line); }
+.field { width:100%; border:1px solid var(--line); background:var(--surface); border-radius:.5rem; padding:.65rem .75rem; }
+.card { border:1px solid var(--line); border-radius:.75rem; padding:1rem; background:var(--surface); }
