@@ -1,0 +1,1 @@
+Implement the requested vertical feature using existing Nuxt-native patterns. Inspect related code first; cover validation, server authorization, UI states, tests, and documentation. Run affected checks and fix regressions before finishing.
