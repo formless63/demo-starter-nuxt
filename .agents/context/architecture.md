@@ -15,3 +15,5 @@ Better Auth owns `/api/auth/**`: OAuth establishes an account, user, and databas
 - `tests`: unit/integration and Playwright smoke tests
 
 For cross-layer features, validate at the HTTP edge, keep client/server types serializable, enforce authorization in SQL predicates, and add migrations rather than schema push.
+
+The production Docker image contains Nitro's portable Node output and a bundled Node migration runner. Compose uses that same tagged image for the one-shot `migrate` service and long-running `app` service. Operators run migrations explicitly before starting or updating `app`; application startup itself never changes schema. Both services depend on healthy PostgreSQL, and `/api/health` is the runtime readiness contract.

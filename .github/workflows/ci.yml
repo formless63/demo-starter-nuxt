@@ -12,6 +12,10 @@ jobs:
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/nuxt_starter
       NUXT_AUTH_SECRET: ci-secret-that-is-at-least-thirty-two-characters
+      NUXT_PUBLIC_APP_BASE_URL: http://127.0.0.1:3001
+      APP_IMAGE: nuxt-starter:ci
+      APP_PORT: 3001
+      POSTGRES_PORT: 5433
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
@@ -24,3 +28,16 @@ jobs:
       - run: bunx playwright install --with-deps chromium
       - run: bun run test:e2e
       - run: bun run build
+      - name: Build production application image
+        run: docker compose build app
+      - name: Start container smoke database
+        run: docker compose up -d postgres
+      - name: Apply migrations through production image
+        run: docker compose run --rm migrate
+      - name: Start and await production application
+        run: docker compose up -d --wait app
+      - name: Verify production health endpoint
+        run: curl --fail --show-error --silent http://127.0.0.1:3001/api/health
+      - name: Stop container smoke stack
+        if: always()
+        run: docker compose down --volumes --remove-orphans
