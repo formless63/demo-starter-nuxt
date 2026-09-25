@@ -1,1 +1,3 @@
-export default defineEventHandler(event=>useServerAuth().handler!(toWebRequest(event)))
+export default defineEventHandler((event) => {
+  return useServerAuth().handler(toWebRequest(event))
+})

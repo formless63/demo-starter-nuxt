@@ -1,2 +1,6 @@
-import { desc, eq } from 'drizzle-orm'; import { project } from '../../database/schema'
-export default defineEventHandler(async event=>{const u=await requireUser(event); return useDb().select().from(project).where(eq(project.ownerId,u.id)).orderBy(desc(project.updatedAt))})
+import { listProjects } from '../../services/projects'
+
+export default defineEventHandler(async (event) => {
+  const user = await requireUser(event)
+  return listProjects(useDb(), user.id)
+})

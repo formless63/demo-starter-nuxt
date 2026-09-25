@@ -9,8 +9,8 @@ All commands use Bun. PostgreSQL is required for migrations, authenticated runti
 - `bun run dev`: Nuxt development server.
 - `bun run lint`: ESLint static checks.
 - `bun run typecheck`: strict Nuxt/Vue TypeScript check.
-- `bun test`: Vitest unit/integration suite.
-- `bun run test:e2e`: Playwright browser smoke test (install Chromium once with `bunx playwright install chromium`).
+- `bun run test`: Nuxt/Vitest unit and database integration suite; authorization coverage requires `DATABASE_URL` and migrated PostgreSQL.
+- `bun run test:e2e`: Playwright browser smoke test, which starts Nuxt itself (install Chromium once with `bunx playwright install chromium`).
 - `bun run build` / `bun run start`: produce and serve portable Nitro output.
-- `bun run check`: lint, typecheck, tests, and production build.
+- `bun run check`: lint, typecheck, Nuxt/Vitest tests, and production build.
 - `bun run auth:provision`: idempotently configure a development Pocket ID client using the documented environment.

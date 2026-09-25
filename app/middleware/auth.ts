@@ -1,5 +1,12 @@
-export default defineNuxtRouteMiddleware(async () => {
-  const { session } = useAuth()
-  if (import.meta.server) await session.value.refetch()
-  if (!session.value.data) return navigateTo('/?redirect=/app/projects')
+import { authClient } from '~~/lib/auth-client'
+
+export default defineNuxtRouteMiddleware(async (to) => {
+  const { data: session } = await authClient.useSession(useFetch)
+
+  if (!session.value) {
+    return navigateTo({
+      path: '/',
+      query: { redirect: to.fullPath },
+    })
+  }
 })
