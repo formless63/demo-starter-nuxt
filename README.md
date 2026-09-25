@@ -48,7 +48,38 @@ Playwright may first need `bunx playwright install chromium`. E2E starts its own
 
 ## Production and Docker
 
-`bun run build && bun run start` serves Nitro's portable Node output. Build the container with `docker build -t nuxt-starter .`; run it with required environment and a reachable PostgreSQL URL. `GET /api/health` verifies process and database readiness. The runtime is provider-neutral and persists no application state in the container.
+`bun run build && bun run start` serves Nitro's portable Node output. The production image contains that same Node output plus a small, explicit migration runner. Both the one-shot migration job and application service use the image tagged by `APP_IMAGE`; normal application startup never mutates the database. The image runs as the unprivileged `node` user, has no source bind mounts, and persists no application state.
+
+Set a production `NUXT_AUTH_SECRET` and absolute `NUXT_PUBLIC_APP_BASE_URL` in `.env`. OAuth variables remain optional, and the application always connects to the Compose service hostname `postgres`, never host-local PostgreSQL. `APP_PORT` controls the published application port, `POSTGRES_PORT` controls the development database port, and `APP_IMAGE` controls the reusable image tag.
+
+The release flow is intentionally explicit. A failed migration command is a failed deployment; do not start or update the application after it fails.
+
+```sh
+# Build the production image once for both migration and runtime.
+docker compose build app
+
+# Development: start only PostgreSQL (unchanged workflow).
+docker compose up -d postgres
+
+# Release: apply committed migrations, then start the production-like stack.
+docker compose run --rm migrate
+docker compose up -d --wait app
+
+# Operate and inspect the stack.
+docker compose logs -f app postgres
+curl --fail http://localhost:${APP_PORT:-3000}/api/health
+docker compose down --remove-orphans
+```
+
+To deploy a new application revision, pull or check out the revision, set `APP_IMAGE` to the intended tag, and run:
+
+```sh
+docker compose build app
+docker compose run --rm migrate
+docker compose up -d --wait app
+```
+
+Compose reuses the newly built image for the migration job and application. For a registry-provided image, pull the tag first with `docker compose pull app migrate`, then run the same migration and startup commands without rebuilding. Add `--volumes` to `docker compose down` only when intentionally deleting PostgreSQL data. `GET /api/health` verifies both process and database readiness.
 
 ## Repository conventions
 

@@ -6,7 +6,7 @@ export default defineNuxtConfig({
   modules: ['@nuxt/eslint', '@nuxtjs/color-mode', 'shadcn-nuxt'],
   css: ['~/assets/css/main.css'],
   vite: { plugins: [tailwindcss()] },
-  typescript: { strict: true, typeCheck: true },
+  typescript: { strict: true, typeCheck: process.env.NUXT_TYPECHECK !== 'false' },
   colorMode: { classSuffix: '', fallback: 'light' },
   shadcn: {
     prefix: '',
