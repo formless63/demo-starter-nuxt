@@ -31,6 +31,7 @@ function createServerAuth() {
     }
 
     plugins.push(magicLink({
+      storeToken: 'hashed',
       sendMagicLink: async ({ email, url }) => {
         console.info(`[development magic link] ${email}: ${url}`)
       },
