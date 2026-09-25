@@ -3,28 +3,31 @@ import { authClient } from '~~/lib/auth-client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { safeRedirectPath } from '@/lib/safe-redirect'
 
 definePageMeta({ layout: 'default' })
 
 const config = useRuntimeConfig()
+const route = useRoute()
 const email = ref('')
 const magicLinkSent = ref(false)
+const callbackURL = computed(() => safeRedirectPath(route.query.redirect))
 const { data: session } = await authClient.useSession(useFetch)
 
 if (session.value) {
-  await navigateTo('/app/projects')
+  await navigateTo(callbackURL.value)
 }
 
 async function signInWithGitHub() {
-  await authClient.signIn.social({ provider: 'github', callbackURL: '/app/projects' })
+  await authClient.signIn.social({ provider: 'github', callbackURL: callbackURL.value })
 }
 
 async function signInWithOidc() {
-  await authClient.signIn.social({ provider: 'oidc', callbackURL: '/app/projects' })
+  await authClient.signIn.social({ provider: 'oidc', callbackURL: callbackURL.value })
 }
 
 async function requestMagicLink() {
-  await authClient.signIn.magicLink({ email: email.value, callbackURL: '/app/projects' })
+  await authClient.signIn.magicLink({ email: email.value, callbackURL: callbackURL.value })
   magicLinkSent.value = true
 }
 </script>
