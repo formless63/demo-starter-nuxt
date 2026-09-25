@@ -20,5 +20,7 @@ jobs:
       - run: bun run db:migrate
       - run: bun run lint
       - run: bun run typecheck
-      - run: bun test
+      - run: bun run test
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run test:e2e
       - run: bun run build
