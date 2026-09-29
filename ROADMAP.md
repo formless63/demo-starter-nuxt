@@ -27,6 +27,12 @@ The starter always supplies:
 
 Capabilities may declare a baseline requirement such as authenticated identity, but that does not create a capability dependency.
 
+## Capability package convention
+
+Reusable Nuxt capabilities are developed as sibling workspace packages under `packages/nuxt-<id>/`, following Nuxt's normal module-author structure and build tooling. Each implemented package owns its runtime dependencies and public commands, has an explicit minimal consumer under `fixtures/`, and is activated only when an application installs it and lists it in `nuxt.config.ts`. Package source existing in this repository is never sufficient to enable a capability.
+
+The root is a reference application that may opt into completed capabilities for integrated development and deployment. It is not the definition of the base generated starter. `capabilities/catalog.json` records package and fixture paths, while each `CAPABILITY.md` owns installation/removal details. This metadata remains documentation and validation—not an installer. Future packages such as API, Observability, Storage, and Email should follow this convention only when implemented; empty packages are not created for roadmap entries.
+
 ## Status summary
 
 | Status | Capability |
@@ -43,7 +49,8 @@ No second capability is implemented by this roadmap change.
 - Requires: none beyond baseline PostgreSQL/Drizzle/Node runtime
 - Integrates with: Observability, Ops / Admin
 - External: PostgreSQL (required)
-- Current implementation: local Nuxt module, typed registry, Zod execution validation, transactional Drizzle enqueue, explicit pg-boss migrations/doctor, standalone worker, smoke test, shared production image
+- Default installation: optional; the root reference application opts in explicitly
+- Current implementation: `@wicaso/nuxt-jobs` workspace package, typed registry, Zod execution validation, transactional Drizzle enqueue, explicit migrations/doctor, package-owned CLI, clean consumer fixture, standalone worker, smoke test, and shared production image
 - Contract: [`capabilities/jobs/CAPABILITY.md`](capabilities/jobs/CAPABILITY.md)
 
 ### API Platform / Machine Auth / OpenAPI (`planned`)

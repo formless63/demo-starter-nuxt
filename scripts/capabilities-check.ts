@@ -20,6 +20,9 @@ interface Capability {
   agentSkill?: string
   evaluationDocument?: string
   modulePath?: string
+  packageName?: string
+  packagePath?: string
+  fixturePath?: string
 }
 
 interface Catalog {
@@ -28,6 +31,7 @@ interface Catalog {
 }
 
 interface PackageManifest {
+  name?: string
   scripts?: Record<string, string>
 }
 
@@ -149,6 +153,23 @@ for (const capability of catalog.capabilities) {
   if (capability.modulePath) {
     await assertPath(`${capability.id} module`, capability.modulePath)
     await assertPath(`${capability.id} Nuxt module entry`, `${capability.modulePath}/index.ts`)
+  }
+  if (capability.packagePath) {
+    const manifestPath = `${capability.packagePath}/package.json`
+    await assertPath(`${capability.id} package`, manifestPath)
+    await assertPath(`${capability.id} Nuxt package module entry`, `${capability.packagePath}/src/module.ts`)
+    const manifest = await Bun.file(resolve(root, manifestPath)).json() as PackageManifest
+    if (!capability.packageName) errors.push(`${capability.id} packageName is required with packagePath`)
+    else if (manifest.name !== capability.packageName) {
+      errors.push(`${capability.id} package name ${manifest.name ?? '(missing)'} does not match ${capability.packageName}`)
+    }
+  }
+  else if (capability.packageName) {
+    errors.push(`${capability.id} packagePath is required with packageName`)
+  }
+  if (capability.fixturePath) {
+    await assertPath(`${capability.id} consumer fixture`, capability.fixturePath)
+    await assertPath(`${capability.id} consumer fixture config`, `${capability.fixturePath}/nuxt.config.ts`)
   }
 }
 

@@ -1,6 +1,6 @@
 # Jobs capability
 
-PostgreSQL-backed background jobs implemented with pg-boss 12.35.0 as the starter's first reusable local Nuxt module. The canonical implementation findings remain in [`JOBS_MODULE_EVALUATION.md`](../../JOBS_MODULE_EVALUATION.md).
+PostgreSQL-backed background jobs implemented by the independently installable Nuxt package `@wicaso/nuxt-jobs`. The package is private until an intentional npm release; implementation findings remain in [`JOBS_MODULE_EVALUATION.md`](../../JOBS_MODULE_EVALUATION.md).
 
 ## Requirements
 
@@ -24,8 +24,9 @@ The Jobs Nuxt module has no hard dependency on another Nuxt module and declares 
 
 ### Dependencies
 
-- `pg-boss` 12.35.0 is the capability-owned runtime dependency.
-- Existing Zod validates payloads, existing Drizzle supplies transactional enqueue support through pg-boss's official adapter, and the baseline Node runtime runs production artifacts. These are starter libraries/runtime, not capability-module dependencies.
+- `pg-boss` 12.35.0 is a direct `@wicaso/nuxt-jobs` dependency and arrives with the package.
+- `jiti` loads an application-owned TypeScript registry for standalone commands.
+- Nuxt 4, Zod, and Drizzle are compatible peers supplied by the consumer. They remain baseline libraries, not capability-module dependencies.
 
 ### Environment
 
@@ -34,6 +35,7 @@ The Jobs Nuxt module has no hard dependency on another Nuxt module and declares 
 - `PGBOSS_SCHEMA`: pg-boss schema, default `pgboss`.
 - `JOBS_CONCURRENCY`: worker concurrency, default `5`.
 - `PGBOSS_USE_LISTEN_NOTIFY`: opt-in pg-boss LISTEN/NOTIFY, default `false`.
+- `JOBS_REGISTRY`: optional package-CLI registry path override, default `server/jobs/registry.ts`.
 
 All values are server-only.
 
@@ -43,6 +45,10 @@ All values are server-only.
 - `bun run jobs:migrate`: explicitly create or upgrade the pg-boss schema.
 - `bun run jobs:doctor`: fail on schema drift or migration problems.
 - `bun run jobs:smoke`: enqueue and consume `starter.echo`, then verify its output.
+- `bun run jobs:package:build`: build the publish-shaped module, runtime, declarations, and CLI.
+- `bun run jobs:package:test`: verify a clean tarball install, runtime, and removal lifecycle.
+
+The long-term command contract is the package-provided `nuxt-jobs <worker|migrate|doctor|smoke>` bin. Consumer package scripts are optional aliases; Jobs does not rewrite them.
 
 ### Database/migrations
 
@@ -50,7 +56,7 @@ pg-boss owns its schema and supported migrations. Only `jobs:migrate` may run th
 
 ### Runtime processes
 
-- A standalone worker runs `scripts/jobs-worker.ts` in development and `.jobs/worker.mjs` in production.
+- A standalone worker runs through the package command contract; the reference app keeps a thin adapter for its production bundle.
 - The Compose `migrate` service is a one-shot release gate, not a long-running process.
 - Nitro creates its pg-boss enqueue client lazily and closes it on Nitro shutdown.
 
@@ -60,7 +66,7 @@ The existing production image bundles Nitro and the jobs tools once. Compose use
 
 ## Application API
 
-The local module registers server-only Nitro auto-imports:
+After explicit installation, the module registers server-only Nitro auto-imports:
 
 ```ts
 await sendJob('starter.echo', { message: 'hello' })
@@ -75,32 +81,32 @@ await db.transaction(async (tx) => {
 })
 ```
 
-Task definitions live in `server/jobs/tasks/` and are collected by `server/jobs/registry.ts`. Zod validation runs before enqueue and again at the worker execution boundary. `starter.echo` is a removable demonstration task.
+Consumers import `defineJob` and `defineJobRegistry` from `@wicaso/nuxt-jobs/server`; the package root is the Nuxt module entry. Task definitions live in application `server/jobs/tasks/` and are collected by `server/jobs/registry.ts`. Zod validation runs before enqueue and again at the worker execution boundary. `starter.echo` is a removable reference-app demonstration task.
 
 ## Installation
 
-The current starter already has Jobs installed:
+1. Add `@wicaso/nuxt-jobs` to a compatible Nuxt 4 application. Workspace consumers use `workspace:*`; future npm consumers should pin a released version.
+2. Add `'@wicaso/nuxt-jobs'` to `nuxt.config.ts`. Source existing under `packages/` never enables the capability by itself.
+3. Create the application registry and tasks under `server/jobs/` using the public package API.
+4. Configure the server-only environment and optional command aliases.
+5. Add migration/worker deployment roles and CI steps explicitly.
+6. Apply `nuxt-jobs migrate`, run `nuxt-jobs doctor`, then start the worker.
 
-1. `pg-boss` is pinned in `package.json` and `bun.lock`.
-2. `modules/jobs/index.ts` is auto-discovered by Nuxt 4; it is not manually added to `nuxt.config.ts`.
-3. The application registry and tasks live under `server/jobs/`.
-4. Package scripts, Docker build outputs, Compose services, CI steps, environment examples, tests, and documentation are explicit consumer-repository changes.
-5. Run application migrations, `bun run jobs:migrate`, and `bun run jobs:doctor` before starting the worker.
-
-A future published module should install normally as a Nuxt module and expose stable CLI/bin commands. It must not rewrite consumer package scripts, Docker, Compose, or CI files behind the scenes.
+`fixtures/jobs-consumer` is the minimal external-style example. The package must not rewrite consumer scripts, Docker, Compose, or CI.
 
 ## Removal
 
-1. Stop the worker and decide whether queued work must be drained or retained.
-2. Remove `modules/jobs/`, `server/jobs/`, the four jobs scripts, jobs tests, and jobs-specific agent/evaluation/contract files.
-3. Remove `pg-boss`, the four package scripts, environment entries, Docker `.jobs` bundles, the Compose worker and pg-boss migration/doctor commands, and CI jobs steps.
-4. Remove Jobs from `capabilities/catalog.json` relationships or change its status only as part of an intentional governance decision; update `ROADMAP.md` in the same change.
-5. Regenerate the lockfile and run full verification.
-6. Retain the `pgboss` PostgreSQL schema for rollback safety or drop it explicitly only after confirming no queued work is needed.
+1. Stop/drain the worker and decide whether queued work must be retained.
+2. Remove the package from Nuxt's modules array and dependencies.
+3. Remove the application registry/tasks, Jobs API calls, command aliases, tests, deployment roles, CI steps, and environment entries.
+4. Clear generated Nuxt state and reinstall so stale auto-import types cannot hide a dependency.
+5. Typecheck/build the remaining application. The clean-package test executes this contract and confirms `pg-boss` also leaves.
+6. Retain the `pgboss` schema for rollback safety or drop it explicitly only after queued work is no longer needed.
 
 ## Upgrade considerations
 
 - Review pg-boss release notes and migration notes before changing its version.
+- Rebuild/pack the module and run the clean fixture lifecycle when changing its package boundary or Nuxt module builder.
 - Apply the supported pg-boss migration explicitly on a clean database and run `jobs:doctor`.
 - Confirm every long-running instance still uses `migrate: false`.
 - Re-run invalid-payload behavior, transaction commit/rollback, worker shutdown, production image, and Compose smoke coverage.
@@ -110,6 +116,8 @@ A future published module should install normally as a Nuxt module and expose st
 
 ```sh
 bun run capabilities:check
+bun run jobs:package:build
+bun run jobs:package:test
 bun run jobs:migrate
 bun run jobs:doctor
 bun run jobs:smoke
@@ -120,6 +128,8 @@ bun run test:e2e
 
 Production verification builds the shared image, runs the one-shot migration service, starts `app` and `worker`, checks `/api/health`, confirms the worker is running, and shuts the stack down cleanly.
 
+The package test separately proves dependency arrival, module loading, registry extension, migrations, the package worker, strict typecheck/build, and removal without hidden assumptions.
+
 ## Agent guidance
 
-Use both `.agents/skills/capability-change/SKILL.md` and `.agents/skills/jobs-change/SKILL.md` when changing this capability or its relationships. Preserve explicit migrations, execution-boundary payload validation, server-only code, atomic Drizzle enqueueing where needed, and the shared production image contract.
+Use both `.agents/skills/capability-change/SKILL.md` and `.agents/skills/jobs-change/SKILL.md` when changing this capability or its relationships. Preserve explicit Nuxt opt-in, package-owned dependencies/CLI, explicit migrations, execution-boundary payload validation, server-only code, atomic Drizzle enqueueing where needed, and the shared production image contract.

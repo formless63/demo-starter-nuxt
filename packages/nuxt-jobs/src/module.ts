@@ -1,3 +1,4 @@
+import { resolve } from 'node:path'
 import { addServerImports, addServerPlugin, createResolver, defineNuxtModule } from '@nuxt/kit'
 
 export interface JobsModuleOptions {
@@ -9,9 +10,9 @@ export interface JobsModuleOptions {
 
 export default defineNuxtModule<JobsModuleOptions>({
   meta: {
-    name: 'jobs',
+    name: '@wicaso/nuxt-jobs',
     configKey: 'jobs',
-    compatibility: { nuxt: '>=4.0.0' },
+    compatibility: { nuxt: '>=4.0.0 <5.0.0' },
   },
   defaults: {
     schema: 'pgboss',
@@ -22,7 +23,7 @@ export default defineNuxtModule<JobsModuleOptions>({
   setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
 
-    nuxt.options.alias['#jobs-registry'] = resolver.resolve(nuxt.options.rootDir, options.registry)
+    nuxt.options.alias['#jobs-registry'] = resolve(nuxt.options.rootDir, options.registry)
     nuxt.options.runtimeConfig.jobs = {
       schema: options.schema,
       concurrency: options.concurrency,

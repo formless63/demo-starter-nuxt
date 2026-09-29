@@ -16,6 +16,10 @@ All commands use Bun. PostgreSQL is required for migrations, authenticated runti
 - `bun run jobs:doctor`: fail on pg-boss schema drift or pending migration problems.
 - `bun run jobs:worker`: run the standalone worker with migrations disabled.
 - `bun run jobs:smoke`: enqueue `starter.echo`, run the real worker registration, and verify completion output.
+- `bun run jobs:package:prepare`: build the Jobs workspace package and its types before Nuxt preparation.
+- `bun run jobs:package:build`: produce the publish-shaped Nuxt module/runtime/type/CLI artifact without publishing it.
+- `bun run jobs:package:test`: pack Jobs, install it in a fresh consumer fixture, prove module/dependency/registry/migration/worker/build behavior, remove it, and prove the remaining app typechecks/builds.
+- Package CLI: `nuxt-jobs <worker|migrate|doctor|smoke>`; registry commands accept `--registry`, and smoke also requires `--job` plus JSON `--payload`.
 - `bun run dev`: Nuxt development server.
 - `bun run lint`: ESLint static checks.
 - `bun run typecheck`: strict Nuxt/Vue TypeScript check.

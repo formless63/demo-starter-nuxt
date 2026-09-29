@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { fromDrizzle } from 'pg-boss'
-import type { PgBoss, DrizzleTransactionLike } from 'pg-boss'
+import type { DrizzleTransactionLike, PgBoss } from 'pg-boss'
 import { getJobDefinition } from './registry'
 import type { JobName, JobPayload, JobRegistry } from './types'
 

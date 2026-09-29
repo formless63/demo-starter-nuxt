@@ -1,10 +1,14 @@
 import type { Queue, SendOptions, WorkOptions } from 'pg-boss'
-import type { ZodType, z  } from 'zod'
+import type { z, ZodType } from 'zod'
 
 export interface JobContext {
   id: string
   signal: AbortSignal
 }
+
+type JobHandler<Payload, Result> = {
+  bivarianceHack(payload: Payload, context: JobContext): Promise<Result> | Result
+}['bivarianceHack']
 
 export interface JobDefinition<Name extends string, Schema extends ZodType, Result = unknown> {
   name: Name
@@ -12,7 +16,7 @@ export interface JobDefinition<Name extends string, Schema extends ZodType, Resu
   queue?: Omit<Queue, 'name'>
   send?: Omit<SendOptions, 'db'>
   work?: Omit<WorkOptions, 'localConcurrency'>
-  handler: (payload: z.output<Schema>, context: JobContext) => Promise<Result> | Result
+  handler: JobHandler<z.output<Schema>, Result>
 }
 
 export type AnyJobDefinition = JobDefinition<string, ZodType, unknown>

@@ -3,6 +3,10 @@
 node_modules
 .nuxt
 .output
+packages/*/dist
+packages/*/.nuxt
+fixtures/*/.nuxt
+fixtures/*/.output
 .env*
 coverage
 playwright-report

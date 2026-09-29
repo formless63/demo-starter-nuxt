@@ -97,7 +97,10 @@
         "documentationPath": { "$ref": "#/$defs/nonEmptyString" },
         "agentSkill": { "$ref": "#/$defs/nonEmptyString" },
         "evaluationDocument": { "$ref": "#/$defs/nonEmptyString" },
-        "modulePath": { "$ref": "#/$defs/nonEmptyString" }
+        "modulePath": { "$ref": "#/$defs/nonEmptyString" },
+        "packageName": { "$ref": "#/$defs/nonEmptyString" },
+        "packagePath": { "$ref": "#/$defs/nonEmptyString" },
+        "fixturePath": { "$ref": "#/$defs/nonEmptyString" }
       },
       "allOf": [
         {

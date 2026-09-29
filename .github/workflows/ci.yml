@@ -26,6 +26,7 @@ jobs:
       - run: bun run jobs:migrate
       - run: bun run jobs:doctor
       - run: bun run jobs:smoke
+      - run: bun run jobs:package:test
       - run: bun run lint
       - run: bun run typecheck
       - run: bun run test
