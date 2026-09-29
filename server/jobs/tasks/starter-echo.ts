@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { defineJob } from '../../../modules/jobs/runtime/server/registry'
+import { defineJob } from '@wicaso/nuxt-jobs/server'
 
 /** Demonstration task. Remove this when the application adds its first real job. */
 export const starterEchoJob = defineJob({

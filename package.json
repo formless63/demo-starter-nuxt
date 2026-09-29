@@ -2,6 +2,10 @@
   "name": "nuxt-full-stack-starter",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*",
+    "fixtures/*"
+  ],
   "packageManager": "bun@1.4.2",
   "engines": {
     "node": ">=24.0.0",
@@ -20,13 +24,17 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "auth:provision": "bun scripts/provision-oidc.ts",
-    "postinstall": "nuxt prepare",
+    "postinstall": "bun run jobs:package:prepare && nuxt prepare",
+    "jobs:package:prepare": "bun run --cwd packages/nuxt-jobs dev:prepare",
+    "jobs:package:build": "bun run --cwd packages/nuxt-jobs prepack",
+    "jobs:package:test": "bun scripts/jobs-package-test.ts",
     "jobs:worker": "bun scripts/jobs-worker.ts",
     "jobs:migrate": "bun scripts/jobs-migrate.ts",
     "jobs:doctor": "bun scripts/jobs-doctor.ts",
     "jobs:smoke": "bun scripts/jobs-smoke.ts"
   },
   "dependencies": {
+    "@wicaso/nuxt-jobs": "workspace:*",
     "@nuxtjs/color-mode": "4.0.1",
     "@tabler/icons-vue": "3.48.0",
     "@tailwindcss/vite": "4.3.3",
@@ -36,7 +44,6 @@
     "clsx": "2.1.1",
     "drizzle-orm": "0.45.3",
     "nuxt": "4.5.2",
-    "pg-boss": "12.35.0",
     "postgres": "3.4.9",
     "reka-ui": "2.10.5",
     "shadcn-nuxt": "2.8.2",

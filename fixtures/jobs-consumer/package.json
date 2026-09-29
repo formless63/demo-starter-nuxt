@@ -1,0 +1,23 @@
+{
+  "name": "jobs-consumer-fixture",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck",
+    "jobs:migrate": "nuxt-jobs migrate",
+    "jobs:doctor": "nuxt-jobs doctor",
+    "jobs:worker": "nuxt-jobs worker --registry server/jobs/registry.ts",
+    "jobs:smoke": "nuxt-jobs smoke --registry server/jobs/registry.ts --job fixture.echo --payload '{\"message\":\"fixture-smoke\"}'"
+  },
+  "dependencies": {
+    "@wicaso/nuxt-jobs": "workspace:*",
+    "drizzle-orm": "0.45.3",
+    "nuxt": "4.5.2",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vue-tsc": "3.1.7"
+  }
+}

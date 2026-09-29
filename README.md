@@ -37,7 +37,7 @@ Set `DEV_OIDC_ADMIN_URL`, `DEV_OIDC_API_KEY`, and `APP_BASE_URL`, then run `bun 
 
 ## Background jobs
 
-`modules/jobs/` is a genuine Nuxt 4 local module discovered automatically by Nuxt. It exposes server-only typed `sendJob` and `sendJobInTransaction` helpers. Application tasks live in `server/jobs/tasks/` and are registered in `server/jobs/registry.ts`; `starter.echo` is a removable demonstration task. Payloads are validated with Zod when workers execute them.
+Jobs is the optional workspace package `@wicaso/nuxt-jobs` under `packages/nuxt-jobs`. The root reference app installs and explicitly enables it in `nuxt.config.ts`; package source is never auto-loaded. It exposes server-only typed `sendJob` and `sendJobInTransaction` helpers. Application tasks live in `server/jobs/tasks/` and are registered in `server/jobs/registry.ts`; `starter.echo` is a removable demonstration task. Payloads are validated with Zod before enqueue and when workers execute them.
 
 Start PostgreSQL, apply both explicit schemas, then run the worker:
 
@@ -48,7 +48,9 @@ bun run jobs:doctor
 bun run jobs:worker
 ```
 
-`bun run jobs:smoke` starts the real worker registration, enqueues `starter.echo`, and verifies its stored completion output. Runtime clients and workers always use `migrate: false`. Use `sendJobInTransaction(tx, name, payload)` inside a Drizzle transaction when an application write and enqueue must commit or roll back together. `PGBOSS_DATABASE_URL` may select a separate jobs migration role; otherwise jobs commands use `DATABASE_URL`. See `JOBS_MODULE_EVALUATION.md` for packaging, extraction, and removal findings.
+`bun run jobs:smoke` starts the real worker registration and executes `starter.echo`. Runtime clients and workers always use `migrate: false`. Use `sendJobInTransaction(tx, name, payload)` inside a Drizzle transaction when an application write and enqueue must commit or roll back together. `PGBOSS_DATABASE_URL` may select a separate jobs migration role; otherwise jobs commands use `DATABASE_URL`.
+
+The package owns the long-term `nuxt-jobs worker|migrate|doctor|smoke` CLI. `fixtures/jobs-consumer` consumes the package like an external application. `bun run jobs:package:test` builds a tarball, installs it into a fresh fixture, proves the module/dependency/registry/migration/worker/build path, removes it, and proves no generated or runtime assumption remains. Publishing is intentionally disabled. See `JOBS_MODULE_EVALUATION.md` for the chosen layout and rejected alternatives.
 
 ## Verification
 
@@ -57,6 +59,7 @@ bun run lint
 bun run typecheck
 bun run test
 bun run test:e2e
+bun run jobs:package:test
 bun run check
 ```
 

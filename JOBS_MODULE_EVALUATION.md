@@ -1,21 +1,39 @@
 # Jobs module evaluation (September 2026)
 
-## Prototype inventory
+## Chosen package layout
 
-- pg-boss **12.35.0** is the sole new runtime dependency and is pinned in `package.json`/`bun.lock`. Existing Zod, Drizzle, postgres, Nuxt, Bun, and Node dependencies are reused.
-- The local module lives in `modules/jobs/`. Nuxt 4 discovers `modules/jobs/index.ts` automatically; it is deliberately absent from the manual `modules` array in `nuxt.config.ts`.
-- The module owns typed module options, private runtime configuration, the pg-boss factory, registry primitives, queue/worker registration, typed enqueue functions, the official Drizzle transaction adapter, Nitro server imports, and Nitro shutdown cleanup.
-- Application-owned pieces are `server/jobs/registry.ts` and `server/jobs/tasks/starter-echo.ts`. `starter.echo` is an explicitly disposable demonstration task.
-- Consumer-owned scripts are `jobs:worker`, `jobs:migrate`, `jobs:doctor`, and `jobs:smoke`. Environment settings are `PGBOSS_SCHEMA` (default `pgboss`), `JOBS_CONCURRENCY` (default `5`), and `PGBOSS_USE_LISTEN_NOTIFY` (default `false`). `PGBOSS_DATABASE_URL` overrides `DATABASE_URL` for jobs processes, including a separate migration role.
-- Files outside `modules/jobs/` changed for the application registry/task, scripts, tests, dependency/lockfile, environment example, Dockerfile, Compose, CI, README, stack/architecture/commands notes, agent skill, and this evaluation.
+Jobs now lives at `packages/nuxt-jobs` as the private workspace package `@wicaso/nuxt-jobs`. `src/module.ts` is the Nuxt Kit entry, `src/runtime/server/` owns the server-only pg-boss implementation and the public `/server` API, and `src/cli/` owns the `nuxt-jobs` executable. The official Nuxt module builder emits the publish-shaped module, declarations, runtime, and CLI artifacts.
 
-## Installation and published-module shape
+The root remains the feature-complete reference application. It depends on and explicitly enables the package, while `server/jobs/` remains application-owned. `fixtures/jobs-consumer` is a minimal independent Nuxt application that consumes the same package entrypoint an external application will use. The package stays `private` until an intentional npm release.
 
-The current install behavior is genuine Nuxt local-module behavior: placing `index.ts` under `modules/jobs/` makes Nuxt run the module, and Nuxt Kit registers server-only imports and the shutdown plugin. The application consumes `sendJob(...)` and `sendJobInTransaction(...)` through Nitro auto-imports; browser bundles receive neither pg-boss nor database code.
+This is the least invasive maintainable move from the proven prototype: queue, migration, transaction, validation, and shutdown behavior are unchanged. Only repository-relative package internals became public package imports.
 
-A published form should expose a normal Nuxt module such as `@formless/nuxt-jobs`, installed with Nuxt's module installer and configured in `nuxt.config.ts`. It should also expose a package `bin`/CLI for `worker`, `migrate`, `doctor`, and `smoke` so consumer scripts can call stable commands instead of importing package internals. Publishing is intentionally deferred.
+## Why this scales
 
-Nuxt's module system naturally owns runtime/server utilities, types, module options, runtime configuration, aliases, server imports, and Nitro plugins. It does not naturally own a consumer's package scripts, application task registry, Dockerfile, Compose services, CI workflow, or release runbook. This prototype keeps those changes explicit rather than performing brittle source rewriting.
+Future capabilities can use sibling packages such as `packages/nuxt-api`, `packages/nuxt-observability`, and `packages/nuxt-storage`, each with its own dependencies, runtime, commands if needed, and fixture. Package presence does not activate a capability. A consumer must install the package and name it in Nuxt's `modules` array, so adding packages to this repository cannot silently enable them in generated applications.
+
+Nuxt remains the integration model. There is no capability loader, manifest interpreter, source rewriter, or custom package manager. The catalog is architecture metadata, not an installer.
+
+## Rejected alternatives
+
+- **Keep every capability under root `modules/`:** Nuxt auto-discovers local modules there, which becomes surprising with dozens of optional capabilities and does not exercise a publishable boundary.
+- **One large feature-flagged module:** this would ship unrelated dependencies and couple install and release concerns.
+- **A proprietary installer or script rewriter:** it duplicates package-manager/Nuxt responsibilities and makes removal fragile.
+- **Nuxt layers as the primary boundary:** layers suit template/application composition; Jobs is server runtime/package behavior and fits a normal module directly.
+- **Separate repositories now:** that adds release coordination before APIs stabilize. This package can split later without changing consumer imports.
+- **Consumer-owned command copies:** these drift. The package CLI is canonical; thin root adapters remain only to bundle the reference registry into the existing lean production image.
+
+## Dependency and command contract
+
+`pg-boss` 12.35.0 is a direct package dependency, so it arrives with Jobs. Nuxt, Drizzle, and Zod are peers because the module integrates with consumer framework, transaction, and schema types. No other reusable capability is required.
+
+The package root is the Nuxt module and `@wicaso/nuxt-jobs/server` is the typed application/worker API. The package exposes `nuxt-jobs worker`, `migrate`, `doctor`, and `smoke`. Registry commands accept `--registry`; smoke also requires `--job` and a JSON `--payload`, so the package assumes no application task name or schema. Consumer scripts may alias the bin, but the module never rewrites them. Nuxt Kit still owns runtime configuration, server imports, the registry alias, and shutdown cleanup; browser bundles receive no pg-boss code.
+
+## Clean consumer proof
+
+`bun run jobs:package:test` builds and packs the actual artifact, installs it into a fresh copy of `fixtures/jobs-consumer`, checks that pg-boss arrived, loads the application registry, runs strict typecheck/build, migrates and diagnoses a unique schema, starts and gracefully stops the standalone worker, and executes a queued smoke job. It then removes the package and explicit consumer-owned Jobs files, clears generated Nuxt state, verifies package-owned dependencies are gone, and typechecks/builds the remaining app.
+
+This is a verification harness, not an installer. It proves the documented install/removal contract has no hidden root imports or generated-type residue.
 
 ## Production and removal
 
@@ -23,14 +41,14 @@ The existing `compose.yaml` was extended instead of adding `compose.jobs.yaml`. 
 
 The production image bundles Nitro, the application migrator, and all jobs entrypoints once. The one-shot `migrate` service applies application migrations, applies supported pg-boss migrations, then runs the pg-boss doctor. `app` and `worker` use that exact image revision. Every long-running pg-boss instance sets `migrate: false`; a failed explicit migration/doctor command blocks release startup.
 
-To remove the capability, delete `modules/jobs/`, `server/jobs/`, the four jobs scripts/tests/skill/evaluation, remove pg-boss and its scripts from the manifest, remove the jobs build artifacts and Compose worker/jobs migration commands, remove jobs CI/docs/env entries, then regenerate the lockfile. The application schema is independent. The `pgboss` PostgreSQL schema may be retained for rollback or dropped explicitly after confirming no queued work is needed.
+Removal now means removing the package from the Nuxt modules array and dependencies, then removing the consumer-owned registry/tasks, aliases, deployment roles, tests, and docs. The application schema remains independent. The `pgboss` schema may be retained for rollback or dropped explicitly after queued work is no longer needed.
 
-## Findings
+## Findings and publication boundary
 
-Framework-specific glue is small: one Nuxt module entry, one alias to the consumer registry, two Nitro server imports, and one shutdown plugin. The registry, worker, scripts, and transaction support are runtime-neutral TypeScript. The official pg-boss Drizzle adapter avoids leaking adapter internals into feature code and makes the application mutation and enqueue one PostgreSQL transaction.
+Framework-specific glue remains small: one module entry, one consumer-registry alias, two Nitro server imports, and one shutdown plugin. The official pg-boss Drizzle adapter keeps an application mutation and enqueue in one PostgreSQL transaction.
 
-Nuxt local-module discovery and Nitro server imports worked cleanly. Bun runs the TypeScript development commands, while Bun's bundler emits Node-targeted worker/tool artifacts for the existing non-root Node production image. pg-boss owns a separate schema and supported migration lifecycle; keeping migration authority out of runtime startup is operationally clearer but adds a mandatory release step. LISTEN/NOTIFY stays off by default because polling is portable across connection poolers; operators can opt in deliberately.
+The module builder produces normal ESM and declarations for both workspace consumption and the tarball build. Bun still emits the reference application's Node-targeted worker/tool adapters for the non-root production image. pg-boss owns its separate schema and migration lifecycle; keeping migration authority out of startup remains a mandatory, explicit release step. LISTEN/NOTIFY stays off by default for pooler portability.
 
 No dashboard was added. A later optional module/profile could add one, but it should not introduce Hono, Fastify, or Express into this starter merely to mount UI.
 
-This feels robust enough for a maintained personal local module: boundaries are visible, transaction semantics and invalid payloads are tested against PostgreSQL, and deployment uses one image. Before extraction, add a package-level test fixture with a minimal Nuxt consumer, define the public registry-resolution API without a project alias, publish a stable CLI/bin contract, test multiple supported Nuxt/Node versions, and write upgrade/removal automation that reports changes without rewriting consumer files.
+Before publishing, choose the permanent npm scope, add license/repository/release metadata, test a supported Nuxt/Node version matrix, and define a release/versioning policy. None requires moving runtime code or changing consumer integration.

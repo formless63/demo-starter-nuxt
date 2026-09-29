@@ -2,12 +2,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import { createJobsBoss, resolveJobsConfig } from '../../modules/jobs/runtime/server/boss'
 import {
+  createJobsBoss,
   defineQueues,
   registerWorkers,
+  resolveJobsConfig,
   sendRegisteredJobInTransaction,
-} from '../../modules/jobs/runtime/server/client'
+} from '@wicaso/nuxt-jobs/server'
 import { project, user } from '../../server/database/schema'
 import { jobRegistry } from '../../server/jobs/registry'
 
@@ -31,12 +32,13 @@ async function waitForState(
 describeWithDatabase('PostgreSQL jobs integration', () => {
   const client = postgres(databaseUrl!, { max: 2 })
   const db = drizzle(client)
-  const boss = createJobsBoss(resolveJobsConfig())
+  let boss: ReturnType<typeof createJobsBoss>
   const suffix = crypto.randomUUID()
   const userId = `jobs-user-${suffix}`
   const projectId = `jobs-project-${suffix}`
 
   beforeAll(async () => {
+    boss = createJobsBoss(resolveJobsConfig())
     await boss.start()
     await defineQueues(boss, jobRegistry)
     await db.insert(user).values({ id: userId, name: 'Jobs User', email: `${userId}@example.test` })

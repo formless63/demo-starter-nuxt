@@ -4,7 +4,7 @@
 
 The exact reproducible graph is in `package.json`/`bun.lock`. Major versions: Bun 1.4, Node 24 LTS, Nuxt 4, Vue 3, TypeScript 5, PostgreSQL 18, Better Auth 1, Drizzle 0.45, Tailwind 4, Reka UI 2, Vitest 5, Playwright 1. The repository began nearly empty, so none of create-nuxt's generated demo UI was retained. The result follows its Nuxt 4 `app/` layout and Nitro conventions manually.
 
-Nuxt modules are `@nuxt/eslint`, `@nuxtjs/color-mode`, and `shadcn-nuxt`; Tailwind uses its official Vite plugin. Official Nuxt docs and the credential-free Nuxt MCP endpoint informed conventions; MCP is documented for capable agents rather than tied to an editor or application runtime.
+Nuxt modules are `@nuxt/eslint`, `@nuxtjs/color-mode`, `shadcn-nuxt`, and the explicitly installed local package `@wicaso/nuxt-jobs`; Tailwind uses its official Vite plugin. Official Nuxt docs and the credential-free Nuxt MCP endpoint informed conventions; MCP is documented for capable agents rather than tied to an editor or application runtime.
 
 ## Packages added and manual wiring
 
@@ -12,7 +12,7 @@ Meaningful additions are pg-boss 12.35 for PostgreSQL-backed jobs; Better Auth p
 
 ## Friction and findings
 
-- **Jobs module:** Nuxt 4 local-module discovery loads `modules/jobs/index.ts` without a manual config entry. Nuxt Kit cleanly owns server imports, private runtime options, the application-registry alias, and shutdown cleanup; the standalone CLI scripts, task registry, Docker/Compose roles, and CI remain explicit consumer concerns. pg-boss runtime instances use `migrate: false`; releases explicitly migrate and diagnose its separate schema. The official Drizzle adapter provides atomic application-write plus enqueue transactions. One Node image now runs Nitro, migration tooling, and the worker. Detailed extraction and removal findings are in `JOBS_MODULE_EVALUATION.md`.
+- **Jobs module:** Jobs is a publish-shaped workspace package built by the official Nuxt module builder and enabled explicitly by both the root reference app and a minimal external-style fixture. This avoids root local-module auto-discovery as the catalog grows. The package owns pg-boss, server imports, private runtime options, registry primitives, shutdown cleanup, and a `nuxt-jobs` CLI; registries, deployment roles, and operator aliases remain consumer concerns. A tarball lifecycle test proves clean install, registry extension, migrations, worker execution, build/typecheck, and removal. Runtime instances still use `migrate: false`, and the official Drizzle adapter still provides atomic write-plus-enqueue transactions. Detailed choices are in `JOBS_MODULE_EVALUATION.md`.
 
 - **Auth:** Better Auth is framework-neutral rather than a first-party Nuxt module. Version 1.7 moved generic OAuth onto the standard social-provider flow and `/api/auth/callback/:providerId`; older examples using `/oauth2/callback/` are wrong. Its current Vue client adds a Nuxt-specific `useSession(useFetch)` overload, which is necessary for incoming-cookie forwarding and hydration-safe SSR. The optional email transport is deliberately not faked for production.
 - **Database:** Drizzle is direct and predictable, but Better Auth schema ownership means upgrades must be checked against its CLI/schema documentation. Migrations remain a separate operational step, correctly avoiding auto-push.
