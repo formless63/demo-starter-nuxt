@@ -52,6 +52,12 @@ bun run jobs:worker
 
 The package owns the long-term `nuxt-jobs worker|migrate|doctor|smoke` CLI. `fixtures/jobs-consumer` consumes the package like an external application. `bun run packages:test jobs` builds a tarball, installs it into a fresh fixture, proves the module/dependency/registry/migration/worker/build path, removes it, and proves no generated or runtime assumption remains. The generic lifecycle comes from catalog metadata while the Jobs runtime check remains fixture-owned. Publishing is intentionally disabled. See `JOBS_MODULE_EVALUATION.md` for the chosen layout and rejected alternatives.
 
+## API Platform
+
+API Platform is the optional `@wicaso/nuxt-api` workspace package. The root reference app explicitly enables it and deliberately adds its `apiPlatformAuth()` helper to the existing Better Auth instance. API keys are user-owned, hashed at rest, accepted only through `x-api-key`, permission-scoped, rate-limited, and unable to establish browser sessions. Apply the committed application migration before use.
+
+The reference app exposes owner-scoped `GET` and `POST /api/v1/projects`, generated OpenAPI 3.1.1 at `/api/openapi.json`, Scalar at `/docs/api`, and authenticated key management at `/app/api-keys`. Native Nitro routes remain authoritative and reuse an explicit Zod contract registry; internal and Better Auth routes are not added to the public spec. `bun run packages:test api-platform` proves packed installation, migration, key security and permissions, browser-session separation, contracts/docs, owner isolation, and clean removal. See `capabilities/api-platform/CAPABILITY.md` and `API_PLATFORM_MODULE_EVALUATION.md`.
+
 ## Verification
 
 ```sh
@@ -60,6 +66,7 @@ bun run typecheck
 bun run test
 bun run test:e2e
 bun run packages:test jobs
+bun run packages:test api-platform
 bun run check
 ```
 
