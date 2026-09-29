@@ -35,3 +35,7 @@ Read only what is relevant to the task:
 - `.agents/skills/` contains task-specific workflows; use a skill only when its description matches the work.
 
 Keep this file concise. Put task-specific procedures in skills rather than expanding always-loaded instructions.
+
+## Reusable capabilities
+
+Reusable capabilities and their relationships are tracked in `ROADMAP.md` and `capabilities/catalog.json`. Before installing, removing, creating, or changing capability dependencies, use the `capability-change` skill. Hard dependencies must be explicit and must not form cycles.

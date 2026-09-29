@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Reusable capability catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "baseline", "capabilities"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 1 },
+    "baseline": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/baselineEntry" }
+    },
+    "capabilities": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/capability" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "uniqueStringArray": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nonEmptyString" }
+    },
+    "baselineEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "displayName", "summary"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "displayName": { "$ref": "#/$defs/nonEmptyString" },
+        "summary": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "externalRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "required"],
+      "properties": {
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "required": { "type": "boolean" },
+        "notes": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "displayName",
+        "kind",
+        "status",
+        "defaultInstalled",
+        "requires",
+        "integratesWith",
+        "externalRequirements",
+        "summary"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "displayName": { "$ref": "#/$defs/nonEmptyString" },
+        "kind": {
+          "enum": [
+            "foundational-backend",
+            "application-infrastructure",
+            "identity-policy",
+            "business-integration",
+            "operations-ui",
+            "client-platform"
+          ]
+        },
+        "status": {
+          "enum": ["done", "in-progress", "planned", "evaluate", "deferred"]
+        },
+        "defaultInstalled": { "type": "boolean" },
+        "requires": { "$ref": "#/$defs/uniqueStringArray" },
+        "integratesWith": { "$ref": "#/$defs/uniqueStringArray" },
+        "baselineRequirements": { "$ref": "#/$defs/uniqueStringArray" },
+        "baselineIntegrations": { "$ref": "#/$defs/uniqueStringArray" },
+        "externalRequirements": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/externalRequirement" }
+        },
+        "summary": { "$ref": "#/$defs/nonEmptyString" },
+        "scripts": { "$ref": "#/$defs/uniqueStringArray" },
+        "environmentVariables": { "$ref": "#/$defs/uniqueStringArray" },
+        "migrations": { "$ref": "#/$defs/uniqueStringArray" },
+        "runtimeProcesses": { "$ref": "#/$defs/uniqueStringArray" },
+        "documentationPath": { "$ref": "#/$defs/nonEmptyString" },
+        "agentSkill": { "$ref": "#/$defs/nonEmptyString" },
+        "evaluationDocument": { "$ref": "#/$defs/nonEmptyString" },
+        "modulePath": { "$ref": "#/$defs/nonEmptyString" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "done" } }, "required": ["status"] },
+          "then": {
+            "properties": { "documentationPath": { "$ref": "#/$defs/nonEmptyString" } },
+            "required": ["documentationPath"]
+          }
+        }
+      ]
+    }
+  }
+}
