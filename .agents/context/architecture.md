@@ -12,8 +12,10 @@ Better Auth owns `/api/auth/**`: OAuth establishes an account, user, and databas
 - `server/api`: HTTP boundary
 - `server/utils`: focused server helpers
 - `server/database`: Drizzle schema and immutable migrations
+- `modules/jobs`: local Nuxt module with server-only pg-boss runtime and typed enqueue helpers
+- `server/jobs`: application-owned job registry and handlers shared by Nitro and the worker
 - `tests`: unit/integration and Playwright smoke tests
 
 For cross-layer features, validate at the HTTP edge, keep client/server types serializable, enforce authorization in SQL predicates, and add migrations rather than schema push.
 
-The production Docker image contains Nitro's portable Node output and a bundled Node migration runner. Compose uses that same tagged image for the one-shot `migrate` service and long-running `app` service. Operators run migrations explicitly before starting or updating `app`; application startup itself never changes schema. Both services depend on healthy PostgreSQL, and `/api/health` is the runtime readiness contract.
+The production Docker image contains Nitro's portable Node output plus bundled application migration and jobs entrypoints. Compose uses that same tagged image for the one-shot `migrate` service and long-running `app` and `worker` services. Operators run application and pg-boss migrations explicitly before starting or updating runtime services; application and worker startup never change schema. Runtime jobs use `migrate: false`, validate payloads at execution, and use pg-boss's Drizzle adapter when enqueueing must commit atomically with application writes. Services depend on healthy PostgreSQL, and `/api/health` is the application readiness contract.
