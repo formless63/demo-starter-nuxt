@@ -50,6 +50,25 @@
         "notes": { "$ref": "#/$defs/nonEmptyString" }
       }
     },
+    "packageTest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ownedDependencies", "removal"],
+      "properties": {
+        "ownedDependencies": { "$ref": "#/$defs/uniqueStringArray" },
+        "runtimeScript": { "$ref": "#/$defs/nonEmptyString" },
+        "removal": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["scripts", "paths", "replacementNuxtConfig"],
+          "properties": {
+            "scripts": { "$ref": "#/$defs/uniqueStringArray" },
+            "paths": { "$ref": "#/$defs/uniqueStringArray" },
+            "replacementNuxtConfig": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        }
+      }
+    },
     "capability": {
       "type": "object",
       "additionalProperties": false,
@@ -100,7 +119,8 @@
         "modulePath": { "$ref": "#/$defs/nonEmptyString" },
         "packageName": { "$ref": "#/$defs/nonEmptyString" },
         "packagePath": { "$ref": "#/$defs/nonEmptyString" },
-        "fixturePath": { "$ref": "#/$defs/nonEmptyString" }
+        "fixturePath": { "$ref": "#/$defs/nonEmptyString" },
+        "packageTest": { "$ref": "#/$defs/packageTest" }
       },
       "allOf": [
         {

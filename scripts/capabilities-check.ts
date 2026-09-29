@@ -23,6 +23,15 @@ interface Capability {
   packageName?: string
   packagePath?: string
   fixturePath?: string
+  packageTest?: {
+    ownedDependencies: string[]
+    runtimeScript?: string
+    removal: {
+      scripts: string[]
+      paths: string[]
+      replacementNuxtConfig: string
+    }
+  }
 }
 
 interface Catalog {
@@ -33,6 +42,7 @@ interface Catalog {
 interface PackageManifest {
   name?: string
   scripts?: Record<string, string>
+  dependencies?: Record<string, string>
 }
 
 const root = process.cwd()
@@ -61,6 +71,9 @@ const catalog = catalogData as Catalog
 const errors: string[] = []
 const capabilityIds = new Set<string>()
 const baselineIds = new Set<string>()
+const packageNames = new Set<string>()
+const packagePaths = new Set<string>()
+const fixturePaths = new Set<string>()
 
 for (const entry of catalog.baseline) {
   if (baselineIds.has(entry.id)) errors.push(`Duplicate baseline ID: ${entry.id}`)
@@ -163,6 +176,18 @@ for (const capability of catalog.capabilities) {
     else if (manifest.name !== capability.packageName) {
       errors.push(`${capability.id} package name ${manifest.name ?? '(missing)'} does not match ${capability.packageName}`)
     }
+
+    if (!capability.fixturePath) errors.push(`${capability.id} fixturePath is required with packagePath`)
+    if (capability.status === 'done' && !capability.packageTest) {
+      errors.push(`${capability.id} packageTest is required for a completed package capability`)
+    }
+    if (capability.packageTest) {
+      for (const dependency of capability.packageTest.ownedDependencies) {
+        if (!manifest.dependencies?.[dependency]) {
+          errors.push(`${capability.id} package test dependency ${dependency} is not a direct package dependency`)
+        }
+      }
+    }
   }
   else if (capability.packageName) {
     errors.push(`${capability.id} packagePath is required with packageName`)
@@ -170,6 +195,48 @@ for (const capability of catalog.capabilities) {
   if (capability.fixturePath) {
     await assertPath(`${capability.id} consumer fixture`, capability.fixturePath)
     await assertPath(`${capability.id} consumer fixture config`, `${capability.fixturePath}/nuxt.config.ts`)
+    if (!capability.packagePath) errors.push(`${capability.id} packagePath is required with fixturePath`)
+
+    const fixtureManifestPath = `${capability.fixturePath}/package.json`
+    await assertPath(`${capability.id} consumer fixture manifest`, fixtureManifestPath)
+    if (await Bun.file(resolve(root, fixtureManifestPath)).exists()) {
+      const fixtureManifest = await Bun.file(resolve(root, fixtureManifestPath)).json() as PackageManifest
+      for (const script of ['typecheck', 'build']) {
+        if (!fixtureManifest.scripts?.[script]) {
+          errors.push(`${capability.id} consumer fixture is missing ${script} script`)
+        }
+      }
+      if (capability.packageTest?.runtimeScript && !fixtureManifest.scripts?.[capability.packageTest.runtimeScript]) {
+        errors.push(`${capability.id} consumer fixture is missing runtime script ${capability.packageTest.runtimeScript}`)
+      }
+      for (const script of capability.packageTest?.removal.scripts ?? []) {
+        if (!fixtureManifest.scripts?.[script]) {
+          errors.push(`${capability.id} removal declares missing fixture script ${script}`)
+        }
+      }
+    }
+    if (capability.packageTest) {
+      await assertPath(
+        `${capability.id} removal Nuxt config`,
+        `${capability.fixturePath}/${capability.packageTest.removal.replacementNuxtConfig}`,
+      )
+      for (const path of capability.packageTest.removal.paths) {
+        await assertPath(`${capability.id} removable fixture path`, `${capability.fixturePath}/${path}`)
+      }
+    }
+  }
+  else if (capability.packageTest) {
+    errors.push(`${capability.id} fixturePath is required with packageTest`)
+  }
+
+  for (const [label, value, values] of [
+    ['packageName', capability.packageName, packageNames],
+    ['packagePath', capability.packagePath, packagePaths],
+    ['fixturePath', capability.fixturePath, fixturePaths],
+  ] as const) {
+    if (!value) continue
+    if (values.has(value)) errors.push(`Duplicate ${label}: ${value}`)
+    values.add(value)
   }
 }
 

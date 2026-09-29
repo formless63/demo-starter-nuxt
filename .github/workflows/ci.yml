@@ -1,6 +1,38 @@
 name: CI
 on: { push: {}, pull_request: {} }
 jobs:
+  package-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.packages.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: 1.4.2 }
+      - id: packages
+        run: echo "matrix=$(bun run packages:matrix)" >> "$GITHUB_OUTPUT"
+
+  package-test:
+    needs: package-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.package-matrix.outputs.matrix) }}
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env: { POSTGRES_DB: nuxt_starter, POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/nuxt_starter
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: 1.4.2 }
+      - run: bun install --frozen-lockfile
+      - run: bun run packages:test ${{ matrix.capability }}
+
   check:
     runs-on: ubuntu-latest
     services:
@@ -26,7 +58,6 @@ jobs:
       - run: bun run jobs:migrate
       - run: bun run jobs:doctor
       - run: bun run jobs:smoke
-      - run: bun run jobs:package:test
       - run: bun run lint
       - run: bun run typecheck
       - run: bun run test
