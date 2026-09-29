@@ -1,12 +1,48 @@
-# Nuxt full-stack starter
+# Nuxt Full-Stack Starter
 
-A deliberately small but production-sensible Nuxt 4 evaluation repository. It combines a portable Nitro application, OAuth-only authentication, PostgreSQL, and owner-scoped Projects CRUD without a second API framework or client cache.
+A deployable, modular Nuxt 4 and Vue 3 starter using Bun, PostgreSQL with Drizzle, Better Auth, Tailwind CSS with shadcn-vue and Tabler Icons, Docker Compose, and a complete test/CI path. The repository includes a reference application plus optional Nuxt capability packages that can be kept or removed independently.
 
-## Stack and prerequisites
+## Why this starter
 
-Nuxt 4 / Vue 3, strict TypeScript, Better Auth, Drizzle/PostgreSQL 18, Tailwind CSS 4 with an initialized shadcn-vue component layer, Reka UI, Tabler Icons, vue-sonner, Vitest, and Playwright. Install **Node 24**, **Bun 1.4.2**, and Docker with Compose. Versions are pinned; see `.agents/context/stack.md`.
+- Production-sensible, provider-neutral defaults with portable Nitro output.
+- Explicit reviewed migrations instead of startup-time schema mutation.
+- Passwordless authentication with GitHub OAuth, generic OIDC, and optional magic links.
+- Native Nitro server routes without a second backend framework.
+- A health-checked production image and Compose release workflow.
+- Optional capabilities built as normal Nuxt workspace packages.
+- Lint, strict typecheck, integration tests, browser tests, package fixtures, and container smoke coverage.
+- Concise agent guidance and machine-readable architecture metadata.
 
-## Setup
+This is an opinionated starting point, not a universal application architecture. Keep the pieces that fit the product you are building.
+
+## Base stack
+
+| Baseline | Included |
+| --- | --- |
+| Application | Nuxt 4, Vue 3, Nitro, strict TypeScript |
+| Tooling/runtime | Bun for dependencies and scripts; Node 24 production output |
+| Data | PostgreSQL 18, Drizzle ORM, committed SQL migrations |
+| Authentication | Better Auth sessions; GitHub OAuth; generic OIDC; optional hashed-token magic links; passwords disabled |
+| UI | Tailwind CSS 4, shadcn-vue/Reka UI, Tabler Icons |
+| Deployment | Multi-stage Docker image and provider-neutral Compose stack |
+| Quality | ESLint, Vitest, Playwright, package lifecycle tests, CI, container smoke |
+
+Optional capabilities are not baseline features. Their source may exist in the repository without making them part of a clean consumer application.
+
+## Available capabilities
+
+| Capability | Status | Default | Requirements | Purpose |
+| --- | --- | --- | --- | --- |
+| Jobs | Available (`done`) | Optional | Baseline PostgreSQL; external PostgreSQL service | Typed pg-boss jobs, explicit queue migrations, and a standalone worker |
+| API Platform | Available (`done`) | Optional | Baseline Nuxt, Better Auth, PostgreSQL, and Drizzle | User-owned API keys, permissions, native `/api/v1` routes, OpenAPI 3.1.1, and Scalar docs |
+
+`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application deliberately enables both completed capabilities so their integration is continuously tested.
+
+See [Using capabilities](docs/CAPABILITIES.md) for installation and removal guidance and [ROADMAP.md](ROADMAP.md) for the future design plan.
+
+## Quick start
+
+Install Node 24, Bun 1.4.2, and Docker with Compose, then:
 
 ```sh
 cp .env.example .env
@@ -17,9 +53,9 @@ bun run jobs:migrate
 bun run dev
 ```
 
-Generate a strong `NUXT_AUTH_SECRET` (at least 32 characters). `DATABASE_URL` and secrets are server-only; only `NUXT_PUBLIC_APP_BASE_URL` and explicit public capability flags are sent to browsers. Production startup fails clearly when the database URL, auth secret, or an absolute non-localhost application URL is missing. OAuth providers remain optional.
+Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app enables Jobs and API Platform; `db:migrate` applies the application/API tables and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
 
-## Authentication
+## Authentication notes
 
 Password authentication is disabled. For GitHub, create an OAuth application with homepage `http://localhost:3000` and authorization callback `http://localhost:3000/api/auth/callback/github`, then set `NUXT_GITHUB_CLIENT_ID` and `NUXT_GITHUB_CLIENT_SECRET`.
 
@@ -27,86 +63,58 @@ Generic OIDC is provider-neutral. Set `NUXT_OIDC_ISSUER`, client ID/secret, and 
 
 Magic links are opt-in with `NUXT_MAGIC_LINK_ENABLED=true`. The starter logs the link only for local development; replace that callback with a transactional email sender before production.
 
-### Optional Pocket ID development provisioning
+### Pocket ID development provisioning
 
 Set `DEV_OIDC_ADMIN_URL`, `DEV_OIDC_API_KEY`, and `APP_BASE_URL`, then run `bun run auth:provision`. It authenticates with Pocket ID's `X-API-KEY` header, creates or updates the named client, and uses the dedicated client-secret endpoint when no usable local secret exists. It preserves matching local credentials, replaces managed keys instead of appending duplicates, writes ignored `.env.local` with mode `0600`, and exits with actionable diagnostics when configuration or the IdP is unavailable. Revalidate the current Pocket ID API when upgrading that external service.
 
-## Development and database
+## Starting a project
 
-`bun run dev` starts Nuxt. Modify `server/database/schema.ts`, run `bun run db:generate`, review generated SQL, and apply with `bun run db:migrate`. Production uses migrations—not schema push. All Project queries include the authenticated owner in their SQL predicate.
+Choose one of two supported paths:
 
-## Background jobs
+1. **Use the full reference application.** Keep Jobs and API Platform enabled when they are likely to be useful. This preserves the integrated worker, API-key UI, external API, and production Compose path.
+2. **Start lean.** Keep the baseline and remove Jobs, API Platform, or both before product work. Capabilities can be re-enabled later from their local packages and contracts.
 
-Jobs is the optional workspace package `@wicaso/nuxt-jobs` under `packages/nuxt-jobs`. The root reference app installs and explicitly enables it in `nuxt.config.ts`; package source is never auto-loaded. It exposes server-only typed `sendJob` and `sendJobInTransaction` helpers. Application tasks live in `server/jobs/tasks/` and are registered in `server/jobs/registry.ts`; `starter.echo` is a removable demonstration task. Payloads are validated with Zod before enqueue and when workers execute them.
-
-Start PostgreSQL, apply both explicit schemas, then run the worker:
-
-```sh
-bun run db:migrate
-bun run jobs:migrate
-bun run jobs:doctor
-bun run jobs:worker
-```
-
-`bun run jobs:smoke` starts the real worker registration and executes `starter.echo`. Runtime clients and workers always use `migrate: false`. Use `sendJobInTransaction(tx, name, payload)` inside a Drizzle transaction when an application write and enqueue must commit or roll back together. `PGBOSS_DATABASE_URL` may select a separate jobs migration role; otherwise jobs commands use `DATABASE_URL`.
-
-The package owns the long-term `nuxt-jobs worker|migrate|doctor|smoke` CLI. `fixtures/jobs-consumer` consumes the package like an external application. `bun run packages:test jobs` builds a tarball, installs it into a fresh fixture, proves the module/dependency/registry/migration/worker/build path, removes it, and proves no generated or runtime assumption remains. The generic lifecycle comes from catalog metadata while the Jobs runtime check remains fixture-owned. Publishing is intentionally disabled. See `JOBS_MODULE_EVALUATION.md` for the chosen layout and rejected alternatives.
-
-## API Platform
-
-API Platform is the optional `@wicaso/nuxt-api` workspace package. The root reference app explicitly enables it and deliberately adds its `apiPlatformAuth()` helper to the existing Better Auth instance. API keys are user-owned, hashed at rest, accepted only through `x-api-key`, permission-scoped, rate-limited, and unable to establish browser sessions. Apply the committed application migration before use.
-
-The reference app exposes owner-scoped `GET` and `POST /api/v1/projects`, generated OpenAPI 3.1.1 at `/api/openapi.json`, Scalar at `/docs/api`, and authenticated key management at `/app/api-keys`. Native Nitro routes remain authoritative and reuse an explicit Zod contract registry; internal and Better Auth routes are not added to the public spec. `bun run packages:test api-platform` proves packed installation, migration, key security and permissions, browser-session separation, contracts/docs, owner isolation, and clean removal. See `capabilities/api-platform/CAPABILITY.md` and `API_PLATFORM_MODULE_EVALUATION.md`.
+[Starting a project](docs/STARTING-A-PROJECT.md) contains verified, capability-specific removal recipes and distinguishes a disposable never-deployed project from an already-deployed application.
 
 ## Verification
 
 ```sh
-bun run lint
-bun run typecheck
-bun run test
-bun run test:e2e
+bun install --frozen-lockfile
+bun run capabilities:status
+bun run capabilities:check
 bun run packages:test jobs
 bun run packages:test api-platform
 bun run check
+bun run test:e2e
 ```
 
-Playwright may first need `bunx playwright install chromium`. E2E starts its own Nuxt development server and needs migrated PostgreSQL because session restoration runs during SSR. The authorization integration test also uses `DATABASE_URL`; it skips only when no database is available. See `.agents/context/commands.md` for what each check proves.
+PostgreSQL and committed migrations are required for database integration tests and E2E session restoration. Playwright may first require `bunx playwright install chromium`. See [.agents/context/commands.md](.agents/context/commands.md) for the full command contract.
 
-## Production and Docker
+## Deployment
 
-`bun run build && bun run start` serves Nitro's portable Node output. The production image contains that same Node output plus explicit application migration and jobs tool/worker entrypoints. Both the one-shot migration job and long-running application and worker services use the image tagged by `APP_IMAGE`; normal application and worker startup never mutate either schema. The image runs as the unprivileged `node` user, has no source bind mounts, and persists no application state.
-
-Set a production `NUXT_AUTH_SECRET` and absolute `NUXT_PUBLIC_APP_BASE_URL` in `.env`. OAuth variables remain optional, and the application always connects to the Compose service hostname `postgres`, never host-local PostgreSQL. `APP_PORT` controls the published application port, `POSTGRES_PORT` controls the development database port, and `APP_IMAGE` controls the reusable image tag. `PGBOSS_SCHEMA`, `JOBS_CONCURRENCY`, and `PGBOSS_USE_LISTEN_NOTIFY` configure the server-only jobs runtime.
-
-The release flow is intentionally explicit. A failed migration command is a failed deployment; do not start or update the application after it fails.
+Normal runtime startup never mutates the database. Build one image, use it for the explicit migration gate and runtime services, then verify health:
 
 ```sh
-# Build the production image once for both migration and runtime.
 docker compose build app
-
-# Development: start only PostgreSQL (unchanged workflow).
-docker compose up -d postgres
-
-# Release: apply application and pg-boss migrations, then start the production-like stack.
 docker compose run --rm migrate
 docker compose up -d --wait app worker
-
-# Operate and inspect the stack.
-docker compose logs -f app worker postgres
 curl --fail http://localhost:${APP_PORT:-3000}/api/health
+docker compose logs -f app worker postgres
 docker compose down --remove-orphans
 ```
 
-To deploy a new application revision, pull or check out the revision, set `APP_IMAGE` to the intended tag, and run:
+Set production `NUXT_AUTH_SECRET` and `NUXT_PUBLIC_APP_BASE_URL` values in the environment. Compose connects to the `postgres` service rather than localhost. `APP_IMAGE`, `APP_PORT`, and `POSTGRES_PORT` are configurable. A failed migration is a failed deployment; do not update the runtime services after it fails. Add `--volumes` to `docker compose down` only when intentionally deleting PostgreSQL data.
 
-```sh
-docker compose build app
-docker compose run --rm migrate
-docker compose up -d --wait app worker
-```
+For an image update, check out the intended revision or select a registry tag with `APP_IMAGE`, build or pull that image, run `migrate`, and only then recreate `app` and `worker` with `--wait`.
 
-Compose reuses the newly built image for the migration job, application, and worker. For a registry-provided image, pull the tag first with `docker compose pull app migrate worker`, then run the same migration and startup commands without rebuilding. Add `--volumes` to `docker compose down` only when intentionally deleting PostgreSQL data. `GET /api/health` verifies both process and database readiness.
+## Repository and capability development
 
-## Repository conventions
+- `app/` and `server/` contain the reference application.
+- `packages/nuxt-*` contains private, publish-shaped optional Nuxt packages.
+- `fixtures/*-consumer` proves tarball installation, runtime behavior, and clean removal like an external consumer.
+- `capabilities/*/CAPABILITY.md` is the technical installation/removal contract for each completed capability.
+- `capabilities/catalog.json` drives validation, package discovery, and the CI matrix.
+- `ROADMAP.md` records planned capabilities and their dependency relationships.
+- `.agents/` contains focused maintenance context and workflows.
 
-`AGENTS.md` is concise canonical guidance. Load a relevant note or skill under `.agents/` only when needed. Browser code belongs in `app/`, trusted code in `server/`, authorization is enforced in handlers/SQL, and schema changes always include migrations. `STACK_EVALUATION.md` records integration tradeoffs.
+The private `@repo/*` package scope means “inside this workspace.” These packages are not published; choose a real npm scope deliberately before any future release. Nuxt's module system remains the integration mechanism—there is no custom installer or runtime capability manager.

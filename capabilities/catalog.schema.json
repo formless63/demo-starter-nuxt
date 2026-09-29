@@ -99,7 +99,10 @@
         "status": {
           "enum": ["done", "in-progress", "planned", "evaluate", "deferred"]
         },
-        "defaultInstalled": { "type": "boolean" },
+        "defaultInstalled": {
+          "type": "boolean",
+          "description": "Whether a clean consumer/base application receives the capability without explicitly selecting or enabling it; independent of reference-application enablement."
+        },
         "requires": { "$ref": "#/$defs/uniqueStringArray" },
         "integratesWith": { "$ref": "#/$defs/uniqueStringArray" },
         "baselineRequirements": { "$ref": "#/$defs/uniqueStringArray" },

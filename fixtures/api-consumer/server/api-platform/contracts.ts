@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { defineApiContract, defineApiRegistry } from '@wicaso/nuxt-api/server'
+import { defineApiContract, defineApiRegistry } from '@repo/nuxt-api/server'
 
 export const projectResponseSchema = z.object({
   id: z.string().uuid(),

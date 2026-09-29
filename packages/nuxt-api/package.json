@@ -1,5 +1,5 @@
 {
-  "name": "@wicaso/nuxt-api",
+  "name": "@repo/nuxt-api",
   "version": "0.1.0",
   "description": "Machine authentication and OpenAPI contracts for Nuxt applications",
   "private": true,

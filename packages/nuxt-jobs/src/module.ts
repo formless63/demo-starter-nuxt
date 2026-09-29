@@ -10,7 +10,7 @@ export interface JobsModuleOptions {
 
 export default defineNuxtModule<JobsModuleOptions>({
   meta: {
-    name: '@wicaso/nuxt-jobs',
+    name: '@repo/nuxt-jobs',
     configKey: 'jobs',
     compatibility: { nuxt: '>=4.0.0 <5.0.0' },
   },

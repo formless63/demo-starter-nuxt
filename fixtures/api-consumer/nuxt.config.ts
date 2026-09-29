@@ -1,6 +1,6 @@
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-01',
-  modules: ['@wicaso/nuxt-api'],
+  modules: ['@repo/nuxt-api'],
   apiPlatform: {
     auth: 'server/utils/auth',
     contracts: 'server/api-platform/contracts',

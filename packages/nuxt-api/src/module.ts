@@ -13,7 +13,7 @@ export interface ApiPlatformModuleOptions {
 
 export default defineNuxtModule<ApiPlatformModuleOptions>({
   meta: {
-    name: '@wicaso/nuxt-api',
+    name: '@repo/nuxt-api',
     configKey: 'apiPlatform',
     compatibility: { nuxt: '>=4.0.0 <5.0.0' },
   },

@@ -1,4 +1,4 @@
-import { defineJob } from '@wicaso/nuxt-jobs/server'
+import { defineJob } from '@repo/nuxt-jobs/server'
 import { z } from 'zod'
 
 export const fixtureEchoJob = defineJob({

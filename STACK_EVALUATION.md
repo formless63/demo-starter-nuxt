@@ -4,7 +4,7 @@
 
 The exact reproducible graph is in `package.json`/`bun.lock`. Major versions: Bun 1.4, Node 24 LTS, Nuxt 4, Vue 3, TypeScript 5, PostgreSQL 18, Better Auth 1, Drizzle 0.45, Tailwind 4, Reka UI 2, Vitest 5, Playwright 1. The repository began nearly empty, so none of create-nuxt's generated demo UI was retained. The result follows its Nuxt 4 `app/` layout and Nitro conventions manually.
 
-Nuxt modules are `@nuxt/eslint`, `@nuxtjs/color-mode`, `shadcn-nuxt`, and the explicitly installed local packages `@wicaso/nuxt-jobs` and `@wicaso/nuxt-api`; Tailwind uses its official Vite plugin. Official Nuxt docs and the credential-free Nuxt MCP endpoint informed conventions; MCP is documented for capable agents rather than tied to an editor or application runtime.
+Nuxt modules are `@nuxt/eslint`, `@nuxtjs/color-mode`, `shadcn-nuxt`, and the explicitly installed private workspace packages `@repo/nuxt-jobs` and `@repo/nuxt-api`; Tailwind uses its official Vite plugin. `@repo/*` is internal only and is not a future npm-scope decision. Official Nuxt docs and the credential-free Nuxt MCP endpoint informed conventions; MCP is documented for capable agents rather than tied to an editor or application runtime.
 
 ## Packages added and manual wiring
 

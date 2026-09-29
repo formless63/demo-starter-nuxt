@@ -2,6 +2,8 @@
 
 This roadmap separates the permanent starter baseline from optional reusable capabilities and from framework/library evaluations. The machine-readable source for capability status and relationships is [`capabilities/catalog.json`](capabilities/catalog.json); its contract is [`capabilities/catalog.schema.json`](capabilities/catalog.schema.json).
 
+For user-facing enablement, removal, and pruning guidance, see [`docs/CAPABILITIES.md`](docs/CAPABILITIES.md) and [`docs/STARTING-A-PROJECT.md`](docs/STARTING-A-PROJECT.md).
+
 ## Relationship vocabulary
 
 - **Requires** is a hard dependency on another reusable capability. Installation is incomplete without it.
@@ -31,7 +33,9 @@ Capabilities may declare a baseline requirement such as authenticated identity, 
 
 Reusable Nuxt capabilities are developed as sibling workspace packages under `packages/nuxt-<id>/`, following Nuxt's normal module-author structure and build tooling. Each implemented package owns its runtime dependencies and public commands, has an explicit minimal consumer under `fixtures/`, and is activated only when an application installs it and lists it in `nuxt.config.ts`. Package source existing in this repository is never sufficient to enable a capability.
 
-The root is a reference application that may opt into completed capabilities for integrated development and deployment. It is not the definition of the base generated starter. `capabilities/catalog.json` is the source of truth for completed package discovery and records the package name/path, consumer fixture, owned-dependency assertions, optional fixture runtime hook, and removal test contract. Each `CAPABILITY.md` owns installation/removal guidance. This metadata drives repository preparation and verification only; it is not an application installer or runtime capability loader. Future packages such as API, Observability, Storage, and Email should follow this convention only when implemented; empty packages are not created for roadmap entries.
+`defaultInstalled` has one meaning: whether a clean consumer/base application receives a capability without explicitly selecting or enabling it. It does not describe the root reference application. Both completed capabilities are `defaultInstalled: false`; the root deliberately installs and enables them for continuous integration testing.
+
+The root is a reference application that may opt into completed capabilities for integrated development and deployment. It is not the definition of the base generated starter. `capabilities/catalog.json` is the source of truth for completed package discovery and records the package name/path, consumer fixture, owned-dependency assertions, optional fixture runtime hook, and removal test contract. Each `CAPABILITY.md` owns installation/removal guidance. This metadata drives repository preparation and verification only; it is not an application installer or runtime capability loader. The private `@repo/*` scope identifies internal workspace packages only; a publication scope must be chosen deliberately before any npm release. Future packages such as API, Observability, Storage, and Email should follow this convention only when implemented; empty packages are not created for roadmap entries.
 
 The generic `packages:*` commands build and exercise the catalog entries. Root postinstall prepares only catalog packages that are actual root dependencies. CI derives its package matrix from the catalog, performs the common tarball install/typecheck/build/removal lifecycle once per entry, and lets each capability fixture own any specialized runtime checks. Adding a completed package therefore changes metadata and its fixture, not the CI workflow.
 
@@ -51,8 +55,8 @@ API Platform is capability #2. Its package, machine-credential model, contract g
 - Requires: none beyond baseline PostgreSQL/Drizzle/Node runtime
 - Integrates with: Observability, Ops / Admin
 - External: PostgreSQL (required)
-- Default installation: optional; the root reference application opts in explicitly
-- Current implementation: `@wicaso/nuxt-jobs` workspace package, typed registry, Zod execution validation, transactional Drizzle enqueue, explicit migrations/doctor, package-owned CLI, clean consumer fixture, standalone worker, smoke test, and shared production image
+- Default installed: no; a clean consumer must explicitly select it. Enabled in reference app: yes.
+- Current implementation: `@repo/nuxt-jobs` private workspace package, typed registry, Zod execution validation, transactional Drizzle enqueue, explicit migrations/doctor, package-owned CLI, clean consumer fixture, standalone worker, smoke test, and shared production image
 - Contract: [`capabilities/jobs/CAPABILITY.md`](capabilities/jobs/CAPABILITY.md)
 
 ### API Platform / Machine Auth / OpenAPI (`done`)
@@ -60,8 +64,8 @@ API Platform is capability #2. Its package, machine-credential model, contract g
 - Requires: none beyond the starter baseline
 - Integrates with: Audit Log, Observability, Authorization, Organizations / Tenancy
 - External: none
-- Default installation: optional; the root reference application opts in explicitly
-- Current implementation: `@wicaso/nuxt-api`, Better Auth user-owned hashed API keys, typed machine principals and permissions, native Nitro `/api/v1` routes, Zod-backed OpenAPI 3.1.1, Scalar docs, committed migration, credential management, and clean consumer fixture
+- Default installed: no; a clean consumer must explicitly select it. Enabled in reference app: yes.
+- Current implementation: `@repo/nuxt-api`, Better Auth user-owned hashed API keys, typed machine principals and permissions, native Nitro `/api/v1` routes, Zod-backed OpenAPI 3.1.1, Scalar docs, committed migration, credential management, and clean consumer fixture
 - Contract: [`capabilities/api-platform/CAPABILITY.md`](capabilities/api-platform/CAPABILITY.md)
 
 ### Observability (`planned`)

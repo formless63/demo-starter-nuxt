@@ -3,7 +3,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { and, eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import { apiPlatformAuth } from '@wicaso/nuxt-api/server'
+import { apiPlatformAuth } from '@repo/nuxt-api/server'
 import * as tables from '../server/database/schema'
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -127,8 +127,15 @@ await db.update(tables.apikey)
 
 const [storedReadKey] = await db.select().from(tables.apikey).where(eq(tables.apikey.id, readKey.id))
 assert(storedReadKey, 'Created API key was not stored')
+assert(readKey.key.startsWith('app_'), 'Default API key prefix must be app_')
+assert(readKey.key.length === 68, 'Default API key must contain a 64-character secret after the app_ prefix')
 assert(storedReadKey.key !== readKey.key, 'Raw API key was stored in plaintext')
 assert(!storedReadKey.key.includes(readKey.key), 'Stored API key contains the raw secret')
+assert(storedReadKey.prefix === 'app_', 'Stored API key prefix must match the app_ default')
+assert(storedReadKey.expiresAt === null, 'API keys must not expire by default')
+assert(storedReadKey.rateLimitEnabled, 'Default API key rate limiting must be enabled')
+assert(storedReadKey.rateLimitMax === 1_000, 'Default API key rate limit must allow 1,000 requests')
+assert(storedReadKey.rateLimitTimeWindow === 60_000, 'Default API key rate-limit window must be 60 seconds')
 
 const sessionToken = crypto.randomUUID()
 await db.insert(tables.session).values({
@@ -155,48 +162,51 @@ try {
   const missing = await json(`${baseUrl}/api/v1/projects`)
   assert(missing.response.status === 401 && missing.body.error?.code === 'unauthorized', 'Missing key must return the standard 401 envelope')
 
-  const invalid = await json(`${baseUrl}/api/v1/projects`, { headers: { 'x-api-key': 'invalid' } })
+  const invalid = await json(`${baseUrl}/api/v1/projects`, { headers: { 'X-API-Key': 'invalid' } })
   assert(invalid.response.status === 401 && invalid.body.error?.code === 'unauthorized', 'Invalid key must return 401')
 
-  const visible = await json(`${baseUrl}/api/v1/projects`, { headers: { 'x-api-key': readKey.key } })
+  const queryCredential = await json(`${baseUrl}/api/v1/projects?api_key=${encodeURIComponent(readKey.key)}`)
+  assert(queryCredential.response.status === 401, 'API keys must not be accepted from query parameters')
+
+  const visible = await json(`${baseUrl}/api/v1/projects`, { headers: { 'X-API-Key': readKey.key } })
   assert(visible.response.status === 200, 'Read key could not list projects')
   assert(Array.isArray(visible.body) && visible.body.length === 1 && visible.body[0].name === 'Visible project', 'Project listing was not owner scoped')
 
   const forbidden = await json(`${baseUrl}/api/v1/projects`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-api-key': readKey.key },
+    headers: { 'content-type': 'application/json', 'X-API-Key': readKey.key },
     body: JSON.stringify({ name: 'Denied project' }),
   })
   assert(forbidden.response.status === 403 && forbidden.body.error?.code === 'forbidden', 'Insufficient permission must return 403')
 
   const malformed = await json(`${baseUrl}/api/v1/projects`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-api-key': writeKey.key },
+    headers: { 'content-type': 'application/json', 'X-API-Key': writeKey.key },
     body: JSON.stringify({ name: '' }),
   })
   assert(malformed.response.status === 422 && malformed.body.error?.code === 'validation_failed', 'Malformed body must return 422')
 
   const created = await json(`${baseUrl}/api/v1/projects`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-api-key': writeKey.key },
+    headers: { 'content-type': 'application/json', 'X-API-Key': writeKey.key },
     body: JSON.stringify({ name: 'Created through API', description: 'fixture' }),
   })
   assert(created.response.status === 201 && created.body.name === 'Created through API', 'Write key could not create a project')
 
-  const revoked = await json(`${baseUrl}/api/v1/projects`, { headers: { 'x-api-key': revokeKey.key } })
+  const revoked = await json(`${baseUrl}/api/v1/projects`, { headers: { 'X-API-Key': revokeKey.key } })
   assert(revoked.response.status === 401, 'Revoked key must return 401')
 
-  const expired = await json(`${baseUrl}/api/v1/projects`, { headers: { 'x-api-key': expiredKey.key } })
+  const expired = await json(`${baseUrl}/api/v1/projects`, { headers: { 'X-API-Key': expiredKey.key } })
   assert(expired.response.status === 401, 'Expired key must return 401')
 
-  const limitedFirst = await json(`${baseUrl}/api/v1/projects`, { headers: { 'x-api-key': limitedKey.key } })
-  const limitedSecond = await json(`${baseUrl}/api/v1/projects`, { headers: { 'x-api-key': limitedKey.key } })
+  const limitedFirst = await json(`${baseUrl}/api/v1/projects`, { headers: { 'X-API-Key': limitedKey.key } })
+  const limitedSecond = await json(`${baseUrl}/api/v1/projects`, { headers: { 'X-API-Key': limitedKey.key } })
   assert(limitedFirst.response.status === 200 && limitedSecond.response.status === 429, 'Per-key rate limit must return 429')
 
   const [usedReadKey] = await db.select().from(tables.apikey).where(eq(tables.apikey.id, readKey.id))
   assert(usedReadKey?.lastRequest, 'Successful verification did not persist last use')
 
-  const apiKeySession = await json(`${baseUrl}/api/auth/get-session`, { headers: { 'x-api-key': readKey.key } })
+  const apiKeySession = await json(`${baseUrl}/api/auth/get-session`, { headers: { 'X-API-Key': readKey.key } })
   assert(apiKeySession.response.status === 200 && apiKeySession.body === null, 'API key must not become a browser session')
 
   const cookie = await signedCookie(sessionToken, secret)
@@ -207,6 +217,7 @@ try {
 
   const openApi = await json(`${baseUrl}/api/openapi.json`)
   assert(openApi.response.status === 200 && openApi.body.openapi === '3.1.1', 'OpenAPI endpoint must emit 3.1.1')
+  assert(openApi.body.components.securitySchemes.ApiKeyAuth.name === 'X-API-Key', 'OpenAPI must document the X-API-Key header')
   const paths = Object.keys(openApi.body.paths ?? {})
   assert(paths.length === 1 && paths[0] === '/api/v1/projects', 'OpenAPI exposed unregistered internal routes')
   const pathOperations = openApi.body.paths['/api/v1/projects'] as Record<string, { operationId?: string }>

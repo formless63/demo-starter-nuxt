@@ -4,6 +4,7 @@ All commands use Bun. PostgreSQL is required for migrations, authenticated runti
 
 - `bun install --frozen-lockfile`: reproduce dependencies.
 - `bun run capabilities:check`: validate capability catalog schema, relationships, files, and declared package scripts.
+- `bun run capabilities:status`: read the catalog and root Nuxt configuration to report availability, clean-consumer defaults, package-source presence, reference-app enablement, requirements, and external services; it does not modify the application.
 - `docker compose up -d postgres`: start PostgreSQL 18.
 - `docker compose build app`: build and tag the shared production application/migration image.
 - `docker compose run --rm migrate`: explicitly apply application migrations, supported pg-boss migrations, and the jobs doctor using the production image; failure blocks release startup.

@@ -1,3 +1,3 @@
-import { runJobsDoctor } from '@wicaso/nuxt-jobs/cli'
+import { runJobsDoctor } from '@repo/nuxt-jobs/cli'
 
 await runJobsDoctor()

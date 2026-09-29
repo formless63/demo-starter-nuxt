@@ -6,11 +6,11 @@
       "name": "nuxt-full-stack-starter",
       "dependencies": {
         "@nuxtjs/color-mode": "4.0.1",
+        "@repo/nuxt-api": "workspace:*",
+        "@repo/nuxt-jobs": "workspace:*",
         "@tabler/icons-vue": "3.48.0",
         "@tailwindcss/vite": "4.3.3",
         "@vueuse/core": "15.0.0",
-        "@wicaso/nuxt-api": "workspace:*",
-        "@wicaso/nuxt-jobs": "workspace:*",
         "better-auth": "1.7.6",
         "class-variance-authority": "0.7.1",
         "clsx": "2.1.1",
@@ -43,7 +43,7 @@
     "fixtures/api-consumer": {
       "name": "api-consumer-fixture",
       "dependencies": {
-        "@wicaso/nuxt-api": "workspace:*",
+        "@repo/nuxt-api": "workspace:*",
         "better-auth": "1.7.6",
         "drizzle-orm": "0.45.3",
         "nuxt": "4.5.2",
@@ -59,7 +59,7 @@
     "fixtures/jobs-consumer": {
       "name": "jobs-consumer-fixture",
       "dependencies": {
-        "@wicaso/nuxt-jobs": "workspace:*",
+        "@repo/nuxt-jobs": "workspace:*",
         "drizzle-orm": "0.45.3",
         "nuxt": "4.5.2",
         "zod": "4.6.5",
@@ -70,7 +70,7 @@
       },
     },
     "packages/nuxt-api": {
-      "name": "@wicaso/nuxt-api",
+      "name": "@repo/nuxt-api",
       "version": "0.1.0",
       "dependencies": {
         "@better-auth/api-key": "1.7.6",
@@ -94,7 +94,7 @@
       },
     },
     "packages/nuxt-jobs": {
-      "name": "@wicaso/nuxt-jobs",
+      "name": "@repo/nuxt-jobs",
       "version": "0.1.0",
       "bin": {
         "nuxt-jobs": "./dist/bin.mjs",
@@ -510,6 +510,10 @@
 
     "@replit/codemirror-css-color-picker": ["@replit/codemirror-css-color-picker@6.3.0", "", { "peerDependencies": { "@codemirror/language": "^6.0.0", "@codemirror/state": "^6.0.0", "@codemirror/view": "^6.0.0" } }, "sha512-19biDANghUm7Fz7L1SNMIhK48tagaWuCOHj4oPPxc7hxPGkTVY2lU/jVZ8tsbTKQPVG7BO2CBDzs7CBwb20t4A=="],
 
+    "@repo/nuxt-api": ["@repo/nuxt-api@workspace:packages/nuxt-api"],
+
+    "@repo/nuxt-jobs": ["@repo/nuxt-jobs@workspace:packages/nuxt-jobs"],
+
     "@rolldown/binding-android-arm-eabi": ["@rolldown/binding-android-arm-eabi@1.2.11", "", { "os": "android", "cpu": "arm" }, "sha512-A5kXfGKvKWWZE0TtPrfsvT+q4Y5d1QG8gGUzpYjGydM+fARM9MuX90PrXYXe0XbsDVgyxxNzHo6giCj90bsFNw=="],
 
     "@rolldown/binding-android-arm64": ["@rolldown/binding-android-arm64@1.2.11", "", { "os": "android", "cpu": "arm64" }, "sha512-z6cTycz+iJ4PVkuL4HHW4DfTfoeU/2nqYYuSOrTmH7yHK5Y0LCOnA03V4ZNxavyVaU1oOqUgIg2klN/s+USGOA=="],
@@ -879,10 +883,6 @@
     "@vueuse/metadata": ["@vueuse/metadata@15.0.0", "", {}, "sha512-sfWE5LADAKJ0KnjtGliMdSN8Ij/L7uP6rXIZlgPloAI4zvvefbw6H5Lt7KJA6RqQOYgVqWF5Guj50HHMIzygBg=="],
 
     "@vueuse/shared": ["@vueuse/shared@15.0.0", "", { "peerDependencies": { "vue": "^3.5.0" } }, "sha512-vbNXhGrbV53xPOMSyOzMHQRvhMgZf7oNDw2RChUetVxwTIEkInQ1joZ9JbT0G3z2n2AJNjvmCWeM9ySYrnvogA=="],
-
-    "@wicaso/nuxt-api": ["@wicaso/nuxt-api@workspace:packages/nuxt-api"],
-
-    "@wicaso/nuxt-jobs": ["@wicaso/nuxt-jobs@workspace:packages/nuxt-jobs"],
 
     "abbrev": ["abbrev@3.0.1", "", {}, "sha512-AO2ac6pjRB3SJmGJo+v5/aK6Omggp6fsLrs6wN9bd35ulu4cCwaAU9+7ZhXjeqHVkaHThLuzH0nZr0YpCDhygg=="],
 

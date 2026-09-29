@@ -1,5 +1,5 @@
 import { boolean, index, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
-import { apikey } from '@wicaso/nuxt-api/server'
+import { apikey } from '@repo/nuxt-api/server'
 
 export { apikey }
 

@@ -23,7 +23,7 @@ export async function requireApiKey(
   event: H3Event,
   requiredPermissions: ApiPermissions,
 ): Promise<ApiPrincipal> {
-  const key = getHeader(event, 'x-api-key')?.trim()
+  const key = getHeader(event, 'X-API-Key')?.trim()
   if (!key) apiError(401, 'unauthorized', 'A valid API key is required')
 
   const result = await useServerAuth().api.verifyApiKey({ body: { key } })

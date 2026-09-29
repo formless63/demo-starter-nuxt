@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { sendRegisteredJob } from '@wicaso/nuxt-jobs/server'
+import { sendRegisteredJob } from '@repo/nuxt-jobs/server'
 import { jobRegistry } from '../../server/jobs/registry'
 
 describe('jobs registry', () => {

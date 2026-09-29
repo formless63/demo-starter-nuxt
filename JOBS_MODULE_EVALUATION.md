@@ -2,7 +2,7 @@
 
 ## Chosen package layout
 
-Jobs now lives at `packages/nuxt-jobs` as the private workspace package `@wicaso/nuxt-jobs`. `src/module.ts` is the Nuxt Kit entry, `src/runtime/server/` owns the server-only pg-boss implementation and the public `/server` API, and `src/cli/` owns the `nuxt-jobs` executable. The official Nuxt module builder emits the publish-shaped module, declarations, runtime, and CLI artifacts.
+Jobs now lives at `packages/nuxt-jobs` as the private workspace package `@repo/nuxt-jobs`. The `@repo/*` scope is repository-local and intentionally says nothing about a future npm scope. `src/module.ts` is the Nuxt Kit entry, `src/runtime/server/` owns the server-only pg-boss implementation and the public `/server` API, and `src/cli/` owns the `nuxt-jobs` executable. The official Nuxt module builder emits the publish-shaped module, declarations, runtime, and CLI artifacts.
 
 The root remains the feature-complete reference application. It depends on and explicitly enables the package, while `server/jobs/` remains application-owned. `fixtures/jobs-consumer` is a minimal independent Nuxt application that consumes the same package entrypoint an external application will use. The catalog declares this package/fixture pair and its test contract. The package stays `private` until an intentional npm release.
 
@@ -31,7 +31,7 @@ Root orchestration is intentionally generic. `scripts/packages.ts` discovers com
 
 `pg-boss` 12.35.0 is a direct package dependency, so it arrives with Jobs. Nuxt, Drizzle, and Zod are peers because the module integrates with consumer framework, transaction, and schema types. No other reusable capability is required.
 
-The package root is the Nuxt module and `@wicaso/nuxt-jobs/server` is the typed application/worker API. The package exposes `nuxt-jobs worker`, `migrate`, `doctor`, and `smoke`. Registry commands accept `--registry`; smoke also requires `--job` and a JSON `--payload`, so the package assumes no application task name or schema. Consumer scripts may alias the bin, but the module never rewrites them. Nuxt Kit still owns runtime configuration, server imports, the registry alias, and shutdown cleanup; browser bundles receive no pg-boss code.
+The package root is the Nuxt module and `@repo/nuxt-jobs/server` is the typed application/worker API. The package exposes `nuxt-jobs worker`, `migrate`, `doctor`, and `smoke`. Registry commands accept `--registry`; smoke also requires `--job` and a JSON `--payload`, so the package assumes no application task name or schema. Consumer scripts may alias the bin, but the module never rewrites them. Nuxt Kit still owns runtime configuration, server imports, the registry alias, and shutdown cleanup; browser bundles receive no pg-boss code.
 
 ## Clean consumer proof
 
