@@ -16,9 +16,9 @@ export type ApiPlatformAuthOptions = Pick<
 export function apiPlatformAuth(options: ApiPlatformAuthOptions = {}) {
   return apiKey({
     ...options,
-    apiKeyHeaders: 'x-api-key',
+    apiKeyHeaders: 'X-API-Key',
     defaultKeyLength: options.defaultKeyLength ?? 64,
-    defaultPrefix: options.defaultPrefix ?? 'wcs_',
+    defaultPrefix: options.defaultPrefix ?? 'app_',
     disableKeyHashing: false,
     enableMetadata: options.enableMetadata ?? true,
     enableSessionForAPIKeys: false,

@@ -8,7 +8,7 @@ import {
   registerWorkers,
   resolveJobsConfig,
   sendRegisteredJobInTransaction,
-} from '@wicaso/nuxt-jobs/server'
+} from '@repo/nuxt-jobs/server'
 import { project, user } from '../../server/database/schema'
 import { jobRegistry } from '../../server/jobs/registry'
 

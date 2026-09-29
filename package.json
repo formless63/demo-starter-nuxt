@@ -21,6 +21,7 @@
     "test:e2e": "playwright test",
     "check": "bun run capabilities:check && bun run lint && bun run typecheck && bun run test && bun run build",
     "capabilities:check": "bun scripts/capabilities-check.ts",
+    "capabilities:status": "bun scripts/capabilities-status.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "auth:provision": "bun scripts/provision-oidc.ts",
@@ -35,8 +36,8 @@
     "jobs:smoke": "bun scripts/jobs-smoke.ts"
   },
   "dependencies": {
-    "@wicaso/nuxt-api": "workspace:*",
-    "@wicaso/nuxt-jobs": "workspace:*",
+    "@repo/nuxt-api": "workspace:*",
+    "@repo/nuxt-jobs": "workspace:*",
     "@nuxtjs/color-mode": "4.0.1",
     "@tabler/icons-vue": "3.48.0",
     "@tailwindcss/vite": "4.3.3",

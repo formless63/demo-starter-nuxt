@@ -1,3 +1,3 @@
-import { runJobsMigration } from '@wicaso/nuxt-jobs/cli'
+import { runJobsMigration } from '@repo/nuxt-jobs/cli'
 
 await runJobsMigration()

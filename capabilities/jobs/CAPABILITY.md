@@ -1,6 +1,8 @@
 # Jobs capability
 
-PostgreSQL-backed background jobs implemented by the independently installable Nuxt package `@wicaso/nuxt-jobs`. The package is private until an intentional npm release; implementation findings remain in [`JOBS_MODULE_EVALUATION.md`](../../JOBS_MODULE_EVALUATION.md).
+PostgreSQL-backed background jobs implemented by the independently installable Nuxt package `@repo/nuxt-jobs`. `@repo/*` is an internal workspace scope, not a publication decision, and the package remains private. Implementation findings remain in [`JOBS_MODULE_EVALUATION.md`](../../JOBS_MODULE_EVALUATION.md).
+
+`defaultInstalled` is false: clean consumers do not receive Jobs without selecting it. The root reference application enables it deliberately for integration testing.
 
 ## Requirements
 
@@ -24,7 +26,7 @@ The Jobs Nuxt module has no hard dependency on another Nuxt module and declares 
 
 ### Dependencies
 
-- `pg-boss` 12.35.0 is a direct `@wicaso/nuxt-jobs` dependency and arrives with the package.
+- `pg-boss` 12.35.0 is a direct `@repo/nuxt-jobs` dependency and arrives with the package.
 - `jiti` loads an application-owned TypeScript registry for standalone commands.
 - Nuxt 4, Zod, and Drizzle are compatible peers supplied by the consumer. They remain baseline libraries, not capability-module dependencies.
 
@@ -81,12 +83,12 @@ await db.transaction(async (tx) => {
 })
 ```
 
-Consumers import `defineJob` and `defineJobRegistry` from `@wicaso/nuxt-jobs/server`; the package root is the Nuxt module entry. Task definitions live in application `server/jobs/tasks/` and are collected by `server/jobs/registry.ts`. Zod validation runs before enqueue and again at the worker execution boundary. `starter.echo` is a removable reference-app demonstration task.
+Consumers import `defineJob` and `defineJobRegistry` from `@repo/nuxt-jobs/server`; the package root is the Nuxt module entry. Task definitions live in application `server/jobs/tasks/` and are collected by `server/jobs/registry.ts`. Zod validation runs before enqueue and again at the worker execution boundary. `starter.echo` is a removable reference-app demonstration task.
 
 ## Installation
 
-1. Add `@wicaso/nuxt-jobs` to a compatible Nuxt 4 application. Workspace consumers use `workspace:*`; future npm consumers should pin a released version.
-2. Add `'@wicaso/nuxt-jobs'` to `nuxt.config.ts`. Source existing under `packages/` never enables the capability by itself.
+1. Add the private workspace package `@repo/nuxt-jobs` to a compatible Nuxt 4 application with `workspace:*`. It is not currently resolvable from npm; choose a real scope before publishing it.
+2. Add `'@repo/nuxt-jobs'` to `nuxt.config.ts`. Source existing under `packages/` never enables the capability by itself.
 3. Create the application registry and tasks under `server/jobs/` using the public package API.
 4. Configure the server-only environment and optional command aliases.
 5. Add migration/worker deployment roles and CI steps explicitly.

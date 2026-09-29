@@ -9,7 +9,7 @@
     "package:test:runtime": "bun .fixture/package-test.ts"
   },
   "dependencies": {
-    "@wicaso/nuxt-api": "workspace:*",
+    "@repo/nuxt-api": "workspace:*",
     "better-auth": "1.7.6",
     "drizzle-orm": "0.45.3",
     "nuxt": "4.5.2",

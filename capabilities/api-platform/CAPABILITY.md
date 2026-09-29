@@ -1,6 +1,8 @@
 # API Platform capability
 
-User-owned machine credentials and explicit OpenAPI contracts implemented by the independently installable Nuxt package `@wicaso/nuxt-api`. The package is private until an intentional npm release; implementation findings are in [`API_PLATFORM_MODULE_EVALUATION.md`](../../API_PLATFORM_MODULE_EVALUATION.md).
+User-owned machine credentials and explicit OpenAPI contracts implemented by the independently installable Nuxt package `@repo/nuxt-api`. `@repo/*` is an internal workspace scope, not a publication decision, and the package remains private. Implementation findings are in [`API_PLATFORM_MODULE_EVALUATION.md`](../../API_PLATFORM_MODULE_EVALUATION.md).
+
+`defaultInstalled` is false: clean consumers do not receive API Platform without selecting it. The root reference application enables it deliberately for integration testing.
 
 ## Requirements
 
@@ -37,7 +39,7 @@ The module has no hard dependency on Jobs or another Nuxt capability module and 
 - `NUXT_AUTH_SECRET`: existing Better Auth secret, at least 32 characters.
 - `NUXT_PUBLIC_APP_BASE_URL`: existing canonical Better Auth/application URL.
 
-The package adds no client-visible credential configuration. API keys are accepted only through the `x-api-key` header.
+The package adds no client-visible credential configuration. API keys are accepted only through the `X-API-Key` header.
 
 ### Scripts
 
@@ -61,7 +63,7 @@ No service is added. The existing application image contains the explicitly enab
 
 ## Application API
 
-The package root is the Nuxt module. `@wicaso/nuxt-api/server` exports:
+The package root is the Nuxt module. `@repo/nuxt-api/server` exports:
 
 - `apiPlatformAuth()` for deliberate addition to the application's single Better Auth plugin list;
 - the `apikey` Drizzle table;
@@ -84,10 +86,12 @@ The reference app demonstrates `GET /api/v1/projects` with `projects.read` and `
 
 Human-session management at `/app/api-keys` creates named keys with selected project permissions and optional expiry, reveals the new secret once, lists only safe metadata, and supports revoke/delete. Rotation is create replacement, save its one-time secret, then explicitly revoke the old key. API keys cannot create a browser session and cannot reach management as a human user.
 
+The shared v1 defaults are `X-API-Key`, hashing enabled, user ownership, no default expiry, a 64-character generated secret, `app_` prefix, 1,000 requests per 60 seconds, and `enableSessionForAPIKeys: false`. The demonstrated permissions are `projects.read` and `projects.write`. The typed helper permits non-security-weakening customization where the package API supports it; hashing, header-only credentials, database storage, user references, and browser-session separation remain fixed.
+
 ## Installation
 
-1. Add `@wicaso/nuxt-api` to a compatible Nuxt 4 application.
-2. Add `'@wicaso/nuxt-api'` to `nuxt.config.ts` and configure the application-owned auth and contract-registry paths if they differ from the defaults.
+1. Add the private workspace package `@repo/nuxt-api` to a compatible Nuxt 4 application with `workspace:*`. It is not currently resolvable from npm; choose a real scope before publishing it.
+2. Add `'@repo/nuxt-api'` to `nuxt.config.ts` and configure the application-owned auth and contract-registry paths if they differ from the defaults.
 3. Add `apiPlatformAuth()` to the existing Better Auth instance; do not create a second instance.
 4. Export `apikey` from the application Drizzle schema, generate/review a committed incremental migration, and apply it explicitly.
 5. Define an explicit application contract registry and native `/api/v1` Nitro routes using shared Zod schemas.

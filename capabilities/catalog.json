@@ -39,7 +39,7 @@
       "documentationPath": "capabilities/jobs/CAPABILITY.md",
       "agentSkill": ".agents/skills/jobs-change/SKILL.md",
       "evaluationDocument": "JOBS_MODULE_EVALUATION.md",
-      "packageName": "@wicaso/nuxt-jobs",
+      "packageName": "@repo/nuxt-jobs",
       "packagePath": "packages/nuxt-jobs",
       "fixturePath": "fixtures/jobs-consumer",
       "packageTest": {
@@ -70,7 +70,7 @@
       "documentationPath": "capabilities/api-platform/CAPABILITY.md",
       "agentSkill": ".agents/skills/api-contract-change/SKILL.md",
       "evaluationDocument": "API_PLATFORM_MODULE_EVALUATION.md",
-      "packageName": "@wicaso/nuxt-api",
+      "packageName": "@repo/nuxt-api",
       "packagePath": "packages/nuxt-api",
       "fixturePath": "fixtures/api-consumer",
       "packageTest": {

@@ -1,4 +1,4 @@
-import { runJobsSmoke } from '@wicaso/nuxt-jobs/cli'
+import { runJobsSmoke } from '@repo/nuxt-jobs/cli'
 import { jobRegistry } from '../server/jobs/registry'
 
 const expected = `smoke-${crypto.randomUUID()}`

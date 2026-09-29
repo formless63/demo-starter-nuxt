@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { apiPlatformAuth } from '@wicaso/nuxt-api/server'
+import { apiPlatformAuth } from '@repo/nuxt-api/server'
 import * as schema from '../database/schema'
 
 function createServerAuth() {

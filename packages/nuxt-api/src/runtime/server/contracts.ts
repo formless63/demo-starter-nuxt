@@ -130,7 +130,7 @@ export function createOpenApiDocument(
         ApiKeyAuth: {
           type: 'apiKey',
           in: 'header',
-          name: 'x-api-key',
+          name: 'X-API-Key',
           description: 'A user-owned API key. The secret is returned only when the key is created.',
         },
       },

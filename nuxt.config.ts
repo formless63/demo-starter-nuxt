@@ -3,7 +3,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-01',
   devtools: { enabled: true },
-  modules: ['@nuxt/eslint', '@nuxtjs/color-mode', 'shadcn-nuxt', '@wicaso/nuxt-jobs', '@wicaso/nuxt-api'],
+  modules: ['@nuxt/eslint', '@nuxtjs/color-mode', 'shadcn-nuxt', '@repo/nuxt-jobs', '@repo/nuxt-api'],
   css: ['~/assets/css/main.css'],
   vite: { plugins: [tailwindcss()] },
   typescript: { strict: true, typeCheck: process.env.NUXT_TYPECHECK !== 'false' },

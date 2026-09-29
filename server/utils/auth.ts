@@ -1,7 +1,7 @@
 import { betterAuth, type BetterAuthPlugin } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { genericOAuth, magicLink } from 'better-auth/plugins'
-import { apiPlatformAuth } from '@wicaso/nuxt-api/server'
+import { apiPlatformAuth } from '@repo/nuxt-api/server'
 import * as authSchema from '../database/schema'
 
 type AuthConfiguration = {

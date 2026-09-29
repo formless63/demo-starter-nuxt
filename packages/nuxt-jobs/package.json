@@ -1,5 +1,5 @@
 {
-  "name": "@wicaso/nuxt-jobs",
+  "name": "@repo/nuxt-jobs",
   "version": "0.1.0",
   "description": "Typed PostgreSQL-backed jobs for Nuxt applications",
   "private": true,

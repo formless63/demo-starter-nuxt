@@ -4,7 +4,7 @@ import {
   createOpenApiDocument,
   defineApiContract,
   defineApiRegistry,
-} from '@wicaso/nuxt-api/server'
+} from '@repo/nuxt-api/server'
 import { configuredAuthPlugins, configuredSocialProviders } from '../../server/utils/auth'
 import { toSafeApiKey } from '../../server/utils/api-keys'
 
@@ -38,7 +38,7 @@ describe('API Platform package contracts', () => {
     expect(document.components?.securitySchemes?.ApiKeyAuth).toMatchObject({
       type: 'apiKey',
       in: 'header',
-      name: 'x-api-key',
+      name: 'X-API-Key',
     })
     expect(document.paths?.['/api/v1/example']?.get).toMatchObject({
       operationId: 'getExample',
@@ -69,8 +69,8 @@ describe('API Platform auth integration', () => {
     const safe = toSafeApiKey({
       id: 'key-id',
       name: 'Example',
-      start: 'wcs_1234',
-      prefix: 'wcs_',
+      start: 'app_1234',
+      prefix: 'app_',
       key: 'stored-hash',
       enabled: true,
       permissions: { projects: ['read'] },
