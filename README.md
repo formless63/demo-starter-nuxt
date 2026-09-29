@@ -50,7 +50,7 @@ bun run jobs:worker
 
 `bun run jobs:smoke` starts the real worker registration and executes `starter.echo`. Runtime clients and workers always use `migrate: false`. Use `sendJobInTransaction(tx, name, payload)` inside a Drizzle transaction when an application write and enqueue must commit or roll back together. `PGBOSS_DATABASE_URL` may select a separate jobs migration role; otherwise jobs commands use `DATABASE_URL`.
 
-The package owns the long-term `nuxt-jobs worker|migrate|doctor|smoke` CLI. `fixtures/jobs-consumer` consumes the package like an external application. `bun run jobs:package:test` builds a tarball, installs it into a fresh fixture, proves the module/dependency/registry/migration/worker/build path, removes it, and proves no generated or runtime assumption remains. Publishing is intentionally disabled. See `JOBS_MODULE_EVALUATION.md` for the chosen layout and rejected alternatives.
+The package owns the long-term `nuxt-jobs worker|migrate|doctor|smoke` CLI. `fixtures/jobs-consumer` consumes the package like an external application. `bun run packages:test jobs` builds a tarball, installs it into a fresh fixture, proves the module/dependency/registry/migration/worker/build path, removes it, and proves no generated or runtime assumption remains. The generic lifecycle comes from catalog metadata while the Jobs runtime check remains fixture-owned. Publishing is intentionally disabled. See `JOBS_MODULE_EVALUATION.md` for the chosen layout and rejected alternatives.
 
 ## Verification
 
@@ -59,7 +59,7 @@ bun run lint
 bun run typecheck
 bun run test
 bun run test:e2e
-bun run jobs:package:test
+bun run packages:test jobs
 bun run check
 ```
 

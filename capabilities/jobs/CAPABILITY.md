@@ -45,8 +45,8 @@ All values are server-only.
 - `bun run jobs:migrate`: explicitly create or upgrade the pg-boss schema.
 - `bun run jobs:doctor`: fail on schema drift or migration problems.
 - `bun run jobs:smoke`: enqueue and consume `starter.echo`, then verify its output.
-- `bun run jobs:package:build`: build the publish-shaped module, runtime, declarations, and CLI.
-- `bun run jobs:package:test`: verify a clean tarball install, runtime, and removal lifecycle.
+- `bun run packages:build jobs`: build the publish-shaped module, runtime, declarations, and CLI.
+- `bun run packages:test jobs`: verify a clean tarball install, Jobs-owned runtime checks, and removal lifecycle.
 
 The long-term command contract is the package-provided `nuxt-jobs <worker|migrate|doctor|smoke>` bin. Consumer package scripts are optional aliases; Jobs does not rewrite them.
 
@@ -106,7 +106,7 @@ Consumers import `defineJob` and `defineJobRegistry` from `@wicaso/nuxt-jobs/ser
 ## Upgrade considerations
 
 - Review pg-boss release notes and migration notes before changing its version.
-- Rebuild/pack the module and run the clean fixture lifecycle when changing its package boundary or Nuxt module builder.
+- Rebuild/pack the module and run the catalog-driven clean fixture lifecycle when changing its package boundary or Nuxt module builder.
 - Apply the supported pg-boss migration explicitly on a clean database and run `jobs:doctor`.
 - Confirm every long-running instance still uses `migrate: false`.
 - Re-run invalid-payload behavior, transaction commit/rollback, worker shutdown, production image, and Compose smoke coverage.
@@ -116,8 +116,8 @@ Consumers import `defineJob` and `defineJobRegistry` from `@wicaso/nuxt-jobs/ser
 
 ```sh
 bun run capabilities:check
-bun run jobs:package:build
-bun run jobs:package:test
+bun run packages:build jobs
+bun run packages:test jobs
 bun run jobs:migrate
 bun run jobs:doctor
 bun run jobs:smoke
@@ -128,7 +128,7 @@ bun run test:e2e
 
 Production verification builds the shared image, runs the one-shot migration service, starts `app` and `worker`, checks `/api/health`, confirms the worker is running, and shuts the stack down cleanly.
 
-The package test separately proves dependency arrival, module loading, registry extension, migrations, the package worker, strict typecheck/build, and removal without hidden assumptions.
+The generic package test proves tarball installation, owned-dependency arrival/removal, strict typecheck/build, generated-state cleanup, and post-removal build. The Jobs fixture's `package:test:runtime` hook separately proves registry extension, migrations/doctor, the package worker, and a queued smoke job.
 
 ## Agent guidance
 

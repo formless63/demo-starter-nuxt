@@ -8,7 +8,8 @@
     "jobs:migrate": "nuxt-jobs migrate",
     "jobs:doctor": "nuxt-jobs doctor",
     "jobs:worker": "nuxt-jobs worker --registry server/jobs/registry.ts",
-    "jobs:smoke": "nuxt-jobs smoke --registry server/jobs/registry.ts --job fixture.echo --payload '{\"message\":\"fixture-smoke\"}'"
+    "jobs:smoke": "nuxt-jobs smoke --registry server/jobs/registry.ts --job fixture.echo --payload '{\"message\":\"fixture-smoke\"}'",
+    "package:test:runtime": "bun .fixture/package-test.ts"
   },
   "dependencies": {
     "@wicaso/nuxt-jobs": "workspace:*",

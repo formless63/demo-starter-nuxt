@@ -4,7 +4,7 @@
 
 Jobs now lives at `packages/nuxt-jobs` as the private workspace package `@wicaso/nuxt-jobs`. `src/module.ts` is the Nuxt Kit entry, `src/runtime/server/` owns the server-only pg-boss implementation and the public `/server` API, and `src/cli/` owns the `nuxt-jobs` executable. The official Nuxt module builder emits the publish-shaped module, declarations, runtime, and CLI artifacts.
 
-The root remains the feature-complete reference application. It depends on and explicitly enables the package, while `server/jobs/` remains application-owned. `fixtures/jobs-consumer` is a minimal independent Nuxt application that consumes the same package entrypoint an external application will use. The package stays `private` until an intentional npm release.
+The root remains the feature-complete reference application. It depends on and explicitly enables the package, while `server/jobs/` remains application-owned. `fixtures/jobs-consumer` is a minimal independent Nuxt application that consumes the same package entrypoint an external application will use. The catalog declares this package/fixture pair and its test contract. The package stays `private` until an intentional npm release.
 
 This is the least invasive maintainable move from the proven prototype: queue, migration, transaction, validation, and shutdown behavior are unchanged. Only repository-relative package internals became public package imports.
 
@@ -14,6 +14,8 @@ Future capabilities can use sibling packages such as `packages/nuxt-api`, `packa
 
 Nuxt remains the integration model. There is no capability loader, manifest interpreter, source rewriter, or custom package manager. The catalog is architecture metadata, not an installer.
 
+Root orchestration is intentionally generic. `scripts/packages.ts` discovers completed package-backed capabilities from `capabilities/catalog.json`; it prepares only packages referenced by the root application, builds named packages, emits the CI matrix, and runs the common packed-artifact lifecycle. Capability-specific behavior stays in the fixture: Jobs supplies `package:test:runtime` for registry, migration, doctor, worker, and queue checks. This gives future packages a shared release-shaped test without forcing them to imitate Jobs runtime behavior.
+
 ## Rejected alternatives
 
 - **Keep every capability under root `modules/`:** Nuxt auto-discovers local modules there, which becomes surprising with dozens of optional capabilities and does not exercise a publishable boundary.
@@ -22,6 +24,8 @@ Nuxt remains the integration model. There is no capability loader, manifest inte
 - **Nuxt layers as the primary boundary:** layers suit template/application composition; Jobs is server runtime/package behavior and fits a normal module directly.
 - **Separate repositories now:** that adds release coordination before APIs stabilize. This package can split later without changing consumer imports.
 - **Consumer-owned command copies:** these drift. The package CLI is canonical; thin root adapters remain only to bundle the reference registry into the existing lean production image.
+- **One root test script or CI block per package:** this would duplicate artifact lifecycle code and make every new capability edit CI. The catalog-driven matrix owns common mechanics instead.
+- **A universal runtime smoke contract:** capabilities need different services and assertions. A fixture-owned optional runtime script keeps those checks deep without coupling unrelated packages.
 
 ## Dependency and command contract
 
@@ -31,7 +35,7 @@ The package root is the Nuxt module and `@wicaso/nuxt-jobs/server` is the typed 
 
 ## Clean consumer proof
 
-`bun run jobs:package:test` builds and packs the actual artifact, installs it into a fresh copy of `fixtures/jobs-consumer`, checks that pg-boss arrived, loads the application registry, runs strict typecheck/build, migrates and diagnoses a unique schema, starts and gracefully stops the standalone worker, and executes a queued smoke job. It then removes the package and explicit consumer-owned Jobs files, clears generated Nuxt state, verifies package-owned dependencies are gone, and typechecks/builds the remaining app.
+`bun run packages:test jobs` builds and packs the actual artifact, installs it into a fresh copy of `fixtures/jobs-consumer`, checks that pg-boss arrived, and runs strict typecheck/build. The fixture-owned runtime hook loads the application registry, migrates and diagnoses a unique schema, starts and gracefully stops the standalone worker, and executes a queued smoke job. Generic orchestration then removes the package and catalog-declared consumer-owned Jobs files, clears generated Nuxt state, verifies package-owned dependencies are gone, and typechecks/builds the remaining app.
 
 This is a verification harness, not an installer. It proves the documented install/removal contract has no hidden root imports or generated-type residue.
 

@@ -32,7 +32,7 @@
       "baselineRequirements": ["postgresql"],
       "externalRequirements": [{ "name": "PostgreSQL", "required": true }],
       "summary": "Typed PostgreSQL-backed background jobs using pg-boss, explicit migrations, and a standalone worker.",
-      "scripts": ["jobs:worker", "jobs:migrate", "jobs:doctor", "jobs:smoke", "jobs:package:build", "jobs:package:test"],
+      "scripts": ["jobs:worker", "jobs:migrate", "jobs:doctor", "jobs:smoke", "packages:build", "packages:test"],
       "environmentVariables": ["DATABASE_URL", "PGBOSS_DATABASE_URL", "PGBOSS_SCHEMA", "JOBS_CONCURRENCY", "PGBOSS_USE_LISTEN_NOTIFY"],
       "migrations": ["Explicit pg-boss schema migration via jobs:migrate"],
       "runtimeProcesses": ["worker", "migrate (one-shot)"],
@@ -41,7 +41,16 @@
       "evaluationDocument": "JOBS_MODULE_EVALUATION.md",
       "packageName": "@wicaso/nuxt-jobs",
       "packagePath": "packages/nuxt-jobs",
-      "fixturePath": "fixtures/jobs-consumer"
+      "fixturePath": "fixtures/jobs-consumer",
+      "packageTest": {
+        "ownedDependencies": ["pg-boss"],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": ["jobs:migrate", "jobs:doctor", "jobs:worker", "jobs:smoke", "package:test:runtime"],
+          "paths": ["server/jobs", "server/api/jobs.post.ts"],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "api-platform",
