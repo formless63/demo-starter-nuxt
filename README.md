@@ -13,6 +13,7 @@ cp .env.example .env
 docker compose up -d postgres
 bun install --frozen-lockfile
 bun run db:migrate
+bun run jobs:migrate
 bun run dev
 ```
 
@@ -34,6 +35,21 @@ Set `DEV_OIDC_ADMIN_URL`, `DEV_OIDC_API_KEY`, and `APP_BASE_URL`, then run `bun 
 
 `bun run dev` starts Nuxt. Modify `server/database/schema.ts`, run `bun run db:generate`, review generated SQL, and apply with `bun run db:migrate`. Production uses migrations—not schema push. All Project queries include the authenticated owner in their SQL predicate.
 
+## Background jobs
+
+`modules/jobs/` is a genuine Nuxt 4 local module discovered automatically by Nuxt. It exposes server-only typed `sendJob` and `sendJobInTransaction` helpers. Application tasks live in `server/jobs/tasks/` and are registered in `server/jobs/registry.ts`; `starter.echo` is a removable demonstration task. Payloads are validated with Zod when workers execute them.
+
+Start PostgreSQL, apply both explicit schemas, then run the worker:
+
+```sh
+bun run db:migrate
+bun run jobs:migrate
+bun run jobs:doctor
+bun run jobs:worker
+```
+
+`bun run jobs:smoke` starts the real worker registration, enqueues `starter.echo`, and verifies its stored completion output. Runtime clients and workers always use `migrate: false`. Use `sendJobInTransaction(tx, name, payload)` inside a Drizzle transaction when an application write and enqueue must commit or roll back together. `PGBOSS_DATABASE_URL` may select a separate jobs migration role; otherwise jobs commands use `DATABASE_URL`. See `JOBS_MODULE_EVALUATION.md` for packaging, extraction, and removal findings.
+
 ## Verification
 
 ```sh
@@ -48,9 +64,9 @@ Playwright may first need `bunx playwright install chromium`. E2E starts its own
 
 ## Production and Docker
 
-`bun run build && bun run start` serves Nitro's portable Node output. The production image contains that same Node output plus a small, explicit migration runner. Both the one-shot migration job and application service use the image tagged by `APP_IMAGE`; normal application startup never mutates the database. The image runs as the unprivileged `node` user, has no source bind mounts, and persists no application state.
+`bun run build && bun run start` serves Nitro's portable Node output. The production image contains that same Node output plus explicit application migration and jobs tool/worker entrypoints. Both the one-shot migration job and long-running application and worker services use the image tagged by `APP_IMAGE`; normal application and worker startup never mutate either schema. The image runs as the unprivileged `node` user, has no source bind mounts, and persists no application state.
 
-Set a production `NUXT_AUTH_SECRET` and absolute `NUXT_PUBLIC_APP_BASE_URL` in `.env`. OAuth variables remain optional, and the application always connects to the Compose service hostname `postgres`, never host-local PostgreSQL. `APP_PORT` controls the published application port, `POSTGRES_PORT` controls the development database port, and `APP_IMAGE` controls the reusable image tag.
+Set a production `NUXT_AUTH_SECRET` and absolute `NUXT_PUBLIC_APP_BASE_URL` in `.env`. OAuth variables remain optional, and the application always connects to the Compose service hostname `postgres`, never host-local PostgreSQL. `APP_PORT` controls the published application port, `POSTGRES_PORT` controls the development database port, and `APP_IMAGE` controls the reusable image tag. `PGBOSS_SCHEMA`, `JOBS_CONCURRENCY`, and `PGBOSS_USE_LISTEN_NOTIFY` configure the server-only jobs runtime.
 
 The release flow is intentionally explicit. A failed migration command is a failed deployment; do not start or update the application after it fails.
 
@@ -61,12 +77,12 @@ docker compose build app
 # Development: start only PostgreSQL (unchanged workflow).
 docker compose up -d postgres
 
-# Release: apply committed migrations, then start the production-like stack.
+# Release: apply application and pg-boss migrations, then start the production-like stack.
 docker compose run --rm migrate
-docker compose up -d --wait app
+docker compose up -d --wait app worker
 
 # Operate and inspect the stack.
-docker compose logs -f app postgres
+docker compose logs -f app worker postgres
 curl --fail http://localhost:${APP_PORT:-3000}/api/health
 docker compose down --remove-orphans
 ```
@@ -76,10 +92,10 @@ To deploy a new application revision, pull or check out the revision, set `APP_I
 ```sh
 docker compose build app
 docker compose run --rm migrate
-docker compose up -d --wait app
+docker compose up -d --wait app worker
 ```
 
-Compose reuses the newly built image for the migration job and application. For a registry-provided image, pull the tag first with `docker compose pull app migrate`, then run the same migration and startup commands without rebuilding. Add `--volumes` to `docker compose down` only when intentionally deleting PostgreSQL data. `GET /api/health` verifies both process and database readiness.
+Compose reuses the newly built image for the migration job, application, and worker. For a registry-provided image, pull the tag first with `docker compose pull app migrate worker`, then run the same migration and startup commands without rebuilding. Add `--volumes` to `docker compose down` only when intentionally deleting PostgreSQL data. `GET /api/health` verifies both process and database readiness.
 
 ## Repository conventions
 
