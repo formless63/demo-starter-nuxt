@@ -56,12 +56,32 @@
       "id": "api-platform",
       "displayName": "API Platform / Machine Auth / OpenAPI",
       "kind": "foundational-backend",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": ["audit-log", "observability", "authorization", "organizations"],
+      "baselineRequirements": ["authentication", "postgresql", "drizzle", "framework"],
       "externalRequirements": [],
-      "summary": "Machine authentication, stable API contracts, and OpenAPI support without replacing Nitro."
+      "summary": "User-owned machine credentials, stable Zod contracts, and OpenAPI 3.1.1 without replacing Nitro.",
+      "scripts": ["db:migrate", "packages:build", "packages:test"],
+      "environmentVariables": ["DATABASE_URL", "NUXT_AUTH_SECRET", "NUXT_PUBLIC_APP_BASE_URL"],
+      "migrations": ["Committed Drizzle migration for the Better Auth apikey table"],
+      "runtimeProcesses": ["Nitro application"],
+      "documentationPath": "capabilities/api-platform/CAPABILITY.md",
+      "agentSkill": ".agents/skills/api-contract-change/SKILL.md",
+      "evaluationDocument": "API_PLATFORM_MODULE_EVALUATION.md",
+      "packageName": "@wicaso/nuxt-api",
+      "packagePath": "packages/nuxt-api",
+      "fixturePath": "fixtures/api-consumer",
+      "packageTest": {
+        "ownedDependencies": ["@better-auth/api-key", "@scalar/nuxt", "zod-openapi"],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": ["db:migrate", "package:test:runtime"],
+          "paths": ["server", "drizzle.config.ts"],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "observability",

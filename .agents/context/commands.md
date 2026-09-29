@@ -20,6 +20,7 @@ All commands use Bun. PostgreSQL is required for migrations, authenticated runti
 - `bun run packages:build <id>`: produce a completed capability's publish-shaped package artifact without publishing it; omit IDs to build all completed package capabilities.
 - `bun run packages:test <id>`: pack a completed capability, install it in its catalog-declared fixture, run common typecheck/build and its optional fixture-owned runtime check, remove it, and prove the remaining app typechecks/builds; omit IDs to test all.
 - `bun run packages:matrix`: emit the catalog-derived JSON matrix used by CI for completed package capabilities.
+- API package verification: `bun run packages:build api-platform` and `bun run packages:test api-platform`; the fixture owns database/auth/permission/OpenAPI/docs checks while generic orchestration owns packed install and removal.
 - Package CLI: `nuxt-jobs <worker|migrate|doctor|smoke>`; registry commands accept `--registry`, and smoke also requires `--job` plus JSON `--payload`.
 - `bun run dev`: Nuxt development server.
 - `bun run lint`: ESLint static checks.

@@ -35,6 +35,7 @@
     "jobs:smoke": "bun scripts/jobs-smoke.ts"
   },
   "dependencies": {
+    "@wicaso/nuxt-api": "workspace:*",
     "@wicaso/nuxt-jobs": "workspace:*",
     "@nuxtjs/color-mode": "4.0.1",
     "@tabler/icons-vue": "3.48.0",

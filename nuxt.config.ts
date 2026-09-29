@@ -3,7 +3,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-01',
   devtools: { enabled: true },
-  modules: ['@nuxt/eslint', '@nuxtjs/color-mode', 'shadcn-nuxt', '@wicaso/nuxt-jobs'],
+  modules: ['@nuxt/eslint', '@nuxtjs/color-mode', 'shadcn-nuxt', '@wicaso/nuxt-jobs', '@wicaso/nuxt-api'],
   css: ['~/assets/css/main.css'],
   vite: { plugins: [tailwindcss()] },
   typescript: { strict: true, typeCheck: process.env.NUXT_TYPECHECK !== 'false' },
@@ -11,6 +11,12 @@ export default defineNuxtConfig({
   shadcn: {
     prefix: '',
     componentDir: './app/components/ui',
+  },
+  apiPlatform: {
+    auth: 'server/utils/auth',
+    contracts: 'server/api-platform/contracts',
+    title: 'Nuxt Starter API',
+    version: '1.0.0',
   },
   runtimeConfig: {
     databaseUrl: '',

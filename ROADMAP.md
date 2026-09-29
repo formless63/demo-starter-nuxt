@@ -39,10 +39,10 @@ The generic `packages:*` commands build and exercise the catalog entries. Root p
 
 | Status | Capability |
 | --- | --- |
-| Done | Jobs — pg-boss |
-| Planned | All capabilities below unless explicitly changed in the catalog |
+| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI |
+| Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
-No second capability is implemented by this roadmap change.
+API Platform is capability #2. Its package, machine-credential model, contract generation, and clean-consumer lifecycle are complete.
 
 ## Foundational / backend
 
@@ -55,11 +55,14 @@ No second capability is implemented by this roadmap change.
 - Current implementation: `@wicaso/nuxt-jobs` workspace package, typed registry, Zod execution validation, transactional Drizzle enqueue, explicit migrations/doctor, package-owned CLI, clean consumer fixture, standalone worker, smoke test, and shared production image
 - Contract: [`capabilities/jobs/CAPABILITY.md`](capabilities/jobs/CAPABILITY.md)
 
-### API Platform / Machine Auth / OpenAPI (`planned`)
+### API Platform / Machine Auth / OpenAPI (`done`)
 
 - Requires: none beyond the starter baseline
 - Integrates with: Audit Log, Observability, Authorization, Organizations / Tenancy
 - External: none
+- Default installation: optional; the root reference application opts in explicitly
+- Current implementation: `@wicaso/nuxt-api`, Better Auth user-owned hashed API keys, typed machine principals and permissions, native Nitro `/api/v1` routes, Zod-backed OpenAPI 3.1.1, Scalar docs, committed migration, credential management, and clean consumer fixture
+- Contract: [`capabilities/api-platform/CAPABILITY.md`](capabilities/api-platform/CAPABILITY.md)
 
 ### Observability (`planned`)
 
