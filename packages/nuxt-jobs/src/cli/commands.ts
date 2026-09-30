@@ -34,23 +34,29 @@ export async function runJobsDoctor() {
   }
 }
 
-export async function runJobsWorker(registry: JobRegistry) {
+export async function runJobsWorker(registry: JobRegistry, lifecycle: {
+  onError?: (error: unknown) => void
+  onShutdown?: () => Promise<void>
+} = {}) {
   const config = resolveJobsConfig()
   const boss = createJobsBoss(config)
   let stopping = false
 
-  boss.on('error', error => console.error('[jobs] pg-boss error', error))
+  boss.on('error', error => lifecycle.onError ? lifecycle.onError(error) : console.error('[jobs] pg-boss error', error))
 
   async function stop(signal: string) {
     if (stopping) return
     stopping = true
     console.info(`[jobs] ${signal} received; stopping worker`)
-    await boss.stop({ graceful: true, timeout: 30_000 })
+    try { await boss.stop({ graceful: true, timeout: 30_000 }) }
+    finally { await lifecycle.onShutdown?.() }
     console.info('[jobs] worker stopped')
   }
 
-  function fatal(error: unknown): never {
-    console.error('[jobs] fatal worker error', error)
+  async function fatal(error: unknown) {
+    if (lifecycle.onError) lifecycle.onError(error)
+    else console.error('[jobs] fatal worker error', error)
+    await lifecycle.onShutdown?.()
     process.exit(1)
   }
 
@@ -64,7 +70,7 @@ export async function runJobsWorker(registry: JobRegistry) {
     console.info(`[jobs] worker started (schema=${config.schema}, concurrency=${config.concurrency}, migrate=false)`)
   }
   catch (error) {
-    fatal(error)
+    await fatal(error)
   }
 }
 

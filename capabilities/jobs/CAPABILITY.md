@@ -14,6 +14,7 @@ Requires:
 Integrates with:
 
 - Observability, when installed, for worker/job telemetry.
+  The reference `starter.echo` handler is wrapped at the application boundary; no job payload is logged. The worker adapter uses generic CLI `onError`/`onShutdown` callbacks to capture safe errors and flush after draining, including fatal startup. Jobs has no Observability package dependency; without callbacks its CLI behavior is unchanged. Cross-process enqueue trace propagation is not claimed.
 - Ops / Admin, when installed, for operational queue views and actions.
 
 External:
@@ -101,6 +102,7 @@ Consumers import `defineJob` and `defineJobRegistry` from `@repo/nuxt-jobs/serve
 1. Stop/drain the worker and decide whether queued work must be retained.
 2. Remove the package from Nuxt's modules array and dependencies.
 3. Remove the application registry/tasks, Jobs API calls, command aliases, tests, deployment roles, CI steps, and environment entries.
+   Retained Observability/API Platform do not require Jobs; remove only the Jobs-specific telemetry wrappers/adapters and update root-enable/script catalog metadata.
 4. Clear generated Nuxt state and reinstall so stale auto-import types cannot hide a dependency.
 5. Typecheck/build the remaining application. The clean-package test executes this contract and confirms `pg-boss` also leaves.
 6. Retain the `pgboss` schema for rollback safety or drop it explicitly only after queued work is no longer needed.

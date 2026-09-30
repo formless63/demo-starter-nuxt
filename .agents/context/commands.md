@@ -17,10 +17,12 @@ All commands use Bun. PostgreSQL is required for migrations, authenticated runti
 - `bun run jobs:doctor`: fail on pg-boss schema drift or pending migration problems.
 - `bun run jobs:worker`: run the standalone worker with migrations disabled.
 - `bun run jobs:smoke`: enqueue `starter.echo`, run the real worker registration, and verify completion output.
-- `bun run packages:prepare`: prepare completed capability packages that the root reference application actually depends on; root postinstall runs this before Nuxt preparation.
+- `bun run packages:prepare`: prepare done/in-progress catalog packages that the root reference application actually depends on; root postinstall runs this before Nuxt preparation.
 - `bun run packages:build <id>`: produce a completed capability's publish-shaped package artifact without publishing it; omit IDs to build all completed package capabilities.
 - `bun run packages:test <id>`: pack a completed capability, install it in its catalog-declared fixture, run common typecheck/build and its optional fixture-owned runtime check, remove it, and prove the remaining app typechecks/builds; omit IDs to test all.
 - `bun run packages:matrix`: emit the catalog-derived JSON matrix used by CI for completed package capabilities.
+- Explicit `packages:build <id>` / `packages:test <id>` may target an in-progress package while developing it; unqualified commands and the CI matrix still select only completed packages.
+- Observability package verification: `bun run packages:test observability`; the fixture owns safe-output/context/span/metric tests, actual local OTLP/HTTP JSON receiving, no-backend/independent-signal checks and bounded app/standalone shutdown. No external collector is needed.
 - API package verification: `bun run packages:build api-platform` and `bun run packages:test api-platform`; the fixture owns database/auth/permission/OpenAPI/docs checks while generic orchestration owns packed install and removal.
 - Package CLI: `nuxt-jobs <worker|migrate|doctor|smoke>`; registry commands accept `--registry`, and smoke also requires `--job` plus JSON `--payload`.
 - `bun run dev`: Nuxt development server.

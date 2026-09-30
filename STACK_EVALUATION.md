@@ -4,7 +4,11 @@
 
 The exact reproducible graph is in `package.json`/`bun.lock`. Major versions: Bun 1.4, Node 24 LTS, Nuxt 4, Vue 3, TypeScript 5, PostgreSQL 18, Better Auth 1, Drizzle 0.45, Tailwind 4, Reka UI 2, Vitest 5, Playwright 1. The repository began nearly empty, so none of create-nuxt's generated demo UI was retained. The result follows its Nuxt 4 `app/` layout and Nitro conventions manually.
 
-Nuxt modules are `@nuxt/eslint`, `@nuxtjs/color-mode`, `shadcn-nuxt`, and the explicitly installed private workspace packages `@repo/nuxt-jobs` and `@repo/nuxt-api`; Tailwind uses its official Vite plugin. `@repo/*` is internal only and is not a future npm-scope decision. Official Nuxt docs and the credential-free Nuxt MCP endpoint informed conventions; MCP is documented for capable agents rather than tied to an editor or application runtime.
+Nuxt modules are `@nuxt/eslint`, `@nuxtjs/color-mode`, `shadcn-nuxt`, and the explicitly installed private workspace packages `@repo/nuxt-jobs`, `@repo/nuxt-api` and `@repo/nuxt-observability`; Tailwind uses its official Vite plugin. `@repo/*` is internal only and is not a future npm-scope decision. Official Nuxt docs and the credential-free Nuxt MCP endpoint informed conventions; MCP is documented for capable agents rather than tied to an editor or application runtime.
+
+## Observability capability
+
+Pino 10.3.1 and OTel API 1.9.1/stable SDK 2.11.0/HTTP exporters 0.222.0 are owned by the optional Observability package. Explicit Nitro/manual instrumentation avoids a blanket auto-instrumentation dependency, and no backend is required. Emitted-output tests caught Pino's child-binding formatter reset; the public logger now guards child fields. Nitro's raw uncaught-error fallback also required the supported safe error-handler boundary. The fixture proves real trace/metric POSTs and unavailable-collector shutdown. Details and official sources are in `OBSERVABILITY_MODULE_EVALUATION.md`.
 
 ## Packages added and manual wiring
 

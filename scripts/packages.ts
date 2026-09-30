@@ -37,7 +37,7 @@ interface PackageManifest {
 const root = process.cwd()
 const catalog = await Bun.file(resolve(root, 'capabilities/catalog.json')).json() as Catalog
 const packagedCapabilities = catalog.capabilities.filter(capability =>
-  capability.status === 'done'
+  ['done', 'in-progress'].includes(capability.status)
   && capability.packageName
   && capability.packagePath
   && capability.fixturePath,
@@ -51,11 +51,11 @@ function selectCapabilities(ids: string[], requireTest = false) {
   const available = requireTest
     ? packagedCapabilities.filter(capability => capability.packageTest)
     : packagedCapabilities
-  if (ids.length === 0) return available
+  if (ids.length === 0) return available.filter(capability => capability.status === 'done')
 
   return ids.map((id) => {
     const capability = available.find(candidate => candidate.id === id)
-    return capability ?? fail(`Unknown completed package capability: ${id}`)
+    return capability ?? fail(`Unknown package capability (done or in-progress): ${id}`)
   })
 }
 

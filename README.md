@@ -35,8 +35,9 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | --- | --- | --- | --- | --- |
 | Jobs | Available (`done`) | Optional | Baseline PostgreSQL; external PostgreSQL service | Typed pg-boss jobs, explicit queue migrations, and a standalone worker |
 | API Platform | Available (`done`) | Optional | Baseline Nuxt, Better Auth, PostgreSQL, and Drizzle | User-owned API keys, permissions, native `/api/v1` routes, OpenAPI 3.1.1, and Scalar docs |
+| Observability | Available (`done`) | Optional | No other capability; OTLP destination optional | Safe server JSON logs, request IDs, traces, metrics and optional OTLP/HTTP export |
 
-`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application deliberately enables both completed capabilities so their integration is continuously tested.
+`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application deliberately enables all three completed capabilities so their integration is continuously tested.
 
 See [Using capabilities](docs/CAPABILITIES.md) for installation and removal guidance and [ROADMAP.md](ROADMAP.md) for the future design plan.
 
@@ -71,8 +72,8 @@ Set `DEV_OIDC_ADMIN_URL`, `DEV_OIDC_API_KEY`, and `APP_BASE_URL`, then run `bun 
 
 Choose one of two supported paths:
 
-1. **Use the full reference application.** Keep Jobs and API Platform enabled when they are likely to be useful. This preserves the integrated worker, API-key UI, external API, and production Compose path.
-2. **Start lean.** Keep the baseline and remove Jobs, API Platform, or both before product work. Capabilities can be re-enabled later from their local packages and contracts.
+1. **Use the full reference application.** Keep the selected capabilities enabled. This preserves the integrated worker, API-key UI, external API, safe server telemetry, and production Compose path.
+2. **Start lean.** Keep the baseline and remove any optional capabilities before product work. Capabilities can be re-enabled later from their local packages and contracts.
 
 [Starting a project](docs/STARTING-A-PROJECT.md) contains verified, capability-specific removal recipes and distinguishes a disposable never-deployed project from an already-deployed application.
 
@@ -84,6 +85,7 @@ bun run capabilities:status
 bun run capabilities:check
 bun run packages:test jobs
 bun run packages:test api-platform
+bun run packages:test observability
 bun run check
 bun run test:e2e
 ```
@@ -106,6 +108,12 @@ docker compose down --remove-orphans
 Set production `NUXT_AUTH_SECRET` and `NUXT_PUBLIC_APP_BASE_URL` values in the environment. Compose connects to the `postgres` service rather than localhost. `APP_IMAGE`, `APP_PORT`, and `POSTGRES_PORT` are configurable. A failed migration is a failed deployment; do not update the runtime services after it fails. Add `--volumes` to `docker compose down` only when intentionally deleting PostgreSQL data.
 
 For an image update, check out the intended revision or select a registry tag with `APP_IMAGE`, build or pull that image, run `migrate`, and only then recreate `app` and `worker` with `--wait`.
+
+## Server observability
+
+Without a backend, the reference app produces safe Pino JSON logs, returns `X-Request-ID`, correlates nested operation spans, and adds safe build/export-enabled metadata to `/api/health`. Set `APP_VERSION`, `APP_REVISION` and `DEPLOYMENT_ENVIRONMENT` at release time. To export traces/metrics, set `OTEL_EXPORTER_OTLP_ENDPOINT` to an OTLP/HTTP JSON destination; each signal can be disabled independently with `OTEL_TRACES_EXPORTER=none` or `OTEL_METRICS_EXPORTER=none`. Compose passes these settings to the app and worker; no collector is required or started.
+
+Raw request headers/bodies/query strings, job payloads, sessions/users and credentials are omitted. Use safe operation names/messages and extend `observability.redactKeys` for application secrets. This is server-only v1—no browser instrumentation or analytics. See the [Observability contract](capabilities/observability/CAPABILITY.md) for configuration, safe error behavior, optional Jobs/API wrappers, shutdown and removal.
 
 ## Repository and capability development
 

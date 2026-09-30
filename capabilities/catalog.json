@@ -1,6 +1,7 @@
 {
   "$schema": "./catalog.schema.json",
   "schemaVersion": 1,
+  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability"] },
   "baseline": [
     { "id": "framework", "displayName": "Nuxt framework", "summary": "Nuxt 4 with Vue and Nitro routing, SSR, and server APIs." },
     { "id": "strict-typescript", "displayName": "Strict TypeScript", "summary": "Strict TypeScript checks across application and server code." },
@@ -87,12 +88,31 @@
       "id": "observability",
       "displayName": "Observability",
       "kind": "foundational-backend",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": ["jobs", "api-platform", "object-storage", "email", "webhooks", "audit-log", "ai", "cache-coordination", "search", "realtime", "notifications", "import-export", "organizations", "authorization", "feature-flags", "invoice-ninja", "stripe", "medusa", "ops-admin"],
       "externalRequirements": [{ "name": "OTLP destination", "required": false }],
-      "summary": "Structured telemetry and diagnostics for server and runtime capabilities."
+      "summary": "Server-only safe Pino logs, request correlation, OpenTelemetry traces/metrics and optional OTLP/HTTP export.",
+      "scripts": ["packages:build", "packages:test"],
+      "environmentVariables": ["LOG_LEVEL", "OTEL_SERVICE_NAME", "OTEL_SDK_DISABLED", "OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_EXPORTER_OTLP_HEADERS", "OTEL_TRACES_EXPORTER", "OTEL_METRICS_EXPORTER", "OTEL_RESOURCE_ATTRIBUTES", "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "APP_VERSION", "APP_REVISION", "DEPLOYMENT_ENVIRONMENT"],
+      "migrations": [],
+      "runtimeProcesses": ["Nitro application", "Optional instrumented Jobs worker"],
+      "documentationPath": "capabilities/observability/CAPABILITY.md",
+      "agentSkill": ".agents/skills/observability-change/SKILL.md",
+      "evaluationDocument": "OBSERVABILITY_MODULE_EVALUATION.md",
+      "packageName": "@repo/nuxt-observability",
+      "packagePath": "packages/nuxt-observability",
+      "fixturePath": "fixtures/observability-consumer",
+      "packageTest": {
+        "ownedDependencies": ["pino", "@opentelemetry/sdk-trace-node", "@opentelemetry/sdk-metrics", "@opentelemetry/exporter-trace-otlp-http", "@opentelemetry/exporter-metrics-otlp-http"],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": ["package:test:runtime"],
+          "paths": ["server"],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "object-storage",

@@ -35,6 +35,7 @@ interface Capability {
 }
 
 interface Catalog {
+  referenceApplication?: { enabledCapabilities: string[] }
   baseline: BaselineEntry[]
   capabilities: Capability[]
 }
@@ -244,6 +245,14 @@ const visiting = new Set<string>()
 const visited = new Set<string>()
 const stack: string[] = []
 const capabilitiesById = new Map(catalog.capabilities.map(capability => [capability.id, capability]))
+const nuxtConfig = await Bun.file(resolve(root, 'nuxt.config.ts')).text()
+for (const id of catalog.referenceApplication?.enabledCapabilities ?? []) {
+  const capability = capabilitiesById.get(id)
+  if (!capability?.packageName || !packageManifest.dependencies?.[capability.packageName]
+    || !nuxtConfig.includes(`'${capability.packageName}'`)) {
+    errors.push(`Reference application ${id} must reference an installed, explicitly registered package capability`)
+  }
+}
 
 function visit(id: string) {
   if (visited.has(id)) return

@@ -48,6 +48,9 @@ jobs:
       APP_IMAGE: nuxt-starter:ci
       APP_PORT: 3001
       POSTGRES_PORT: 5433
+      APP_VERSION: ci
+      APP_REVISION: ${{ github.sha }}
+      DEPLOYMENT_ENVIRONMENT: ci
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
@@ -76,6 +79,8 @@ jobs:
         run: curl --fail --show-error --silent http://127.0.0.1:3001/api/health
       - name: Verify production worker is running
         run: docker compose ps --status running worker | grep worker
+      - name: Verify instrumented production job execution
+        run: docker compose exec -T worker node .jobs/smoke.mjs
       - name: Stop container smoke stack
         if: always()
         run: docker compose down --volumes --remove-orphans

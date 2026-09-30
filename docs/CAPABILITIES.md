@@ -6,7 +6,7 @@ The baseline starter always includes Nuxt/Nitro, strict TypeScript, Bun tooling,
 
 A capability is an optional, independently maintained feature package layered onto that baseline. Package source existing under `packages/` does not activate anything. A consumer must keep the workspace dependency, register the Nuxt module, and perform the capability's documented application integration. Unused packages do not become modules, routes, workers, or runtime services merely because their source exists.
 
-The root application deliberately enables every completed capability for continuous integration. That is separate from `defaultInstalled`: this field means “will a clean consumer/base application receive this capability without explicitly selecting or enabling it?” Both current capabilities answer no.
+The root application deliberately enables every completed capability for continuous integration, recorded in `referenceApplication.enabledCapabilities`. That is separate from `defaultInstalled`: this field means “will a clean consumer/base application receive this capability without explicitly selecting or enabling it?” All current capabilities answer no.
 
 `@repo/*` is the private internal workspace scope. The packages are not published, so commands such as `bun add @repo/nuxt-jobs` will not work in an unrelated external repository. A real npm scope will be chosen deliberately if publication happens later.
 
@@ -16,6 +16,7 @@ The root application deliberately enables every completed capability for continu
 | --- | --- | --- | --- | --- | --- | --- |
 | `jobs` | `@repo/nuxt-jobs` | Enabled | No | None | PostgreSQL (required) | [Jobs](../capabilities/jobs/CAPABILITY.md) |
 | `api-platform` | `@repo/nuxt-api` | Enabled | No | None | None | [API Platform](../capabilities/api-platform/CAPABILITY.md) |
+| `observability` | `@repo/nuxt-observability` | Enabled | No | None | OTLP destination (optional) | [Observability](../capabilities/observability/CAPABILITY.md) |
 
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
 
@@ -38,6 +39,12 @@ Keep `"@repo/nuxt-jobs": "workspace:*"`, add `'@repo/nuxt-jobs'` to the Nuxt mod
 Keep `"@repo/nuxt-api": "workspace:*"`, add `'@repo/nuxt-api'` to the Nuxt modules array, compose `apiPlatformAuth()` from `@repo/nuxt-api/server` into the application's single Better Auth instance, export the package's `apikey` table from the application schema, and commit/apply a reviewed migration. Add an application-owned contract registry and native Nitro `/api/v1` routes. Key-management routes/UI are consumer features, not hidden module side effects. Verify with `bun run packages:test api-platform`. See the [API Platform contract](../capabilities/api-platform/CAPABILITY.md).
 
 The current API defaults are `X-API-Key`, hashing enabled, user-owned keys, no default expiry, a 64-character generated secret, `app_` prefix, 1,000 requests per 60 seconds, no browser sessions from API keys, `projects.read`/`projects.write`, OpenAPI 3.1.1 at `/api/openapi.json`, and Scalar at `/docs/api`.
+
+### Observability
+
+Keep `@repo/nuxt-observability: workspace:*` and explicitly register its Nuxt module. JSON logs, request IDs, local span correlation and safe build metadata work with no backend. Set `OTEL_EXPORTER_OTLP_ENDPOINT` only for an optional OTLP/HTTP JSON destination, with independent trace/metric `otlp`/`none` selection. Request bodies, raw headers/query, job payloads and auth objects are omitted; extend `redactKeys` and use deliberate safe free text/attributes. v1 is server-only. Jobs/API wrappers are optional consumer-owned integrations, not dependencies. See the [contract](../capabilities/observability/CAPABILITY.md) for the complete configuration/safe uncaught-error/shutdown model and fixture proof.
+
+Removal restores ordinary Jobs handlers/API handlers and baseline health output, removes module/dependency/env configuration, then clears generated state and rebuilds. There is no schema to drop. [Starting a project](STARTING-A-PROJECT.md#remove-observability) lists the root-specific files.
 
 ## Disabling, removing, and pruning
 

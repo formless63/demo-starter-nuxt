@@ -15,6 +15,7 @@ Integrates with:
 
 - Audit Log for credential and external-API activity.
 - Observability for request and verification telemetry.
+  The root uses an application-owned `defineObservedApiHandler` wrapper with registered operation IDs/method/status and safe exception capture. Machine keys/bodies are never logged; the existing API envelopes and 401/403/429 behavior remain authoritative. API Platform has no Observability package dependency.
 - Authorization for future application-wide policy decisions.
 - Organizations / Tenancy for future organization-owned credentials and scoping.
 
@@ -105,6 +106,7 @@ The shared v1 defaults are `X-API-Key`, hashing enabled, user ownership, no defa
 1. Revoke keys if external access must end immediately.
 2. Remove the module from `nuxt.config.ts`, remove `apiPlatformAuth()` from Better Auth, and remove the package dependency.
 3. Remove package-specific API routes, contract registry, management endpoints/UI, and schema export.
+   Remove `server/utils/observed-api.ts` with the routes; Observability remains independently usable.
 4. Clear generated Nuxt state, reinstall, and typecheck/build so stale auto-imports cannot hide a dependency.
 5. Retain the `apikey` table for rollback by default. Drop it only with an explicit reviewed migration when credential destruction is intended.
 

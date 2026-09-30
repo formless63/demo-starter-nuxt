@@ -38,6 +38,7 @@
   "dependencies": {
     "@repo/nuxt-api": "workspace:*",
     "@repo/nuxt-jobs": "workspace:*",
+    "@repo/nuxt-observability": "workspace:*",
     "@nuxtjs/color-mode": "4.0.1",
     "@tabler/icons-vue": "3.48.0",
     "@tailwindcss/vite": "4.3.3",

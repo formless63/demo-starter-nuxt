@@ -1,5 +1,9 @@
 # Jobs module evaluation (September 2026)
 
+## Optional Observability integration (capability #3)
+
+Jobs retains no hard capability dependency and its registry, migration policy and `migrate:false` runtime behavior are unchanged. The reference application wraps `starter.echo` with Observability's operation helper; safe job ID/name/outcome/duration are logged, never payloads. A small generic CLI lifecycle extension (`onError`, `onShutdown`) lets the application capture safe worker errors and flush its optional telemetry after graceful drain or fatal initialization. Default callers still use the original behavior. No cross-process enqueue trace propagation or trace fields in payload schemas are claimed. The independent Jobs fixture still installs/builds/runs/removes Jobs without Observability.
+
 ## Chosen package layout
 
 Jobs now lives at `packages/nuxt-jobs` as the private workspace package `@repo/nuxt-jobs`. The `@repo/*` scope is repository-local and intentionally says nothing about a future npm scope. `src/module.ts` is the Nuxt Kit entry, `src/runtime/server/` owns the server-only pg-boss implementation and the public `/server` API, and `src/cli/` owns the `nuxt-jobs` executable. The official Nuxt module builder emits the publish-shaped module, declarations, runtime, and CLI artifacts.

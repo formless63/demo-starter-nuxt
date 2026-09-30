@@ -1,0 +1,33 @@
+{
+  "name": "@repo/nuxt-observability",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Server-only structured logs, traces and metrics for Nuxt",
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "exports": {
+    ".": { "types": "./dist/types.d.mts", "import": "./dist/module.mjs", "default": "./dist/module.mjs" },
+    "./server": { "types": "./dist/runtime/server/index.d.ts", "import": "./dist/runtime/server/index.js", "default": "./dist/runtime/server/index.js" }
+  },
+  "typesVersions": { "*": { ".": ["./dist/types.d.mts"], "server": ["./dist/runtime/server/index.d.ts"] } },
+  "files": ["dist"],
+  "scripts": {
+    "dev:prepare": "nuxt-module-build prepare && nuxt-module-build build",
+    "prepack": "nuxt-module-build prepare && nuxt-module-build build"
+  },
+  "dependencies": {
+    "@nuxt/kit": "4.5.2",
+    "@opentelemetry/api": "1.9.1",
+    "@opentelemetry/context-async-hooks": "2.11.0",
+    "@opentelemetry/core": "2.11.0",
+    "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
+    "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+    "@opentelemetry/resources": "2.11.0",
+    "@opentelemetry/sdk-metrics": "2.11.0",
+    "@opentelemetry/sdk-trace-node": "2.11.0",
+    "@opentelemetry/sdk-trace-base": "2.11.0",
+    "pino": "10.3.1"
+  },
+  "peerDependencies": { "nuxt": ">=4.0.0 <5", "h3": ">=1.15.0 <2" },
+  "devDependencies": { "@nuxt/module-builder": "1.0.3", "nuxt": "4.5.2", "h3": "1.15.11" }
+}
