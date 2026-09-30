@@ -1,0 +1,78 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { betterAuth } from 'better-auth'
+import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import { eq, like } from 'drizzle-orm'
+import postgres from 'postgres'
+import { closeEmail, renderMagicLinkEmail } from '@repo/nuxt-email/server'
+import { getLogger } from '@repo/nuxt-observability/server'
+import { configuredAuthPlugins } from '../../server/utils/auth'
+import * as schema from '../../server/database/schema'
+import { mailpitEnv, startMailpit } from '../../fixtures/email-consumer/.fixture/mailpit'
+
+afterEach(() => { closeEmail(); vi.unstubAllEnvs(); vi.restoreAllMocks() })
+describe('SMTP-backed root auth configuration', () => {
+  it('needs no SMTP while disabled and validates structural config when enabled', () => {
+    vi.stubEnv('SMTP_HOST', '')
+    expect(configuredAuthPlugins({ magicLinkEnabled: false }).map(plugin => plugin.id)).toEqual(['api-key'])
+    expect(() => configuredAuthPlugins({ magicLinkEnabled: true })).toThrow('configuration')
+    for (const [key, value] of Object.entries(mailpitEnv(1025))) vi.stubEnv(key, value)
+    vi.stubEnv('NODE_ENV', 'production')
+    expect(configuredAuthPlugins({ magicLinkEnabled: true }).map(plugin => plugin.id)).toEqual(['api-key', 'magic-link'])
+    expect(() => renderMagicLinkEmail('https://foreign.test/?token=SECRET', 'https://canonical.test')).toThrow('message')
+  })
+})
+
+const databaseUrl = process.env.DATABASE_URL
+;(databaseUrl ? describe : describe.skip)('real root Better Auth Email integration', () => {
+  it('sends through SMTP, keeps token hashed, redeems a session and never logs mail secrets', async () => {
+    const fixture = await startMailpit()
+    const sql = postgres(databaseUrl!, { max: 1 })
+    const db = drizzle(sql)
+    const recipient = `magic-${crypto.randomUUID()}@example.test`
+    const baseURL = 'http://127.0.0.1:3197'
+    const logs = [vi.spyOn(console, 'info'), vi.spyOn(console, 'warn'), vi.spyOn(console, 'error'), vi.spyOn(getLogger(), 'info')]
+    try {
+      for (const [key, value] of Object.entries(mailpitEnv(fixture.port))) vi.stubEnv(key, value)
+      const auth = betterAuth({ baseURL, secret: 'email-fixture-secret-at-least-thirty-two-characters',
+        database: drizzleAdapter(db, { provider: 'pg', schema }), emailAndPassword: { enabled: false },
+        plugins: configuredAuthPlugins({ magicLinkEnabled: true, public: { appBaseUrl: baseURL } }), trustedOrigins: [baseURL] })
+      const request = await auth.handler(new Request(`${baseURL}/api/auth/sign-in/magic-link`, {
+        method: 'POST', headers: { 'content-type': 'application/json', origin: baseURL }, body: JSON.stringify({ email: recipient, callbackURL: '/app/projects' }),
+      }))
+      expect(request.status).toBe(200)
+      expect((await fixture.messages()).length).toBe(1)
+      const captured = await fixture.api(`message/${(await fixture.messages())[0]!.ID}`)
+      expect(captured.To[0].Address === recipient).toBe(true)
+      expect(Boolean(captured.Text && captured.HTML)).toBe(true)
+      const link = captured.Text.match(/https?:\/\/[^\s]+/u)?.[0]
+      expect(Boolean(link)).toBe(true)
+      const url = new URL(link)
+      expect(url.origin === baseURL).toBe(true)
+      const token = url.searchParams.get('token')!
+      expect(Boolean(token)).toBe(true)
+      const stored = await db.select().from(schema.verification).where(eq(schema.verification.identifier, token))
+      expect(stored.length).toBe(0)
+      const allVerification = await db.select().from(schema.verification)
+      expect(allVerification.some(row => row.value.includes(recipient))).toBe(true)
+      expect(allVerification.some(row => row.identifier === token || row.value.includes(token))).toBe(false)
+      const redeemed = await auth.handler(new Request(url))
+      expect(redeemed.status).toBe(302)
+      expect(redeemed.headers.get('location')?.endsWith('/app/projects')).toBe(true)
+      const cookie = redeemed.headers.getSetCookie().map(value => value.split(';')[0]).join('; ')
+      expect(Boolean(cookie?.includes('session_token'))).toBe(true)
+      const session = await auth.api.getSession({ headers: new Headers({ cookie }) })
+      expect(Boolean(session?.user.email === recipient)).toBe(true)
+      const output = JSON.stringify(logs.flatMap(log => log.mock.calls))
+      for (const secret of [recipient, token, link, captured.Text, captured.HTML, 'fixture:fixture']) expect(output.includes(secret)).toBe(false)
+      const reused = await auth.handler(new Request(url))
+      expect(reused.status).toBe(302)
+      expect(reused.headers.get('location')?.includes('error=')).toBe(true)
+    }
+    finally {
+      await db.delete(schema.verification).where(like(schema.verification.value, `%${recipient}%`))
+      await db.delete(schema.user).where(eq(schema.user.email, recipient))
+      await sql.end(); closeEmail(); await fixture.close()
+    }
+  }, 60000)
+})

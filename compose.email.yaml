@@ -1,0 +1,17 @@
+# Additive local sink only. No relay, forwarding or persistent mail volume.
+name: nuxt-email-dev
+services:
+  mailpit:
+    image: axllent/mailpit:v1.31.3
+    ports: ["127.0.0.1:1025:1025", "127.0.0.1:8025:8025"]
+    environment:
+      MP_MAX_MESSAGES: "100"
+      MP_ALLOWED_HOSTS: "localhost,127.0.0.1,mailpit"
+      MP_BLOCK_REMOTE_CSS_AND_FONTS: "true"
+      MP_SMTP_DISABLE_RDNS: "true"
+      MP_DISABLE_VERSION_CHECK: "true"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 2s
+      timeout: 2s
+      retries: 20

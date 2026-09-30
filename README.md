@@ -37,8 +37,9 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | API Platform | Available (`done`) | Optional | Baseline Nuxt, Better Auth, PostgreSQL, and Drizzle | User-owned API keys, permissions, native `/api/v1` routes, OpenAPI 3.1.1, and Scalar docs |
 | Observability | Available (`done`) | Optional | No other capability; OTLP destination optional | Safe server JSON logs, request IDs, traces, metrics and optional OTLP/HTTP export |
 | Object Storage | Available (`done`) | Optional | S3-compatible service only when used; no capability dependency | Private objects, streaming, signed GET/PUT, multipart and post-upload policy verification |
+| Email | Available (`done`) | Optional | SMTP only when used; no capability dependency | Safe text/HTML SMTP, Mailpit fixture and hashed-token magic links |
 
-`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage remains lazy with no provider required to boot/build.
+`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage and Email remain lazy with no provider required to boot/build.
 
 See [Using capabilities](docs/CAPABILITIES.md) for installation and removal guidance and [ROADMAP.md](ROADMAP.md) for the future design plan.
 
@@ -63,7 +64,7 @@ Password authentication is disabled. For GitHub, create an OAuth application wit
 
 Generic OIDC is provider-neutral. Set `NUXT_OIDC_ISSUER`, client ID/secret, and base URL. Better Auth 1.7 treats generic OAuth as a standard social provider, so register redirect URI `${NUXT_PUBLIC_APP_BASE_URL}/api/auth/callback/oidc` (not the retired `/oauth2/callback/` route) and post-logout URI `${NUXT_PUBLIC_APP_BASE_URL}`. Discovery, issuer checks, OAuth state, and PKCE are handled by Better Auth. GitHub remains independent.
 
-Magic links are opt-in with `NUXT_MAGIC_LINK_ENABLED=true`. The starter logs the link only for local development; replace that callback with a transactional email sender before production.
+Magic links are opt-in with `NUXT_MAGIC_LINK_ENABLED=true`. Configure the optional Email SMTP transport and canonical app URL; delivery is awaited and links/tokens are never logged, including in development.
 
 ### Pocket ID development provisioning
 
@@ -134,3 +135,5 @@ Use the standard AWS credential chain or paired server-only static credentials. 
 - `.agents/` contains focused maintenance context and workflows.
 
 The private `@repo/*` package scope means “inside this workspace.” These packages are not published; choose a real npm scope deliberately before any future release. Nuxt's module system remains the integration mechanism—there is no custom installer or runtime capability manager.
+
+Email (#5) is an optional server-only SMTP package. See the [Email contract](capabilities/email/CAPABILITY.md) for lazy configuration, local Mailpit, safe magic links and removal.

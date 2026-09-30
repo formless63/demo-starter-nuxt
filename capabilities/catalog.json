@@ -1,7 +1,7 @@
 {
   "$schema": "./catalog.schema.json",
   "schemaVersion": 1,
-  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage"] },
+  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage", "email"] },
   "baseline": [
     { "id": "framework", "displayName": "Nuxt framework", "summary": "Nuxt 4 with Vue and Nitro routing, SSR, and server APIs." },
     { "id": "strict-typescript", "displayName": "Strict TypeScript", "summary": "Strict TypeScript checks across application and server code." },
@@ -144,16 +144,70 @@
       "id": "email",
       "displayName": "Email",
       "kind": "foundational-backend",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["jobs", "observability"],
-      "baselineIntegrations": ["authentication"],
-      "externalRequirements": [
-        { "name": "SMTP", "required": true, "notes": "Base transport; do not require a provider-specific SDK." },
-        { "name": "Mailpit", "required": false, "notes": "Recommended development SMTP sink." }
+      "integratesWith": [
+        "jobs",
+        "observability"
       ],
-      "summary": "SMTP-based transactional email with optional Jobs delivery and Better Auth magic-link integration."
+      "baselineIntegrations": [
+        "authentication"
+      ],
+      "externalRequirements": [
+        {
+          "name": "SMTP",
+          "required": true,
+          "notes": "Base transport; do not require a provider-specific SDK."
+        },
+        {
+          "name": "Mailpit",
+          "required": false,
+          "notes": "Recommended development SMTP sink."
+        }
+      ],
+      "summary": "Lazy single-attempt transactional SMTP with safe messages/errors, optional root auth and telemetry integrations.",
+      "scripts": [
+        "email:check",
+        "email:smoke",
+        "email:dev:mailpit",
+        "email:dev:down",
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [
+        "SMTP_HOST",
+        "SMTP_PORT",
+        "SMTP_SECURITY",
+        "SMTP_USER",
+        "SMTP_PASSWORD",
+        "EMAIL_FROM_ADDRESS",
+        "EMAIL_FROM_NAME",
+        "EMAIL_REPLY_TO_ADDRESS",
+        "EMAIL_REPLY_TO_NAME",
+        "EMAIL_MAX_RECIPIENTS"
+      ],
+      "documentationPath": "capabilities/email/CAPABILITY.md",
+      "evaluationDocument": "EMAIL_MODULE_EVALUATION.md",
+      "agentSkill": ".agents/skills/email-change/SKILL.md",
+      "packageName": "@repo/nuxt-email",
+      "packagePath": "packages/nuxt-email",
+      "fixturePath": "fixtures/email-consumer",
+      "packageTest": {
+        "ownedDependencies": [
+          "nodemailer"
+        ],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "webhooks",
