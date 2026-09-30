@@ -12,7 +12,7 @@ Read `capabilities/observability/CAPABILITY.md` and `OBSERVABILITY_MODULE_EVALUA
 - Use current semantic conventions. Metric dimensions must use bounded registered route/operation/job names, methods and statuses; IDs and arbitrary URLs are never metric dimensions.
 - Request context must remain async-safe across concurrent requests and nested spans. Use supported Nitro/Kit integration rather than patching router internals.
 - No backend is valid. OTLP is optional, signals are independently configurable, and absent endpoints must not instantiate localhost exporters.
-- Jobs/API integrations remain application-owned and optional; do not introduce capability dependencies for telemetry.
+- Jobs/API/Storage integrations remain application-owned and optional; do not introduce capability dependencies for telemetry. Storage dimensions/logs exclude buckets, keys, filenames, upload IDs and signed URLs; its runner sees only bounded operation/outcome/duration/known bytes.
 - Flush and bounded exporter shutdown are part of correctness for Nitro and workers. Keep the supported Jobs lifecycle hook generic.
 - Telemetry changes require secrecy, concurrency, span/error, metric/cardinality, export/no-backend and shutdown tests. Run `packages:test observability`, affected Jobs/API fixtures, normal checks and production container smoke.
 

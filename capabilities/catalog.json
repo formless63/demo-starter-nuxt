@@ -1,7 +1,7 @@
 {
   "$schema": "./catalog.schema.json",
   "schemaVersion": 1,
-  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability"] },
+  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage"] },
   "baseline": [
     { "id": "framework", "displayName": "Nuxt framework", "summary": "Nuxt 4 with Vue and Nitro routing, SSR, and server APIs." },
     { "id": "strict-typescript", "displayName": "Strict TypeScript", "summary": "Strict TypeScript checks across application and server code." },
@@ -118,12 +118,27 @@
       "id": "object-storage",
       "displayName": "Object Storage",
       "kind": "foundational-backend",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": ["jobs", "observability"],
-      "externalRequirements": [{ "name": "S3-compatible storage", "required": true, "notes": "Prefer RustFS; Garage with optional GarageUI is also supported. MinIO is not the default." }],
-      "summary": "Provider-neutral object storage built around the S3 protocol."
+      "externalRequirements": [{ "name": "S3-compatible storage", "required": true, "notes": "Required only for runtime storage operations. RustFS preferred; Garage supported with optional localhost Garage Web UI. MinIO is not the default." }],
+      "summary": "Private server-only S3 objects, streaming, presigned GET/PUT, multipart and post-upload verification; RustFS preferred, Garage supported.",
+      "scripts": ["storage:check", "storage:smoke", "storage:dev:rustfs", "storage:dev:garage", "storage:dev:down", "packages:build", "packages:test"],
+      "environmentVariables": ["STORAGE_BUCKET", "STORAGE_REGION", "STORAGE_ENDPOINT", "STORAGE_ACCESS_KEY_ID", "STORAGE_SECRET_ACCESS_KEY", "STORAGE_SESSION_TOKEN", "STORAGE_FORCE_PATH_STYLE", "STORAGE_PRESIGN_TTL_SECONDS", "STORAGE_KEY_PREFIX"],
+      "migrations": [],
+      "runtimeProcesses": ["Nitro application; optional external S3 service"],
+      "documentationPath": "capabilities/object-storage/CAPABILITY.md",
+      "agentSkill": ".agents/skills/storage-change/SKILL.md",
+      "evaluationDocument": "OBJECT_STORAGE_MODULE_EVALUATION.md",
+      "packageName": "@repo/nuxt-storage",
+      "packagePath": "packages/nuxt-storage",
+      "fixturePath": "fixtures/storage-consumer",
+      "packageTest": {
+        "ownedDependencies": ["@aws-sdk/client-s3", "@aws-sdk/s3-request-presigner"],
+        "runtimeScript": "package:test:runtime",
+        "removal": { "scripts": ["package:test:runtime"], "paths": ["server"], "replacementNuxtConfig": ".fixture/base-nuxt.config.ts" }
+      }
     },
     {
       "id": "email",

@@ -17,6 +17,7 @@ The root application deliberately enables every completed capability for continu
 | `jobs` | `@repo/nuxt-jobs` | Enabled | No | None | PostgreSQL (required) | [Jobs](../capabilities/jobs/CAPABILITY.md) |
 | `api-platform` | `@repo/nuxt-api` | Enabled | No | None | None | [API Platform](../capabilities/api-platform/CAPABILITY.md) |
 | `observability` | `@repo/nuxt-observability` | Enabled | No | None | OTLP destination (optional) | [Observability](../capabilities/observability/CAPABILITY.md) |
+| `object-storage` | `@repo/nuxt-storage` | Enabled | No | None | S3-compatible service when used | [Object Storage](../capabilities/object-storage/CAPABILITY.md) |
 
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
 
@@ -45,6 +46,12 @@ The current API defaults are `X-API-Key`, hashing enabled, user-owned keys, no d
 Keep `@repo/nuxt-observability: workspace:*` and explicitly register its Nuxt module. JSON logs, request IDs, local span correlation and safe build metadata work with no backend. Set `OTEL_EXPORTER_OTLP_ENDPOINT` only for an optional OTLP/HTTP JSON destination, with independent trace/metric `otlp`/`none` selection. Request bodies, raw headers/query, job payloads and auth objects are omitted; extend `redactKeys` and use deliberate safe free text/attributes. v1 is server-only. Jobs/API wrappers are optional consumer-owned integrations, not dependencies. See the [contract](../capabilities/observability/CAPABILITY.md) for the complete configuration/safe uncaught-error/shutdown model and fixture proof.
 
 Removal restores ordinary Jobs handlers/API handlers and baseline health output, removes module/dependency/env configuration, then clears generated state and rebuilds. There is no schema to drop. [Starting a project](STARTING-A-PROJECT.md#remove-observability) lists the root-specific files.
+
+### Object Storage
+
+Keep `@repo/nuxt-storage: workspace:*` and explicitly register the module. Installation/build/startup need no backend. When used, supply an existing private bucket and server-only S3 configuration; absent static credentials preserves the AWS default chain. Root `storage:dev:rustfs` / `storage:dev:garage` explicitly bootstrap local-only providers. `storage:check` is read-only; `storage:smoke` uses package-owned unique-key cleanup. The same packed fixture verifies real RustFS/Garage object/signing/multipart contracts and post-removal builds, independently of Jobs/API/Observability.
+
+Authorization, files records and UI remain app-owned. The optional root operation runner instruments bounded operation/outcome/duration/known bytes without keys or signed URLs; Storage has no Observability dependency. Removal means code/config removal, **not deleting remote objects/buckets or revoking credentials**. See the [contract](../capabilities/object-storage/CAPABILITY.md) and [root removal recipe](STARTING-A-PROJECT.md#remove-object-storage).
 
 ## Disabling, removing, and pruning
 

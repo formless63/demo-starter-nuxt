@@ -1,0 +1,8 @@
+{
+  "name": "storage-consumer-fixture",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "nuxt build", "typecheck": "nuxt typecheck", "package:test:runtime": "bun .fixture/package-test.ts" },
+  "dependencies": { "@repo/nuxt-storage": "workspace:*", "nuxt": "4.5.2" },
+  "devDependencies": { "typescript": "5.9.3", "vue-tsc": "3.1.7" }
+}
