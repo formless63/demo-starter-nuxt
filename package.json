@@ -45,7 +45,11 @@
     "email:smoke": "bun scripts/email.ts smoke",
     "email:dev:mailpit": "docker compose -f compose.email.yaml up -d --wait",
     "email:dev:down": "docker compose -f compose.email.yaml down",
-    "webhooks:smoke": "bun scripts/webhooks-smoke.ts"
+    "webhooks:smoke": "bun scripts/webhooks-smoke.ts",
+    "cache:check": "bun scripts/cache.ts check",
+    "cache:smoke": "bun scripts/cache.ts smoke",
+    "cache:dev:valkey": "bun scripts/cache-dev.ts valkey",
+    "cache:dev:down": "bun scripts/cache-dev.ts down"
   },
   "dependencies": {
     "@repo/nuxt-api": "workspace:*",
@@ -72,7 +76,8 @@
     "vue-sonner": "2.0.9",
     "zod": "4.6.5",
     "@repo/nuxt-email": "workspace:*",
-    "@repo/nuxt-webhooks": "workspace:*"
+    "@repo/nuxt-webhooks": "workspace:*",
+    "@repo/nuxt-cache": "workspace:*"
   },
   "devDependencies": {
     "@nuxt/eslint": "1.17.0",

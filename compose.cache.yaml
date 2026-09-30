@@ -1,0 +1,3 @@
+# Explicit additive, disposable local infrastructure; normal Compose stays unchanged.
+include:
+  - path: ./fixtures/cache-consumer/.fixture/compose.yaml

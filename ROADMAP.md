@@ -43,7 +43,7 @@ The generic `packages:*` commands build and exercise the catalog entries. Root p
 
 | Status | Capability |
 | --- | --- |
-| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log |
+| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
 API Platform is capability #2. Observability is capability #3: server-only logs, request correlation, explicit spans/metrics, optional OTLP export and a clean-consumer lifecycle. No new service is required.
@@ -123,11 +123,14 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 ## Application infrastructure
 
-### Cache / Coordination (`planned`)
+### Cache / Coordination (`done`)
 
 - Requires: none
 - Integrates with: Realtime, API Platform, Jobs
-- External: Valkey/Redis-compatible service (required)
+- External: Valkey/Redis-compatible service (required only on use)
+- Default installed: no; reference application explicitly opts in.
+- Implementation: `@repo/nuxt-cache`, ephemeral exact namespaced strings/bytes, TTL/NX, atomic counters, advisory token-safe single-backend leases (no fencing/Redlock), non-durable pub/sub and lazy lifecycle. Pinned Valkey 9.1.2 / node-redis 6.3.0; independent packed fixture. No future Realtime/API/Jobs integrations implemented.
+- Contract: [`capabilities/cache-coordination/CAPABILITY.md`](capabilities/cache-coordination/CAPABILITY.md)
 
 ### Search (`planned`)
 

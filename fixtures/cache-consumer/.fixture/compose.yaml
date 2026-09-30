@@ -1,0 +1,12 @@
+services:
+  valkey:
+    image: valkey/valkey:9.1.2
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "127.0.0.1:${CACHE_DEV_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+    # Entirely disposable: no data volume and no AOF/RDB persistence.

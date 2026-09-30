@@ -1,7 +1,7 @@
 {
   "$schema": "./catalog.schema.json",
   "schemaVersion": 1,
-  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage", "email", "webhooks", "audit-log"] },
+  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage", "email", "webhooks", "audit-log", "cache-coordination"] },
   "baseline": [
     { "id": "framework", "displayName": "Nuxt framework", "summary": "Nuxt 4 with Vue and Nitro routing, SSR, and server APIs." },
     { "id": "strict-typescript", "displayName": "Strict TypeScript", "summary": "Strict TypeScript checks across application and server code." },
@@ -293,12 +293,60 @@
       "id": "cache-coordination",
       "displayName": "Cache / Coordination",
       "kind": "application-infrastructure",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["realtime", "api-platform", "jobs"],
-      "externalRequirements": [{ "name": "Valkey or Redis-compatible service", "required": true }],
-      "summary": "Shared cache, rate coordination, and ephemeral distributed state."
+      "integratesWith": [
+        "realtime",
+        "api-platform",
+        "jobs"
+      ],
+      "externalRequirements": [
+        {
+          "name": "Valkey/Redis-compatible service",
+          "required": true
+        }
+      ],
+      "summary": "Server-only ephemeral exact-key cache, atomic counters, advisory token-safe leases and non-durable pub/sub.",
+      "scripts": [
+        "cache:check",
+        "cache:smoke",
+        "cache:dev:valkey",
+        "cache:dev:down",
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [
+        "CACHE_URL",
+        "CACHE_KEY_PREFIX",
+        "CACHE_DEFAULT_TTL_SECONDS",
+        "CACHE_MAX_VALUE_BYTES"
+      ],
+      "migrations": [],
+      "runtimeProcesses": [
+        "Nitro application; optional external Valkey/Redis-compatible service"
+      ],
+      "documentationPath": "capabilities/cache-coordination/CAPABILITY.md",
+      "agentSkill": ".agents/skills/cache-change/SKILL.md",
+      "evaluationDocument": "CACHE_COORDINATION_MODULE_EVALUATION.md",
+      "packageName": "@repo/nuxt-cache",
+      "packagePath": "packages/nuxt-cache",
+      "fixturePath": "fixtures/cache-consumer",
+      "packageTest": {
+        "ownedDependencies": [
+          "redis"
+        ],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "search",

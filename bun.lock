@@ -29,7 +29,8 @@
         "vue": "3.5.43",
         "vue-sonner": "2.0.9",
         "zod": "4.6.5",
-        "@repo/nuxt-audit-log": "workspace:*"
+        "@repo/nuxt-audit-log": "workspace:*",
+        "@repo/nuxt-cache": "workspace:*"
       },
       "devDependencies": {
         "@nuxt/eslint": "1.17.0",
@@ -274,6 +275,32 @@
       },
       "peerDependencies": {
         "drizzle-orm": ">=0.45.0 <1",
+        "nuxt": ">=4.0.0 <5"
+      }
+    },
+    "fixtures/cache-consumer": {
+      "name": "cache-consumer-fixture",
+      "dependencies": {
+        "@repo/nuxt-cache": "workspace:*",
+        "nuxt": "4.5.2"
+      },
+      "devDependencies": {
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7"
+      }
+    },
+    "packages/nuxt-cache": {
+      "name": "@repo/nuxt-cache",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+        "redis": "6.3.0"
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "nuxt": "4.5.2"
+      },
+      "peerDependencies": {
         "nuxt": ">=4.0.0 <5"
       }
     }
@@ -16832,6 +16859,81 @@
     ],
     "audit-log-consumer-fixture": [
       "audit-log-consumer-fixture@workspace:fixtures/audit-log-consumer"
+    ],
+    "@redis/bloom": [
+      "@redis/bloom@6.3.0",
+      "",
+      {
+        "peerDependencies": {
+          "@redis/client": "^6.3.0"
+        }
+      },
+      "sha512-NQ5poYpZr0jv6zazN1cy6JY5kIipKFZ3R9GTL4kOUTX3a9YAfY29U8bsE4lWhVQEM+G4V0BXVC57mubIdDijeA=="
+    ],
+    "@redis/client": [
+      "@redis/client@6.3.0",
+      "",
+      {
+        "peerDependencies": {
+          "@node-rs/xxhash": "^1.1.0",
+          "@opentelemetry/api": ">=1 <2"
+        },
+        "optionalPeers": [
+          "@node-rs/xxhash",
+          "@opentelemetry/api"
+        ]
+      },
+      "sha512-fHrjwGCBvAANGi+TuRuwKi83sIOzgHr8eh+Uf48w3fSX7Hhrz174NrWqfJhAC2vnN0d/tfaZpdr6+o6JC3QHwg=="
+    ],
+    "@redis/json": [
+      "@redis/json@6.3.0",
+      "",
+      {
+        "peerDependencies": {
+          "@redis/client": "^6.3.0"
+        }
+      },
+      "sha512-yt6vRfPBXtW/3qm53cF81TSQpLMjWdW4/2E9WQ2GgbvsKkuCKCFQIcMiKlil1ZMnezK+IQuS795xKU5psbaegw=="
+    ],
+    "@redis/search": [
+      "@redis/search@6.3.0",
+      "",
+      {
+        "peerDependencies": {
+          "@redis/client": "^6.3.0"
+        }
+      },
+      "sha512-RPXAZmKjZZG7Tm7m1w9keFdXzbL91PiSHQBfQRe9xwW40jNsTRbG0FwhIz4QlHPU4gKDAsCy8IQHj4yZl4H9rw=="
+    ],
+    "@redis/time-series": [
+      "@redis/time-series@6.3.0",
+      "",
+      {
+        "peerDependencies": {
+          "@redis/client": "^6.3.0"
+        }
+      },
+      "sha512-+fJOB8mN1z5WRakCJNh5lVdz1KqvHGSOistsKeitD24QsCtPwyRQXWC0iq6T/i/ubLE/YcguZqPm8F598MKk4A=="
+    ],
+    "@repo/nuxt-cache": [
+      "@repo/nuxt-cache@workspace:packages/nuxt-cache"
+    ],
+    "cache-consumer-fixture": [
+      "cache-consumer-fixture@workspace:fixtures/cache-consumer"
+    ],
+    "redis": [
+      "redis@6.3.0",
+      "",
+      {
+        "dependencies": {
+          "@redis/bloom": "6.3.0",
+          "@redis/client": "6.3.0",
+          "@redis/json": "6.3.0",
+          "@redis/search": "6.3.0",
+          "@redis/time-series": "6.3.0"
+        }
+      },
+      "sha512-XFQbPie1lGpKeUZ8ySYY43yLnQy/iIQtHNvIr/1XdaABpb96rUSdm3Mfl+98FEVbv9ZJIzINMno5s0Nh8E5LEw=="
     ]
   }
 }

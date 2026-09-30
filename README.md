@@ -36,6 +36,7 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Jobs | Available (`done`) | Optional | Baseline PostgreSQL; external PostgreSQL service | Typed pg-boss jobs, explicit queue migrations, and a standalone worker |
 | API Platform | Available (`done`) | Optional | Baseline Nuxt, Better Auth, PostgreSQL, and Drizzle | User-owned API keys, permissions, native `/api/v1` routes, OpenAPI 3.1.1, and Scalar docs |
 | Observability | Available (`done`) | Optional | No other capability; OTLP destination optional | Safe server JSON logs, request IDs, traces, metrics and optional OTLP/HTTP export |
+| Cache / Coordination | Available (`done`) | Optional | Valkey/Redis-compatible service only when used; no capability dependency | Ephemeral values/counters, advisory token-safe leases and non-durable pub/sub |
 | Object Storage | Available (`done`) | Optional | S3-compatible service only when used; no capability dependency | Private objects, streaming, signed GET/PUT, multipart and post-upload policy verification |
 | Email | Available (`done`) | Optional | SMTP only when used; no capability dependency | Safe text/HTML SMTP, Mailpit fixture and hashed-token magic links |
 | Webhooks | Available (`done`) | Optional | Jobs; remote endpoints only when delivering | Standard signed envelopes, durable delivery and bounded raw-body verification |
@@ -91,6 +92,7 @@ bun run packages:test jobs
 bun run packages:test api-platform
 bun run packages:test observability
 bun run packages:test object-storage
+bun run packages:test cache-coordination
 bun run check
 bun run test:e2e
 ```
@@ -141,3 +143,7 @@ The private `@repo/*` package scope means “inside this workspace.” These pac
 Email (#5) is an optional server-only SMTP package. See the [Email contract](capabilities/email/CAPABILITY.md) for lazy configuration, local Mailpit, safe magic links and removal.
 
 Webhooks is explicitly enabled as `@repo/nuxt-webhooks` and requires Jobs; see its [contract](capabilities/webhooks/CAPABILITY.md). Run `bun run webhooks:smoke` for a local receiver test.
+
+## Cache / Coordination
+
+Explicitly enabled in the reference app and lazy at boot/build. Server-only `@repo/nuxt-cache` supplies exact namespaced string/byte values, expiring writes, atomic counters, advisory leases and non-durable pub/sub. No Jobs/Realtime/queue integration is implemented. `cache:dev:valkey` starts pinned disposable localhost Valkey; `cache:check`, `cache:smoke` and `cache:dev:down` use explicit configuration. Leases have no fencing or quorum and cannot alone protect irreversible correctness. See the [contract](capabilities/cache-coordination/CAPABILITY.md) and [evaluation](CACHE_COORDINATION_MODULE_EVALUATION.md).

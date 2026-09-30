@@ -23,3 +23,5 @@ Official Nuxt documentation should be the primary source. Agents supporting MCP 
 `@repo/nuxt-webhooks` has a hard Jobs peer/module/catalog dependency; Nuxt/Zod are peers. Node 24 native fetch/crypto implement Standard Webhooks HMAC exact-byte signing. `standardwebhooks` 1.1.1 is a root test-only interoperability oracle; optional Audit/API/Observability remain dependency-free.
 
 `@repo/nuxt-audit-log` uses Nuxt/Drizzle peers and @nuxt/kit only; no API/Jobs/auth dependency. Application-generated UUIDs, timestamptz(3), bounded JSONB metadata and three B-tree indexes support append-oriented records and exact keyset queries.
+
+`@repo/nuxt-cache` owns stable redis/node-redis 6.3.0 with Nuxt peer and official Valkey 9.1.2 disposable fixture. Node 24 production and Bun tooling share the verified protocol subset; TLS verification stays enabled. Additive `compose.cache.yaml` is loopback-only with no AOF/RDB/data volume. Cache is ephemeral; Jobs remains PostgreSQL-durable. See `CACHE_COORDINATION_MODULE_EVALUATION.md`.

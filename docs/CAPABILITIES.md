@@ -17,6 +17,7 @@ The root application deliberately enables every completed capability for continu
 | `jobs` | `@repo/nuxt-jobs` | Enabled | No | None | PostgreSQL (required) | [Jobs](../capabilities/jobs/CAPABILITY.md) |
 | `api-platform` | `@repo/nuxt-api` | Enabled | No | None | None | [API Platform](../capabilities/api-platform/CAPABILITY.md) |
 | `observability` | `@repo/nuxt-observability` | Enabled | No | None | OTLP destination (optional) | [Observability](../capabilities/observability/CAPABILITY.md) |
+| `cache-coordination` | `@repo/nuxt-cache` | Enabled | No | None | Valkey/Redis-compatible service on use | [Cache / Coordination](../capabilities/cache-coordination/CAPABILITY.md) |
 | `object-storage` | `@repo/nuxt-storage` | Enabled | No | None | S3-compatible service when used | [Object Storage](../capabilities/object-storage/CAPABILITY.md) |
 | `email` | `@repo/nuxt-email` | Enabled | No | None | SMTP on use; Mailpit optional | [Email](../capabilities/email/CAPABILITY.md) |
 
@@ -60,6 +61,12 @@ Authorization, files records and UI remain app-owned. The optional root operatio
 ### Email
 
 Keep `@repo/nuxt-email` and register its Nuxt module explicitly. SMTP config is server-only and lazy; enable magic links only with structural SMTP configuration and canonical app URL. `email:check` verifies without sending; `email:smoke [recipient]` intentionally sends once. Mailpit is an optional local sink. No DB/Jobs/Observability dependencies, queues or SMTP health requirement. See [Email contract](../capabilities/email/CAPABILITY.md) and [removal](STARTING-A-PROJECT.md#remove-email).
+
+### Cache / Coordination
+
+Keep `@repo/nuxt-cache: workspace:*` and explicitly register the module. First-use server-only CACHE_URL config supports redis/rediss with TLS verification. Namespaced exact keys, bounded strings/bytes, default 300-second TTL, NX, atomic initial-TTL counters, token-safe advisory leases and non-durable pub/sub; no routes or startup connection. Local `cache:dev:valkey` / `cache:dev:down` owns disposable loopback Valkey 9.1.2 with no AOF/RDB/volume. `cache:check` pings and `cache:smoke` cleans only unique exact keys. The generic packed fixture owns real compatibility and removal. Optional root telemetry records operation/outcome/duration/hit-miss only; no capability dependency.
+
+Leases have no fencing/Redlock/quorum and cannot alone guarantee irreversible correctness under partitions/process pauses. Future Realtime pub/sub/API shared state are documentation only; Jobs remains PostgreSQL-durable. Removal changes code/config with no persistent migration and **never external FLUSH**. See the [contract](../capabilities/cache-coordination/CAPABILITY.md), [evaluation](../CACHE_COORDINATION_MODULE_EVALUATION.md) and [removal recipe](STARTING-A-PROJECT.md#remove-cache--coordination).
 
 ## Disabling, removing, and pruning
 
