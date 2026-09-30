@@ -48,3 +48,5 @@ All commands use Bun. PostgreSQL is required for migrations, authenticated runti
 `bun run webhooks:smoke` explicitly tests signed local delivery, inbound verification, Jobs retries/exhaustion and permanent rejection. `bun run packages:test webhooks` packs catalog hard dependencies and proves removal retains Jobs. No external endpoint is configured for root build/health/worker startup.
 
 `bun run packages:test audit-log`: generic packed install/build/remove lifecycle and fixture-owned PostgreSQL migration, metadata, pagination and commit/rollback proof. Fixture creates a disposable database via DATABASE_URL (local test role needs CREATEDB); root migrations include audit_event. No Audit-specific CI orchestration.
+
+- Cache: `bun run packages:test cache-coordination` owns real Valkey 9.1.2 Node/Bun protocol, lazy production boot, install/removal and explicit reconnect. `cache:check` pings configured server; `cache:smoke` uses unique exact keys. `cache:dev:valkey` starts explicit disposable loopback infrastructure, `cache:dev:down` stops it. No external FLUSH or migration exists.

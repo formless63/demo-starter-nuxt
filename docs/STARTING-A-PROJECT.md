@@ -1,12 +1,12 @@
 # Starting a project
 
-The repository is both a baseline starter and a reference application. Decide whether Jobs, API Platform, Observability, Object Storage and Audit Log belong in the product before building domain features around them.
+The repository is both a baseline starter and a reference application. Choose which of the eight completed capabilities belong in the product before building domain features around them.
 
 ## Full/reference setup
 
-Keep the completed capabilities when durable background work, a machine-facing API and server telemetry are useful. The root application already:
+Keep the completed capabilities when durable background work, a machine-facing API and server telemetry, object storage or ephemeral coordination are useful. The root application already:
 
-- depends on and registers `@repo/nuxt-jobs`, `@repo/nuxt-api`, `@repo/nuxt-observability`, `@repo/nuxt-storage` and `@repo/nuxt-audit-log`;
+- depends on and registers `@repo/nuxt-jobs`, `@repo/nuxt-api`, `@repo/nuxt-observability`, `@repo/nuxt-storage`, `@repo/nuxt-email`, `@repo/nuxt-webhooks`, `@repo/nuxt-audit-log` and `@repo/nuxt-cache`;
 - includes a Jobs registry and `starter.echo` demonstration task;
 - composes API Platform into Better Auth and exposes project API contracts;
 - includes the application and API-key migration plus explicit pg-boss migration commands;
@@ -14,6 +14,8 @@ Keep the completed capabilities when durable background work, a machine-facing A
 - adds safe JSON logs/request IDs, explicit server telemetry and optional Jobs/API wrappers; and
 - exposes lazy server-only S3 primitives, optional app-owned telemetry and explicit local provider commands, with no File UI or required storage backend at startup; and
 - appends stable actor/Project IDs transactionally to application-owned audit history; and
+
+- adds lazy ephemeral Cache/Coordination primitives and optional safe telemetry, with explicit disposable local Valkey helpers; and
 - exercises all packages through catalog-driven fixture tests and CI.
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
@@ -89,6 +91,15 @@ When removing **Observability but retaining Storage**, remove the optional impor
 5. For permanent pruning, update catalog/docs first, then optionally remove `packages/nuxt-email`, `fixtures/email-consumer`, capability contract, `EMAIL_MODULE_EVALUATION.md` and `.agents/skills/email-change`. Retain the roadmap ID where other capabilities reference it.
 
 When removing **Observability but retaining Email**, replace `sendObservedEmail` with package `sendEmail`, and command verification with `verifyEmailTransport`; remove only the telemetry wrapper. Keep SMTP/auth/canonical validation. Also retain plain Storage helpers as documented above.
+
+## Remove Cache / Coordination
+
+1. Stop application calls/subscriptions and await connection close. Remove `'@repo/nuxt-cache'` from Nuxt modules, its root dependency and `cache-coordination` from reference enablement.
+2. Remove `server/utils/observed-cache.ts`, `server/plugins/cache.ts`, `scripts/cache.ts`, `scripts/cache-dev.ts`, Cache call sites and root `cache:*` aliases/catalog script declarations. Remove Cache-specific tests when pruning the reference integration.
+3. Remove CACHE_URL/CACHE_KEY_PREFIX/CACHE_DEFAULT_TTL_SECONDS/CACHE_MAX_VALUE_BYTES from server config/environment and optional `compose.cache.yaml`. Stop only `starter-cache-dev` via its helper before removing helpers; local data is disposable. Retain fixture-owned assets if keeping independent package tests.
+4. Clear generated `.nuxt`/`.output`, reinstall and run catalog/typecheck/build/normal verification. The generic fixture proves redis-owned dependencies disappear when unused. No persistent data migration exists. **Never issue FLUSH against external Cache as part of removal.**
+
+When removing Observability but retaining Cache, replace the optional wrapper with plain `createCache()`/`getCache()` and remove telemetry initialization/shutdown from the CLI; preserve the independent cache API/config/helpers. Permanent pruning consistently updates catalog/docs before deleting package, fixture, contract, evaluation and skill; retain the roadmap ID for optional relationships.
 
 ## Fresh versus deployed removal
 
