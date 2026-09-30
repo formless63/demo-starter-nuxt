@@ -18,6 +18,7 @@ The root application deliberately enables every completed capability for continu
 | `api-platform` | `@repo/nuxt-api` | Enabled | No | None | None | [API Platform](../capabilities/api-platform/CAPABILITY.md) |
 | `observability` | `@repo/nuxt-observability` | Enabled | No | None | OTLP destination (optional) | [Observability](../capabilities/observability/CAPABILITY.md) |
 | `object-storage` | `@repo/nuxt-storage` | Enabled | No | None | S3-compatible service when used | [Object Storage](../capabilities/object-storage/CAPABILITY.md) |
+| `email` | `@repo/nuxt-email` | Enabled | No | None | SMTP on use; Mailpit optional | [Email](../capabilities/email/CAPABILITY.md) |
 
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
 
@@ -52,6 +53,10 @@ Removal restores ordinary Jobs handlers/API handlers and baseline health output,
 Keep `@repo/nuxt-storage: workspace:*` and explicitly register the module. Installation/build/startup need no backend. When used, supply an existing private bucket and server-only S3 configuration; absent static credentials preserves the AWS default chain. Region resolves `STORAGE_REGION` → `AWS_REGION` → `AWS_DEFAULT_REGION` → safe configuration error on use, not build/boot. Root `storage:dev:rustfs` / `storage:dev:garage` explicitly bootstrap local-only RustFS 1.0.0 / Garage 2.4.1 with explicit regions. `storage:check` is read-only; `storage:smoke` uses package-owned unique-key cleanup. The same packed fixture verifies real RustFS/Garage object/signing/multipart contracts and post-removal builds, independently of Jobs/API/Observability. Optional third-party Noooste Garage UI v0.13.0 is localhost-bound operator tooling, not official Garage or needed for S3; privileged admin credentials never belong in application browser code or normal S3 clients. Known development credentials are local-only. See the [shared defaults](../OBJECT_STORAGE_MODULE_EVALUATION.md#shared-cross-framework-baseline).
 
 Authorization, files records and UI remain app-owned. The optional root operation runner instruments bounded operation/outcome/duration/known bytes without keys or signed URLs; Storage has no Observability dependency. Removal means code/config removal, **not deleting remote objects/buckets or revoking credentials**. See the [contract](../capabilities/object-storage/CAPABILITY.md) and [root removal recipe](STARTING-A-PROJECT.md#remove-object-storage).
+
+### Email
+
+Keep `@repo/nuxt-email` and register its Nuxt module explicitly. SMTP config is server-only and lazy; enable magic links only with structural SMTP configuration and canonical app URL. `email:check` verifies without sending; `email:smoke [recipient]` intentionally sends once. Mailpit is an optional local sink. No DB/Jobs/Observability dependencies, queues or SMTP health requirement. See [Email contract](../capabilities/email/CAPABILITY.md) and [removal](STARTING-A-PROJECT.md#remove-email).
 
 ## Disabling, removing, and pruning
 

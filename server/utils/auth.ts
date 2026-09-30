@@ -2,12 +2,15 @@ import { betterAuth, type BetterAuthPlugin } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { genericOAuth, magicLink } from 'better-auth/plugins'
 import { apiPlatformAuth } from '@repo/nuxt-api/server'
+import { EmailError, renderMagicLinkEmail, resolveEmailConfig } from '@repo/nuxt-email/server'
+import { sendObservedEmail } from './observed-email'
 import * as authSchema from '../database/schema'
 
 type AuthConfiguration = {
   oidcIssuer?: string
   oidcClientId?: string
   oidcClientSecret?: string
+  public?: { appBaseUrl: string }
   magicLinkEnabled?: boolean
   githubClientId?: string
   githubClientSecret?: string
@@ -30,14 +33,14 @@ export function configuredAuthPlugins(config: AuthConfiguration) {
   }
 
   if (config.magicLinkEnabled) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('Magic links require a production email sender; disable NUXT_MAGIC_LINK_ENABLED until one is configured')
-    }
+    resolveEmailConfig()
 
     plugins.push(magicLink({
       storeToken: 'hashed',
       sendMagicLink: async ({ email, url }) => {
-        console.info(`[development magic link] ${email}: ${url}`)
+        const content = renderMagicLinkEmail(url, config.public?.appBaseUrl ?? '')
+        const result = await sendObservedEmail({ to: [{ address: email }], ...content })
+        if (result.outcome !== 'accepted') throw new EmailError('partial-delivery')
       },
     }))
   }

@@ -35,7 +35,7 @@ Reusable Nuxt capabilities are developed as sibling workspace packages under `pa
 
 `defaultInstalled` has one meaning: whether a clean consumer/base application receives a capability without explicitly selecting or enabling it. It does not describe the root reference application. All completed capabilities are `defaultInstalled: false`; the root deliberately installs and enables them for continuous integration testing, tracked separately in `referenceApplication.enabledCapabilities`.
 
-The root is a reference application that may opt into completed capabilities for integrated development and deployment. It is not the definition of the base generated starter. `capabilities/catalog.json` is the source of truth for completed package discovery and records the package name/path, consumer fixture, owned-dependency assertions, optional fixture runtime hook, and removal test contract. Each `CAPABILITY.md` owns installation/removal guidance. This metadata drives repository preparation and verification only; it is not an application installer or runtime capability loader. The private `@repo/*` scope identifies internal workspace packages only; a publication scope must be chosen deliberately before any npm release. Future packages such as API, Observability, Storage, and Email should follow this convention only when implemented; empty packages are not created for roadmap entries.
+The root is a reference application that may opt into completed capabilities for integrated development and deployment. It is not the definition of the base generated starter. `capabilities/catalog.json` is the source of truth for completed package discovery and records the package name/path, consumer fixture, owned-dependency assertions, optional fixture runtime hook, and removal test contract. Each `CAPABILITY.md` owns installation/removal guidance. This metadata drives repository preparation and verification only; it is not an application installer or runtime capability loader. The private `@repo/*` scope identifies internal workspace packages only; a publication scope must be chosen deliberately before any npm release. Future packages should follow this convention only when implemented; empty packages are not created for roadmap entries.
 
 The generic `packages:*` commands build and exercise the catalog entries. Root postinstall prepares only catalog packages that are actual root dependencies. CI derives its package matrix from the catalog, performs the common tarball install/typecheck/build/removal lifecycle once per entry, and lets each capability fixture own any specialized runtime checks. Adding a completed package therefore changes metadata and its fixture, not the CI workflow.
 
@@ -43,7 +43,7 @@ The generic `packages:*` commands build and exercise the catalog entries. Root p
 
 | Status | Capability |
 | --- | --- |
-| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage |
+| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
 API Platform is capability #2. Observability is capability #3: server-only logs, request correlation, explicit spans/metrics, optional OTLP export and a clean-consumer lifecycle. No new service is required.
@@ -88,11 +88,14 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - External storage is needed only when operations are used, not at install/build/startup. Default installed: no; reference application explicitly opts in.
 - Contract: [`capabilities/object-storage/CAPABILITY.md`](capabilities/object-storage/CAPABILITY.md)
 
-### Email (`planned`)
+### Email (`done`)
 
 - Requires: none
 - Integrates with: Jobs, Observability, baseline Better Auth magic links
-- External: SMTP (required); Mailpit is the development default
+- External: SMTP required only on use; Mailpit 1.31.3 is an optional disposable development/test sink.
+- Implementation (#5): private `@repo/nuxt-email`, lazy Nodemailer 10.0.13 SMTP, explicit transport security, bounded text/HTML/addresses and safe single-attempt delivery/errors; root hashed-token magic links and optional application-owned telemetry. No durable queue, database dependency, attachments or provider SDK.
+- Default installed: no; the reference application explicitly opts in.
+- Contract: [`capabilities/email/CAPABILITY.md`](capabilities/email/CAPABILITY.md)
 - Base transport remains SMTP rather than a provider-specific SDK.
 
 ### Webhooks (`planned`)

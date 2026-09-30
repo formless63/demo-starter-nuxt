@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import {
   createOpenApiDocument,
@@ -6,6 +6,7 @@ import {
   defineApiRegistry,
 } from '@repo/nuxt-api/server'
 import { configuredAuthPlugins, configuredSocialProviders } from '../../server/utils/auth'
+import { mailpitEnv } from '../../fixtures/email-consumer/.fixture/mailpit'
 import { toSafeApiKey } from '../../server/utils/api-keys'
 
 function contract(operationId: string) {
@@ -50,6 +51,7 @@ describe('API Platform package contracts', () => {
 
 describe('API Platform auth integration', () => {
   it('keeps API keys alongside optional OIDC and magic-link plugins', () => {
+    for (const [key, value] of Object.entries(mailpitEnv(1025))) vi.stubEnv(key, value)
     const plugins = configuredAuthPlugins({
       oidcIssuer: 'https://id.example.test',
       oidcClientId: 'client',
@@ -58,6 +60,7 @@ describe('API Platform auth integration', () => {
     })
 
     expect(plugins.map(plugin => plugin.id)).toEqual(['api-key', 'generic-oauth', 'magic-link'])
+    vi.unstubAllEnvs()
   })
 
   it('preserves optional GitHub provider configuration', () => {

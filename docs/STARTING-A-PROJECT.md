@@ -79,6 +79,16 @@ Do not delete remote buckets/objects, revoke remote access keys or delete named-
 
 When removing **Observability but retaining Storage**, remove the optional imports/runner in `observed-storage.ts` and use plain `createStorage()`/`getStorage()`; remove initialization/shutdown instrumentation from `scripts/storage.ts`. Keep Storage commands/core API/provider configuration. This does not introduce a hard dependency.
 
+## Remove Email
+
+1. Explicitly disable `NUXT_MAGIC_LINK_ENABLED` and its public UI flag, or replace SMTP with a deliberately reviewed sender. Remove Email imports/config validation/render/send callback from `server/utils/auth.ts`; omit the magicLink plugin when disabled. Never restore console magic-link URLs. Keep password-disabled OAuth/API auth and hashed magic-link token behavior if replacing the sender.
+2. Remove `'@repo/nuxt-email'` from Nuxt modules, root workspace dependency, and `email` from `referenceApplication.enabledCapabilities`.
+3. Remove `server/utils/observed-email.ts`, `scripts/email.ts`, `compose.email.yaml`, root `email:*` aliases and matching catalog script declarations. Remove SMTP/EMAIL env entries and any consumer-owned mail callers. Delete/adapt Email-specific tests; retain unrelated auth/API coverage.
+4. Clear generated output, reinstall, run agents/capability checks and normal typecheck/build/tests/Playwright/container verification. No migration exists. Do not touch external SMTP accounts, DNS or remote credentials. The independent retained package/fixture remains available without activating infrastructure.
+5. For permanent pruning, update catalog/docs first, then optionally remove `packages/nuxt-email`, `fixtures/email-consumer`, capability contract, `EMAIL_MODULE_EVALUATION.md` and `.agents/skills/email-change`. Retain the roadmap ID where other capabilities reference it.
+
+When removing **Observability but retaining Email**, replace `sendObservedEmail` with package `sendEmail`, and command verification with `verifyEmailTransport`; remove only the telemetry wrapper. Keep SMTP/auth/canonical validation. Also retain plain Storage helpers as documented above.
+
 ## Fresh versus deployed removal
 
 | Situation | Application code | Migration history and data |

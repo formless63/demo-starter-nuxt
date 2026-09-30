@@ -1,0 +1,18 @@
+{
+  "name": "email-consumer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck",
+    "package:test:runtime": "bun .fixture/package-test.ts"
+  },
+  "dependencies": {
+    "nuxt": "4.5.2",
+    "@repo/nuxt-email": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vue-tsc": "3.1.7"
+  }
+}
