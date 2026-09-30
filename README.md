@@ -38,6 +38,7 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Observability | Available (`done`) | Optional | No other capability; OTLP destination optional | Safe server JSON logs, request IDs, traces, metrics and optional OTLP/HTTP export |
 | Object Storage | Available (`done`) | Optional | S3-compatible service only when used; no capability dependency | Private objects, streaming, signed GET/PUT, multipart and post-upload policy verification |
 | Email | Available (`done`) | Optional | SMTP only when used; no capability dependency | Safe text/HTML SMTP, Mailpit fixture and hashed-token magic links |
+| Webhooks | Available (`done`) | Optional | Jobs; remote endpoints only when delivering | Standard signed envelopes, durable delivery and bounded raw-body verification |
 
 `defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage and Email remain lazy with no provider required to boot/build.
 
@@ -137,3 +138,5 @@ Use the standard AWS credential chain or paired server-only static credentials. 
 The private `@repo/*` package scope means “inside this workspace.” These packages are not published; choose a real npm scope deliberately before any future release. Nuxt's module system remains the integration mechanism—there is no custom installer or runtime capability manager.
 
 Email (#5) is an optional server-only SMTP package. See the [Email contract](capabilities/email/CAPABILITY.md) for lazy configuration, local Mailpit, safe magic links and removal.
+
+Webhooks is explicitly enabled as `@repo/nuxt-webhooks` and requires Jobs; see its [contract](capabilities/webhooks/CAPABILITY.md). Run `bun run webhooks:smoke` for a local receiver test.

@@ -1,3 +1,4 @@
+import { useRuntimeConfig } from '#imports'
 import type { DrizzleTransactionLike } from 'pg-boss'
 import { jobRegistry } from '#jobs-registry'
 import { createJobsBoss, resolveJobsConfig } from './boss'

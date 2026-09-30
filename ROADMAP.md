@@ -43,7 +43,7 @@ The generic `packages:*` commands build and exercise the catalog entries. Root p
 
 | Status | Capability |
 | --- | --- |
-| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email |
+| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
 API Platform is capability #2. Observability is capability #3: server-only logs, request correlation, explicit spans/metrics, optional OTLP export and a clean-consumer lifecycle. No new service is required.
@@ -98,11 +98,13 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Contract: [`capabilities/email/CAPABILITY.md`](capabilities/email/CAPABILITY.md)
 - Base transport remains SMTP rather than a provider-specific SDK.
 
-### Webhooks (`planned`)
+### Webhooks (`done`)
 
-- Requires: Jobs for the complete reliable inbound/outbound capability
+- Requires: Jobs (hard catalog/module/peer dependency)
 - Integrates with: Audit Log, Observability, API Platform
-- External: remote webhook endpoints
+- External: remote webhook endpoints only for outbound use; build/boot/health need none
+- Default installed: no; root explicitly opts in. `@repo/nuxt-webhooks` supplies Standard Webhooks HMAC signing, bounded raw-body verification, target policy, replay handoff and durable Jobs definitions with no second worker/routes/UI.
+- Contract: [`capabilities/webhooks/CAPABILITY.md`](capabilities/webhooks/CAPABILITY.md)
 
 ### Audit Log (`planned`)
 

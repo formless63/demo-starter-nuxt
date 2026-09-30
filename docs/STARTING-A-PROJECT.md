@@ -97,3 +97,12 @@ When removing **Observability but retaining Email**, replace `sendObservedEmail`
 | Already deployed or shared | Remove runtime integration after draining/revoking as appropriate | Preserve historical migrations and data by default; use a new explicit reviewed migration for intentional destruction |
 
 After either path, `bun run capabilities:status` should report whether the capability remains enabled in the root application. If package source is retained for future reuse, “package source present: yes” and “enabled in reference app: no” is the expected result.
+
+## Remove Webhooks
+
+1. Drain or deliberately cancel application webhook delivery work. Remove `'@repo/nuxt-webhooks'` from Nuxt modules, its workspace dependency and `webhooks` from referenceApplication enabled metadata.
+2. Remove `server/webhooks/registry.ts` and its import/definition from `server/jobs/registry.ts`. Remove application webhook route/config/calls if added. Keep Jobs, `starter.echo`, the existing worker and migration roles.
+3. Remove `scripts/webhooks-smoke.ts`, root `webhooks:smoke` alias/catalog script declaration and Webhooks-only tests; remove the test-only `standardwebhooks` dependency if no retained tests use it. Adjust the expected Jobs registry names in its test.
+4. Clear generated Nuxt state, reinstall, then run capability checks, Jobs fixture, normal checks and the production worker path. Keep generic Jobs schema/history and external webhook endpoints untouched.
+
+For permanent pruning, consistently update catalog/docs before removing `packages/nuxt-webhooks`, `fixtures/webhooks-consumer`, its contract/evaluation and skill. Preserve its roadmap ID where planned business integrations reference it. Remove Webhooks first before removing its hard Jobs dependency.
