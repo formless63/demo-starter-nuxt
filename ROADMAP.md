@@ -84,7 +84,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Jobs, Observability
 - External: S3-compatible storage (required)
 - Preferred self-hosted options: RustFS; Garage with optional GarageUI. MinIO is not the default.
-- Current implementation (#4): private `@repo/nuxt-storage`, server-only S3 primitives, lazy configuration, private streaming objects, signed GET/PUT, multipart and HEAD policy verification; generic external fixture tests real RustFS 1.0.0 and Garage 2.4.1, CORS and optional Garage Web UI 1.1.0. No files table, UI, processing jobs or implicit bucket creation.
+- Current implementation (#4): private `@repo/nuxt-storage`, server-only S3 primitives, lazy configuration with explicit region, private streaming objects, signed GET/PUT, multipart and HEAD policy verification; generic external fixture tests real RustFS 1.0.0 and Garage 2.4.1, CORS and optional third-party Noooste Garage UI v0.13.0 (localhost/operator-only, not official or needed for S3). Shared AWS SDK 3.1143.0, TTL 600 seconds (30–3600), custom-endpoint path-style defaults and region/credentials follow the [synchronized baseline](OBJECT_STORAGE_MODULE_EVALUATION.md#shared-cross-framework-baseline). No files table, application UI, processing jobs or implicit bucket creation.
 - External storage is needed only when operations are used, not at install/build/startup. Default installed: no; reference application explicitly opts in.
 - Contract: [`capabilities/object-storage/CAPABILITY.md`](capabilities/object-storage/CAPABILITY.md)
 

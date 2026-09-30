@@ -3,6 +3,26 @@ import { randomUUID } from 'node:crypto'
 import { smokeStorage } from '@repo/nuxt-storage/testing'
 import { compose, startProvider } from './providers'
 
+// Installing the module must not turn Storage configuration into a boot requirement.
+const backendlessEnv = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('STORAGE_') && !key.startsWith('AWS_')))
+const backendless = Bun.spawn(['node', '.output/server/index.mjs'], {
+  env: { ...backendlessEnv, PORT: '3198', HOST: '127.0.0.1' }, stdout: 'pipe', stderr: 'pipe',
+})
+try {
+  let ready = false
+  for (let attempt = 0; attempt < 60; attempt++) {
+    try {
+      assert.equal((await fetch('http://127.0.0.1:3198/')).status, 200)
+      ready = true
+      break
+    }
+    catch { await Bun.sleep(250) }
+  }
+  assert(ready, 'Installed Storage module boots without backend, bucket or region when unused')
+  console.info('[storage] backendless production boot passed')
+}
+finally { backendless.kill('SIGTERM'); await backendless.exited }
+
 for (const provider of ['rustfs', 'garage'] as const) {
   const project = `storage-test-${provider}-${randomUUID().slice(0, 8)}`
   let server: ReturnType<typeof Bun.spawn> | undefined
@@ -20,26 +40,37 @@ for (const provider of ['rustfs', 'garage'] as const) {
     })
     assert.notEqual(untrusted.headers.get('access-control-allow-origin'), 'https://untrusted.invalid')
     if (provider === 'garage') {
-      const address = await compose(project, ['port', 'garage-ui', '3909'], env)
+      const address = await compose(project, ['port', 'garage-ui', '8080'], env)
       let response: Response | undefined
       for (let attempt = 0; attempt < 40; attempt++) {
-        try { response = await fetch(`http://${address}`); break }
+        try { response = await fetch(`http://${address}/health`); if (response.ok) break }
         catch { await Bun.sleep(250) }
       }
-      assert(response && response.ok, 'Garage UI reachability')
-      assert.equal((await fetch(`http://${address}/api/config`)).status, 401, 'UI admin configuration requires authentication')
-      const failedLogin = await fetch(`http://${address}/api/auth/login`, {
-        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'operator', password: 'wrong' }),
-      })
-      assert.equal(failedLogin.status, 401)
-      const login = await fetch(`http://${address}/api/auth/login`, {
-        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'operator', password: 'local-ui-dev-only' }),
+      assert(response && response.ok, 'Noooste Garage UI health')
+      assert.equal((await fetch(`http://${address}/`)).status, 200, 'UI frontend reachability')
+      const authConfig = await (await fetch(`http://${address}/auth/config`)).json()
+      assert.equal(authConfig.token.enabled, true, 'Operator token authentication is enabled')
+      assert(!JSON.stringify(authConfig).includes('local-only-garage-admin-change-me'), 'Public auth configuration must not expose admin credentials')
+      assert.equal((await fetch(`http://${address}/api/v1/cluster/status`)).status, 401, 'Admin API requires authentication')
+      for (const token of ['', 'wrong', config.secretAccessKey]) {
+        const failedLogin = await fetch(`http://${address}/auth/login-token`, {
+          method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token }),
+        })
+        assert.equal(failedLogin.status, 401, 'Empty/wrong/S3 credentials cannot authenticate as a Garage administrator')
+      }
+      const login = await fetch(`http://${address}/auth/login-token`, {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: 'local-only-garage-admin-change-me' }),
       })
       assert.equal(login.status, 200)
-      const cookie = login.headers.getSetCookie().map(value => value.split(';')[0]).join('; ')
-      assert(cookie, 'UI login establishes operator session')
-      const cluster = await fetch(`http://${address}/api/v2/GetClusterStatus`, { headers: { cookie } })
-      assert.equal(cluster.status, 200, 'UI admin proxy must reach the configured Garage v2 API')
+      const session = await login.json()
+      assert.equal(session.success, true)
+      assert(session.token && session.token !== 'local-only-garage-admin-change-me', 'UI login returns a separate signed session token')
+      const cluster = await fetch(`http://${address}/api/v1/cluster/status`, { headers: { authorization: `Bearer ${session.token}` } })
+      assert.equal(cluster.status, 200, 'UI admin proxy must reach Garage 2.4.1')
+      const status = await cluster.json()
+      assert.equal(status.success, true)
+      assert(status.data, 'Successful admin API response contains cluster status')
+      console.info('[storage] Noooste Garage UI v0.13.0 health, token authentication and Garage 2.4.1 admin API passed')
     }
     // Prove the installed module's server auto-import in actual production Node output.
     server = Bun.spawn(['node', '.output/server/index.mjs'], {
@@ -65,8 +96,6 @@ for (const provider of ['rustfs', 'garage'] as const) {
     server?.kill('SIGTERM')
     if (server) await server.exited
     backend?.storage.close()
-    await compose(project, ['--profile', provider, '--profile', 'garage-ui', 'down', '--volumes', '--remove-orphans'], {
-      GARAGE_UI_AUTH: backend?.env.GARAGE_UI_AUTH ?? 'unused:unused',
-    })
+    await compose(project, ['--profile', provider, '--profile', 'garage-ui', 'down', '--volumes', '--remove-orphans'])
   }
 }

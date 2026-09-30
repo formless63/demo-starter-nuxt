@@ -32,18 +32,17 @@ services:
       - garage-data:/var/lib/garage
     restart: unless-stopped
   garage-ui:
-    image: khairul169/garage-webui:1.1.0
+    image: noooste/garage-ui:v0.13.0
     profiles: [garage-ui]
     depends_on: [garage]
     environment:
-      API_BASE_URL: http://garage:3903
-      API_ADMIN_KEY: local-only-garage-admin-change-me
-      S3_ENDPOINT_URL: http://garage:3900
-      S3_REGION: garage
-      # Required even on localhost. Generate with htpasswd -nbBC 10 operator PASSWORD.
-      # Default password: local-ui-dev-only. Local development ONLY; override it.
-      AUTH_USER_PASS: ${GARAGE_UI_AUTH:-operator:$$2b$$10$$uJ8.mb0GUmYviZ35Zj28HuXtwGTQnrLSghaXEmiKFOnVlqdJQD2YG}
-    ports: ["127.0.0.1:${GARAGE_UI_PORT:-3909}:3909"]
+      # Operator-only token/region come from Garage's config, never S3 credentials.
+      GARAGE_UI_GARAGE_TOML: /etc/garage.toml
+      GARAGE_UI_GARAGE_ENDPOINT: http://garage:3900
+      GARAGE_UI_GARAGE_ADMIN_ENDPOINT: http://garage:3903
+      GARAGE_UI_AUTH_TOKEN_ENABLED: "true"
+    volumes: [./garage.toml:/etc/garage.toml:ro]
+    ports: ["127.0.0.1:${GARAGE_UI_PORT:-3909}:8080"]
     restart: unless-stopped
 volumes:
   rustfs-data:

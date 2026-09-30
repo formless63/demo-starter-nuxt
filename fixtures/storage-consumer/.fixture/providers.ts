@@ -6,7 +6,7 @@ import { createStorage } from '@repo/nuxt-storage/server'
 export type Provider = 'rustfs' | 'garage'
 const composeFile = fileURLToPath(new URL('./compose.yaml', import.meta.url))
 const docker = process.env.STORAGE_DOCKER_SUDO === 'true'
-  ? ['sudo', '-n', '--preserve-env=RUSTFS_PORT,RUSTFS_CONSOLE_PORT,GARAGE_PORT,GARAGE_UI_PORT,GARAGE_UI_AUTH,STORAGE_DEV_ACCESS_KEY,STORAGE_DEV_SECRET_KEY,STORAGE_DEV_BUCKET,STORAGE_DEV_ORIGIN,GARAGE_DEV_ACCESS_KEY', 'docker']
+  ? ['sudo', '-n', '--preserve-env=RUSTFS_PORT,RUSTFS_CONSOLE_PORT,GARAGE_PORT,GARAGE_UI_PORT,STORAGE_DEV_ACCESS_KEY,STORAGE_DEV_SECRET_KEY,STORAGE_DEV_BUCKET,STORAGE_DEV_ORIGIN,GARAGE_DEV_ACCESS_KEY', 'docker']
   : ['docker']
 
 export async function compose(project: string, args: string[], env: NodeJS.ProcessEnv = {}) {
@@ -24,7 +24,6 @@ export async function startProvider(provider: Provider, project: string, tempora
     RUSTFS_CONSOLE_PORT: temporary ? '0' : process.env.RUSTFS_CONSOLE_PORT ?? '9001',
     GARAGE_PORT: temporary ? '0' : process.env.GARAGE_PORT ?? '3900',
     GARAGE_UI_PORT: temporary ? '0' : process.env.GARAGE_UI_PORT ?? '3909',
-    GARAGE_UI_AUTH: process.env.GARAGE_UI_AUTH ?? `operator:${await Bun.password.hash('local-ui-dev-only', { algorithm: 'bcrypt', cost: 10 })}`,
   }
   const profiles = ['--profile', provider, ...(ui ? ['--profile', 'garage-ui'] : [])]
   await compose(project, [...profiles, 'up', '-d', ...(ui ? [provider, 'garage-ui'] : [provider])], env)

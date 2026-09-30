@@ -4,7 +4,7 @@ const project = 'starter-storage-dev'
 const provider = Bun.argv[2]
 if (provider === 'down') {
   // No --volumes: operator data is retained.
-  await compose(project, ['--profile', 'rustfs', '--profile', 'garage', '--profile', 'garage-ui', 'down', '--remove-orphans'], { GARAGE_UI_AUTH: 'unused:unused' })
+  await compose(project, ['--profile', 'rustfs', '--profile', 'garage', '--profile', 'garage-ui', 'down', '--remove-orphans'])
 }
 else if (provider === 'rustfs' || provider === 'garage') {
   const backend = await startProvider(provider, project)

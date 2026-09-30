@@ -52,7 +52,7 @@ export function validateTtl(ttl: number): number {
 
 export function resolveStorageConfig(options: StorageConfig = {}, env: NodeJS.ProcessEnv = process.env) {
   const bucket = options.bucket ?? env.STORAGE_BUCKET
-  const region = options.region ?? (env.STORAGE_REGION || env.AWS_REGION || env.AWS_DEFAULT_REGION || 'us-east-1')
+  const region = options.region ?? (env.STORAGE_REGION || env.AWS_REGION || env.AWS_DEFAULT_REGION)
   const endpoint = options.endpoint ?? env.STORAGE_ENDPOINT
   const accessKeyId = options.accessKeyId ?? env.STORAGE_ACCESS_KEY_ID
   const secretAccessKey = options.secretAccessKey ?? env.STORAGE_SECRET_ACCESS_KEY
@@ -63,7 +63,7 @@ export function resolveStorageConfig(options: StorageConfig = {}, env: NodeJS.Pr
   try { keyPrefix = normalizeStoragePrefix(options.keyPrefix ?? env.STORAGE_KEY_PREFIX ?? '') }
   catch { throw new StorageError('configuration') }
   if (!bucket || !/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(bucket)
-    || !/^[a-z0-9-]{1,64}$/.test(region) || Boolean(accessKeyId) !== Boolean(secretAccessKey)
+    || !region || !/^[a-z0-9-]{1,64}$/.test(region) || Boolean(accessKeyId) !== Boolean(secretAccessKey)
     || (sessionToken && !accessKeyId) || (pathStyle !== undefined && !['true', 'false'].includes(pathStyle))) {
     throw new StorageError('configuration')
   }

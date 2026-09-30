@@ -3,23 +3,37 @@ import { createStorage, createStorageKey, resolveStorageConfig, validateComplete
 
 describe('Storage configuration and safe primitives', () => {
   it('requires a bucket only on use and preserves the AWS credential chain', async () => {
-    const storage = createStorage({ env: {} })
+    const storage = createStorage({ region: 'eu-west-1', env: {} })
     await expect(storage.checkStorage()).rejects.toMatchObject({ code: 'configuration' })
     const config = resolveStorageConfig({}, { STORAGE_BUCKET: 'test-bucket', AWS_DEFAULT_REGION: 'eu-west-1' })
     expect(config).toMatchObject({ region: 'eu-west-1', forcePathStyle: false, credentials: undefined, presignTtlSeconds: 600 })
-    const chain = createStorage({ bucket: 'test-bucket', env: {} })
+    const chain = createStorage({ bucket: 'test-bucket', region: 'eu-west-1', env: {} })
     expect(chain.getS3Client().config.credentials).toBeTypeOf('function')
     chain.close()
   })
+  it('resolves explicit region sources in order and rejects missing region only on use', async () => {
+    const env = { STORAGE_BUCKET: 'test-bucket', STORAGE_REGION: 'garage', AWS_REGION: 'us-west-2', AWS_DEFAULT_REGION: 'eu-west-1' }
+    expect(resolveStorageConfig({}, env).region).toBe('garage')
+    expect(resolveStorageConfig({}, { ...env, STORAGE_REGION: '' }).region).toBe('us-west-2')
+    expect(resolveStorageConfig({}, { ...env, STORAGE_REGION: '', AWS_REGION: '' }).region).toBe('eu-west-1')
+    expect(resolveStorageConfig({ region: 'ap-southeast-2' }, env).region).toBe('ap-southeast-2')
+    const storage = createStorage({ bucket: 'test-bucket', env: {} })
+    try {
+      expect(() => storage.getS3Client()).toThrow('Storage: configuration')
+      await expect(storage.checkStorage()).rejects.toMatchObject({ code: 'configuration', message: 'Storage: configuration' })
+      await expect(storage.presignDownload('test/key')).rejects.toMatchObject({ code: 'configuration' })
+    }
+    finally { storage.close() }
+  })
   it('supports self-hosted endpoint, explicit/session credentials and path-style overrides', () => {
-    const config = resolveStorageConfig({}, { STORAGE_BUCKET: 'test-bucket', STORAGE_ENDPOINT: 'http://localhost:9000', STORAGE_ACCESS_KEY_ID: 'access', STORAGE_SECRET_ACCESS_KEY: 'secret', STORAGE_SESSION_TOKEN: 'session' })
+    const config = resolveStorageConfig({}, { STORAGE_BUCKET: 'test-bucket', STORAGE_REGION: 'garage', STORAGE_ENDPOINT: 'http://localhost:9000', STORAGE_ACCESS_KEY_ID: 'access', STORAGE_SECRET_ACCESS_KEY: 'secret', STORAGE_SESSION_TOKEN: 'session' })
     expect(config).toMatchObject({ forcePathStyle: true, credentials: { accessKeyId: 'access', secretAccessKey: 'secret', sessionToken: 'session' } })
-    expect(resolveStorageConfig({ forcePathStyle: false }, { STORAGE_BUCKET: 'test-bucket', STORAGE_ENDPOINT: 'http://localhost:9000' }).forcePathStyle).toBe(false)
+    expect(resolveStorageConfig({ forcePathStyle: false }, { STORAGE_BUCKET: 'test-bucket', STORAGE_REGION: 'garage', STORAGE_ENDPOINT: 'http://localhost:9000' }).forcePathStyle).toBe(false)
     expect(resolveStorageConfig({}, { STORAGE_BUCKET: 'test-bucket', AWS_REGION: 'us-west-2', AWS_DEFAULT_REGION: 'us-east-1' }).region).toBe('us-west-2')
     for (const env of [{ STORAGE_ACCESS_KEY_ID: 'access' }, { STORAGE_SECRET_ACCESS_KEY: 'secret' }, { STORAGE_FORCE_PATH_STYLE: 'maybe' }, { STORAGE_ENDPOINT: 'https://access:secret@example.com' }, { STORAGE_KEY_PREFIX: '../invalid' }]) {
-      expect(() => resolveStorageConfig({}, { STORAGE_BUCKET: 'test-bucket', ...env })).toThrow('Storage: configuration')
+      expect(() => resolveStorageConfig({}, { STORAGE_BUCKET: 'test-bucket', STORAGE_REGION: 'garage', ...env })).toThrow('Storage: configuration')
     }
-    for (const ttl of [29, 3601, 1.5, NaN]) expect(() => resolveStorageConfig({ bucket: 'test-bucket', presignTtlSeconds: ttl }, {})).toThrow()
+    for (const ttl of [29, 3601, 1.5, NaN]) expect(() => resolveStorageConfig({ bucket: 'test-bucket', region: 'garage', presignTtlSeconds: ttl }, {})).toThrow()
   })
   it('generates opaque namespaced keys and rejects path/header injection', () => {
     const first = createStorageKey('imports', 'application/')
