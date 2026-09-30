@@ -15,7 +15,8 @@ WORKDIR /app
 COPY --from=build /app/.output ./.output
 COPY --from=build /app/.migration ./.migration
 COPY --from=build /app/.jobs ./.jobs
-COPY --from=build /app/server/database/migrations ./server/database/migrations
+# The non-root migrator must read history even from a restrictive checkout.
+COPY --from=build --chown=node:node /app/server/database/migrations ./server/database/migrations
 USER node
 EXPOSE 3000
 CMD ["node", ".output/server/index.mjs"]

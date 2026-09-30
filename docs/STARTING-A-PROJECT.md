@@ -1,18 +1,19 @@
 # Starting a project
 
-The repository is both a baseline starter and a reference application. Decide whether Jobs, API Platform, Observability and Object Storage belong in the product before building domain features around them.
+The repository is both a baseline starter and a reference application. Decide whether Jobs, API Platform, Observability, Object Storage and Audit Log belong in the product before building domain features around them.
 
 ## Full/reference setup
 
 Keep the completed capabilities when durable background work, a machine-facing API and server telemetry are useful. The root application already:
 
-- depends on and registers `@repo/nuxt-jobs`, `@repo/nuxt-api`, `@repo/nuxt-observability` and `@repo/nuxt-storage`;
+- depends on and registers `@repo/nuxt-jobs`, `@repo/nuxt-api`, `@repo/nuxt-observability`, `@repo/nuxt-storage` and `@repo/nuxt-audit-log`;
 - includes a Jobs registry and `starter.echo` demonstration task;
 - composes API Platform into Better Auth and exposes project API contracts;
 - includes the application and API-key migration plus explicit pg-boss migration commands;
 - builds the app, migration tools, and Jobs worker into one production image; and
 - adds safe JSON logs/request IDs, explicit server telemetry and optional Jobs/API wrappers; and
 - exposes lazy server-only S3 primitives, optional app-owned telemetry and explicit local provider commands, with no File UI or required storage backend at startup; and
+- appends stable actor/Project IDs transactionally to application-owned audit history; and
 - exercises all packages through catalog-driven fixture tests and CI.
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
@@ -106,3 +107,12 @@ After either path, `bun run capabilities:status` should report whether the capab
 4. Clear generated Nuxt state, reinstall, then run capability checks, Jobs fixture, normal checks and the production worker path. Keep generic Jobs schema/history and external webhook endpoints untouched.
 
 For permanent pruning, consistently update catalog/docs before removing `packages/nuxt-webhooks`, `fixtures/webhooks-consumer`, its contract/evaluation and skill. Preserve its roadmap ID where planned business integrations reference it. Remove Webhooks first before removing its hard Jobs dependency.
+
+## Remove Audit Log
+
+1. Remove the Nuxt module, root dependency and `audit-log` from referenceApplication.enabledCapabilities.
+2. Remove appendAuditEvent imports/calls and actor parameters from Project services; restore plain domain writes or retain transactions as appropriate. Remove the machine actor argument in the v1 creation route. Remove Audit-specific root integration tests.
+3. Remove the package schema import/export and schema object entry. Preserve `0002_audit-log.sql`, migration journal/snapshots and existing audit table/history. Retain a local table definition if subsequent schema generation would otherwise propose a drop. Never apply an incidental generated drop.
+4. Reinstall, clear generated state, run capabilities:check, typecheck/build, ordinary checks and the production migration/container smoke. No worker or daemon needs draining.
+
+A deployed table drop requires a new explicit destructive migration and a deliberate retention/privacy decision. For permanent pruning, update the catalog/roadmap/docs and remove package, fixture, contract, evaluation and audit-log-change skill only after all imports are gone; preserve the roadmap ID for optional relationships.

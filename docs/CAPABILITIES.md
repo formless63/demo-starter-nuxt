@@ -21,6 +21,7 @@ The root application deliberately enables every completed capability for continu
 | `email` | `@repo/nuxt-email` | Enabled | No | None | SMTP on use; Mailpit optional | [Email](../capabilities/email/CAPABILITY.md) |
 
 | `webhooks` | `@repo/nuxt-webhooks` | Enabled | No | Jobs | Remote endpoints when used | [Webhooks](../capabilities/webhooks/CAPABILITY.md) |
+| `audit-log` | `@repo/nuxt-audit-log` | Enabled | No | None | PostgreSQL (required) | [Audit Log](../capabilities/audit-log/CAPABILITY.md) |
 
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
 
@@ -101,3 +102,7 @@ Package tests build and pack the real artifact, install it into an external-styl
 ## Webhooks
 
 Install and explicitly enable Jobs and Webhooks together; compose `createWebhookJobs({ events, resolveTarget })` into your existing Jobs registry. Serialize once with `createWebhookEvent`; keep endpoints/secrets out of queues. Applications own routes and secrets, verify raw bytes before parsing, and provide durable transactional idempotency for replay prevention. Normal build/health/worker startup requires no endpoints. `bun run webhooks:smoke` exercises a local signed receiver and bounded retries. The [contract](../capabilities/webhooks/CAPABILITY.md) covers SSRF/DNS limits, privacy, retry outcomes and removal while retaining Jobs.
+
+## Audit Log
+
+Explicitly enable `@repo/nuxt-audit-log`, export its table in the application Drizzle schema and apply a committed migration. Append within the domain transaction; query using bounded exact filters and an opaque cursor. Root Projects record stable user/machine IDs only. Authentication and all other capabilities remain optional. See the [contract](../capabilities/audit-log/CAPABILITY.md) and [removal recipe](STARTING-A-PROJECT.md#remove-audit-log). No UI or retention service is supplied.

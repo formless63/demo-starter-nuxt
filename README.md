@@ -39,6 +39,7 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Object Storage | Available (`done`) | Optional | S3-compatible service only when used; no capability dependency | Private objects, streaming, signed GET/PUT, multipart and post-upload policy verification |
 | Email | Available (`done`) | Optional | SMTP only when used; no capability dependency | Safe text/HTML SMTP, Mailpit fixture and hashed-token magic links |
 | Webhooks | Available (`done`) | Optional | Jobs; remote endpoints only when delivering | Standard signed envelopes, durable delivery and bounded raw-body verification |
+| Audit Log | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; optional authentication | Transactional append-oriented history and bounded keyset queries |
 
 `defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage and Email remain lazy with no provider required to boot/build.
 

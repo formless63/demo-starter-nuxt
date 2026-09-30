@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@repo/nuxt-api": "workspace:*",
+    "@repo/nuxt-audit-log": "workspace:*",
     "@repo/nuxt-jobs": "workspace:*",
     "@repo/nuxt-observability": "workspace:*",
     "@repo/nuxt-storage": "workspace:*",
