@@ -159,6 +159,10 @@ for (const capability of catalog.capabilities) {
       errors.push(`${capability.id} documentationPath must be ${expectedPath}`)
     }
     await assertPath(`${capability.id} capability documentation`, expectedPath)
+    if (!capability.evaluationDocument) errors.push(`${capability.id} evaluationDocument is required for a completed capability`)
+    if (!capability.packagePath && !capability.modulePath) {
+      errors.push(`${capability.id} must declare completed package or Nuxt module implementation metadata`)
+    }
   }
   if (capability.evaluationDocument) {
     await assertPath(`${capability.id} evaluation document`, capability.evaluationDocument)
@@ -172,7 +176,9 @@ for (const capability of catalog.capabilities) {
     const manifestPath = `${capability.packagePath}/package.json`
     await assertPath(`${capability.id} package`, manifestPath)
     await assertPath(`${capability.id} Nuxt package module entry`, `${capability.packagePath}/src/module.ts`)
-    const manifest = await Bun.file(resolve(root, manifestPath)).json() as PackageManifest
+    const manifest = await Bun.file(resolve(root, manifestPath)).exists()
+      ? await Bun.file(resolve(root, manifestPath)).json() as PackageManifest
+      : {}
     if (!capability.packageName) errors.push(`${capability.id} packageName is required with packagePath`)
     else if (manifest.name !== capability.packageName) {
       errors.push(`${capability.id} package name ${manifest.name ?? '(missing)'} does not match ${capability.packageName}`)
@@ -248,9 +254,9 @@ const capabilitiesById = new Map(catalog.capabilities.map(capability => [capabil
 const nuxtConfig = await Bun.file(resolve(root, 'nuxt.config.ts')).text()
 for (const id of catalog.referenceApplication?.enabledCapabilities ?? []) {
   const capability = capabilitiesById.get(id)
-  if (!capability?.packageName || !packageManifest.dependencies?.[capability.packageName]
-    || !nuxtConfig.includes(`'${capability.packageName}'`)) {
-    errors.push(`Reference application ${id} must reference an installed, explicitly registered package capability`)
+  if (capability?.status !== 'done' || !capability.packageName || !packageManifest.dependencies?.[capability.packageName]
+    || ![`'${capability.packageName}'`, `"${capability.packageName}"`].some(literal => nuxtConfig.includes(literal))) {
+    errors.push(`Reference application ${id} must reference a completed, installed, explicitly registered package capability`)
   }
 }
 

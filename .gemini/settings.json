@@ -1,1 +1,44 @@
-{"context":{"fileName":"AGENTS.md"}}
+{
+  "context": {
+    "fileName": "AGENTS.md"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${GEMINI_PROJECT_DIR}/.agents/hooks/session-context.sh\" gemini",
+            "timeout": 15000,
+            "name": "project-session-context"
+          }
+        ]
+      }
+    ],
+    "BeforeTool": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"${GEMINI_PROJECT_DIR}/.agents/hooks/tool-guard.ts\" gemini",
+            "timeout": 15000,
+            "name": "project-tool-guard"
+          }
+        ],
+        "matcher": ".*"
+      }
+    ],
+    "AfterAgent": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"${GEMINI_PROJECT_DIR}/.agents/hooks/quality-gate.ts\" gemini",
+            "timeout": 15000,
+            "name": "project-quality-gate"
+          }
+        ]
+      }
+    ]
+  }
+}

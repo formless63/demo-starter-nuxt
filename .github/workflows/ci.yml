@@ -53,10 +53,14 @@ jobs:
       DEPLOYMENT_ENVIRONMENT: ci
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 24 }
       - uses: oven-sh/setup-bun@v2
         with: { bun-version: 1.4.2 }
       - run: bun install --frozen-lockfile
       - run: bun run capabilities:check
+      - run: bun run agents:check
+      - run: bun run agents:test
       - run: bun run db:migrate
       - run: bun run jobs:migrate
       - run: bun run jobs:doctor

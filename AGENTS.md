@@ -33,6 +33,7 @@ Read only what is relevant to the task:
 - `.agents/context/stack.md` for dependency or integration decisions.
 - `.agents/context/commands.md` for canonical development and verification commands.
 - `.agents/skills/` contains task-specific workflows; use a skill only when its description matches the work.
+- `docs/AGENT-AUTOMATION.md` explains shared project hooks, trust controls, and automatic versus full verification.
 
 Keep this file concise. Put task-specific procedures in skills rather than expanding always-loaded instructions.
 
