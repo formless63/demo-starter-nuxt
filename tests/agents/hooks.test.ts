@@ -23,10 +23,10 @@ function repository() {
   git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'fixture')
   return { root, git }
 }
-function runner(calls: string[], capabilitiesOk = true): Runner {
+function runner(calls: string[], capabilitiesOk = true, agentsOk = capabilitiesOk): Runner {
   return (args, root) => {
     calls.push(args.join(' '))
-    if (args[0] === 'bun') return { ok: capabilitiesOk, text: '' }
+    if (args[0] === 'bun') return { ok: args[2] === 'agents:check' ? agentsOk : capabilitiesOk, text: '' }
     const result = spawnSync(args[0]!, args.slice(1), { cwd: root, encoding: 'utf8' })
     return { ok: result.status === 0, text: result.stdout }
   }
@@ -133,16 +133,45 @@ describe('quality gate', () => {
       expect(calls.some(call => call.startsWith('bun '))).toBe(false)
     }
   })
-  test('governance changes invoke only the cheap checker; untracked and renamed paths are included', () => {
+  test('overlapping changes invoke both cheap checkers; untracked and renamed paths are included', () => {
     const { root, git } = repository()
     mkdirSync(join(root, '.agents'), { recursive: true })
     writeFileSync(join(root, '.agents', 'new.md'), 'policy\n')
     const calls: string[] = []
-    expect(qualityGate(root, runner(calls, false))).toContain('bun run capabilities:check')
-    expect(calls.filter(call => call.startsWith('bun '))).toEqual(['bun run capabilities:check'])
+    const reason = qualityGate(root, runner(calls, false))
+    expect(reason).toContain('bun run capabilities:check')
+    expect(reason).toContain('bun run agents:check')
+    expect(calls.filter(call => call.startsWith('bun '))).toEqual(['bun run capabilities:check', 'bun run agents:check'])
     rmSync(join(root, '.agents'), { recursive: true })
     git('mv', 'source.txt', 'ROADMAP.md')
     expect(qualityGate(root, runner([], false))).toContain('capabilities:check')
+  })
+  test.each([
+    ['capabilities/catalog.json', ['bun run capabilities:check']],
+    ['ROADMAP.md', ['bun run capabilities:check']],
+    ['scripts/agents-check.ts', ['bun run agents:check']],
+    ['docs/AGENT-AUTOMATION.md', ['bun run agents:check']],
+    ['.agents/hooks/quality-gate.ts', ['bun run capabilities:check', 'bun run agents:check']],
+    ['.claude/settings.json', ['bun run capabilities:check', 'bun run agents:check']],
+    ['.codex/hooks.json', ['bun run capabilities:check', 'bun run agents:check']],
+    ['.gemini/settings.json', ['bun run capabilities:check', 'bun run agents:check']],
+  ])('selects deterministic checkers for %s', (path, expected) => {
+    const calls: string[] = []
+    qualityGate(projectRoot, (args) => {
+      calls.push(args.join(' '))
+      return { ok: true, text: args[1] === 'status' ? ` M ${path}\0` : '' }
+    })
+    expect(calls.filter(call => call.startsWith('bun '))).toEqual(expected)
+  })
+  test('a harness failure requests retry even when the capability checker passes', () => {
+    const { root } = repository()
+    mkdirSync(join(root, '.codex'))
+    writeFileSync(join(root, '.codex/hooks.json'), '{invalid')
+    const calls: string[] = []
+    const reason = qualityGate(root, runner(calls, true, false))
+    expect(reason).toContain('bun run agents:check')
+    expect(reason).not.toContain('capabilities:check')
+    for (const client of clients) expect(gateResponse(client, reason)).toHaveProperty('decision', client === 'gemini' ? 'deny' : 'block')
   })
   test('unrelated edits do not invoke capability, network, Docker or full verification', () => {
     const { root } = repository()
