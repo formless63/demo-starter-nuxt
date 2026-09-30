@@ -15,4 +15,15 @@ Read `ROADMAP.md`, `capabilities/catalog.json`, and the capability's `capabiliti
    Keep `referenceApplication.enabledCapabilities` aligned with explicit root dependency/module enablement. Mark new work `in-progress` before implementation; explicit generic package build/test can target that status, but the CI matrix includes only completed packages.
 6. Test clean installation and removal with `bun run packages:test <id>` when applicable. Run capability-specific migrations and smoke tests, `bun run capabilities:check`, and normal repository verification.
 
-Do not create empty module-specific skills for capabilities that are not implemented.
+## Definition of Done
+
+For each new reusable capability, where applicable:
+
+- Mark the catalog entry `in-progress` before implementation; keep relationships and `ROADMAP.md` aligned.
+- Write `capabilities/<id>/CAPABILITY.md` and declare an existing evaluation document.
+- Complete package/add-on metadata and a clean consumer fixture; verify clean installation and removal with the catalog-driven lifecycle tooling.
+- Verify reference-app integration when intentionally enabled; update the README capability table, `docs/CAPABILITIES.md`, and the pruning/removal recipe in `docs/STARTING-A-PROJECT.md`.
+- Update relevant `.agents/context` files. Add a domain-specific skill only when meaningful maintenance rules warrant it. **Do not create a domain skill solely because a capability exists.**
+- Run `capabilities:status`, `capabilities:check`, normal affected verification and full CI; change status to `done` only after verification passes.
+
+Machine-readable catalog checks enforce declarations and relationships; human documentation explains usage and tradeoffs.

@@ -12,3 +12,4 @@ packages/*/dist
 *.log
 
 .nuxtrc
+.claude/settings.local.json

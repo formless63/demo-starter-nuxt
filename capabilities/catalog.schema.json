@@ -135,8 +135,11 @@
         {
           "if": { "properties": { "status": { "const": "done" } }, "required": ["status"] },
           "then": {
-            "properties": { "documentationPath": { "$ref": "#/$defs/nonEmptyString" } },
-            "required": ["documentationPath"]
+            "properties": {
+              "documentationPath": { "$ref": "#/$defs/nonEmptyString" },
+              "evaluationDocument": { "$ref": "#/$defs/nonEmptyString" }
+            },
+            "required": ["documentationPath", "evaluationDocument"]
           }
         }
       ]

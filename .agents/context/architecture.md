@@ -1,5 +1,7 @@
 # Architecture
 
+Project agent settings in `.claude`, `.codex` and `.gemini` are thin adapters for shared local hooks in `.agents/hooks`; guidance and skills remain canonical in `AGENTS.md` and `.agents/skills`. Hooks provide concise context, minimal tool guards and cheap completion checks, not an agent framework or application runtime capability.
+
 Nuxt's `app/` owns Vue pages, layouts, components, middleware, and browser-safe composables. `server/` owns Nitro routes, authentication, authorization, and PostgreSQL access; never import Vue/app code there. `shared/` is reserved for runtime-neutral types and validation.
 
 A page uses `useFetch`/`$fetch` to call `/api`. Each protected server handler calls `requireUser(event)` before reading data and includes `ownerId` in every resource query, update, and delete. Direct Drizzle queries are preferred over an empty repository abstraction. Errors use h3 status errors.
