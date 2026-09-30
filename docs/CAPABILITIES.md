@@ -20,6 +20,8 @@ The root application deliberately enables every completed capability for continu
 | `object-storage` | `@repo/nuxt-storage` | Enabled | No | None | S3-compatible service when used | [Object Storage](../capabilities/object-storage/CAPABILITY.md) |
 | `email` | `@repo/nuxt-email` | Enabled | No | None | SMTP on use; Mailpit optional | [Email](../capabilities/email/CAPABILITY.md) |
 
+| `webhooks` | `@repo/nuxt-webhooks` | Enabled | No | Jobs | Remote endpoints when used | [Webhooks](../capabilities/webhooks/CAPABILITY.md) |
+
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
 
 ## Adding or enabling a capability
@@ -95,3 +97,7 @@ bun run check
 ```
 
 Package tests build and pack the real artifact, install it into an external-style fixture, exercise capability-owned runtime checks, remove it, clear generated state, and prove the remaining fixture still typechecks and builds. They validate package-level removal without acting as a source-rewriting uninstaller.
+
+## Webhooks
+
+Install and explicitly enable Jobs and Webhooks together; compose `createWebhookJobs({ events, resolveTarget })` into your existing Jobs registry. Serialize once with `createWebhookEvent`; keep endpoints/secrets out of queues. Applications own routes and secrets, verify raw bytes before parsing, and provide durable transactional idempotency for replay prevention. Normal build/health/worker startup requires no endpoints. `bun run webhooks:smoke` exercises a local signed receiver and bounded retries. The [contract](../capabilities/webhooks/CAPABILITY.md) covers SSRF/DNS limits, privacy, retry outcomes and removal while retaining Jobs.

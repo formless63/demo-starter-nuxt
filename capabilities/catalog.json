@@ -1,7 +1,7 @@
 {
   "$schema": "./catalog.schema.json",
   "schemaVersion": 1,
-  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage", "email"] },
+  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage", "email", "webhooks"] },
   "baseline": [
     { "id": "framework", "displayName": "Nuxt framework", "summary": "Nuxt 4 with Vue and Nitro routing, SSR, and server APIs." },
     { "id": "strict-typescript", "displayName": "Strict TypeScript", "summary": "Strict TypeScript checks across application and server code." },
@@ -213,12 +213,38 @@
       "id": "webhooks",
       "displayName": "Webhooks",
       "kind": "foundational-backend",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": ["jobs"],
       "integratesWith": ["audit-log", "observability", "api-platform"],
-      "externalRequirements": [{ "name": "Remote webhook endpoints", "required": true }],
-      "summary": "Reliable inbound and outbound webhook processing with durable delivery."
+      "externalRequirements": [
+        {
+          "name": "Remote webhook endpoints",
+          "required": true,
+          "notes": "Required only for outbound operations; build, boot and health need no configured endpoint."
+        }
+      ],
+      "summary": "Reliable inbound and outbound webhook processing with durable delivery.",
+      "baselineRequirements": ["node-runtime", "postgresql"],
+      "scripts": ["webhooks:smoke", "packages:build", "packages:test"],
+      "environmentVariables": [],
+      "migrations": ["Uses explicit Jobs migration; no Webhooks table"],
+      "runtimeProcesses": ["Existing Jobs worker"],
+      "documentationPath": "capabilities/webhooks/CAPABILITY.md",
+      "agentSkill": ".agents/skills/webhooks-change/SKILL.md",
+      "evaluationDocument": "WEBHOOKS_MODULE_EVALUATION.md",
+      "packageName": "@repo/nuxt-webhooks",
+      "packagePath": "packages/nuxt-webhooks",
+      "fixturePath": "fixtures/webhooks-consumer",
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": ["package:test:runtime", "webhooks:worker"],
+          "paths": ["server/webhooks", "server/api/webhook.post.ts", ".fixture/smoke.ts"],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "audit-log",

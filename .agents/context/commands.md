@@ -44,3 +44,5 @@ All commands use Bun. PostgreSQL is required for migrations, authenticated runti
 
 - Email: `bun run packages:test email` verifies packed SMTP/Mailpit contract and clean removal. `email:check` verifies without sending; `email:smoke [recipient]` sends exactly once (explicit target outside local Mailpit). `email:dev:mailpit` / `email:dev:down` manage the disposable localhost sink, not the production stack.
 - After a root production build, `bun fixtures/email-consumer/.fixture/reference-smoke.ts` checks the actual Nitro magic-link endpoint/delivery/redemption with disposable Mailpit and migrated `DATABASE_URL`; `reference-removal.ts` verifies documented application removal in a temporary copy. Neither runs automatically at turn completion.
+
+`bun run webhooks:smoke` explicitly tests signed local delivery, inbound verification, Jobs retries/exhaustion and permanent rejection. `bun run packages:test webhooks` packs catalog hard dependencies and proves removal retains Jobs. No external endpoint is configured for root build/health/worker startup.

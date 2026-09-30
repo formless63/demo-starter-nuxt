@@ -15,6 +15,7 @@ interface PackageTestConfig {
 interface Capability {
   id: string
   status: string
+  requires?: string[]
   packageName?: string
   packagePath?: string
   fixturePath?: string
@@ -32,6 +33,7 @@ interface PackageManifest {
   dependencies?: Record<string, string>
   devDependencies?: Record<string, string>
   optionalDependencies?: Record<string, string>
+  overrides?: Record<string, string>
 }
 
 const root = process.cwd()
@@ -108,13 +110,23 @@ async function prepareRootPackages() {
   }
 }
 
+function packageClosure(capability: Capability, visiting = new Set<string>()): Capability[] {
+  if (visiting.has(capability.id)) fail(`Hard dependency cycle at ${capability.id}`)
+  visiting.add(capability.id)
+  const dependencies = (capability.requires ?? []).flatMap((id) => {
+    const dependency = packagedCapabilities.find(candidate => candidate.id === id)
+    if (!dependency) fail(`Missing hard package dependency ${id} for ${capability.id}`)
+    return packageClosure(dependency, new Set(visiting))
+  })
+  return [...new Map([...dependencies, capability].map(entry => [entry.id, entry])).values()]
+}
+
 async function buildPackage(capability: Capability) {
   await run(['bun', 'run', '--cwd', capability.packagePath!, 'prepack'], root)
 }
 
 async function testPackage(capability: Capability) {
   const packageName = capability.packageName!
-  const packageRoot = resolve(root, capability.packagePath!)
   const fixtureRoot = resolve(root, capability.fixturePath!)
   const config = capability.packageTest!
   const temporaryRoot = await mkdtemp(join(tmpdir(), `${capability.id}-package-install-`))
@@ -123,10 +135,15 @@ async function testPackage(capability: Capability) {
 
   try {
     await mkdir(packRoot)
-    await run(['bun', 'pm', 'pack', '--destination', packRoot], packageRoot)
-    const archiveName = (await readdir(packRoot)).find(file => file.endsWith('.tgz'))
-    if (!archiveName) fail(`${capability.id} package build did not produce a tarball`)
-    const archivePath = join(packRoot, archiveName)
+    const archives = new Map<string, string>()
+    for (const dependency of packageClosure(capability)) {
+      const destination = join(packRoot, dependency.id)
+      await mkdir(destination)
+      await run(['bun', 'pm', 'pack', '--destination', destination], resolve(root, dependency.packagePath!))
+      const archiveName = (await readdir(destination)).find(file => file.endsWith('.tgz'))
+      if (!archiveName) fail(`${dependency.id} package build did not produce a tarball`)
+      archives.set(dependency.packageName!, join(destination, archiveName))
+    }
 
     await cp(fixtureRoot, consumerRoot, {
       recursive: true,
@@ -136,7 +153,13 @@ async function testPackage(capability: Capability) {
     const manifestPath = join(consumerRoot, 'package.json')
     const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as PackageManifest
     manifest.dependencies ??= {}
-    manifest.dependencies[packageName] = `file:${archivePath}`
+    manifest.overrides ??= {}
+    for (const [name, archive] of archives) {
+      manifest.dependencies[name] = `file:${archive}`
+      // Bun resolves private peer ranges via the registry unless the artifact also
+      // overrides that name. Keep the entire hard-dependency graph external/local.
+      manifest.overrides[name] = `file:${archive}`
+    }
     await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
 
     await run(['bun', 'install'], consumerRoot)
@@ -155,8 +178,11 @@ async function testPackage(capability: Capability) {
     await run(['bun', 'run', 'build'], consumerRoot)
     if (config.runtimeScript) await run(['bun', 'run', config.runtimeScript], consumerRoot)
 
+    delete manifest.overrides?.[packageName]
+    await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
     await run(['bun', 'remove', packageName], consumerRoot)
     const removedManifest = JSON.parse(await readFile(manifestPath, 'utf8')) as PackageManifest
+    delete removedManifest.overrides?.[packageName]
     const removedScripts = new Set(config.removal.scripts)
     removedManifest.scripts = Object.fromEntries(
       Object.entries(removedManifest.scripts ?? {}).filter(([script]) => !removedScripts.has(script)),
@@ -183,6 +209,9 @@ async function testPackage(capability: Capability) {
     }
     await run(['bun', 'run', 'typecheck'], consumerRoot)
     await run(['bun', 'run', 'build'], consumerRoot)
+    for (const dependency of packageClosure(capability).filter(entry => entry.id !== capability.id)) {
+      if (!await exists(installedPackagePath(consumerRoot, dependency.packageName!))) fail(`Required package ${dependency.packageName} disappeared during removal`)
+    }
 
     console.info(`[packages] ${capability.id} clean install, runtime, and removal verification passed`)
   }
