@@ -43,7 +43,7 @@ The generic `packages:*` commands build and exercise the catalog entries. Root p
 
 | Status | Capability |
 | --- | --- |
-| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks |
+| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
 API Platform is capability #2. Observability is capability #3: server-only logs, request correlation, explicit spans/metrics, optional OTLP export and a clean-consumer lifecycle. No new service is required.
@@ -106,11 +106,14 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Default installed: no; root explicitly opts in. `@repo/nuxt-webhooks` supplies Standard Webhooks HMAC signing, bounded raw-body verification, target policy, replay handoff and durable Jobs definitions with no second worker/routes/UI.
 - Contract: [`capabilities/webhooks/CAPABILITY.md`](capabilities/webhooks/CAPABILITY.md)
 
-### Audit Log (`planned`)
+### Audit Log (`done`)
 
 - Requires: none
-- Integrates with: baseline authentication, API Platform, Organizations, Jobs, and business integrations
+- Integrates with: API Platform, Organizations, Jobs, Invoice Ninja, Stripe, Medusa; optional baseline authentication
+- Baseline: PostgreSQL and Drizzle
 - External: PostgreSQL (required)
+- Implementation: `@repo/nuxt-audit-log`, application-owned schema/migrations, transactional append, bounded metadata and keyset queries; no UI or retention daemon.
+- Contract: [`capabilities/audit-log/CAPABILITY.md`](capabilities/audit-log/CAPABILITY.md)
 
 ### AI (`planned`)
 

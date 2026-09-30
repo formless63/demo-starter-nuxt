@@ -5,7 +5,7 @@ import { createProject } from '../../../services/projects'
 export default defineObservedApiHandler(createProjectContract.operationId, async (event) => {
   const principal = await requireApiKey(event, createProjectContract.auth.permissions)
   const input = await readApiBody(event, createProjectContract.request.body)
-  const project = await createProject(useDb(), principal.userId, input)
+  const project = await createProject(useDb(), principal.userId, input, { type: 'machine', id: principal.keyId })
 
   setResponseStatus(event, 201)
   return parseApiResponse(createProjectContract.responses[201].schema, serializeProject(project!))

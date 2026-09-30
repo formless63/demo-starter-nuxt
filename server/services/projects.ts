@@ -1,3 +1,5 @@
+import { appendAuditEvent } from '@repo/nuxt-audit-log/server'
+import type { AuditActor } from '@repo/nuxt-audit-log/server'
 import { and, desc, eq } from 'drizzle-orm'
 import { project } from '../database/schema'
 import type { useDb } from '../utils/db'
@@ -23,13 +25,16 @@ export async function getProject(db: Database, ownerId: string, projectId: strin
   return row
 }
 
-export async function createProject(db: Database, ownerId: string, input: ProjectInput) {
-  const [row] = await db
-    .insert(project)
-    .values({ id: crypto.randomUUID(), ownerId, ...input })
-    .returning()
+export async function createProject(db: Database, ownerId: string, input: ProjectInput, actor: AuditActor = { type: 'user', id: ownerId }) {
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(project)
+      .values({ id: crypto.randomUUID(), ownerId, ...input })
+      .returning()
 
-  return row
+    if (row) await appendAuditEvent(tx, { actorType: actor.type, actorId: actor.id, action: 'project.created', subjectType: 'project', subjectId: row.id, outcome: 'success' })
+    return row
+  })
 }
 
 export async function updateProject(
@@ -37,21 +42,28 @@ export async function updateProject(
   ownerId: string,
   projectId: string,
   input: ProjectInput,
+  actor: AuditActor = { type: 'user', id: ownerId },
 ) {
-  const [row] = await db
-    .update(project)
-    .set({ ...input, updatedAt: new Date() })
-    .where(and(eq(project.id, projectId), eq(project.ownerId, ownerId)))
-    .returning()
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .update(project)
+      .set({ ...input, updatedAt: new Date() })
+      .where(and(eq(project.id, projectId), eq(project.ownerId, ownerId)))
+      .returning()
 
-  return row
+    if (row) await appendAuditEvent(tx, { actorType: actor.type, actorId: actor.id, action: 'project.updated', subjectType: 'project', subjectId: row.id, outcome: 'success' })
+    return row
+  })
 }
 
-export async function deleteProject(db: Database, ownerId: string, projectId: string) {
-  const [row] = await db
-    .delete(project)
-    .where(and(eq(project.id, projectId), eq(project.ownerId, ownerId)))
-    .returning({ id: project.id })
+export async function deleteProject(db: Database, ownerId: string, projectId: string, actor: AuditActor = { type: 'user', id: ownerId }) {
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .delete(project)
+      .where(and(eq(project.id, projectId), eq(project.ownerId, ownerId)))
+      .returning({ id: project.id })
 
-  return row
+    if (row) await appendAuditEvent(tx, { actorType: actor.type, actorId: actor.id, action: 'project.deleted', subjectType: 'project', subjectId: row.id, outcome: 'success' })
+    return row
+  })
 }

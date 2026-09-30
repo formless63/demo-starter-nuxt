@@ -46,3 +46,5 @@ All commands use Bun. PostgreSQL is required for migrations, authenticated runti
 - After a root production build, `bun fixtures/email-consumer/.fixture/reference-smoke.ts` checks the actual Nitro magic-link endpoint/delivery/redemption with disposable Mailpit and migrated `DATABASE_URL`; `reference-removal.ts` verifies documented application removal in a temporary copy. Neither runs automatically at turn completion.
 
 `bun run webhooks:smoke` explicitly tests signed local delivery, inbound verification, Jobs retries/exhaustion and permanent rejection. `bun run packages:test webhooks` packs catalog hard dependencies and proves removal retains Jobs. No external endpoint is configured for root build/health/worker startup.
+
+`bun run packages:test audit-log`: generic packed install/build/remove lifecycle and fixture-owned PostgreSQL migration, metadata, pagination and commit/rollback proof. Fixture creates a disposable database via DATABASE_URL (local test role needs CREATEDB); root migrations include audit_event. No Audit-specific CI orchestration.

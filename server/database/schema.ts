@@ -1,7 +1,8 @@
 import { boolean, index, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
+import { auditEvent } from '@repo/nuxt-audit-log/server'
 import { apikey } from '@repo/nuxt-api/server'
 
-export { apikey }
+export { apikey, auditEvent }
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -64,4 +65,4 @@ export const project = pgTable('project', {
   ...timestamps,
 }, table => [index('project_owner_updated_idx').on(table.ownerId, table.updatedAt)])
 
-export const schema = { user, session, account, verification, apikey, project }
+export const schema = { user, session, account, verification, apikey, project, auditEvent }

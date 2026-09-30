@@ -21,3 +21,5 @@ Official Nuxt documentation should be the primary source. Agents supporting MCP 
 `@repo/nuxt-email` owns Nodemailer 10.0.13 with Nuxt as peer. Explicit SMTP security, bounded structured messages and safe single-attempt error/result handling are server-only; Mailpit1.31.3 is optional disposable test/dev infrastructure. Root Better Auth and telemetry composition introduce no package dependency.
 
 `@repo/nuxt-webhooks` has a hard Jobs peer/module/catalog dependency; Nuxt/Zod are peers. Node 24 native fetch/crypto implement Standard Webhooks HMAC exact-byte signing. `standardwebhooks` 1.1.1 is a root test-only interoperability oracle; optional Audit/API/Observability remain dependency-free.
+
+`@repo/nuxt-audit-log` uses Nuxt/Drizzle peers and @nuxt/kit only; no API/Jobs/auth dependency. Application-generated UUIDs, timestamptz(3), bounded JSONB metadata and three B-tree indexes support append-oriented records and exact keyset queries.

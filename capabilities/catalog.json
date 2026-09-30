@@ -1,7 +1,7 @@
 {
   "$schema": "./catalog.schema.json",
   "schemaVersion": 1,
-  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage", "email", "webhooks"] },
+  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage", "email", "webhooks", "audit-log"] },
   "baseline": [
     { "id": "framework", "displayName": "Nuxt framework", "summary": "Nuxt 4 with Vue and Nitro routing, SSR, and server APIs." },
     { "id": "strict-typescript", "displayName": "Strict TypeScript", "summary": "Strict TypeScript checks across application and server code." },
@@ -250,13 +250,33 @@
       "id": "audit-log",
       "displayName": "Audit Log",
       "kind": "foundational-backend",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": ["api-platform", "organizations", "jobs", "invoice-ninja", "stripe", "medusa"],
       "baselineIntegrations": ["authentication"],
       "externalRequirements": [{ "name": "PostgreSQL", "required": true }],
-      "summary": "Durable actor and system activity records for sensitive application changes."
+      "summary": "Append-oriented application audit events with caller-owned transactions and bounded keyset queries.",
+      "baselineRequirements": ["postgresql", "drizzle"],
+      "scripts": ["db:migrate", "packages:build", "packages:test"],
+      "environmentVariables": ["DATABASE_URL"],
+      "migrations": ["Application-owned committed Drizzle migration for audit_event"],
+      "runtimeProcesses": ["Nitro application"],
+      "documentationPath": "capabilities/audit-log/CAPABILITY.md",
+      "agentSkill": ".agents/skills/audit-log-change/SKILL.md",
+      "evaluationDocument": "AUDIT_LOG_MODULE_EVALUATION.md",
+      "packageName": "@repo/nuxt-audit-log",
+      "packagePath": "packages/nuxt-audit-log",
+      "fixturePath": "fixtures/audit-log-consumer",
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": ["db:migrate", "package:test:runtime"],
+          "paths": ["server/database/schema.ts", "drizzle.config.ts", ".fixture/package-test.ts"],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "ai",
