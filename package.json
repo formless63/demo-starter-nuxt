@@ -33,12 +33,18 @@
     "jobs:worker": "bun scripts/jobs-worker.ts",
     "jobs:migrate": "bun scripts/jobs-migrate.ts",
     "jobs:doctor": "bun scripts/jobs-doctor.ts",
-    "jobs:smoke": "bun scripts/jobs-smoke.ts"
+    "jobs:smoke": "bun scripts/jobs-smoke.ts",
+    "storage:check": "bun scripts/storage.ts check",
+    "storage:smoke": "bun scripts/storage.ts smoke",
+    "storage:dev:rustfs": "bun scripts/storage-dev.ts rustfs",
+    "storage:dev:garage": "bun scripts/storage-dev.ts garage",
+    "storage:dev:down": "bun scripts/storage-dev.ts down"
   },
   "dependencies": {
     "@repo/nuxt-api": "workspace:*",
     "@repo/nuxt-jobs": "workspace:*",
     "@repo/nuxt-observability": "workspace:*",
+    "@repo/nuxt-storage": "workspace:*",
     "@nuxtjs/color-mode": "4.0.1",
     "@tabler/icons-vue": "3.48.0",
     "@tailwindcss/vite": "4.3.3",

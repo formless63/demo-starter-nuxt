@@ -43,7 +43,7 @@ The generic `packages:*` commands build and exercise the catalog entries. Root p
 
 | Status | Capability |
 | --- | --- |
-| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability |
+| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
 API Platform is capability #2. Observability is capability #3: server-only logs, request correlation, explicit spans/metrics, optional OTLP export and a clean-consumer lifecycle. No new service is required.
@@ -78,12 +78,15 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Contract: [`capabilities/observability/CAPABILITY.md`](capabilities/observability/CAPABILITY.md)
 - Browser telemetry/replay/analytics remain future extensions; no vendor backend or cross-process pg-boss propagation is claimed.
 
-### Object Storage (`planned`)
+### Object Storage (`done`)
 
 - Requires: none
 - Integrates with: Jobs, Observability
 - External: S3-compatible storage (required)
 - Preferred self-hosted options: RustFS; Garage with optional GarageUI. MinIO is not the default.
+- Current implementation (#4): private `@repo/nuxt-storage`, server-only S3 primitives, lazy configuration, private streaming objects, signed GET/PUT, multipart and HEAD policy verification; generic external fixture tests real RustFS 1.0.0 and Garage 2.4.1, CORS and optional Garage Web UI 1.1.0. No files table, UI, processing jobs or implicit bucket creation.
+- External storage is needed only when operations are used, not at install/build/startup. Default installed: no; reference application explicitly opts in.
+- Contract: [`capabilities/object-storage/CAPABILITY.md`](capabilities/object-storage/CAPABILITY.md)
 
 ### Email (`planned`)
 

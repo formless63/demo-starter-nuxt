@@ -24,6 +24,7 @@ All commands use Bun. PostgreSQL is required for migrations, authenticated runti
 - Explicit `packages:build <id>` / `packages:test <id>` may target an in-progress package while developing it; unqualified commands and the CI matrix still select only completed packages.
 - Observability package verification: `bun run packages:test observability`; the fixture owns safe-output/context/span/metric tests, actual local OTLP/HTTP JSON receiving, no-backend/independent-signal checks and bounded app/standalone shutdown. No external collector is needed.
 - API package verification: `bun run packages:build api-platform` and `bun run packages:test api-platform`; the fixture owns database/auth/permission/OpenAPI/docs checks while generic orchestration owns packed install and removal.
+- Use an isolated empty database for the external API fixture; its migration history is intentionally independent of the root reference application. Do not point it at a deployed/shared application database.
 - Package CLI: `nuxt-jobs <worker|migrate|doctor|smoke>`; registry commands accept `--registry`, and smoke also requires `--job` plus JSON `--payload`.
 - `bun run dev`: Nuxt development server.
 - `bun run lint`: ESLint static checks.
@@ -34,3 +35,7 @@ All commands use Bun. PostgreSQL is required for migrations, authenticated runti
 - `bun run check`: lint, typecheck, Nuxt/Vitest tests, and production build.
 - `bun run auth:provision`: idempotently configure a development Pocket ID client using the documented environment.
 - Container smoke: build the shared image, start `postgres`, run `migrate`, start `app worker` with `--wait`, curl `/api/health`, confirm the worker is running, then always run `docker compose down --volumes --remove-orphans`.
+- Storage package: `bun run packages:test object-storage` runs the common real RustFS/Garage contract and UI/CORS/module runtime checks within generic packed install/removal. Docker is required; no other capability or storage config is needed for fixture build. Normal CI matrix discovers completed Storage metadata without a special job.
+- `bun fixtures/storage-consumer/.fixture/reference-removal.ts`: verify the broader documented Storage removal in a temporary root-reference copy without touching external resources. Use a temporary location outside `node_modules` for this source-building check.
+- `bun run storage:check`: read-only configured-bucket check; `storage:smoke`: unique temporary object/signing/multipart/policy contract with cleanup. Both use package exports, no consumer script rewriting.
+- `bun run storage:dev:rustfs` / `storage:dev:garage`: explicitly bootstrap localhost single-node dev provider/bucket/CORS; `storage:dev:down` stops that project and retains named volumes. Override ports/dev credentials before initial bootstrap; on passwordless-sudo-only workstations add `STORAGE_DOCKER_SUDO=true`. See Storage contract for optional authenticated Garage UI and explicit-origin CORS. Normal `docker compose up -d postgres` remains unchanged.

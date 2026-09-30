@@ -34,3 +34,7 @@ No prerelease dependency is intentionally used.
 ## If this became the permanent starter
 
 Add a real transactional-email adapter only when magic links are wanted; define a true service-principal ownership model only when a concrete use case needs one; generate selected shadcn-vue components as the product design emerges; and pin a tested Pocket ID Compose profile if that IdP becomes a permanent development dependency. A registry, TLS ingress, secrets manager, and API gateway remain deployment-environment responsibilities rather than starter infrastructure. Do not add Pinia, a repository layer, or a client cache until feature complexity proves the need.
+
+## Object Storage addition
+
+The optional fourth package uses pinned standard AWS SDK v3 S3 client/presigner 3.1143.0, not a provider-specific SDK or `lib-storage` without a need. RustFS 1.0.0 is the preferred local target; Garage 2.4.1 is verified through the same actual protocol contract. The optional third-party Garage Web UI 1.1.0 is localhost/operator convenience with limited release activity, not a runtime dependency. Default Compose needs no storage backend; app configuration is lazy. See [Object Storage evaluation](OBJECT_STORAGE_MODULE_EVALUATION.md) for signing/checksum/CORS, streaming, size-policy, credential-chain, provider and clean-removal findings.

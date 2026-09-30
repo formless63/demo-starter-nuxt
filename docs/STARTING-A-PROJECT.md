@@ -1,17 +1,18 @@
 # Starting a project
 
-The repository is both a baseline starter and a reference application. Decide whether Jobs, API Platform and Observability belong in the product before building domain features around them.
+The repository is both a baseline starter and a reference application. Decide whether Jobs, API Platform, Observability and Object Storage belong in the product before building domain features around them.
 
 ## Full/reference setup
 
 Keep the completed capabilities when durable background work, a machine-facing API and server telemetry are useful. The root application already:
 
-- depends on and registers `@repo/nuxt-jobs`, `@repo/nuxt-api` and `@repo/nuxt-observability`;
+- depends on and registers `@repo/nuxt-jobs`, `@repo/nuxt-api`, `@repo/nuxt-observability` and `@repo/nuxt-storage`;
 - includes a Jobs registry and `starter.echo` demonstration task;
 - composes API Platform into Better Auth and exposes project API contracts;
 - includes the application and API-key migration plus explicit pg-boss migration commands;
 - builds the app, migration tools, and Jobs worker into one production image; and
 - adds safe JSON logs/request IDs, explicit server telemetry and optional Jobs/API wrappers; and
+- exposes lazy server-only S3 primitives, optional app-owned telemetry and explicit local provider commands, with no File UI or required storage backend at startup; and
 - exercises all packages through catalog-driven fixture tests and CI.
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
@@ -63,6 +64,18 @@ If a downstream fork will never reuse API Platform, follow the pruning metadata 
 6. Reinstall, clear generated `.nuxt`/`.output`, then run all checks, existing Jobs/API fixtures and production container smoke. The module-owned Nitro plugin/imports/error handler/async-context configuration leave with module registration. Pino/OTel dependencies disappear where no other retained package uses them.
 
 For permanent pruning, consistently update catalog/docs before removing `packages/nuxt-observability`, `fixtures/observability-consumer`, `capabilities/observability`, the evaluation and specific skill. Preserve the roadmap ID when optional integrations reference it. The [capability contract](../capabilities/observability/CAPABILITY.md) details the package-level removal proof.
+
+## Remove Object Storage
+
+1. Remove `'@repo/nuxt-storage'` from Nuxt modules, its root dependency and `object-storage` from `referenceApplication.enabledCapabilities`.
+2. Remove `server/utils/observed-storage.ts`, `server/plugins/storage.ts`, `scripts/storage.ts` and `scripts/storage-dev.ts`; remove any product-specific Storage calls/routes. Remove root `storage:*` aliases and their catalog `scripts` declarations. Retained Jobs/API/Observability behavior is unaffected.
+3. Remove Storage variables from `.env.example` and app environment in `compose.yaml`. Remove optional `compose.storage.yaml`. If retaining the independent package fixture, retain its provider assets; they do not activate application infrastructure on their own.
+4. Remove `tests/unit/storage.test.ts` and `tests/unit/storage-observability.test.ts` (or adapt independent assertions). No SQL migration/schema change exists. Stop only the explicitly named local storage project if no longer used, retaining volumes by default.
+5. Clear `.nuxt`/`.output`, reinstall and run capability validation, typecheck/build and normal verification. The package fixture verifies owned AWS dependencies disappear when unused; a temporary reference copy verifies these broader integration steps.
+
+Do not delete remote buckets/objects, revoke remote access keys or delete named-volume data automatically. These resources are operator-controlled and may outlive the application code. For permanent pruning, update catalog/docs consistently before deleting `packages/nuxt-storage`, `fixtures/storage-consumer`, capability contract, `OBJECT_STORAGE_MODULE_EVALUATION.md` and `.agents/skills/storage-change`. Preserve the roadmap ID for File UI/Import/Export and other relationships.
+
+When removing **Observability but retaining Storage**, remove the optional imports/runner in `observed-storage.ts` and use plain `createStorage()`/`getStorage()`; remove initialization/shutdown instrumentation from `scripts/storage.ts`. Keep Storage commands/core API/provider configuration. This does not introduce a hard dependency.
 
 ## Fresh versus deployed removal
 

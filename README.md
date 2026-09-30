@@ -36,8 +36,9 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Jobs | Available (`done`) | Optional | Baseline PostgreSQL; external PostgreSQL service | Typed pg-boss jobs, explicit queue migrations, and a standalone worker |
 | API Platform | Available (`done`) | Optional | Baseline Nuxt, Better Auth, PostgreSQL, and Drizzle | User-owned API keys, permissions, native `/api/v1` routes, OpenAPI 3.1.1, and Scalar docs |
 | Observability | Available (`done`) | Optional | No other capability; OTLP destination optional | Safe server JSON logs, request IDs, traces, metrics and optional OTLP/HTTP export |
+| Object Storage | Available (`done`) | Optional | S3-compatible service only when used; no capability dependency | Private objects, streaming, signed GET/PUT, multipart and post-upload policy verification |
 
-`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application deliberately enables all three completed capabilities so their integration is continuously tested.
+`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage remains lazy with no provider required to boot/build.
 
 See [Using capabilities](docs/CAPABILITIES.md) for installation and removal guidance and [ROADMAP.md](ROADMAP.md) for the future design plan.
 
@@ -86,6 +87,7 @@ bun run capabilities:check
 bun run packages:test jobs
 bun run packages:test api-platform
 bun run packages:test observability
+bun run packages:test object-storage
 bun run check
 bun run test:e2e
 ```
@@ -114,6 +116,12 @@ For an image update, check out the intended revision or select a registry tag wi
 Without a backend, the reference app produces safe Pino JSON logs, returns `X-Request-ID`, correlates nested operation spans, and adds safe build/export-enabled metadata to `/api/health`. Set `APP_VERSION`, `APP_REVISION` and `DEPLOYMENT_ENVIRONMENT` at release time. To export traces/metrics, set `OTEL_EXPORTER_OTLP_ENDPOINT` to an OTLP/HTTP JSON destination; each signal can be disabled independently with `OTEL_TRACES_EXPORTER=none` or `OTEL_METRICS_EXPORTER=none`. Compose passes these settings to the app and worker; no collector is required or started.
 
 Raw request headers/bodies/query strings, job payloads, sessions/users and credentials are omitted. Use safe operation names/messages and extend `observability.redactKeys` for application secrets. This is server-only v1—no browser instrumentation or analytics. See the [Observability contract](capabilities/observability/CAPABILITY.md) for configuration, safe error behavior, optional Jobs/API wrappers, shutdown and removal.
+
+## Object storage
+
+Storage is a server-only S3 primitive, not a File UI or attachments model. It requires an existing private bucket only when used. `bun run storage:dev:rustfs` explicitly starts the preferred RustFS 1.0.0 local profile; `storage:dev:garage` starts Garage 2.4.1. Set the printed endpoint/bucket/region and matching development credentials, then run `storage:check` (read-only) or `storage:smoke` (unique temporary objects with cleanup). `storage:dev:down` stops providers while retaining data. Optional `compose.storage.yaml` leaves normal PostgreSQL/app/worker deployment independent of storage infrastructure; Garage Web UI 1.1.0 is localhost-only operator convenience, not an app dependency.
+
+Use the standard AWS credential chain or paired server-only static credentials. Signed PUT headers must match exactly; post-upload HEAD checks enforce the baseline size/type policy, not a universal pre-ingest size limit. Consume or close streaming downloads and never log signed URLs. See the [Storage contract](capabilities/object-storage/CAPABILITY.md) for configuration, explicit bucket/CORS bootstrap, multipart, optional telemetry and removal.
 
 ## Repository and capability development
 

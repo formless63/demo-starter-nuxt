@@ -78,6 +78,7 @@ Root optional integrations:
 
 - `starter.echo` wraps the handler with `observeOperation('job', ...)`: job name, safe ID, duration and success/failure, no payload. Registry/payload validation/pg-boss migration behavior is unchanged.
 - `defineObservedApiHandler` wraps the existing API envelope handler with a registered operation ID and method/status; it never receives or logs API keys.
+- `runStorageOperation` is an optional application-owned runner for Storage: bounded operation/outcome, duration and known PUT bytes, never keys/buckets/filenames/signed URLs. Storage does not depend on Observability. Remove/replace this runner and Storage operator telemetry imports when removing Observability but retaining Storage.
 - No cross-process enqueue trace propagation is claimed. Each worker execution starts its own span, correlated by job name/ID; payload schemas are not modified to smuggle trace context.
 
 ## Installation
