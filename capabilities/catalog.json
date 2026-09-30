@@ -122,7 +122,7 @@
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": ["jobs", "observability"],
-      "externalRequirements": [{ "name": "S3-compatible storage", "required": true, "notes": "Required only for runtime storage operations. RustFS preferred; Garage supported with optional localhost Garage Web UI. MinIO is not the default." }],
+      "externalRequirements": [{ "name": "S3-compatible storage", "required": true, "notes": "Required only for runtime storage operations, with explicit region. RustFS 1.0.0 preferred; Garage 2.4.1 tested with optional localhost third-party Noooste Garage UI v0.13.0 (not official or required for S3; privileged operator access only). MinIO is not the default." }],
       "summary": "Private server-only S3 objects, streaming, presigned GET/PUT, multipart and post-upload verification; RustFS preferred, Garage supported.",
       "scripts": ["storage:check", "storage:smoke", "storage:dev:rustfs", "storage:dev:garage", "storage:dev:down", "packages:build", "packages:test"],
       "environmentVariables": ["STORAGE_BUCKET", "STORAGE_REGION", "STORAGE_ENDPOINT", "STORAGE_ACCESS_KEY_ID", "STORAGE_SECRET_ACCESS_KEY", "STORAGE_SESSION_TOKEN", "STORAGE_FORCE_PATH_STYLE", "STORAGE_PRESIGN_TTL_SECONDS", "STORAGE_KEY_PREFIX"],

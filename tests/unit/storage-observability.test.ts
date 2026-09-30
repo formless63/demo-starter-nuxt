@@ -13,7 +13,7 @@ describe('optional Storage telemetry', () => {
     const storage = createStorage({ bucket: 'SECRET_BUCKET', env: {}, runOperation: runStorageOperation })
     try {
       await expect(storage.checkStorage()).rejects.toMatchObject({ code: 'configuration' })
-      const signed = createStorage({ bucket: 'secret-bucket', endpoint: 'http://localhost:9000', accessKeyId: 'SECRET_ACCESS', secretAccessKey: 'SECRET_CREDENTIAL', env: {}, runOperation: runStorageOperation })
+      const signed = createStorage({ bucket: 'secret-bucket', region: 'us-east-1', endpoint: 'http://localhost:9000', accessKeyId: 'SECRET_ACCESS', secretAccessKey: 'SECRET_CREDENTIAL', env: {}, runOperation: runStorageOperation })
       try {
         const result = await signed.presignUpload('SECRET_KEY/name', { contentType: 'text/plain' })
         expect(result.url).toContain('SECRET_KEY')

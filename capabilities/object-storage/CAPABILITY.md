@@ -30,7 +30,7 @@ Configuration is evaluated lazily at the first operation/client access; invalid 
 | Variable | Behavior |
 | --- | --- |
 | `STORAGE_BUCKET` | Existing bucket required on use; fixed for all package operations |
-| `STORAGE_REGION` | Falls back to `AWS_REGION`, `AWS_DEFAULT_REGION`, then `us-east-1`; Garage local region is `garage` |
+| `STORAGE_REGION` | Falls back to `AWS_REGION`, then `AWS_DEFAULT_REGION`; missing region is a configuration error **on use**, not build/boot. Local helpers explicitly supply `us-east-1` for RustFS and `garage` for Garage |
 | `STORAGE_ENDPOINT` | Optional HTTP(S) origin, no credentials/query/path; absent uses normal AWS endpoint resolution |
 | `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY` | Both or neither; missing half is rejected |
 | `STORAGE_SESSION_TOKEN` | Optional with explicit credentials; AWS credential-chain tokens remain SDK-owned |
@@ -75,7 +75,11 @@ Development-only default RustFS access key is `starter-storage-dev`; secret is `
 
 RustFS image `rustfs/rustfs:1.0.0` exposes localhost S3 9000 and console 9001; override `RUSTFS_PORT` / `RUSTFS_CONSOLE_PORT`. Garage `dxflrs/garage:v2.4.1` uses SQLite, replication factor 1 and explicit `server --single-node --default-bucket` with development environment credentials; S3 localhost 3900 (`GARAGE_PORT`), no exposed admin/RPC port. These single-node defaults and committed dev RPC/admin tokens are **not production security/redundancy configuration**. Production bucket creation, permissions, lifecycle, backups and redundancy are operator/IaC decisions; application startup never provisions them.
 
-Optional third-party [khairul169/garage-webui](https://github.com/khairul169/garage-webui) image `khairul169/garage-webui:1.1.0` targets Garage v2. It is not official Garage software; release activity is limited, so re-evaluate maintenance/security before upgrades or exposure. Tested here with Garage 2.4.1. Its server needs the Garage admin token (`API_ADMIN_KEY`), not an application S3 key. Local-only dev token matches `garage.toml`; use separate operator secrets outside development. Its password login/session defaults to `operator` / `local-ui-dev-only`; override `GARAGE_UI_AUTH` with `operator:bcrypt-hash` (e.g. `htpasswd -nbBC 10 operator PASSWORD`, quote `$` correctly). This is UI session authentication, not HTTP Basic Auth. Bind is localhost 3909 (`GARAGE_UI_PORT`). It is convenience infrastructure, never an application dependency:
+Optional third-party [Noooste Garage UI v0.13.0](https://github.com/Noooste/garage-ui/tree/v0.13.0), image **`noooste/garage-ui:v0.13.0`**, is **not official Garage software**. It is optional development/operator tooling, not required for S3 operation or an application dependency. Tested with Garage 2.4.1; review upstream/security before upgrades or exposure. It stays localhost-bound at 3909 (`GARAGE_UI_PORT`), mapping container port 8080.
+
+The UI mounts `garage.toml` read-only through `GARAGE_UI_GARAGE_TOML=/etc/garage.toml`, reading the region and privileged admin token. `GARAGE_UI_GARAGE_ENDPOINT=http://garage:3900` and `GARAGE_UI_GARAGE_ADMIN_ENDPOINT=http://garage:3903` override listener addresses for Compose networking; `GARAGE_UI_AUTH_TOKEN_ENABLED=true` explicitly requires operator token login. Enter the local-only admin token `local-only-garage-admin-change-me` in the **operator UI**; `/auth/login-token` exchanges it for a signed UI session token. S3 credentials cannot authenticate as administrators. `/health` and `/auth/config` are public health/auth-method metadata, while `/api/v1/cluster/status` requires authentication and proxies the privileged Garage admin API.
+
+The UI has privileged administrative access, not merely normal S3 client access. Its admin token/credentials must **never reach browser application code, public runtime config or normal S3 clients**. Operator UI login is a separate administrative trust boundary. All committed tokens/credentials are known **local-development-only** values; use separate operator secrets and deliberate network/auth policy outside development. Do not publish Garage admin/RPC ports or expand administration through application routes:
 
 ```sh
 docker compose -p starter-storage-dev -f compose.storage.yaml --profile garage --profile garage-ui up -d garage garage-ui
@@ -159,7 +163,7 @@ bun run check
 bun run test:e2e
 ```
 
-The fixture owns real pinned containers, explicit bootstrap, common object/list/metadata/stream/signing/type-mismatch/multipart/verification/delete contract, CORS and optional UI reachability/configuration. Generic tooling owns real tarball install, owned-dependency arrival, typecheck/build, removal/generated-state cleanup and post-removal build. It has no Jobs/API/Observability dependency or mandatory config at build time. Catalog matrix discovers it without a handwritten CI job. Normal production image/migration/app/worker health and optional dev profiles are separately verified.
+The fixture owns backendless production boot, real pinned containers, explicit bootstrap, common object/list/metadata/stream/signing/type-mismatch/multipart/verification/delete contract, CORS and Noooste UI health/token authentication/admin communication. Generic tooling owns real tarball install, owned-dependency arrival, typecheck/build, removal/generated-state cleanup and post-removal build. It has no Jobs/API/Observability dependency or mandatory config at build time. Catalog matrix discovers it without a handwritten CI job. Normal production image/migration/app/worker health and optional dev profiles are separately verified.
 
 ## Agent guidance
 

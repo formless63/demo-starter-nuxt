@@ -17,6 +17,8 @@ Keep the completed capabilities when durable background work, a machine-facing A
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
 
+Storage stays unused/backendless until configured. Supply a region explicitly through `STORAGE_REGION`, `AWS_REGION` or `AWS_DEFAULT_REGION`; no implicit region is assumed. Local helpers supply RustFS `us-east-1` / Garage `garage`. Optional Noooste Garage UI v0.13.0 is third-party, not official Garage or required for S3, and stays localhost-bound. Its privileged admin-token login is operator-only; known dev tokens are local-only, never application browser configuration or normal S3 credentials. See the [Storage contract](../capabilities/object-storage/CAPABILITY.md) and [shared baseline](../OBJECT_STORAGE_MODULE_EVALUATION.md#shared-cross-framework-baseline).
+
 ## Lean baseline
 
 Remove a capability only after checking its [technical contract](CAPABILITIES.md#capability-status). The recipes below are intentionally explicit because the completed capabilities touch shared auth, schema, migrations, and deployment. There is no automatic source-rewriting uninstaller.
