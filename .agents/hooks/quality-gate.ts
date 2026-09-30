@@ -6,6 +6,12 @@ export function governed(path: string) {
     || /^scripts\/capabilities-[^/]+\.ts$/.test(path)
 }
 
+export function agentHarness(path: string) {
+  return ['.agents/', '.claude/', '.codex/', '.gemini/', 'tests/agents/'].some(prefix => path.startsWith(prefix))
+    || ['AGENTS.md', 'CLAUDE.md', 'docs/AGENT-AUTOMATION.md'].includes(path)
+    || /^scripts\/agents-[^/]+\.ts$/.test(path)
+}
+
 export function qualityGate(root: string, execute: Runner = run): string | undefined {
   const status = execute(['git', 'status', '--porcelain=v1', '-z', '--untracked-files=all'], root)
   if (!status.ok) return 'Project quality gate: git status failed; restore repository access and retry.'
@@ -23,6 +29,7 @@ export function qualityGate(root: string, execute: Runner = run): string | undef
     if (/[RC]/.test(entry.slice(0, 2)) && entries[index + 1]) paths.push(entries[++index]!)
   }
   if (paths.some(governed) && !execute(['bun', 'run', 'capabilities:check'], root).ok) failures.push('bun run capabilities:check')
+  if (paths.some(agentHarness) && !execute(['bun', 'run', 'agents:check'], root).ok) failures.push('bun run agents:check')
   // Never return tool stdout (which could contain a diff or sensitive data).
   if (failures.length) return `Project quality gate failed: ${failures.join('; ')}. Run these commands, fix their deterministic failures, then retry completion.`
 }

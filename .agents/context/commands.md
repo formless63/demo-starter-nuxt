@@ -34,7 +34,7 @@ All commands use Bun. PostgreSQL is required for migrations, authenticated runti
 - `bun run test`: Nuxt/Vitest unit and database integration suite; authorization coverage requires `DATABASE_URL` and migrated PostgreSQL.
 - `bun run test:e2e`: Playwright browser smoke test, which starts Nuxt itself (install Chromium once with `bunx playwright install chromium`).
 - `bun run build` / `bun run start`: produce and serve portable Nitro output.
-- `bun run check`: agent harness/tests, capability catalog, lint, typecheck, Nuxt/Vitest tests, and production build. Stop/AfterAgent hooks run only staged/unstaged whitespace checks plus the capability checker when governance changes; full verification remains task/skill/CI-driven.
+- `bun run check`: agent harness/tests, capability catalog, lint, typecheck, Nuxt/Vitest tests, and production build. Stop/AfterAgent hooks run only staged/unstaged whitespace checks plus the capability checker for governance changes and the agent-harness checker for harness changes (both for overlapping paths); full verification remains task/skill/CI-driven.
 - `bun run auth:provision`: idempotently configure a development Pocket ID client using the documented environment.
 - Container smoke: build the shared image, start `postgres`, run `migrate`, start `app worker` with `--wait`, curl `/api/health`, confirm the worker is running, then always run `docker compose down --volumes --remove-orphans`.
 - Storage package: `bun run packages:test object-storage` runs the common real RustFS/Garage contract and UI/CORS/module runtime checks within generic packed install/removal. Docker is required; no other capability or storage config is needed for fixture build. Normal CI matrix discovers completed Storage metadata without a special job.
