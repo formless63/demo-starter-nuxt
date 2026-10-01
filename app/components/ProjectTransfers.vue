@@ -20,13 +20,13 @@ function upload() {
     staged.value = receipt.id
   })
 }
-function start() { return action(() => $fetch(`/api/transfers/${staged.value}/start` as '/api/transfers/:id/start', { method: 'POST', body: { idempotencyKey: key(staged.value!) } })) }
+function start() { return action(async () => { await $fetch<Transfer>(`/api/transfers/${staged.value}/start` as '/api/transfers/:id/start', { method: 'POST', body: { idempotencyKey: key(staged.value!) } }) }) }
 function exportProjects() {
   const identity = 'export'
   return action(async () => { await $fetch('/api/transfers/export', { method: 'POST', body: { idempotencyKey: key(identity) } }); requestKeys.delete(identity) })
 }
-function status(id: string) { return action(() => $fetch(`/api/transfers/${id}` as '/api/transfers/:id', { query: { refresh: 'true' } })) }
-function cancel(id: string) { return action(() => $fetch(`/api/transfers/${id}/cancel` as '/api/transfers/:id/cancel', { method: 'POST' })) }
+function status(id: string) { return action(async () => { await $fetch<Transfer>(`/api/transfers/${id}` as '/api/transfers/:id', { query: { refresh: 'true' } }) }) }
+function cancel(id: string) { return action(async () => { await $fetch<Transfer>(`/api/transfers/${id}/cancel` as '/api/transfers/:id/cancel', { method: 'POST' }) }) }
 function download(id: string) { return action(async () => { const signed = await $fetch<{ url: string }>(`/api/transfers/${id}/download` as '/api/transfers/:id/download'); window.location.assign(signed.url) }) }
 </script>
 

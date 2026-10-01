@@ -160,3 +160,7 @@ When removing **Observability while retaining Realtime/Notifications**, remove o
 3. Clear generated output, reinstall and run catalog checks, normal typecheck/build/tests and production verification. No schema/data migration exists. The packed fixture proves provider SDK removal when unused; shared Zod may remain.
 
 Never delete/revoke external provider accounts or secrets automatically. Removing Observability while retaining AI replaces the optional wrapper with plain package generation. Permanent pruning updates catalog/docs before removing package/fixture/contract/evaluation/ai-change skill, retaining the roadmap ID where referenced.
+
+## Remove Import / Export
+
+Stop transfer producers and drain or preserve pending work before unregistering `transferService.runJob` from `server/jobs/registry.ts`. Remove `server/api/transfers`, `server/transfers`, `scripts/transfers.ts`, the two transfers scripts, `ProjectTransfers.vue` and its Projects-page use, and the transfer resource shutdown hook. Remove the package root dependency/module; keep Jobs/Storage and their data. Remove the transfer schema export only if generation is no longer needed; retain applied migration0006, its immutable history, transfer tables/receipts and source/output objects. Never drop retained data or delete buckets as code removal. Operator `transfers:purge <selected-uuid...>` is dry-run; explicit `--execute` is separate physical cleanup, retaining history/domain data. Rebuild/typecheck/test after pruning. [Contract](../capabilities/import-export/CAPABILITY.md).

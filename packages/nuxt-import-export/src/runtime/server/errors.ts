@@ -21,7 +21,7 @@ export function safeTransferError(error: unknown): TransferError {
   const code = (error as { code?: string })?.code
   if (code === 'cancelled') return new TransferError('cancelled')
   if (code === 'configuration') return new TransferError('configuration')
-  if (code === 'unavailable' || ['40P01', '40001', '08006', '08003', '57P01', '53300'].includes(code ?? '')) return new TransferError('unavailable')
+  if (code === 'unavailable' || ['40P01', '40001', '08006', '08003', '57P01', '53300', '55P03'].includes(code ?? '')) return new TransferError('unavailable')
   if (code === '57014' || code === '25P04') return new TransferError('timeout')
   return new TransferError('unknown')
 }

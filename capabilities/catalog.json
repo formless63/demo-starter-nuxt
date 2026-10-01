@@ -968,7 +968,9 @@
             ".fixture/package-test.ts"
           ],
           "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
-        }
+        },
+        "postRemovalScript": "package:test:survival",
+        "cleanupScript": "package:test:cleanup"
       }
     },
     {

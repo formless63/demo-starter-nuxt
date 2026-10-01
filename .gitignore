@@ -13,3 +13,6 @@ packages/*/dist
 
 .nuxtrc
 .claude/settings.local.json
+
+fixtures/import-export-consumer/.fixture/transfer-survival.json
+fixtures/import-export-consumer/.fixture/node-worker.mjs
