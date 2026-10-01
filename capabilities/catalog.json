@@ -1082,7 +1082,8 @@
       "evaluationDocument": "OPS_ADMIN_MODULE_EVALUATION.md",
       "scripts": [
         "packages:build",
-        "packages:test"
+        "packages:test",
+        "test:ops-reference"
       ],
       "environmentVariables": [
         "OPS_ADMIN_USER_IDS"
