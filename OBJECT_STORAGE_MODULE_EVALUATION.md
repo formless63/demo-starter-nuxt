@@ -58,3 +58,5 @@ Compared with Jobs/API/Observability, Storage owns no database migration, durabl
 ### Narrow transfer cancellation extension
 
 Import / Export needs optional AbortSignal on get/put/head. SDK send receives the signal; preabort avoids I/O and GET also closes its acquired body. Safe cancelled classification is tied to requested AbortError; unrelated provider errors retain existing meanings. No provider API reimplementation or other primitive redesign. Real local delayed HTTP SDK tests cover acquisition/body/PUT/HEAD; ordinary RustFS/Garage generic lifecycle is retained.
+
+Ops composition uses a narrow optional server construction retry override passed to public S3Client `maxAttempts`; ordinary default remains 3. [Official AWS retry configuration](https://docs.aws.amazon.com/sdkref/latest/guide/feature-retry-behavior.html) was checked 2026-10-01: attempts include the first request and 1 disables retry. No SDK middleware internals are changed.

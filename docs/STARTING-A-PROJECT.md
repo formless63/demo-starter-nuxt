@@ -1,10 +1,10 @@
 # Starting a project
 
-The repository is both a baseline starter and a reference application. Choose which of the thirteen completed capabilities belong in the product before building domain features around them.
+The repository is both a baseline starter and a reference application. Choose which of the fourteen completed capabilities belong in the product before building domain features around them.
 
 ## Full/reference setup
 
-The root application explicitly registers Jobs, API Platform, Observability, Object Storage, Email, Webhooks, Audit Log, Cache / Coordination, Realtime, Notifications, Search, AI and Import / Export. It includes:
+The root application explicitly registers Jobs, API Platform, Observability, Object Storage, Email, Webhooks, Audit Log, Cache / Coordination, Realtime, Notifications, Search, AI, Import / Export and Ops / Admin. It includes:
 
 - one Jobs registry and standalone worker with transactional enqueue;
 - Better Auth and owner-scoped browser and machine API routes;
@@ -12,7 +12,7 @@ The root application explicitly registers Jobs, API Platform, Observability, Obj
 - one production image for the app, migration tools and worker;
 - lazy optional S3, SMTP, Cache and AI adapters with no provider required at startup;
 - transactionally appended audit history and notifications, plus ID-only post-commit hints over authenticated SSE/WebSocket transports;
-- all thirteen catalog-driven package install/runtime/removal/rebuild checks in generic CI.
+- all fourteen catalog-driven package install/runtime/removal/rebuild checks in generic CI.
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
 
@@ -164,3 +164,7 @@ Never delete/revoke external provider accounts or secrets automatically. Removin
 ## Remove Import / Export
 
 Stop transfer producers and drain or preserve pending work before unregistering `transferService.runJob` from `server/jobs/registry.ts`. Remove `server/api/transfers`, `server/transfers`, `scripts/transfers.ts`, the two transfers scripts, `ProjectTransfers.vue` and its Projects-page use, and the transfer resource shutdown hook. Remove the package root dependency/module and Import / Export limits from Compose/environment; keep Jobs/Storage and their data. Remove the transfer schema export only if generation is no longer needed; retain applied migrations0006/0007, its immutable history, transfer tables/receipts and source/output objects. Never drop retained data or delete buckets as code removal. Operator `transfers:purge <selected-uuid...>` is dry-run; explicit `--execute` is separate physical cleanup, retaining history/domain data. Rebuild/typecheck/test after pruning. [Contract](../capabilities/import-export/CAPABILITY.md).
+
+For Ops/Admin removal, remove `@repo/nuxt-ops-admin` from dependencies/modules, the `opsAdmin` option, `server/ops`, `server/plugins/ops-admin-jobs.ts` and `server/plugins/ops-admin-storage.ts`, any navigation entry, and `OPS_ADMIN_USER_IDS`. Remove each optional adapter/import when pruning its provider capability. No data/provider cleanup exists. [Contract](../capabilities/ops-admin/CAPABILITY.md).
+
+When retaining Ops during Storage removal, also remove `server/ops/storage.ts` and `server/plugins/ops-admin-storage.ts` alongside its application card/import. During Jobs removal, remove its hard dependents and Ops Jobs/Webhooks cards/imports, `server/ops/jobs.ts` and `server/plugins/ops-admin-jobs.ts`. Cache/Observability direct Ops imports and cards must be removed with their providers; the static Audit card is removed with Audit.
