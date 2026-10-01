@@ -44,6 +44,7 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Audit Log | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; optional authentication | Transactional append-oriented history and bounded keyset queries |
 | Realtime | Available (`done`) | Optional | Node runtime; application session policy; no capability dependency | Bounded server-to-browser SSE and WebSocket event adapters |
 | Notifications | Available (`done`) | Optional | Jobs; PostgreSQL/Drizzle; optional Email/Realtime/ntfy | Recipient-scoped persistent notifications and transactional delivery |
+| Ops / Admin | In progress | Optional | Baseline human session; privileged server allowlist | Read-only sanitized application-owned diagnostic adapters |
 | Search | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; no extra service | Owner-scoped weighted FTS and deterministic keyset pages |
 
 `defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache and AI remain lazy with no provider required to boot/build.

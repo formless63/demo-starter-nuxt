@@ -85,6 +85,8 @@ jobs:
       - run: bunx playwright install --with-deps chromium
       - run: bun run test:e2e
       - run: bun run build
+      - run: bun run packages:test ops-admin
+      - run: bun run test:ops-reference
       - name: Build production application image
         run: docker compose build app
       - name: Start container smoke database

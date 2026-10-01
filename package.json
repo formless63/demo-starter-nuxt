@@ -51,7 +51,8 @@
     "cache:dev:valkey": "bun scripts/cache-dev.ts valkey",
     "cache:dev:down": "bun scripts/cache-dev.ts down",
     "ai:smoke": "bun scripts/ai-smoke.ts",
-    "test:notification-email": "bun fixtures/notifications-consumer/.fixture/email-reference.ts"
+    "test:notification-email": "bun fixtures/notifications-consumer/.fixture/email-reference.ts",
+    "test:ops-reference": "bun fixtures/ops-admin-consumer/.fixture/storage-retry.ts && bun fixtures/ops-admin-consumer/.fixture/reference-protocol.ts && bun fixtures/ops-admin-consumer/.fixture/reference-removal.ts"
   },
   "dependencies": {
     "@repo/nuxt-api": "workspace:*",
