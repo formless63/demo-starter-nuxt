@@ -56,6 +56,7 @@ jobs:
       APP_PORT: 3001
       POSTGRES_PORT: 5433
       REALTIME_TRANSPORTS: sse,websocket
+      OPS_ADMIN_USER_IDS: ops-e2e-operator
       APP_VERSION: ci
       APP_REVISION: ${{ github.sha }}
       DEPLOYMENT_ENVIRONMENT: ci

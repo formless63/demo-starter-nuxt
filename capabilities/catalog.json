@@ -1096,20 +1096,18 @@
         "runtimeScript": "package:test:runtime",
         "removal": {
           "scripts": [
-            "package:test:runtime",
-            "db:migrate"
+            "package:test:runtime"
           ],
           "paths": [
             "server/ops",
-            ".fixture/package-test.ts",
-            "server/utils",
-            "server/database",
-            "server/api",
-            "drizzle.config.ts"
+            ".fixture/package-test.ts"
           ],
           "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
-        }
-      }
+        },
+        "postRemovalScript": "package:test:survival",
+        "cleanupScript": "package:test:cleanup"
+      },
+      "agentSkill": ".agents/skills/ops-admin-change/SKILL.md"
     },
     {
       "id": "command-system",

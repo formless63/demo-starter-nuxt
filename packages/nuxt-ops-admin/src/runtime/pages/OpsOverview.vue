@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { shallowRef, ref, onBeforeUnmount } from 'vue'
+import { useRequestEvent, useRequestHeaders, navigateTo } from '#imports'
 import type { OpsSummary } from '../server/index'
 const requestEvent = import.meta.server ? useRequestEvent() : undefined
 const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
