@@ -40,9 +40,10 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Object Storage | Available (`done`) | Optional | S3-compatible service only when used; no capability dependency | Private objects, streaming, signed GET/PUT, multipart and post-upload policy verification |
 | Email | Available (`done`) | Optional | SMTP only when used; no capability dependency | Safe text/HTML SMTP, Mailpit fixture and hashed-token magic links |
 | Webhooks | Available (`done`) | Optional | Jobs; remote endpoints only when delivering | Standard signed envelopes, durable delivery and bounded raw-body verification |
+| AI | Available (`done`) | Optional | Configured OpenAI-compatible model provider only when used | Text, streaming, Zod structured generation, cancellation and safe errors |
 | Audit Log | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; optional authentication | Transactional append-oriented history and bounded keyset queries |
 
-`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email and Cache remain lazy with no provider required to boot/build.
+`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache and AI remain lazy with no provider required to boot/build.
 
 See [Using capabilities](docs/CAPABILITIES.md) for installation and removal guidance and [ROADMAP.md](ROADMAP.md) for the future design plan.
 
@@ -59,7 +60,7 @@ bun run jobs:migrate
 bun run dev
 ```
 
-Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all eight completed capability packages; `db:migrate` applies the application/API/Audit tables and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
+Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all nine completed capability packages; `db:migrate` applies the application/API/Audit tables and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
 
 ## Authentication notes
 
@@ -96,6 +97,7 @@ bun run packages:test email
 bun run packages:test webhooks
 bun run packages:test audit-log
 bun run packages:test cache-coordination
+bun run packages:test ai
 bun run check
 bun run test:e2e
 ```
@@ -150,3 +152,7 @@ Webhooks is explicitly enabled as `@repo/nuxt-webhooks` and requires Jobs; see i
 ## Cache / Coordination
 
 Explicitly enabled in the reference app and lazy at boot/build. Server-only `@repo/nuxt-cache` supplies exact namespaced string/byte values, expiring writes, atomic counters, advisory leases and non-durable pub/sub. No Jobs/Realtime/queue integration is implemented. `cache:dev:valkey` starts pinned disposable localhost Valkey; `cache:check`, `cache:smoke` and `cache:dev:down` use explicit configuration. Leases have no fencing or quorum and cannot alone protect irreversible correctness. See the [contract](capabilities/cache-coordination/CAPABILITY.md) and [evaluation](CACHE_COORDINATION_MODULE_EVALUATION.md).
+
+## AI
+
+Explicitly enabled, server-only and operation-lazy. `@repo/nuxt-ai/server` provides text, incremental streaming and Zod structured generation; default provider openai-compatible, timeout 60 seconds, no retries, 1 MiB output cap. Set AI_MODEL and optional server AI_API_KEY/AI_BASE_URL only when used. `bun run ai:smoke` performs one intentional configured operation without logging generated content. See the [contract](capabilities/ai/CAPABILITY.md) and [evaluation](AI_MODULE_EVALUATION.md).
