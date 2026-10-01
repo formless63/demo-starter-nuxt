@@ -1,4 +1,5 @@
-import { boolean, index, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { boolean, customType, index, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
 import { auditEvent } from '@repo/nuxt-audit-log/server'
 import { apikey } from '@repo/nuxt-api/server'
 
@@ -57,12 +58,15 @@ export const verification = pgTable('verification', {
   ...timestamps,
 }, table => [index('verification_identifier_idx').on(table.identifier)])
 
+const tsvector = customType<{ data: string }>({ dataType: () => 'tsvector' })
+
 export const project = pgTable('project', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
+  searchVector: tsvector('search_vector').generatedAlwaysAs(sql`setweight(to_tsvector('simple', coalesce(name, '')), 'A') || setweight(to_tsvector('simple', coalesce(description, '')), 'B')`),
   ownerId: text('owner_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   ...timestamps,
-}, table => [index('project_owner_updated_idx').on(table.ownerId, table.updatedAt)])
+}, table => [index('project_owner_updated_idx').on(table.ownerId, table.updatedAt), index('project_search_vector_gin_idx').using('gin', table.searchVector)])
 
 export const schema = { user, session, account, verification, apikey, project, auditEvent }

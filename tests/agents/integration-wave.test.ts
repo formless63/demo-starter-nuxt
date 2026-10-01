@@ -5,9 +5,9 @@ import { resolve } from 'node:path'
 
 const root = resolve(import.meta.dir, '../..')
 const catalog = JSON.parse(readFileSync(resolve(root, 'capabilities/catalog.json'), 'utf8'))
-const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination']
+const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'search']
 
-test('all eight completed packages are explicitly enabled and discovered by the generic matrix', () => {
+test('all nine completed packages are explicitly enabled and discovered by the generic matrix', () => {
   const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
   const nuxt = readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')
   expect(catalog.capabilities.filter((entry: { status: string }) => entry.status === 'done').map((entry: { id: string }) => entry.id).sort()).toEqual([...completed].sort())
@@ -23,9 +23,9 @@ test('all eight completed packages are explicitly enabled and discovered by the 
   expect(JSON.parse(result.stdout).capability.sort()).toEqual([...completed].sort())
 })
 
-test('only Webhooks requires Jobs; Audit and Cache fixtures remain independent', () => {
+test('only Webhooks requires Jobs; Audit, Cache and Search fixtures remain independent', () => {
   expect(catalog.capabilities.find((entry: { id: string }) => entry.id === 'webhooks').requires).toEqual(['jobs'])
-  for (const id of ['audit-log', 'cache-coordination']) {
+  for (const id of ['audit-log', 'cache-coordination', 'search']) {
     const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === id)
     expect(entry.requires).toEqual([])
     const fixture = JSON.parse(readFileSync(resolve(root, entry.fixturePath, 'package.json'), 'utf8'))

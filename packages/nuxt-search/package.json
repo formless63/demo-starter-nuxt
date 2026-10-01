@@ -1,0 +1,49 @@
+{
+  "name": "@repo/nuxt-search",
+  "version": "0.1.0",
+  "description": "PostgreSQL-native full-text search contracts for application-owned rows",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs",
+      "default": "./dist/module.mjs"
+    },
+    "./server": {
+      "types": "./dist/runtime/server/index.d.ts",
+      "import": "./dist/runtime/server/index.js",
+      "default": "./dist/runtime/server/index.js"
+    }
+  },
+  "main": "./dist/module.mjs",
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/types.d.mts"
+      ],
+      "server": [
+        "./dist/runtime/server/index.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev:prepare": "nuxt-module-build prepare && nuxt-module-build build",
+    "prepack": "nuxt-module-build prepare && nuxt-module-build build"
+  },
+  "dependencies": {
+    "@nuxt/kit": "4.5.2"
+  },
+  "peerDependencies": {
+    "drizzle-orm": ">=0.45.0 <1",
+    "nuxt": ">=4.0.0 <5"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "1.0.3",
+    "drizzle-orm": "0.45.3",
+    "nuxt": "4.5.2"
+  }
+}
