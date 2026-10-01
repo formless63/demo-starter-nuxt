@@ -98,12 +98,48 @@ try {
     const [stored] = await db.select().from(transfer).where(eq(transfer.id, exported.id)); await service.purgeTransferArtifacts([exported.id]); await backend.storage.headObject(stored!.artifactKey!); await service.purgeTransferArtifacts([exported.id], { execute: true }); await assert.rejects(backend.storage.headObject(stored!.artifactKey!), { code: 'not-found' }); assert.equal((await service.getTransfer(owner, { transferId: exported.id })).status, 'succeeded')
     const hardCrash = await stage('name,description\ncrash,text\n'); await service.startImport(owner, { transferId: hardCrash.id, idempotencyKey: randomUUID() }); const [crashReceipt] = await db.select().from(transfer).where(eq(transfer.id, hardCrash.id)); assert.equal((await service.reconcileTransfer(hardCrash.id)).status, 'pending'); await boss.cancel(service.runJob.name, crashReceipt!.jobId!); assert.equal((await service.reconcileTransfer(hardCrash.id)).status, 'cancelled')
     const page = await service.listTransfers(owner, { limit: 2 }); assert.equal(page.items.length, 2); assert(page.nextCursor); assert.equal((await service.listTransfers(other, { cursor: page.nextCursor! })).items.length, 0); await assert.rejects(service.listTransfers(owner, { cursor: page.nextCursor! + '=' }), { code: 'invalid-input' })
+    // Cancel versus an already locked atomic apply: commit wins, cancellation observes conflict.
+    let releaseApply!: () => void, enteredApply!: () => void
+    const applied = new Promise<void>(resolve => { enteredApply = resolve })
+    const release = new Promise<void>(resolve => { releaseApply = resolve })
+    const raceRegistry = createTransferRegistry([defineTransfer({ name: 'race', version: '1', columns: ['name'], rowSchema: z.object({ name: z.string() }), async authorize() { return true },
+      async importRows(tx, context, rows) { enteredApply(); await release; await tx.insert(domain).values({ id: randomUUID(), owner: context.requesterId, name: rows[0]!.name }) }, async *exportRows() {} })])
+    const race = createTransferService({ database: () => db, boss: async () => boss!, storage: () => backend!.storage, registry: raceRegistry })
+    const raceReceipt = await race.stageImport(owner, { definition: 'race', body: Readable.from([Buffer.from('name\ncommit-wins\n')]) }); await race.startImport(owner, { transferId: raceReceipt.id, idempotencyKey: randomUUID() })
+    const applying = race.runJob.handler({ transferId: raceReceipt.id }, { id: randomUUID(), signal: new AbortController().signal, retryCount: 5, retryLimit: 5 })
+    await applied
+    const cancelling = race.cancelTransfer(owner, { transferId: raceReceipt.id }).then(() => 'cancelled', error => (error as { code: string }).code)
+    releaseApply(); await applying; assert.equal(await cancelling, 'conflict')
+    // No published URL after permission is revoked during an actual uploaded export.
+    const originalPut = backend.storage.putObject.bind(backend.storage)
+    backend.storage.putObject = async (...args) => { const result = await originalPut(...args); revoked.add(owner.requesterId); return result }
+    const beforePublication = await service.requestExport(owner, { definition: 'projects', idempotencyKey: randomUUID() }); await run(beforePublication.id); revoked.clear(); backend.storage.putObject = originalPut
+    const [orphan] = await db.select().from(transfer).where(eq(transfer.id, beforePublication.id)); assert.equal(orphan!.status, 'failed'); assert.equal(orphan!.artifactKey, null); assert.equal(orphan!.artifactKeys.length, 1)
+    await backend.storage.headObject(orphan!.artifactKeys[0]!); await service.purgeTransferArtifacts([orphan!.id], { execute: true }); await assert.rejects(backend.storage.headObject(orphan!.artifactKeys[0]!), { code: 'not-found' })
+    // A failed staging PUT retains its private pointer and never becomes staged.
+    backend.storage.putObject = () => Promise.reject(new (class extends Error { code = 'unavailable' })())
+    await assert.rejects(stage('name,description\nfailed-upload,text\n'), { code: 'unavailable' }); backend.storage.putObject = originalPut
+    const failedUploads = await db.select().from(transfer).where(eq(transfer.status, 'failed')); assert(failedUploads.some(row => row.errorCode === 'unavailable' && row.status === 'failed' && row.sourceKey && row.sourceHash === null))
+    // Claim/shutdown abort preserves a pending receipt for native retry/reconciliation.
+    const shutdown = await stage('name,description\nshutdown,text\n'); await service.startImport(owner, { transferId: shutdown.id, idempotencyKey: randomUUID() })
+    await assert.rejects(service.runJob.handler({ transferId: shutdown.id }, { id: randomUUID(), signal: AbortSignal.abort(), retryCount: 0, retryLimit: 5 }), { code: 'cancelled' })
+    assert.equal((await service.getTransfer(owner, { transferId: shutdown.id })).status, 'pending')
+    await service.cancelTransfer(owner, { transferId: shutdown.id })
+    // Actual PostgreSQL timeouts cancel a long snapshot query within the end-to-end budget.
+    const slow = createTransferService({ database: () => db, boss: async () => boss!, storage: () => backend!.storage, env: { DATABASE_URL: url.href, IMPORT_EXPORT_TIMEOUT_SECONDS: '5' }, registry: createTransferRegistry([defineTransfer({ name: 'slow', version: '1', columns: ['name'], rowSchema: z.object({ name: z.string() }), async authorize() { return true }, async importRows() {}, async *exportRows(tx) { await tx.execute(sql`select pg_sleep(6)`); yield ['unpublished'] } })]) })
+    const timed = await slow.requestExport(owner, { definition: 'slow', idempotencyKey: randomUUID() }), timeStarted = Date.now()
+    await assert.rejects(slow.runJob.handler({ transferId: timed.id }, { id: randomUUID(), signal: new AbortController().signal, retryCount: 5, retryLimit: 5 }), { code: 'timeout' })
+    assert(Date.now() - timeStarted < 6500, 'PostgreSQL cancels underlying long-running query')
+    assert.equal((await slow.getTransfer(owner, { transferId: timed.id })).errorCode, 'timeout')
     const nodeTransfer = await service.requestExport(owner, { definition: 'projects', idempotencyKey: randomUUID() })
     const built = Bun.spawn(['bun', 'build', '.fixture/node-worker.ts', '--target=node', '--outfile=.fixture/node-worker.mjs'], { stdout: 'pipe', stderr: 'pipe' })
     assert.equal(await built.exited, 0, 'Node fixture bundle builds')
     const node = Bun.spawn(['node', '.fixture/node-worker.mjs'], { env: { ...process.env, DATABASE_URL: url.href, TRANSFER_FIXTURE_ID: nodeTransfer.id, STORAGE_BUCKET: backend.config.bucket, STORAGE_REGION: backend.config.region, STORAGE_ENDPOINT: backend.config.endpoint, STORAGE_ACCESS_KEY_ID: backend.config.accessKeyId, STORAGE_SECRET_ACCESS_KEY: backend.config.secretAccessKey }, stdout: 'pipe', stderr: 'pipe' })
     const [nodeOutput, nodeError, nodeExit] = await Promise.all([new Response(node.stdout).text(), new Response(node.stderr).text(), node.exited])
     assert.equal(nodeExit, 0, nodeError); assert(nodeOutput.includes('Node24 native Jobs worker'))
+    const [nodeReceipt] = await db.select().from(transfer).where(eq(transfer.id, nodeTransfer.id))
+    const nativeNodeJob = await boss.getJobById(service.runJob.name, nodeReceipt!.jobId!)
+    assert(nativeNodeJob && nativeNodeJob.retryCount >= 1, 'Native Jobs retry recovers transient S3 failure without replaying success')
     // No implicit cleanup: source remains through success until explicit selected purge.
     await backend.storage.headObject(source!.sourceKey!)
     console.info(`[import-export] ${provider} real protocol/atomicity/snapshot contract passed`)
