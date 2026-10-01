@@ -5,9 +5,9 @@ import { resolve } from 'node:path'
 
 const root = resolve(import.meta.dir, '../..')
 const catalog = JSON.parse(readFileSync(resolve(root, 'capabilities/catalog.json'), 'utf8'))
-const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai']
+const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export']
 
-test('all twelve completed packages are explicitly enabled and discovered by the generic matrix', () => {
+test('all thirteen completed packages are explicitly enabled and discovered by the generic matrix', () => {
   const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
   const nuxt = readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')
   expect(catalog.capabilities.filter((entry: { status: string }) => entry.status === 'done').map((entry: { id: string }) => entry.id).sort()).toEqual([...completed].sort())
