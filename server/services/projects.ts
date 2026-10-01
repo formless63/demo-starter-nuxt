@@ -32,7 +32,7 @@ export async function createProject(db: Database, ownerId: string, input: Projec
       .values({ id: crypto.randomUUID(), ownerId, ...input })
       .returning()
 
-    if (row) await appendAuditEvent(tx, { actorType: actor.type, actorId: actor.id, action: 'project.created', subjectType: 'project', subjectId: row.id, outcome: 'success' })
+    if (row) await appendAuditEvent(tx, { actorType: actor.type, actorId: actor.id, action: 'projects.create', subjectType: 'project', subjectId: row.id, outcome: 'success' })
     return row
   })
 }
@@ -51,7 +51,7 @@ export async function updateProject(
       .where(and(eq(project.id, projectId), eq(project.ownerId, ownerId)))
       .returning()
 
-    if (row) await appendAuditEvent(tx, { actorType: actor.type, actorId: actor.id, action: 'project.updated', subjectType: 'project', subjectId: row.id, outcome: 'success' })
+    if (row) await appendAuditEvent(tx, { actorType: actor.type, actorId: actor.id, action: 'projects.update', subjectType: 'project', subjectId: row.id, outcome: 'success' })
     return row
   })
 }
@@ -63,7 +63,7 @@ export async function deleteProject(db: Database, ownerId: string, projectId: st
       .where(and(eq(project.id, projectId), eq(project.ownerId, ownerId)))
       .returning({ id: project.id })
 
-    if (row) await appendAuditEvent(tx, { actorType: actor.type, actorId: actor.id, action: 'project.deleted', subjectType: 'project', subjectId: row.id, outcome: 'success' })
+    if (row) await appendAuditEvent(tx, { actorType: actor.type, actorId: actor.id, action: 'projects.delete', subjectType: 'project', subjectId: row.id, outcome: 'success' })
     return row
   })
 }

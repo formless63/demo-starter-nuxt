@@ -29,7 +29,7 @@ export function verifyWebhookSignature(body: Uint8Array, headers: Headers, secre
   const id = headers.get('webhook-id') ?? ''
   const timestamp = headers.get('webhook-timestamp') ?? ''
   const signature = headers.get('webhook-signature') ?? ''
-  const tolerance = boundedInteger(options.toleranceSeconds ?? 300, 1, 3600)
+  const tolerance = boundedInteger(options.toleranceSeconds ?? 300, 1, 900)
   const now = options.now ?? Date.now()
   if (!Number.isSafeInteger(now) || now < 0 || secrets.length < 1 || secrets.length > 8) throw new WebhookError('configuration')
   if (!webhookIdSchema.safeParse(id).success || !/^(0|[1-9][0-9]{0,12})$/.test(timestamp)

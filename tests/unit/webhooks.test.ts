@@ -85,6 +85,15 @@ describe('inbound boundaries and replay handoff', () => {
 })
 
 describe('outbound policy and Jobs composition', () => {
+  it('enforces synchronized default body and timestamp bounds', () => {
+    const large = defineWebhookEvents({ 'large.event': z.object({ value: z.string() }) })
+    expect(() => createWebhookEvent(large, 'large.event', { value: 'x'.repeat(64 * 1024) })).toThrow(WebhookError)
+    expect(() => createWebhookEvent(large, 'large.event', { value: 'x'.repeat(64 * 1024) }, { maxBytes: 1024 * 1024 })).not.toThrow()
+    expect(() => createWebhookEvent(large, 'large.event', { value: 'x' }, { maxBytes: 1024 * 1024 + 1 })).toThrow()
+    const headers = new Headers(signWebhook(event.id, Buffer.from(event.body), secret))
+    expect(verifyWebhookSignature(Buffer.from(event.body), headers, [secret], { toleranceSeconds: 900 })).toBe(event.id)
+    expect(() => verifyWebhookSignature(Buffer.from(event.body), headers, [secret], { toleranceSeconds: 901 })).toThrow()
+  })
   it('rejects unsafe canonical target URLs', async () => {
     for (const url of ['http://example.com', 'https://user:pass@example.com', 'https://example.com/#', 'https://localhost', 'https://foo.localhost', 'https://localhost.', 'https://127.1', 'https://2130706433', 'https://0x7f000001', 'https://10.1.2.3', 'https://172.16.1.1', 'https://192.168.0.1', 'https://169.254.169.254', 'https://[::1]', 'https://[::ffff:127.0.0.1]', 'https://[fc00::1]', 'https://[fe80::1]']) await expect(validateWebhookTarget(url)).rejects.toMatchObject({ code: 'invalid-target' })
     expect((await validateWebhookTarget('https://example.com')).protocol).toBe('https:')
@@ -98,7 +107,7 @@ describe('outbound policy and Jobs composition', () => {
     expect(Object.keys(prepared).sort()).toEqual(['body', 'id', 'targetRef', 'type'])
     expect(jobs.delivery.payload.safeParse({ ...prepared, secret }).success).toBe(false)
     expect(jobs.delivery.payload.safeParse({ ...prepared, id: 'different' }).success).toBe(false)
-    expect(jobs.delivery.send).toMatchObject({ retryLimit: 8, retryBackoff: true, retryDelayMax: 3600 })
+    expect(jobs.delivery.send).toMatchObject({ retryLimit: 5, retryDelay: 30, retryBackoff: true, retryDelayMax: 900 })
   })
   it('classifies HTTP status codes and safely returns permanent resolver failures', async () => {
     for (const status of [408, 425, 429, 500, 503, 599]) expect(isRetryableWebhookStatus(status)).toBe(true)

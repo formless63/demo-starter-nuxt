@@ -19,9 +19,9 @@ All commands use Bun. PostgreSQL is required for migrations, authenticated runti
 - `bun run jobs:doctor`: fail on pg-boss schema drift or pending migration problems.
 - `bun run jobs:worker`: run the standalone worker with migrations disabled.
 - `bun run jobs:smoke`: enqueue `starter.echo`, run the real worker registration, and verify completion output.
-- `bun run packages:prepare`: prepare done/in-progress catalog packages that the root reference application actually depends on; root postinstall runs this before Nuxt preparation.
+- `bun run packages:prepare`: prepare selected done/in-progress root packages and their catalog hard-dependency closure; root postinstall runs this before Nuxt preparation.
 - `bun run packages:build <id>`: produce a completed capability's publish-shaped package artifact without publishing it; omit IDs to build all completed package capabilities.
-- `bun run packages:test <id>`: pack a completed capability, install it in its catalog-declared fixture, run common typecheck/build and its optional fixture-owned runtime check, remove it, and prove the remaining app typechecks/builds; omit IDs to test all.
+- `bun run packages:test <id>`: pack a completed capability and its hard-dependency closure, replace workspace references with local tarballs, install it in its catalog-declared fixture, run common typecheck/build and its optional fixture-owned runtime check, remove it, and prove the remaining app typechecks/builds; omit IDs to test all.
 - `bun run packages:matrix`: emit the catalog-derived JSON matrix used by CI for completed package capabilities.
 - Explicit `packages:build <id>` / `packages:test <id>` may target an in-progress package while developing it; unqualified commands and the CI matrix still select only completed packages.
 - Observability package verification: `bun run packages:test observability`; the fixture owns safe-output/context/span/metric tests, actual local OTLP/HTTP JSON receiving, no-backend/independent-signal checks and bounded app/standalone shutdown. No external collector is needed.
@@ -32,6 +32,7 @@ All commands use Bun. PostgreSQL is required for migrations, authenticated runti
 - `bun run lint`: ESLint static checks.
 - `bun run typecheck`: strict Nuxt/Vue TypeScript check.
 - `bun run test`: Nuxt/Vitest unit and database integration suite; authorization coverage requires `DATABASE_URL` and migrated PostgreSQL.
+- `PLAYWRIGHT_BASE_URL=http://127.0.0.1:<port> bun run test:e2e`: run the same health/API, session/machine Audit and browser contracts against an explicitly started production app; supply its disposable `DATABASE_URL` and auth secret.
 - `bun run test:e2e`: Playwright browser smoke test, which starts Nuxt itself (install Chromium once with `bunx playwright install chromium`).
 - `bun run build` / `bun run start`: produce and serve portable Nitro output.
 - `bun run check`: agent harness/tests, capability catalog, lint, typecheck, Nuxt/Vitest tests, and production build. Stop/AfterAgent hooks run only staged/unstaged whitespace checks plus the capability checker for governance changes and the agent-harness checker for harness changes (both for overlapping paths); full verification remains task/skill/CI-driven.

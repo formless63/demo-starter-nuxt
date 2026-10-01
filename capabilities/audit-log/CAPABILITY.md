@@ -6,7 +6,7 @@
 
 Keep the workspace dependency and add `'@repo/nuxt-audit-log'` to Nuxt `modules`. Import/export `auditEvent` from `@repo/nuxt-audit-log/server` in the application's Drizzle schema. Generate, review and commit the application's migration; apply it explicitly before runtime. The module never connects to a database or changes schema. Nuxt 4 and Drizzle >=0.45 <1 are peers. The packed fixture includes this schema and independent committed migration.
 
-The table uses application-generated UUIDs, millisecond-precision timestamptz, bounded varchar fields and JSONB metadata. There are no tenant/organization columns, foreign keys to actor/subject tables or cascading history deletion. Chronological, actor and subject B-tree indexes include descending createdAt/id. Action/outcome/time filters use these indexes where applicable; no speculative JSONB GIN/full-text index exists.
+The table uses application-generated UUIDs, millisecond-precision timestamptz, bounded varchar fields and JSONB metadata. There are no tenant/organization columns, foreign keys to actor/subject tables or cascading history deletion. Chronological, actor, subject and action B-tree indexes include descending createdAt/id. Action/outcome/time filters use these indexes where applicable; no speculative JSONB GIN/full-text index exists.
 
 ## Transaction contract
 
@@ -15,7 +15,7 @@ import { appendAuditEvent, queryAuditEvents } from '@repo/nuxt-audit-log/server'
 await db.transaction(async (tx) => {
   const [record] = await tx.insert(project).values(input).returning()
   await appendAuditEvent(tx, {
-    actorType: 'user', actorId: user.id, action: 'project.created',
+    actorType: 'user', actorId: user.id, action: 'projects.create',
     subjectType: 'project', subjectId: record.id, outcome: 'success',
   })
 })
@@ -30,7 +30,7 @@ Root Project create/update/delete share the transaction with success events. Mis
 
 ## Data safety and queries
 
-String limits: actor type/outcome 32, action/actor ID/subject ID/request ID 128, subject type 64. Empty strings and control characters are rejected. Metadata must be a plain JSON object: depth <=6, <=50 keys/object, <=100 items/array, <=1,000 nodes, keys <=64 characters, strings <=1,024 characters and serialized UTF-8 <=16 KiB. Values must be finite JSON primitives, dense arrays or plain objects. Errors, class/Date instances, cycles, undefined, symbols, functions, accessors and non-enumerable/custom properties are rejected. Rejected data is never echoed in errors.
+String limits: actor type/outcome 32, action/actor ID/subject ID/request ID 128, subject type 64. Actions must be lowercase namespaced machine identifiers (`domain.action`), such as `projects.create`, `projects.update`, and `projects.delete`; prose, uppercase and empty segments are rejected. Empty strings and control characters are rejected. Metadata must be a plain JSON object: depth <=6, <=50 keys/object, <=100 items/array, <=1,024 nodes, keys <=64 characters, strings <=1,024 characters and serialized UTF-8 <=8 KiB. Values must be finite JSON primitives, dense arrays or plain objects. Errors, class/Date instances, cycles, undefined, symbols, functions, accessors and non-enumerable/custom properties are rejected. Rejected data is never echoed in errors.
 
 Keys are checked recursively with case/separator-insensitive password/passwd/pwd, secret, token, authorization, cookie and apiKey variants, including accessToken, refreshToken and clientSecret. Raw request/session/body/header containers are also rejected. Key checks cannot detect a secret or PII disguised under an innocent key: deliberately allowlist metadata values and prefer stable IDs. Never copy arbitrary request, session, body, headers or exception objects. Do not store names, emails, credentials or unconstrained free text.
 

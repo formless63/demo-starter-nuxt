@@ -3,7 +3,7 @@ import { Buffer } from 'node:buffer'
 import { and, desc, eq, gte, lt, or } from 'drizzle-orm'
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core'
 import { auditEvent } from './schema'
-import { auditDate, boundedString, validateMetadata } from './validation'
+import { auditAction, auditDate, boundedString, validateMetadata } from './validation'
 
 // Only the required Drizzle operations; both databases and existing transactions fit.
 type AuditWriter = Pick<PgDatabase<PgQueryResultHKT>, 'insert'>
@@ -30,7 +30,7 @@ export async function appendAuditEvent(txOrDb: AuditWriter, event: AuditEventInp
     id: randomUUID(),
     actorType: boundedString(event.actorType, 32),
     actorId: optional(event.actorId, 128),
-    action: boundedString(event.action, 128),
+    action: auditAction(event.action),
     subjectType: boundedString(event.subjectType, 64),
     subjectId: optional(event.subjectId, 128),
     outcome: optional(event.outcome, 32),
@@ -86,7 +86,7 @@ export async function queryAuditEvents(db: AuditReader, query: AuditQuery = {}) 
     conditions.push(eq(auditEvent.subjectType, boundedString(query.subject.type, 64)))
     if (query.subject.id !== undefined) conditions.push(eq(auditEvent.subjectId, boundedString(query.subject.id, 128)))
   }
-  if (query.action !== undefined) conditions.push(eq(auditEvent.action, boundedString(query.action, 128)))
+  if (query.action !== undefined) conditions.push(eq(auditEvent.action, auditAction(query.action)))
   if (query.outcome !== undefined) conditions.push(eq(auditEvent.outcome, boundedString(query.outcome, 32)))
   if (from) conditions.push(gte(auditEvent.createdAt, from))
   if (until) conditions.push(lt(auditEvent.createdAt, until))

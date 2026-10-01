@@ -33,6 +33,7 @@ interface PackageManifest {
   dependencies?: Record<string, string>
   devDependencies?: Record<string, string>
   optionalDependencies?: Record<string, string>
+  peerDependencies?: Record<string, string>
   overrides?: Record<string, string>
 }
 
@@ -105,7 +106,8 @@ async function prepareRootPackages() {
   }
   const selected = packagedCapabilities.filter(capability => rootDependencies[capability.packageName!])
 
-  for (const capability of selected) {
+  const closure = [...new Map(selected.flatMap(capability => packageClosure(capability)).map(entry => [entry.id, entry])).values()]
+  for (const capability of closure) {
     await run(['bun', 'run', '--cwd', capability.packagePath!, 'dev:prepare'], root)
   }
 }
@@ -129,6 +131,9 @@ async function testPackage(capability: Capability) {
   const packageName = capability.packageName!
   const fixtureRoot = resolve(root, capability.fixturePath!)
   const config = capability.packageTest!
+  const closure = packageClosure(capability)
+  const retainedOwnedDependencies = new Set(closure.filter(entry => entry.id !== capability.id)
+    .flatMap(entry => entry.packageTest?.ownedDependencies ?? []))
   const temporaryRoot = await mkdtemp(join(tmpdir(), `${capability.id}-package-install-`))
   const packRoot = join(temporaryRoot, 'package')
   const consumerRoot = join(temporaryRoot, 'consumer')
@@ -136,10 +141,28 @@ async function testPackage(capability: Capability) {
   try {
     await mkdir(packRoot)
     const archives = new Map<string, string>()
-    for (const dependency of packageClosure(capability)) {
+    for (const dependency of closure) {
       const destination = join(packRoot, dependency.id)
       await mkdir(destination)
-      await run(['bun', 'pm', 'pack', '--destination', destination], resolve(root, dependency.packagePath!))
+      const packageRoot = resolve(root, dependency.packagePath!)
+      await buildPackage(dependency)
+      const stagedRoot = join(temporaryRoot, 'staged', dependency.id)
+      await cp(packageRoot, stagedRoot, {
+        recursive: true,
+        filter: source => !['node_modules', '.nuxt', '.output'].includes(basename(source)),
+      })
+      const stagedManifestPath = join(stagedRoot, 'package.json')
+      const stagedManifest = JSON.parse(await readFile(stagedManifestPath, 'utf8')) as PackageManifest
+      for (const field of ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies'] as const) {
+        for (const [name, version] of Object.entries(stagedManifest[field] ?? {})) {
+          if (!version.startsWith('workspace:')) continue
+          const archive = archives.get(name)
+          if (!archive) fail(`Workspace dependency ${name} lacks a catalog hard dependency for ${dependency.id}`)
+          stagedManifest[field]![name] = `file:${archive}`
+        }
+      }
+      await writeFile(stagedManifestPath, `${JSON.stringify(stagedManifest, null, 2)}\n`)
+      await run(['bun', 'pm', 'pack', '--ignore-scripts', '--destination', destination], stagedRoot)
       const archiveName = (await readdir(destination)).find(file => file.endsWith('.tgz'))
       if (!archiveName) fail(`${dependency.id} package build did not produce a tarball`)
       archives.set(dependency.packageName!, join(destination, archiveName))
@@ -163,6 +186,13 @@ async function testPackage(capability: Capability) {
     await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
 
     await run(['bun', 'install'], consumerRoot)
+    for (const dependency of closure) {
+      const name = dependency.packageName!
+      const installed = JSON.parse(await readFile(join(installedPackagePath(consumerRoot, name), 'package.json'), 'utf8')) as PackageManifest
+      if (!installed.main || !await exists(childPath(installedPackagePath(consumerRoot, name), installed.main))) {
+        fail(`Packed hard dependency ${name} entrypoint was not installed`)
+      }
+    }
     const installedRoot = installedPackagePath(consumerRoot, packageName)
     const installedManifest = JSON.parse(await readFile(join(installedRoot, 'package.json'), 'utf8')) as PackageManifest
     if (!installedManifest.main || !await exists(childPath(installedRoot, installedManifest.main))) {
@@ -203,7 +233,7 @@ async function testPackage(capability: Capability) {
       fail(`${packageName} remained after removal`)
     }
     for (const dependency of config.ownedDependencies) {
-      if (await exists(installedPackagePath(consumerRoot, dependency))) {
+      if (!retainedOwnedDependencies.has(dependency) && await exists(installedPackagePath(consumerRoot, dependency))) {
         fail(`Capability-owned dependency ${dependency} remained after removal`)
       }
     }
@@ -227,7 +257,7 @@ switch (command) {
     await prepareRootPackages()
     break
   case 'build':
-    for (const capability of selectCapabilities(ids)) await buildPackage(capability)
+    for (const capability of [...new Map(selectCapabilities(ids).flatMap(entry => packageClosure(entry)).map(entry => [entry.id, entry])).values()]) await buildPackage(capability)
     break
   case 'test':
     for (const capability of selectCapabilities(ids, true)) await testPackage(capability)

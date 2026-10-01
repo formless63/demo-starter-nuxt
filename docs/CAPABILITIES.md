@@ -20,7 +20,6 @@ The root application deliberately enables every completed capability for continu
 | `cache-coordination` | `@repo/nuxt-cache` | Enabled | No | None | Valkey/Redis-compatible service on use | [Cache / Coordination](../capabilities/cache-coordination/CAPABILITY.md) |
 | `object-storage` | `@repo/nuxt-storage` | Enabled | No | None | S3-compatible service when used | [Object Storage](../capabilities/object-storage/CAPABILITY.md) |
 | `email` | `@repo/nuxt-email` | Enabled | No | None | SMTP on use; Mailpit optional | [Email](../capabilities/email/CAPABILITY.md) |
-
 | `webhooks` | `@repo/nuxt-webhooks` | Enabled | No | Jobs | Remote endpoints when used | [Webhooks](../capabilities/webhooks/CAPABILITY.md) |
 | `audit-log` | `@repo/nuxt-audit-log` | Enabled | No | None | PostgreSQL (required) | [Audit Log](../capabilities/audit-log/CAPABILITY.md) |
 
@@ -104,7 +103,7 @@ bun run packages:test <id>
 bun run check
 ```
 
-Package tests build and pack the real artifact, install it into an external-style fixture, exercise capability-owned runtime checks, remove it, clear generated state, and prove the remaining fixture still typechecks and builds. They validate package-level removal without acting as a source-rewriting uninstaller.
+Package tests resolve catalog hard dependencies, build and pack the real artifacts with workspace references replaced by local tarballs, install them into an external-style fixture, exercise capability-owned runtime checks, remove it, clear generated state, and prove the remaining fixture still typechecks and builds. Required capability packages and their owned dependencies remain installed after removal of the selected package. Tests validate package-level removal without acting as a source-rewriting uninstaller.
 
 ## Webhooks
 

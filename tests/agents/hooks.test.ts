@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from 'bun:test'
 import { spawnSync } from 'node:child_process'
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 import { contextResponse, gateResponse, guardResponse, projectRoot, type Client, type Runner } from '../../.agents/hooks/common.ts'
 import { sessionContext } from '../../.agents/hooks/session-context.ts'
 import { toolDecision } from '../../.agents/hooks/tool-guard.ts'
@@ -65,7 +65,7 @@ for (const client of clients) {
     test.each(['git status', 'bun run check', 'rm -rf .nuxt .output', 'rm -rf /tmp/disposable-fixture', 'docker compose down --volumes --remove-orphans', 'echo "git reset --hard"'])('allows benign command: %s', command => {
       expect(shell(command).reason).toBeUndefined()
     })
-    test.each(['git reset --hard', 'git -C /tmp/fixture reset --hard', 'git --no-pager reset --hard', 'git clean -fd', 'git clean -fdx', 'git clean --force -d', 'git push --force', 'git push --force-with-lease=main', 'git push -f origin main', 'git push origin +main', 'rm -rf .', 'rm -rf ..', 'rm -r .git', 'rm -rf .git/*', `rm -rf "${projectRoot}"`, 'cd ..; rm -rf demo-starter-nuxt'])('denies clear destructive command: %s', command => {
+    test.each(['git reset --hard', 'git -C /tmp/fixture reset --hard', 'git --no-pager reset --hard', 'git clean -fd', 'git clean -fdx', 'git clean --force -d', 'git push --force', 'git push --force-with-lease=main', 'git push -f origin main', 'git push origin +main', 'rm -rf .', 'rm -rf ..', 'rm -r .git', 'rm -rf .git/*', `rm -rf "${projectRoot}"`, `cd ..; rm -rf "${basename(projectRoot)}"`])('denies clear destructive command: %s', command => {
       const decision = shell(command)
       expect(decision.reason).toBeTruthy()
       const response = guardResponse(client, decision.reason)

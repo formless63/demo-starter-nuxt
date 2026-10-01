@@ -35,7 +35,7 @@ suite('root Project transactional audit', () => {
     await updateProject(db, ownerId, created!.id, { name: 'Updated private name', description: null })
     await deleteProject(db, ownerId, created!.id)
     const events = await queryAuditEvents(db, { subject: { type: 'project', id: created!.id } })
-    expect(events.items.map(e => e.action).sort()).toEqual(['project.created', 'project.deleted', 'project.updated'])
+    expect(events.items.map(e => e.action).sort()).toEqual(['projects.create', 'projects.delete', 'projects.update'])
     for (const event of events.items) {
       expect(event.actorType).toBe('user')
       expect(event.actorId).toBe(ownerId)
@@ -59,6 +59,6 @@ suite('root Project transactional audit', () => {
     const created = await createProject(db, ownerId, { name: 'Machine write', description: null }, { type: 'machine', id: otherId })
     const events = await queryAuditEvents(db, { subject: { type: 'project', id: created!.id } })
     expect(events.items).toHaveLength(1)
-    expect(events.items[0]).toMatchObject({ actorType: 'machine', actorId: otherId, action: 'project.created', metadata: {} })
+    expect(events.items[0]).toMatchObject({ actorType: 'machine', actorId: otherId, action: 'projects.create', metadata: {} })
   })
 })

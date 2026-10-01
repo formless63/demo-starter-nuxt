@@ -17,6 +17,7 @@ test('Project HTTP mutations audit session and verified machine actors without c
   try {
     await db.insert(tables.user).values({ id: ownerId, name: 'Private actor name', email: `${ownerId}@example.test` })
     const auth = betterAuth({
+      baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3000',
       database: drizzleAdapter(db, { provider: 'pg', schema: tables }),
       secret: 'local-test-key-creation-secret-at-least-32-chars',
       plugins: [apiPlatformAuth()],
@@ -31,7 +32,7 @@ test('Project HTTP mutations audit session and verified machine actors without c
     const machineProject = await machineResponse.json() as { id: string }
     const machineAudit = await queryAuditEvents(db, { subject: { type: 'project', id: machineProject.id } })
     expect(machineAudit.items).toHaveLength(1)
-    expect(machineAudit.items[0]).toMatchObject({ actorType: 'machine', actorId: credential.id, action: 'project.created', metadata: {} })
+    expect(machineAudit.items[0]).toMatchObject({ actorType: 'machine', actorId: credential.id, action: 'projects.create', metadata: {} })
     const denied = await request.post('/api/v1/projects', { headers: { 'X-API-Key': 'invalid-raw-key' }, data: { name: 'Denied' } })
     expect(denied.status()).toBe(401)
     expect((await queryAuditEvents(db, { actor: { type: 'machine', id: credential.id } })).items).toHaveLength(1)
@@ -40,14 +41,16 @@ test('Project HTTP mutations audit session and verified machine actors without c
     await db.insert(tables.session).values({ id: crypto.randomUUID(), token: sessionToken, userId: ownerId, expiresAt: new Date(Date.now() + 60_000) })
     const secret = process.env.NUXT_AUTH_SECRET || 'e2e-secret-that-is-at-least-thirty-two-chars'
     const signature = createHmac('sha256', secret).update(sessionToken).digest('base64')
-    const headers = { cookie: `better-auth.session_token=${encodeURIComponent(`${sessionToken}.${signature}`)}` }
+    // Root production auth deliberately enforces the secure cookie prefix.
+    const cookieName = process.env.PLAYWRIGHT_BASE_URL ? '__Secure-better-auth.session_token' : 'better-auth.session_token'
+    const headers = { cookie: `${cookieName}=${encodeURIComponent(`${sessionToken}.${signature}`)}` }
     const createdResponse = await request.post('/api/projects', { headers, data: { name: 'Private session project' } })
     expect(createdResponse.status()).toBe(201)
     const created = await createdResponse.json() as { id: string }
     expect((await request.patch(`/api/projects/${created.id}`, { headers, data: { name: 'Private new name' } })).status()).toBe(200)
     expect((await request.delete(`/api/projects/${created.id}`, { headers })).status()).toBe(204)
     const userAudit = await queryAuditEvents(db, { subject: { type: 'project', id: created.id } })
-    expect(userAudit.items.map(e => e.action).sort()).toEqual(['project.created', 'project.deleted', 'project.updated'])
+    expect(userAudit.items.map(e => e.action).sort()).toEqual(['projects.create', 'projects.delete', 'projects.update'])
     for (const event of userAudit.items) expect(event).toMatchObject({ actorType: 'user', actorId: ownerId, metadata: {} })
     const history = JSON.stringify([...userAudit.items, ...machineAudit.items])
     for (const privateValue of [credential.key, sessionToken, 'Private', `${ownerId}@example.test`]) expect(history).not.toContain(privateValue)

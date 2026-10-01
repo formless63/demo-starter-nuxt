@@ -1,8 +1,13 @@
 FROM oven/bun:1.4.2 AS build
 WORKDIR /app
 COPY . .
-RUN bun install --frozen-lockfile
-RUN NUXT_TYPECHECK=false bun run build \
+# Optional build-only trust for managed environments; never copied into the image.
+RUN --mount=type=secret,id=proxy_ca \
+  if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
+  bun install --frozen-lockfile
+RUN --mount=type=secret,id=proxy_ca \
+  if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
+  NUXT_TYPECHECK=false bun run build \
   && mkdir -p .migration .jobs \
   && bun build ./scripts/migrate.ts --target=node --outfile .migration/migrate.mjs \
   && bun build ./scripts/jobs-migrate.ts --target=node --outfile .jobs/migrate.mjs \

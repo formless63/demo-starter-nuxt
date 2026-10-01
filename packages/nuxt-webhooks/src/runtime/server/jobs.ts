@@ -27,10 +27,10 @@ export function createWebhookJobs<Registry extends WebhookEventRegistry, const N
     name: (options.name ?? 'webhooks.deliver') as Name,
     payload,
     send: {
-      retryLimit: boundedInteger(options.retryLimit ?? 8, 0, 20),
-      retryDelay: boundedInteger(options.retryDelaySeconds ?? 30, 1, 3600),
+      retryLimit: boundedInteger(options.retryLimit ?? 5, 0, 20),
+      retryDelay: boundedInteger(options.retryDelaySeconds ?? 30, 1, 900),
       retryBackoff: true,
-      retryDelayMax: 3600,
+      retryDelayMax: 900,
       expireInSeconds: 60,
       retentionSeconds: 7 * 24 * 3600,
     },
