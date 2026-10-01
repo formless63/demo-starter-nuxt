@@ -72,6 +72,7 @@ async function deleteProject(project: Project) {
 
 <template>
   <div class="space-y-6">
+    <ProjectTransfers />
     <div class="flex items-center justify-between gap-4">
       <div>
         <h1 class="text-3xl font-bold">Projects</h1>
