@@ -180,6 +180,8 @@ try {
     const [lostRow] = await db.select().from(transfer).where(eq(transfer.id, lost.id)); await boss.deleteJob(service.runJob.name, lostRow!.jobId!)
     assert.equal((await service.reconcileTransfer(lost.id)).errorCode, 'execution-lost')
     const nodeTransfer = await service.requestExport(owner, { definition: 'projects', idempotencyKey: randomUUID() })
+    const [nodeQueued] = await db.select().from(transfer).where(eq(transfer.id, nodeTransfer.id))
+    await boss.update(service.runJob.name, undefined, { id: nodeQueued!.jobId!, priority: 800 })
     const built = Bun.spawn(['bun', 'build', '.fixture/node-worker.ts', '--target=node', '--outfile=.fixture/node-worker.mjs'], { stdout: 'pipe', stderr: 'pipe' })
     assert.equal(await built.exited, 0, 'Node fixture bundle builds')
     const node = Bun.spawn(['node', '.fixture/node-worker.mjs'], { env: { ...process.env, DATABASE_URL: url.href, TRANSFER_FIXTURE_ID: nodeTransfer.id, STORAGE_BUCKET: backend.config.bucket, STORAGE_REGION: backend.config.region, STORAGE_ENDPOINT: backend.config.endpoint, STORAGE_ACCESS_KEY_ID: backend.config.accessKeyId, STORAGE_SECRET_ACCESS_KEY: backend.config.secretAccessKey }, stdout: 'pipe', stderr: 'pipe' })

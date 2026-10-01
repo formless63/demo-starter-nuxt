@@ -20,7 +20,7 @@ const service = createTransferService({ database: () => db, storage: () => stora
   async *exportRows() { yield ['Node24 real worker', 'native Jobs/Storage CSV'] },
 })]) })
 try {
-  await boss.start(); await registerWorkers(boss, { [service.runJob.name]: service.runJob }, 1)
+  await boss.start(); await registerWorkers(boss, { [service.runJob.name]: { ...service.runJob, work: { minPriority: 800, maxPriority: 800 } } }, 1)
   const deadline = Date.now() + 90000
   let completed = false
   while (Date.now() < deadline) {
