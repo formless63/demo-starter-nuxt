@@ -1,0 +1,21 @@
+{
+  "name": "realtime-consumer-fixture",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck",
+    "package:test:runtime": "bun .fixture/package-test.ts"
+  },
+  "dependencies": {
+    "nuxt": "4.5.2",
+    "@repo/nuxt-realtime": "workspace:*",
+    "h3": "1.15.11",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vue-tsc": "3.1.7",
+    "@types/node": "24.10.1"
+  }
+}

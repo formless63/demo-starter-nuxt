@@ -1,7 +1,7 @@
 {
   "$schema": "./catalog.schema.json",
   "schemaVersion": 1,
-  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage", "email", "webhooks", "audit-log", "cache-coordination"] },
+  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage", "email", "webhooks", "audit-log", "cache-coordination", "realtime", "notifications"] },
   "baseline": [
     { "id": "framework", "displayName": "Nuxt framework", "summary": "Nuxt 4 with Vue and Nitro routing, SSR, and server APIs." },
     { "id": "strict-typescript", "displayName": "Strict TypeScript", "summary": "Strict TypeScript checks across application and server code." },
@@ -367,27 +367,123 @@
       "id": "realtime",
       "displayName": "Realtime",
       "kind": "application-infrastructure",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["cache-coordination", "notifications", "observability"],
-      "baselineRequirements": ["authentication"],
+      "integratesWith": [
+        "cache-coordination",
+        "notifications",
+        "observability"
+      ],
+      "baselineRequirements": [
+        "node-runtime"
+      ],
       "externalRequirements": [],
-      "summary": "Authenticated realtime application updates without mandatory new infrastructure initially."
+      "summary": "Authenticated realtime application updates without mandatory new infrastructure initially.",
+      "baselineIntegrations": [
+        "authentication"
+      ],
+      "scripts": [
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [
+        "REALTIME_TRANSPORTS"
+      ],
+      "migrations": [],
+      "runtimeProcesses": [
+        "Nitro application"
+      ],
+      "documentationPath": "capabilities/realtime/CAPABILITY.md",
+      "evaluationDocument": "REALTIME_MODULE_EVALUATION.md",
+      "agentSkill": ".agents/skills/realtime-change/SKILL.md",
+      "packageName": "@repo/nuxt-realtime",
+      "packagePath": "packages/nuxt-realtime",
+      "fixturePath": "fixtures/realtime-consumer",
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "notifications",
       "displayName": "Notifications",
       "kind": "application-infrastructure",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
-      "requires": ["jobs"],
-      "integratesWith": ["email", "realtime", "audit-log"],
-      "externalRequirements": [
-        { "name": "ntfy", "required": false },
-        { "name": "SMTP through Email", "required": false }
+      "requires": [
+        "jobs"
       ],
-      "summary": "Durable in-app and optional external notification delivery."
+      "integratesWith": [
+        "email",
+        "realtime",
+        "audit-log",
+        "observability"
+      ],
+      "externalRequirements": [
+        {
+          "name": "ntfy",
+          "required": false
+        }
+      ],
+      "summary": "Durable in-app and optional external notification delivery.",
+      "baselineRequirements": [
+        "postgresql",
+        "drizzle"
+      ],
+      "baselineIntegrations": [
+        "authentication"
+      ],
+      "scripts": [
+        "packages:build",
+        "packages:test",
+        "db:migrate"
+      ],
+      "environmentVariables": [
+        "DATABASE_URL",
+        "NTFY_BASE_URL",
+        "NTFY_TOKEN",
+        "NTFY_TIMEOUT_SECONDS"
+      ],
+      "migrations": [
+        "Application-owned committed Drizzle migration for notification; explicit Jobs migration"
+      ],
+      "runtimeProcesses": [
+        "Nitro application",
+        "Existing Jobs worker"
+      ],
+      "documentationPath": "capabilities/notifications/CAPABILITY.md",
+      "evaluationDocument": "NOTIFICATIONS_MODULE_EVALUATION.md",
+      "agentSkill": ".agents/skills/notifications-change/SKILL.md",
+      "packageName": "@repo/nuxt-notifications",
+      "packagePath": "packages/nuxt-notifications",
+      "fixturePath": "fixtures/notifications-consumer",
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime",
+            "db:migrate"
+          ],
+          "paths": [
+            "server/api/notifications.get.ts",
+            "server/database/schema.ts",
+            "drizzle.config.ts",
+            "server/jobs/registry.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "import-export",

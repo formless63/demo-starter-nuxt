@@ -4,7 +4,7 @@ Optional private `@repo/nuxt-cache`, `packages/nuxt-cache`, with clean consumer 
 
 ## Boundary
 
-Server-only ephemeral exact-key strings/bytes, TTL, NX writes, atomic counters, advisory single-backend leases, non-durable pub/sub and ping. This is not a durable store, session database, queue, Jobs, Realtime, persistent event bus, search or rate-limit product. Jobs stays PostgreSQL-durable and never migrates to Cache. Realtime may later consume pub/sub; API Platform may later consume shared cache/rate-state. Those integrations are documentation only in this change.
+Server-only ephemeral exact-key strings/bytes, TTL, NX writes, atomic counters, advisory single-backend leases, non-durable pub/sub and ping. This is not a durable store, session database, queue, Jobs, Realtime, persistent event bus, search or rate-limit product. Jobs stays PostgreSQL-durable and never migrates to Cache. The root application may compose Realtime fanout through public Cache pub/sub, without a package dependency or delivery/replay guarantee; API shared cache/rate-state remains a future integration.
 
 ## Install and configuration
 

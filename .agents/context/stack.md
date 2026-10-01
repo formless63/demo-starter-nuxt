@@ -25,3 +25,7 @@ Official Nuxt documentation should be the primary source. Agents supporting MCP 
 `@repo/nuxt-audit-log` uses Nuxt/Drizzle peers and @nuxt/kit only; no API/Jobs/auth dependency. Application-generated UUIDs, timestamptz(3), bounded JSONB metadata and four B-tree indexes support append-oriented records and exact keyset queries.
 
 `@repo/nuxt-cache` owns stable redis/node-redis 6.3.0 with Nuxt peer and official Valkey 9.1.2 disposable fixture. Node 24 production and Bun tooling share the verified protocol subset; TLS verification stays enabled. Additive `compose.cache.yaml` is loopback-only with no AOF/RDB/data volume. Cache is ephemeral; Jobs remains PostgreSQL-durable. See `CACHE_COORDINATION_MODULE_EVALUATION.md`.
+
+`@repo/nuxt-realtime` uses H3/Zod peers and current Nitro2.13.4/CrossWS0.3.5 mechanisms; no Socket.IO or new transport dependency. Node PassThrough/H3 sendStream provides SSE comments/drain; native H3 WebSocket hooks provide authenticated Upgrade and send-buffer signals. Nitro's experimental websocket flag is necessary; Node24 global WebSocket is a stable client API. Runtime default SSE; both adapters always available.
+
+`@repo/nuxt-notifications` uses Jobs/Drizzle/Zod peers and native Node24 fetch for optional ntfy JSON. Schema has its own entry for Drizzle Kit compatibility. Actual fixture uses pinned stable ntfy2.28.0 (disposable local server); root Email adapter reuses Nodemailer10.0.13/Mailpit1.31.3 rather than adding SMTP. No optional capability dependency or new mandatory service.

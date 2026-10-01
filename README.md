@@ -41,6 +41,8 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Email | Available (`done`) | Optional | SMTP only when used; no capability dependency | Safe text/HTML SMTP, Mailpit fixture and hashed-token magic links |
 | Webhooks | Available (`done`) | Optional | Jobs; remote endpoints only when delivering | Standard signed envelopes, durable delivery and bounded raw-body verification |
 | Audit Log | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; optional authentication | Transactional append-oriented history and bounded keyset queries |
+| Realtime | Available (`done`) | Optional | Node runtime; application session policy; no capability dependency | Bounded server-to-browser SSE and WebSocket event adapters |
+| Notifications | Available (`done`) | Optional | Jobs; PostgreSQL/Drizzle; optional Email/Realtime/ntfy | Recipient-scoped persistent notifications and transactional delivery |
 
 `defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email and Cache remain lazy with no provider required to boot/build.
 
@@ -59,7 +61,7 @@ bun run jobs:migrate
 bun run dev
 ```
 
-Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all eight completed capability packages; `db:migrate` applies the application/API/Audit tables and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
+Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all ten completed capability packages; `db:migrate` applies the application/API/Audit/Notification tables and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
 
 ## Authentication notes
 
@@ -96,6 +98,8 @@ bun run packages:test email
 bun run packages:test webhooks
 bun run packages:test audit-log
 bun run packages:test cache-coordination
+bun run packages:test realtime
+bun run packages:test notifications
 bun run check
 bun run test:e2e
 ```
@@ -149,4 +153,10 @@ Webhooks is explicitly enabled as `@repo/nuxt-webhooks` and requires Jobs; see i
 
 ## Cache / Coordination
 
-Explicitly enabled in the reference app and lazy at boot/build. Server-only `@repo/nuxt-cache` supplies exact namespaced string/byte values, expiring writes, atomic counters, advisory leases and non-durable pub/sub. No Jobs/Realtime/queue integration is implemented. `cache:dev:valkey` starts pinned disposable localhost Valkey; `cache:check`, `cache:smoke` and `cache:dev:down` use explicit configuration. Leases have no fencing or quorum and cannot alone protect irreversible correctness. See the [contract](capabilities/cache-coordination/CAPABILITY.md) and [evaluation](CACHE_COORDINATION_MODULE_EVALUATION.md).
+Explicitly enabled in the reference app and lazy at boot/build. Server-only `@repo/nuxt-cache` supplies exact namespaced string/byte values, expiring writes, atomic counters, advisory leases and non-durable pub/sub. Optional application-owned Realtime fanout uses pub/sub; Jobs remains PostgreSQL-durable. `cache:dev:valkey` starts pinned disposable localhost Valkey; `cache:check`, `cache:smoke` and `cache:dev:down` use explicit configuration. Leases have no fencing or quorum and cannot alone protect irreversible correctness. See the [contract](capabilities/cache-coordination/CAPABILITY.md) and [evaluation](CACHE_COORDINATION_MODULE_EVALUATION.md).
+
+## Realtime and Notifications
+
+Choose **SSE**, **WebSocket**, or **Both** with server-only `REALTIME_TRANSPORTS=sse` (default), `websocket`, or `sse,websocket`. Both adapters are included. WebSocket v1 carries the same server event stream, not generic RPC, and uses transport-only ping/pong heartbeats. Session-authenticated routes authorize exact channels; reconnect then refetch authoritative state because events and optional Cache fanout have no replay guarantee. See the [Realtime contract](capabilities/realtime/CAPABILITY.md).
+
+Notifications stores recipient-scoped plain records in an application-migrated table. The existing Jobs worker reloads records/current destinations for optional Email/ntfy delivery; queued data contains only notification ID and channel. The reference demo publishes an ID-only realtime hint after commit. ntfy requires an explicitly configured trusted server and application topic resolver; there is no public ntfy default. Optional transports are unnecessary for build/boot. See the [Notifications contract](capabilities/notifications/CAPABILITY.md).
