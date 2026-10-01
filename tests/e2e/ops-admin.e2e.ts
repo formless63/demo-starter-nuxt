@@ -59,7 +59,7 @@ test('Ops guards direct API/SSR, provides manual accessible refresh and clears s
     expect(calls).toBe(1)
     await page.getByRole('button', { name: 'Refresh', exact: true }).click()
     await page.getByRole('link', { name: 'Back to application' }).click()
-    await expect(page).toHaveURL(/\/app$/u)
+    await expect(page).toHaveURL(/\/app\/projects$/u)
     await expect(page.getByRole('heading', { name: 'Operations overview' })).toHaveCount(0)
     await page.unroute('**/api/ops/summary')
     await db.delete(tables.session).where(eq(tables.session.token, token))
