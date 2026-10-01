@@ -49,6 +49,7 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     await db.insert(tables.session).values({ id: randomUUID(), token, userId: owner, expiresAt: new Date(Date.now() + 240000) })
     await db.insert(tables.project).values({ id: randomUUID(), ownerId: other, name: 'Foreign project must stay private' })
     const name = production ? '__Secure-better-auth.session_token' : 'better-auth.session_token', signature = createHmac('sha256', secret).update(token).digest('base64')
+    const sessionHeaders = { cookie: `${name}=${encodeURIComponent(`${token}.${signature}`)}` }
     context = await browser.newContext({ baseURL: base })
     await context.addCookies([{ name, value: encodeURIComponent(`${token}.${signature}`), domain: '127.0.0.1', path: '/', httpOnly: true, secure: production }])
     const page = await context.newPage()
@@ -63,7 +64,7 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     await expect.poll(async () => {
       await page.getByRole('button', { name: 'Refresh transfers', exact: true }).click()
       expect(worker!.exitCode, 'Existing worker remains running').toBeNull()
-      const visible = await (await context!.request.get('/api/transfers')).json() as { items: { status: string, errorCode: string | null }[] }
+      const visible = await (await context!.request.get('/api/transfers', { headers: sessionHeaders })).json() as { items: { status: string, errorCode: string | null }[] }
       const failure = visible.items.find(item => item.status === 'failed')
       if (failure) throw new Error(`Safe transfer failure: ${failure.errorCode}`)
       return await page.getByText('import — succeeded', { exact: false }).count()
@@ -71,14 +72,14 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     await page.getByRole('button', { name: 'Export Projects', exact: true }).click()
     await expect.poll(async () => {
       await page.getByRole('button', { name: 'Refresh transfers', exact: true }).click()
-      const visible = await (await context!.request.get('/api/transfers')).json() as { items: { direction: string, status: string, errorCode: string | null }[] }
+      const visible = await (await context!.request.get('/api/transfers', { headers: sessionHeaders })).json() as { items: { direction: string, status: string, errorCode: string | null }[] }
       const failure = visible.items.find(item => item.direction === 'export' && item.status === 'failed')
       if (failure) throw new Error(`Safe export failure: ${failure.errorCode}`)
       return await page.getByRole('button', { name: 'Download CSV', exact: true }).count()
     }, { timeout: 30000 }).toBe(1)
-    const list = await (await context.request.get('/api/transfers')).json() as { items: { id: string, direction: string, status: string }[] }
+    const list = await (await context.request.get('/api/transfers', { headers: sessionHeaders })).json() as { items: { id: string, direction: string, status: string }[] }
     const exported = list.items.find(item => item.direction === 'export')!
-    const signed = await (await context.request.get(`/api/transfers/${exported.id}/download`)).json() as { url: string }
+    const signed = await (await context.request.get(`/api/transfers/${exported.id}/download`, { headers: sessionHeaders })).json() as { url: string }
     const output = await (await fetch(signed.url)).text()
     expect(output).toBe('name,description\r\nBrowser CSV,"quoted\nline"\r\n')
     expect(output).not.toContain('Foreign project')
@@ -89,8 +90,8 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     await expect(page.getByText('Row 1, name: invalid-value', { exact: false })).toBeVisible()
     expect(await page.locator('body').innerText()).not.toContain('private-cell')
     expect((await db.select().from(tables.project).where(eq(tables.project.ownerId, owner))).length).toBe(1)
-    const staged = await (await context.request.post('/api/transfers/stage', { data: 'name,description\nCancel me,text\n', headers: { 'content-type': 'text/csv' } })).json() as { id: string }
-    expect((await context.request.post(`/api/transfers/${staged.id}/cancel`)).status()).toBe(200)
+    const staged = await (await context.request.post('/api/transfers/stage', { data: 'name,description\nCancel me,text\n', headers: { ...sessionHeaders, 'content-type': 'text/csv' } })).json() as { id: string }
+    expect((await context.request.post(`/api/transfers/${staged.id}/cancel`, { headers: sessionHeaders })).status()).toBe(200)
     await page.getByRole('button', { name: 'Refresh transfers', exact: true }).click()
     await expect(page.getByText('import — cancelled', { exact: false })).toBeVisible()
   }
