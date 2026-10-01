@@ -9,7 +9,9 @@
     "jobs:migrate": "nuxt-jobs migrate",
     "jobs:doctor": "nuxt-jobs doctor",
     "jobs:worker": "nuxt-jobs worker --registry server/jobs/registry.ts",
-    "package:test:runtime": "bun .fixture/package-test.ts"
+    "package:test:runtime": "bun .fixture/package-test.ts",
+    "package:test:survival": "bun .fixture/lifecycle.ts verify",
+    "package:test:cleanup": "bun .fixture/lifecycle.ts cleanup"
   },
   "dependencies": {
     "nuxt": "4.5.2",

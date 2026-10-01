@@ -15,7 +15,15 @@ function deliveryDb() {
   return drizzle(client)
 }
 export const notificationJobs = createNotificationJobs({
-  load: id => getNotification(deliveryDb(), id),
+  async load(id) {
+    try { return await getNotification(deliveryDb(), id) }
+    catch (error) {
+      // Known pre-delivery connection/serialization failures cannot have sent externally.
+      const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined
+      if (['ECONNREFUSED', 'EAI_AGAIN', 'ENOTFOUND', '08001', '08006', '40001', '40P01', '57P03'].includes(String(code))) throw new NotificationError('unavailable', true)
+      throw error
+    }
+  },
   adapters: {
     email: observeNotificationAdapter('email', createNotificationEmailAdapter(async (id) => {
       const [recipient] = await deliveryDb().select({ email: user.email }).from(user).where(eq(user.id, id)).limit(1)

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { saveState, snapshot } from './lifecycle'
 import { execFileSync } from 'node:child_process'
 import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
@@ -15,6 +16,7 @@ const admin = postgres(databaseUrl, { max: 1 })
 const databaseName = `notifications_fixture_${crypto.randomUUID().replaceAll('-', '')}`
 await admin.unsafe(`CREATE DATABASE "${databaseName}"`)
 const url = new URL(databaseUrl); url.pathname = `/${databaseName}`
+await saveState({ databaseName, url: url.toString() })
 const client = postgres(url.toString(), { max: 5 }), db = drizzle(client)
 const previous = { DATABASE_URL: process.env.DATABASE_URL, PGBOSS_DATABASE_URL: process.env.PGBOSS_DATABASE_URL, PGBOSS_SCHEMA: process.env.PGBOSS_SCHEMA }
 process.env.DATABASE_URL = url.toString(); process.env.PGBOSS_DATABASE_URL = url.toString(); process.env.PGBOSS_SCHEMA = 'notifications_fixture_jobs'
@@ -101,7 +103,7 @@ try {
   for (let i = 0; i < 100; i++) { try { if ((await fetch(`${ntfyBase}/v1/health`)).ok) { ready = true; break } } catch { /* wait */ } await Bun.sleep(100) }
   assert(ready, 'Actual ntfy server ready')
   const topic = `fixture_${crypto.randomUUID().replaceAll('-', '')}`
-  const adapter = createNtfyAdapter(async id => id === 'fixture-owner' ? topic : undefined, { env: { NTFY_BASE_URL: ntfyBase } })
+  const adapter = createNtfyAdapter(async id => id === 'fixture-owner' ? topic : undefined, { env: { NODE_ENV: 'test', NTFY_BASE_URL: ntfyBase } })
   assert.deepEqual(await adapter(created, new AbortController().signal), { outcome: 'delivered' })
   const received = await (await fetch(`${ntfyBase}/${topic}/json?poll=1`)).text()
   const message = received.trim().split('\n').map(line => JSON.parse(line)).find(record => record.event === 'message')
@@ -131,6 +133,8 @@ try {
   ready = false
   for (let i = 0; i < 100; i++) { try { if ((await fetch(`http://127.0.0.1:${port}`)).ok) { ready = true; break } } catch { /* wait */ } await Bun.sleep(100) }
   assert(ready, 'Backendless build/start with no optional adapters')
+  await boss.stop({ graceful: true, timeout: 5000 })
+  await saveState({ databaseName, url: url.toString(), snapshot: await snapshot(client) })
   console.info('[notifications fixture] migrations, indexes, isolation, read/unread, cursor, atomic Jobs rollback/retry/privacy, ntfy 2.28.0 and backendless boot passed')
 }
 finally {
@@ -140,6 +144,6 @@ finally {
   if (ntfyStarted) execFileSync('docker', ['rm', '-f', container], { stdio: 'pipe' })
   await boss.stop({ graceful: true, timeout: 5000 })
   await client.end()
-  await admin.unsafe(`DROP DATABASE "${databaseName}"`); await admin.end()
+  await admin.end()
   for (const [key, value] of Object.entries(previous)) { if (value === undefined) Reflect.deleteProperty(process.env, key); else process.env[key] = value }
 }

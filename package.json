@@ -19,7 +19,7 @@
     "typecheck": "nuxt typecheck",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "check": "bun run agents:check && bun run capabilities:check && bun run agents:test && bun run lint && bun run typecheck && bun run test && bun run build",
+    "check": "bun run agents:check && bun run capabilities:check && bun run agents:test && bun run lint && bun run typecheck && bun run test && bun run test:notification-email && bun run build",
     "agents:check": "bun scripts/agents-check.ts",
     "agents:test": "bun test tests/agents",
     "capabilities:check": "bun scripts/capabilities-check.ts",
@@ -50,7 +50,8 @@
     "cache:smoke": "bun scripts/cache.ts smoke",
     "cache:dev:valkey": "bun scripts/cache-dev.ts valkey",
     "cache:dev:down": "bun scripts/cache-dev.ts down",
-    "ai:smoke": "bun scripts/ai-smoke.ts"
+    "ai:smoke": "bun scripts/ai-smoke.ts",
+    "test:notification-email": "bun fixtures/notifications-consumer/.fixture/email-reference.ts"
   },
   "dependencies": {
     "@repo/nuxt-api": "workspace:*",
