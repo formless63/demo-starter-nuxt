@@ -1058,7 +1058,7 @@
       "id": "ops-admin",
       "displayName": "Ops / Admin",
       "kind": "operations-ui",
-      "status": "planned",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1070,10 +1070,11 @@
         "webhooks"
       ],
       "baselineRequirements": [
-        "authentication"
+        "authentication",
+        "node-runtime"
       ],
       "externalRequirements": [],
-      "summary": "Authenticated operational and administrative surfaces for installed capabilities."
+      "summary": "Read-only operator summaries from explicit application-owned adapters."
     },
     {
       "id": "command-system",
