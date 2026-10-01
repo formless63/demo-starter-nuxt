@@ -151,7 +151,8 @@ try {
     assert(new TextDecoder().decode(claimedLine.value).includes('claimed-final-attempt')); reader.releaseLock()
     killed.kill('SIGKILL'); assert.notEqual(await killed.exited, 0)
     assert.equal((await service.reconcileTransfer(exhausted.id)).status, 'pending', 'Active native claim is not failed based on wall time')
-    const crashDeadline = Date.now() + 45000
+    // Native supervision has a 60-second monitor gate; expiry is still 35 seconds.
+    const crashDeadline = Date.now() + 90000
     while (Date.now() < crashDeadline) { await boss.supervise(service.runJob.name); if ((await boss.getJobById(service.runJob.name, nativeId))?.state === 'failed') break; await new Promise(resolve => setTimeout(resolve, 500)) }
     assert.equal((await boss.getJobById(service.runJob.name, nativeId))?.state, 'failed')
     assert.equal((await service.reconcileTransfer(exhausted.id)).errorCode, 'execution-lost')
