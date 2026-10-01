@@ -15,6 +15,9 @@ assert(url)
 const driver = process.env.ORGANIZATIONS_PROBE_DRIVER
 const admin = postgres(url, { max: 2 })
 const client = driver === 'pg' ? new pg.Pool({ connectionString: url, max: 5, options: '-c statement_timeout=5000 -c lock_timeout=2000' }) : postgres(url, { max: 5, connection: { statement_timeout: 5000, lock_timeout: 2000 } })
+// pg emits a connection error after rejecting an interrupted query. The fixture owns
+// these clients and registers the standard listener; safe primitive results are still asserted.
+if (client instanceof pg.Pool) client.on('connect', connection => connection.on('error', () => {}))
 const db = driver === 'pg' ? pgDrizzle(client as pg.Pool, { schema }) : postgresDrizzle(client as ReturnType<typeof postgres>, { schema })
 const secret = 'disposable-organization-contract-secret-only-123456789'
 const origin = 'http://localhost:3997'
@@ -86,6 +89,12 @@ try {
     await denied(call(mode, 'createOrganization', owner, { name: 'Bad', slug: 'bad---slug' }), 400)
     await denied(call(mode, 'createOrganization', owner, { name: 'Bad', slug: 'valid-slug', metadata: { owner: true } }), 400)
     await denied(call(mode, 'createOrganization', owner, { name: 'Duplicate', slug: `${prefix}-${mode}` }), 409)
+    if (mode === 'http') {
+      for (const invalid of ['', 'x'.repeat(129), '\u0001']) {
+        const response = await auth.handler(new Request(`${origin}/api/auth/organization/list-members?organizationId=${encodeURIComponent(invalid)}`, { headers: owner }))
+        assert.equal(response.status, 400)
+      }
+    }
     await denied(call(mode, 'leaveOrganization', owner, { organizationId: orgId }), 403)
     await denied(call(mode, 'removeMember', owner, { organizationId: orgId, memberIdOrEmail: ownerRow!.id }), 403)
     await denied(call(mode, 'updateMemberRole', owner, { organizationId: orgId, memberId: ownerRow!.id, role: 'member' }), 403)
@@ -211,5 +220,5 @@ try {
 finally {
   await admin.end()
   if (driver === 'pg') await (client as pg.Pool).end()
-  else await (client as ReturnType<typeof postgres>).end()
+  else await (client as ReturnType<typeof postgres>).end({ timeout: 1 })
 }

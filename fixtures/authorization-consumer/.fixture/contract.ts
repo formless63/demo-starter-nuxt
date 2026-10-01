@@ -10,6 +10,9 @@ import { roleAssignment, fixtureMembership, fixtureRecord, fixtureAudit } from '
 
 const url = process.env.AUTHORIZATION_PROBE_DATABASE_URL!
 const client = process.env.AUTHORIZATION_PROBE_DRIVER === 'pg' ? new pg.Pool({ connectionString: url, max: 8 }) : postgres(url, { max: 8 })
+// pg emits a connection error after rejecting an interrupted query. The fixture owns
+// these clients and registers the standard listener; safe primitive results are still asserted.
+if (client instanceof pg.Pool) client.on('connect', connection => connection.on('error', () => {}))
 const db = client instanceof pg.Pool ? nodeDrizzle(client) : postgresDrizzle(client)
 const prefix = randomUUID()
 const user = `${prefix}-user`, other = `${prefix}-other`, tenant = `${prefix}-tenant`, secondTenant = `${prefix}-second`
@@ -107,4 +110,4 @@ try {
   assert(decisions.every((value, index) => value === !!(index % 2)))
   console.info('[authorization fixture] registry, exact scopes, role union, credential intersection, rollback, revocation locks, timeout and isolation passed')
 }
-finally { if (client instanceof pg.Pool) await client.end(); else await client.end() }
+finally { if (client instanceof pg.Pool) await client.end(); else await client.end({ timeout: 1 }) }

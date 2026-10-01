@@ -128,6 +128,10 @@ export function organizationsAuth(env: Record<string, string | undefined> = proc
         handler: createAuthMiddleware(async (ctx) => {
           try {
             const current = await session(ctx)
+            for (const field of ['organizationId', 'memberId', 'invitationId']) {
+              const value = ctx.query?.[field]
+              if (value !== undefined) opaqueId(value)
+            }
             const body = ctx.body === undefined ? {} : object(ctx.body)
             if (ctx.path === '/organization/delete') fail('unsupported')
             const orgId = body.organizationId ?? (current.session as { activeOrganizationId?: string | null }).activeOrganizationId

@@ -13,3 +13,11 @@ Actions/roles are bounded code-owned registries. Persisted roles are exact `(sco
 Management has no default authority and no self-grant/bootstrap administrator. Caller transactions remain caller-owned; convenience mutations own one explicit transaction, with no ambiguous-write retry. Protected domain writes must share locked facts/SQL predicates with authorization. No cross-request cache, registry/assignment browser dump, policy network call, startup query, migration or seeding.
 
 The package/consumer, safe reasons/error behavior, pagination, schema, removal and reference composition are defined in capabilities/authorization/CAPABILITY.md with passing independent Bun/Node24 and postgres-js/pg lifecycle evidence. Root and release checks remain pending. This evaluation does not mark the capability complete.
+
+## Connection-loss verification blocker
+
+The strengthened disposable PostgreSQL18 fixture terminates its own backend during an explicit transaction and requires a safe unavailable result with no mutation replay. The pg8.23.0 matrix passes on Bun1.4.2 and Node24.19 after registering the standard connection-error listener on fixture-owned clients.
+
+postgres-js3.4.9 remains blocked: its transaction rejects the connection loss, then a scheduled rollback/write can throw an asynchronous TypeError at `connection.js:255` after the socket is cleared. A minimal bare-driver `begin` containing `SELECT pg_terminate_backend(pg_backend_pid())` reproduces this on Bun and Node, with prepared statements enabled or disabled and with max_pipeline=1. This is outside safe helper error normalization; the process can fail. The [pinned upstream source](https://github.com/porsager/postgres/blob/v3.4.9/src/connection.js) and [transaction implementation](https://github.com/porsager/postgres/blob/v3.4.9/src/index.js) are the relevant boundaries. No global exception suppression, driver fork, automatic replay or reduced outage gate is adopted.
+
+The earlier packed-consumer lifecycle evidence predates this stronger fault test. The capability remains in-progress until both supported drivers pass the full updated lifecycle and release gates. A compatible driver correction is required; changing the supported-driver contract requires explicit architecture coordination.

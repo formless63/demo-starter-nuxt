@@ -25,7 +25,10 @@ try {
   await migrate(drizzle(observer), { migrationsFolder: resolve(import.meta.dirname, '../server/database/migrations') })
   for (const runtime of ['bun','node']) for (const driver of ['postgres-js','pg']) {
     const child = Bun.spawn([runtime, resolve(import.meta.dirname, 'contract.ts')], { env: { ...process.env, AUTHORIZATION_PROBE_DATABASE_URL: parsed.toString(), AUTHORIZATION_PROBE_DRIVER: driver }, stdout: 'inherit', stderr: 'inherit' })
-    assert.equal(await child.exited, 0, 'Authorization contract failed')
+    const deadline = setTimeout(() => child.kill('SIGTERM'), 120_000)
+    let exit: number
+    try { exit = await child.exited } finally { clearTimeout(deadline) }
+    assert.equal(exit, 0, 'Authorization contract failed')
     console.info(`[authorization fixture] ${runtime}/${driver} contract passed`)
   }
   await verifyProductionBoot(parsed.toString(), true)

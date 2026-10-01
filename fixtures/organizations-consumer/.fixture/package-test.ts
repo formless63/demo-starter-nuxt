@@ -30,7 +30,10 @@ try {
         env: { ...process.env, ORGANIZATIONS_PROBE_DATABASE_URL: parsed.toString(), ORGANIZATIONS_PROBE_DRIVER: driver },
         stdin: 'ignore', stdout: 'inherit', stderr: 'inherit',
       })
-      assert.equal(await child.exited, 0, 'Organizations native contract failed')
+      const deadline = setTimeout(() => child.kill('SIGTERM'), 120_000)
+    let exit: number
+    try { exit = await child.exited } finally { clearTimeout(deadline) }
+    assert.equal(exit, 0, 'Organizations native contract failed')
       console.info(`[organizations fixture] ${runtime}/${driver} native dispatch contract passed`)
     }
   }
