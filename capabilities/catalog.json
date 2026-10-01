@@ -923,7 +923,7 @@
       "id": "organizations",
       "displayName": "Organizations / Tenancy",
       "kind": "identity-policy",
-      "status": "planned",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -931,7 +931,10 @@
         "notifications"
       ],
       "baselineRequirements": [
-        "authentication"
+        "authentication",
+        "postgresql",
+        "drizzle",
+        "node-runtime"
       ],
       "externalRequirements": [
         {
@@ -945,7 +948,7 @@
       "id": "authorization",
       "displayName": "Authorization",
       "kind": "identity-policy",
-      "status": "planned",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -954,7 +957,10 @@
         "audit-log"
       ],
       "baselineRequirements": [
-        "authentication"
+        "authentication",
+        "postgresql",
+        "drizzle",
+        "node-runtime"
       ],
       "externalRequirements": [
         {
@@ -968,7 +974,7 @@
       "id": "feature-flags",
       "displayName": "Feature Flags",
       "kind": "identity-policy",
-      "status": "planned",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -982,7 +988,15 @@
           "required": true
         }
       ],
-      "summary": "Database-backed feature rollout and targeting controls."
+      "summary": "Database-backed feature rollout and targeting controls.",
+      "baselineRequirements": [
+        "postgresql",
+        "drizzle",
+        "node-runtime"
+      ],
+      "baselineIntegrations": [
+        "authentication"
+      ]
     },
     {
       "id": "invoice-ninja",

@@ -44,6 +44,7 @@ The generic `packages:*` commands build and exercise the catalog entries. Hard c
 | Status | Capability |
 | --- | --- |
 | Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI |
+| In progress | Organizations / Tenancy; Authorization; Feature Flags |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
 API Platform is capability #2. Observability is capability #3: server-only logs, request correlation, explicit spans/metrics, optional OTLP export and a clean-consumer lifecycle. No new service is required.
@@ -173,19 +174,19 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 ## Identity / policy
 
-### Organizations / Tenancy (`planned`)
+### Organizations / Tenancy (`in-progress`)
 
 - Requires: starter authentication (baseline, not a capability edge)
 - Integrates with: Audit Log, Notifications
 - External: PostgreSQL
 
-### Authorization (`planned`)
+### Authorization (`in-progress`)
 
 - Requires: starter authentication (baseline, not a capability edge)
 - Integrates with: Organizations, API Platform, Audit Log
 - External: PostgreSQL
 
-### Feature Flags (`planned`)
+### Feature Flags (`in-progress`)
 
 - Requires: none
 - Integrates with: Organizations, Authorization, Audit Log
