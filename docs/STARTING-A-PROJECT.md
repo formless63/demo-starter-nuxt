@@ -30,6 +30,8 @@ The package-level core of these recipes is continuously verified by `bun run pac
 
 ## Remove Jobs
 
+First remove the hard-dependent Import / Export integration using its recipe below, preserving receipts, domain rows, objects and immutable migration history. Notifications and Webhooks also require Jobs. Remove Ops Jobs/Webhooks cards, helper and shutdown hook while retaining the baseline login, health and remaining Ops adapters.
+
 Remove Notifications and Webhooks first because both hard-require Jobs. Retain independent Realtime/Email/Audit/Cache when selected.
 
 1. Stop and drain the worker if it has ever processed real work. Decide whether queued jobs must be retained.
@@ -73,6 +75,8 @@ If a downstream fork will never reuse API Platform, follow the pruning metadata 
 For permanent pruning, consistently update catalog/docs before removing `packages/nuxt-observability`, `fixtures/observability-consumer`, `capabilities/observability`, the evaluation and specific skill. Preserve the roadmap ID when optional integrations reference it. The [capability contract](../capabilities/observability/CAPABILITY.md) details the package-level removal proof.
 
 ## Remove Object Storage
+
+First remove hard-dependent Import / Export using its recipe below, retaining all transfer data, applied migrations and objects. If Ops remains, remove its Storage card/import, helper and shutdown hook; retain its other adapters and baseline login/health.
 
 1. Remove `'@repo/nuxt-storage'` from Nuxt modules, its root dependency and `object-storage` from `referenceApplication.enabledCapabilities`.
 2. Remove `server/utils/observed-storage.ts`, `server/plugins/storage.ts`, `scripts/storage.ts` and `scripts/storage-dev.ts`; remove any product-specific Storage calls/routes. Remove root `storage:*` aliases and their catalog `scripts` declarations. Retained Jobs/API/Observability behavior is unaffected.
@@ -164,6 +168,8 @@ Never delete/revoke external provider accounts or secrets automatically. Removin
 ## Remove Import / Export
 
 Stop transfer producers and drain or preserve pending work before unregistering `transferService.runJob` from `server/jobs/registry.ts`. Remove `server/api/transfers`, `server/transfers`, `scripts/transfers.ts`, the two transfers scripts, `ProjectTransfers.vue` and its Projects-page use, and the transfer resource shutdown hook. Remove the package root dependency/module and Import / Export limits from Compose/environment; keep Jobs/Storage and their data. Remove the transfer schema export only if generation is no longer needed; retain applied migrations0006/0007, its immutable history, transfer tables/receipts and source/output objects. Never drop retained data or delete buckets as code removal. Operator `transfers:purge <selected-uuid...>` is dry-run; explicit `--execute` is separate physical cleanup, retaining history/domain data. Rebuild/typecheck/test after pruning. [Contract](../capabilities/import-export/CAPABILITY.md).
+
+## Remove Ops / Admin
 
 For Ops/Admin removal, remove `@repo/nuxt-ops-admin` from dependencies/modules, the `opsAdmin` option, `server/ops`, `server/plugins/ops-admin-jobs.ts` and `server/plugins/ops-admin-storage.ts`, any navigation entry, and `OPS_ADMIN_USER_IDS`. Remove each optional adapter/import when pruning its provider capability. No data/provider cleanup exists. [Contract](../capabilities/ops-admin/CAPABILITY.md).
 
