@@ -35,7 +35,7 @@ export function createNotificationJobs(options: NotificationDeliveryOptions) {
       }
       catch (error) {
         const safe = error instanceof NotificationError ? error : new NotificationError('rejected')
-        if (safe.retryable) throw safe
+        if (safe.retryable && ['unavailable', 'timeout'].includes(safe.code)) throw safe
         return { outcome: 'rejected', code: terminalCodes.has(safe.code) ? safe.code : 'rejected' }
       }
     },

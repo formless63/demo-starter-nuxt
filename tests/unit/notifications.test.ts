@@ -30,9 +30,9 @@ describe('Notifications v1', () => {
     expect(await createNotificationJobs({ load: async () => undefined }).delivery.handler(payload, context)).toEqual({ outcome: 'rejected', code: 'missing' })
     expect(await createNotificationJobs({ load: async () => record }).delivery.handler(payload, context)).toEqual({ outcome: 'rejected', code: 'disabled' })
     for (const retryable of [true, false]) {
-      const job = createNotificationJobs({ load: async () => record, adapters: { email: async () => { throw new NotificationError('rejected', retryable) } } }).delivery
-      if (retryable) await expect(job.handler(payload, context)).rejects.toMatchObject({ code: 'rejected', retryable: true })
-      else expect(await job.handler(payload, context)).toEqual({ outcome: 'rejected', code: 'rejected' })
+      const job = createNotificationJobs({ load: async () => record, adapters: { email: async () => { throw new NotificationError('unavailable', retryable) } } }).delivery
+      if (retryable) await expect(job.handler(payload, context)).rejects.toMatchObject({ code: 'unavailable', retryable: true })
+      else expect(await job.handler(payload, context)).toEqual({ outcome: 'rejected', code: 'unavailable' })
     }
     expect(await createNotificationJobs({ load: async () => { throw new Error('postgres://secret') } }).delivery.handler(payload, context)).toEqual({ outcome: 'rejected', code: 'rejected' })
   })

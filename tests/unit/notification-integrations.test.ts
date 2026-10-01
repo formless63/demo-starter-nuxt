@@ -118,6 +118,8 @@ describe('Composed notification Jobs handler', () => {
     const { createNotificationJobs, NotificationError } = await import('@repo/nuxt-notifications/server')
     const job = createNotificationJobs({ load: async () => record, adapters: { email: async () => ({ outcome: 'delivered', recipient: 'private', body: 'private', topic: 'private' }) } }).delivery
     expect(await job.handler(payload, context(new AbortController().signal))).toEqual({ outcome: 'delivered' })
+    const rejected = createNotificationJobs({ load: async () => record, adapters: { email: async () => { throw new NotificationError('rejected', true) } } }).delivery
+    expect(await rejected.handler(payload, context(new AbortController().signal))).toEqual({ outcome: 'rejected', code: 'rejected' })
     const broken = createNotificationJobs({ load: async () => record, adapters: { email: async () => { throw new NotificationError('private-extra' as never) } } }).delivery
     expect(await broken.handler(payload, context(new AbortController().signal))).toEqual({ outcome: 'rejected', code: 'rejected' })
   })
