@@ -1074,7 +1074,42 @@
         "node-runtime"
       ],
       "externalRequirements": [],
-      "summary": "Read-only operator summaries from explicit application-owned adapters."
+      "summary": "Read-only operator summaries from explicit application-owned adapters.",
+      "packageName": "@repo/nuxt-ops-admin",
+      "packagePath": "packages/nuxt-ops-admin",
+      "fixturePath": "fixtures/ops-admin-consumer",
+      "documentationPath": "capabilities/ops-admin/CAPABILITY.md",
+      "evaluationDocument": "OPS_ADMIN_MODULE_EVALUATION.md",
+      "scripts": [
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [
+        "OPS_ADMIN_USER_IDS"
+      ],
+      "migrations": [],
+      "runtimeProcesses": [
+        "Nitro application"
+      ],
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime",
+            "db:migrate"
+          ],
+          "paths": [
+            "server/ops",
+            ".fixture/package-test.ts",
+            "server/utils",
+            "server/database",
+            "server/api",
+            "drizzle.config.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "command-system",

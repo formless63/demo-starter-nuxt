@@ -83,7 +83,8 @@
     "@repo/nuxt-realtime": "workspace:*",
     "@repo/nuxt-notifications": "workspace:*",
     "@repo/nuxt-search": "workspace:*",
-    "@repo/nuxt-ai": "workspace:*"
+    "@repo/nuxt-ai": "workspace:*",
+    "@repo/nuxt-ops-admin": "workspace:*"
   },
   "devDependencies": {
     "@nuxt/eslint": "1.17.0",
