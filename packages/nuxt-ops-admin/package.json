@@ -1,0 +1,52 @@
+{
+  "name": "@repo/nuxt-ops-admin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Private read-only Nuxt operator overview",
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs",
+      "default": "./dist/module.mjs"
+    },
+    "./server": {
+      "types": "./dist/runtime/server/index.d.ts",
+      "import": "./dist/runtime/server/index.js",
+      "default": "./dist/runtime/server/index.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/types.d.mts"
+      ],
+      "server": [
+        "./dist/runtime/server/index.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev:prepare": "nuxt-module-build prepare && nuxt-module-build build",
+    "prepack": "nuxt-module-build prepare && nuxt-module-build build"
+  },
+  "dependencies": {
+    "@nuxt/kit": "4.5.2"
+  },
+  "peerDependencies": {
+    "nuxt": ">=4.0.0 <5",
+    "h3": ">=1.15.11 <2"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "1.0.3",
+    "nuxt": "4.5.2",
+    "h3": "1.15.11"
+  }
+}

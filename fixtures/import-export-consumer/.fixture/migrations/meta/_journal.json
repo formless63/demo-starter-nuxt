@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790883757765,
+      "tag": "0000_transfer",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790884624991,
+      "tag": "0001_candidates",
+      "breakpoints": true
+    }
+  ]
+}

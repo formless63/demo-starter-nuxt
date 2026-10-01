@@ -26,6 +26,8 @@ The root application deliberately enables every completed capability for continu
 | `realtime` | `@repo/nuxt-realtime` | Enabled | No | None | None; Cache fanout optional | [Realtime](../capabilities/realtime/CAPABILITY.md) |
 | `notifications` | `@repo/nuxt-notifications` | Enabled | No | Jobs | ntfy optional; Email integration optional | [Notifications](../capabilities/notifications/CAPABILITY.md) |
 | `search` | `@repo/nuxt-search` | Enabled | No | None | Existing PostgreSQL | [Search](../capabilities/search/CAPABILITY.md) |
+| `import-export` | `@repo/nuxt-import-export` | Enabled | No | Jobs, Object Storage | Existing PostgreSQL and S3 on use | [Import / Export](../capabilities/import-export/CAPABILITY.md) |
+| `ops-admin` | `@repo/nuxt-ops-admin` | Enabled | No | None | None; optional provider adapters | [Ops / Admin](../capabilities/ops-admin/CAPABILITY.md) |
 
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
 
@@ -132,3 +134,11 @@ Application-owned domain rows and explicit generated-vector/GIN migrations, reus
 ### AI
 
 Keep `@repo/nuxt-ai: workspace:*` and register its module. Use server-only `getAi` or `@repo/nuxt-ai/server` for text, real incremental streams and Zod-validated structured output. Configure AI_MODEL lazily; provider defaults openai-compatible and timeout 60 seconds. No automatic retry, 1 MiB output maximum and safe errors. No routes/UI/history/tools/RAG are installed. Optional integrations are application-owned; the root telemetry wrapper emits only finite operation/provider/outcome/duration/usage/finish fields. Verify the actual local adapter with `bun run packages:test ai`; use `ai:smoke` only for an intentional provider call. See the [contract](../capabilities/ai/CAPABILITY.md) and [removal](STARTING-A-PROJECT.md#remove-ai).
+
+## Import / Export
+
+Private `@repo/nuxt-import-export` requires Jobs and Object Storage; PostgreSQL/Drizzle/Node baseline. Register application definitions and the existing worker handler, include transfer schema and apply the explicit additive migration. Personal Project CSV columns are `name,description`; imports create fresh Projects. S3 configuration is lazy. Cancellation is best effort until committed apply/publication. Explicit selected receipt reconciliation and dry-run artifact purge are operator actions. Optional Audit/Notifications stay application-owned. See [contract](../capabilities/import-export/CAPABILITY.md) and [evaluation](../IMPORT_EXPORT_MODULE_EVALUATION.md).
+
+Ops / Admin (`done`) is an optional private `@repo/nuxt-ops-admin` package. Enable with `opsAdmin.application` pointing to an application-owned baseline session resolver/static adapter registry. No service/migration or hard capability dependencies. [Contract](../capabilities/ops-admin/CAPABILITY.md).
+
+Ops reference verification uses `bun run test:ops-reference` after building the root. Its disposable protocol services and temporary source copies prove read-only inspection and independent adapter/full Ops removal; they are test-only, not an application installer.
