@@ -22,6 +22,8 @@ The root application deliberately enables every completed capability for continu
 | `email` | `@repo/nuxt-email` | Enabled | No | None | SMTP on use; Mailpit optional | [Email](../capabilities/email/CAPABILITY.md) |
 | `webhooks` | `@repo/nuxt-webhooks` | Enabled | No | Jobs | Remote endpoints when used | [Webhooks](../capabilities/webhooks/CAPABILITY.md) |
 | `audit-log` | `@repo/nuxt-audit-log` | Enabled | No | None | PostgreSQL (required) | [Audit Log](../capabilities/audit-log/CAPABILITY.md) |
+| `realtime` | `@repo/nuxt-realtime` | Enabled | No | None | None; Cache fanout optional | [Realtime](../capabilities/realtime/CAPABILITY.md) |
+| `notifications` | `@repo/nuxt-notifications` | Enabled | No | Jobs | ntfy optional; Email integration optional | [Notifications](../capabilities/notifications/CAPABILITY.md) |
 
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
 
@@ -65,7 +67,15 @@ Keep `@repo/nuxt-email` and register its Nuxt module explicitly. SMTP config is 
 
 Keep `@repo/nuxt-cache: workspace:*` and explicitly register the module. First-use server-only CACHE_URL config supports redis/rediss with TLS verification. Namespaced exact keys, bounded strings/bytes, namespace `app`, default 300-second TTL (1–86400), lossless Buffer reads, explicit `setWithoutExpiry`, NX, atomic initial-TTL counters, token-safe advisory leases (30 seconds, allowed 2–300) and non-durable pub/sub (32 subscriptions maximum, explicit re-subscription after failure); no routes or startup connection. Local `cache:dev:valkey` / `cache:dev:down` owns disposable loopback Valkey 9.1.2 with no AOF/RDB/volume. `cache:check` pings and `cache:smoke` cleans only unique exact keys. The generic packed fixture owns real compatibility and removal. Optional root telemetry records operation/outcome/duration/hit-miss only; no capability dependency.
 
-Leases have no fencing/Redlock/quorum and cannot alone guarantee irreversible correctness under partitions/process pauses. Future Realtime pub/sub/API shared state are documentation only; Jobs remains PostgreSQL-durable. Removal changes code/config with no persistent migration and **never external FLUSH**. See the [contract](../capabilities/cache-coordination/CAPABILITY.md), [evaluation](../CACHE_COORDINATION_MODULE_EVALUATION.md) and [removal recipe](STARTING-A-PROJECT.md#remove-cache--coordination).
+Leases have no fencing/Redlock/quorum and cannot alone guarantee irreversible correctness under partitions/process pauses. Application-owned Realtime fanout may compose Cache pub/sub; future API shared state remains documentation only; Jobs remains PostgreSQL-durable. Removal changes code/config with no persistent migration and **never external FLUSH**. See the [contract](../capabilities/cache-coordination/CAPABILITY.md), [evaluation](../CACHE_COORDINATION_MODULE_EVALUATION.md) and [removal recipe](STARTING-A-PROJECT.md#remove-cache--coordination).
+
+### Realtime
+
+Explicitly enable `@repo/nuxt-realtime`, then choose **SSE**, **WebSocket**, or **Both**: `REALTIME_TRANSPORTS=sse` (default), `websocket`, `sse,websocket`. The package includes both adapters and compiles Nitro WebSocket support. Applications own normal cookie/session-authenticated routes and exact authorized channels. Envelopes≤64KiB, channels≤32, pending bytes≤256KiB, heartbeats20seconds. No RPC/replay/delivery guarantee; reconnect then refetch authoritative state. Optional Cache/Notifications/telemetry wrappers remain outside the package. See the [contract](../capabilities/realtime/CAPABILITY.md) and [removal](STARTING-A-PROJECT.md#remove-realtime).
+
+### Notifications
+
+Enable `@repo/nuxt-notifications` with its hard Jobs dependency. Include the public `/schema` Drizzle table in application schema, generate/commit/apply migrations explicitly, and compose `createNotificationJobs` into the existing worker. Recipient-scoped list/read/unread use keyset pagination (page25,1–100). Transactional append/enqueue shares the domain transaction; optional realtime hint follows commit and contains only notification ID. Delivery reloads current record/target, payload only ID/channel, five retries after initial,30sec backoff cap900,expiry60,retention1day. Email is an app adapter; ntfy has explicit server/no public default, optional token and timeout10sec1–30. No optional adapter needed for boot. See the [contract](../capabilities/notifications/CAPABILITY.md) and [removal](STARTING-A-PROJECT.md#remove-notifications).
 
 ## Disabling, removing, and pruning
 

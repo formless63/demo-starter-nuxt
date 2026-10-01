@@ -77,7 +77,9 @@
     "zod": "4.6.5",
     "@repo/nuxt-email": "workspace:*",
     "@repo/nuxt-webhooks": "workspace:*",
-    "@repo/nuxt-cache": "workspace:*"
+    "@repo/nuxt-cache": "workspace:*",
+    "@repo/nuxt-realtime": "workspace:*",
+    "@repo/nuxt-notifications": "workspace:*"
   },
   "devDependencies": {
     "@nuxt/eslint": "1.17.0",

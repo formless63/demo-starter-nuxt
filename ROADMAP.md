@@ -43,7 +43,7 @@ The generic `packages:*` commands build and exercise the catalog entries. Hard c
 
 | Status | Capability |
 | --- | --- |
-| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination |
+| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
 API Platform is capability #2. Observability is capability #3: server-only logs, request correlation, explicit spans/metrics, optional OTLP export and a clean-consumer lifecycle. No new service is required.
@@ -132,7 +132,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Baseline requirement: Node production runtime
 - External: Valkey/Redis-compatible service (required only on use)
 - Default installed: no; reference application explicitly opts in.
-- Implementation: `@repo/nuxt-cache`, ephemeral exact namespaced strings/bytes, TTL/NX, atomic counters, advisory token-safe single-backend leases (no fencing/Redlock), non-durable pub/sub and lazy lifecycle. Pinned Valkey 9.1.2 / node-redis 6.3.0; independent packed fixture. No future Realtime/API/Jobs integrations implemented.
+- Implementation: `@repo/nuxt-cache`, ephemeral exact namespaced strings/bytes, TTL/NX, atomic counters, advisory token-safe single-backend leases (no fencing/Redlock), non-durable pub/sub and lazy lifecycle. Pinned Valkey 9.1.2 / node-redis 6.3.0; independent packed fixture. Optional application-owned Realtime fanout composes Cache pub/sub; no Cache-to-Realtime package dependency.
 - Contract: [`capabilities/cache-coordination/CAPABILITY.md`](capabilities/cache-coordination/CAPABILITY.md)
 
 ### Search (`planned`)
@@ -141,17 +141,22 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Jobs, Object Storage, Organizations
 - External: PostgreSQL initially
 
-### Realtime (`planned`)
+### Realtime (`done`)
 
-- Requires: authenticated starter identity (baseline, not a capability edge)
+- Requires: none; baseline Node runtime, optional baseline authentication
 - Integrates with: Cache / Coordination, Notifications, Observability
-- External: none initially
+- External: none; optional Cache fanout remains non-durable
+- Implementation: both SSE/WebSocket server adapters, bounded events/queues, application-owned session/channel policy; no replay/RPC.
+- Contract: [`capabilities/realtime/CAPABILITY.md`](capabilities/realtime/CAPABILITY.md)
 
-### Notifications (`planned`)
+### Notifications (`done`)
 
 - Requires: Jobs
-- Integrates with: Email, Realtime, Audit Log
-- External: ntfy optional; SMTP through Email optional
+- Integrates with: Email, Realtime, Audit Log, Observability
+- Baseline: PostgreSQL/Drizzle; optional baseline authentication
+- External: ntfy optional
+- Implementation: application-included Drizzle records, recipient keyset/read state, transactional Jobs delivery, optional app Email/post-commit Realtime integrations.
+- Contract: [`capabilities/notifications/CAPABILITY.md`](capabilities/notifications/CAPABILITY.md)
 
 ### Import / Export (`planned`)
 

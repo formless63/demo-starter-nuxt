@@ -1,15 +1,15 @@
 # Starting a project
 
-The repository is both a baseline starter and a reference application. Choose which of the eight completed capabilities belong in the product before building domain features around them.
+The repository is both a baseline starter and a reference application. Choose which of the ten completed capabilities belong in the product before building domain features around them.
 
 ## Full/reference setup
 
 Keep the completed capabilities when durable background work, a machine-facing API and server telemetry, object storage or ephemeral coordination are useful. The root application already:
 
-- depends on and registers `@repo/nuxt-jobs`, `@repo/nuxt-api`, `@repo/nuxt-observability`, `@repo/nuxt-storage`, `@repo/nuxt-email`, `@repo/nuxt-webhooks`, `@repo/nuxt-audit-log` and `@repo/nuxt-cache`;
+- depends on and registers `@repo/nuxt-jobs`, `@repo/nuxt-api`, `@repo/nuxt-observability`, `@repo/nuxt-storage`, `@repo/nuxt-email`, `@repo/nuxt-webhooks`, `@repo/nuxt-audit-log`, `@repo/nuxt-cache`, `@repo/nuxt-realtime` and `@repo/nuxt-notifications`;
 - includes a Jobs registry and `starter.echo` demonstration task;
 - composes API Platform into Better Auth and exposes project API contracts;
-- includes explicit application, API-key and Audit migrations plus separate pg-boss migration commands;
+- includes explicit application, API-key, Audit and Notification migrations plus separate pg-boss migration commands;
 - builds the app, migration tools, and Jobs worker into one production image; and
 - adds safe JSON logs/request IDs, explicit server telemetry and optional Jobs/API wrappers; and
 - exposes lazy server-only S3 primitives, optional app-owned telemetry and explicit local provider commands, with no File UI or required storage backend at startup; and
@@ -17,11 +17,16 @@ Keep the completed capabilities when durable background work, a machine-facing A
 - adds lazy ephemeral Cache/Coordination primitives and optional safe telemetry, with explicit disposable local Valkey helpers; and
 - supports lazy SMTP and opt-in hashed-token magic links, with disposable Mailpit verification;
 - composes signed Webhooks deliveries into the same Jobs worker, with no configured remote target at startup; and
-- exercises all eight packages through catalog-driven fixture tests and CI.
+- provides both authenticated SSE/WebSocket transports and durable notifications with ID-only post-commit hints; and
+- exercises all ten packages through catalog-driven fixture tests and CI.
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
 
 Storage stays unused/backendless until configured. Supply a region explicitly through `STORAGE_REGION`, `AWS_REGION` or `AWS_DEFAULT_REGION`; no implicit region is assumed. Local helpers supply RustFS `us-east-1` / Garage `garage`. Optional Noooste Garage UI v0.13.0 is third-party, not official Garage or required for S3, and stays localhost-bound. Its privileged admin-token login is operator-only; known dev tokens are local-only, never application browser configuration or normal S3 credentials. See the [Storage contract](../capabilities/object-storage/CAPABILITY.md) and [shared baseline](../OBJECT_STORAGE_MODULE_EVALUATION.md#shared-cross-framework-baseline).
+
+## Choose realtime transports
+
+Both adapters are available. Choose **SSE** (`REALTIME_TRANSPORTS=sse`, default recommendation for ordinary server-to-browser updates), **WebSocket** (`websocket`) or **Both** (`sse,websocket`). WebSocket v1 transports the same events and is not generic RPC; clients answer the transport heartbeat and refetch authoritative state on reconnect. Preserve authenticated session/channel policy at the application routes and check deployment proxy streaming/Upgrade support. Optional Cache fanout stays non-durable and does not restore missed events.
 
 ## Lean baseline
 
@@ -30,6 +35,8 @@ Remove a capability only after checking its [technical contract](CAPABILITIES.md
 The package-level core of these recipes is continuously verified by `bun run packages:test <id>`: the test installs the packed package into a clean fixture, exercises its runtime contract, removes its dependency and consumer files, clears generated state, and proves the base fixture still typechecks/builds. The root-specific steps below cover the broader reference integration. Update `referenceApplication.enabledCapabilities` whenever root enablement changes; if command aliases are removed, remove their declarations from the capability's catalog `scripts` as well.
 
 ## Remove Jobs
+
+Remove Notifications and Webhooks first because both hard-require Jobs. Retain independent Realtime/Email/Audit/Cache when selected.
 
 1. Stop and drain the worker if it has ever processed real work. Decide whether queued jobs must be retained.
 2. Remove `'@repo/nuxt-jobs'` from `nuxt.config.ts` and `@repo/nuxt-jobs` from root `package.json`.
@@ -87,7 +94,7 @@ When removing **Observability but retaining Storage**, remove the optional impor
 
 1. Explicitly disable `NUXT_MAGIC_LINK_ENABLED` and its public UI flag, or replace SMTP with a deliberately reviewed sender. Remove Email imports/config validation/render/send callback from `server/utils/auth.ts`; omit the magicLink plugin when disabled. Never restore console magic-link URLs. Keep password-disabled OAuth/API auth and hashed magic-link token behavior if replacing the sender.
 2. Remove `'@repo/nuxt-email'` from Nuxt modules, root workspace dependency, and `email` from `referenceApplication.enabledCapabilities`.
-3. Remove `server/utils/observed-email.ts`, `scripts/email.ts`, `compose.email.yaml`, root `email:*` aliases and matching catalog script declarations. Remove SMTP/EMAIL env entries and any consumer-owned mail callers. Delete/adapt Email-specific tests; retain unrelated auth/API coverage.
+3. If retaining Notifications, remove its optional Email adapter/import from `server/notifications/delivery.ts` and `server/notifications/email-adapter.ts`; leave in-app records/Jobs and other channels intact. Remove `server/utils/observed-email.ts`, `scripts/email.ts`, `compose.email.yaml`, root `email:*` aliases and matching catalog script declarations. Remove SMTP/EMAIL env entries and any consumer-owned mail callers. Delete/adapt Email-specific tests; retain unrelated auth/API coverage.
 4. Clear generated output, reinstall, run agents/capability checks and normal typecheck/build/tests/Playwright/container verification. No migration exists. Do not touch external SMTP accounts, DNS or remote credentials. The independent retained package/fixture remains available without activating infrastructure.
 5. For permanent pruning, update catalog/docs first, then optionally remove `packages/nuxt-email`, `fixtures/email-consumer`, capability contract, `EMAIL_MODULE_EVALUATION.md` and `.agents/skills/email-change`. Retain the roadmap ID where other capabilities reference it.
 
@@ -96,7 +103,7 @@ When removing **Observability but retaining Email**, replace `sendObservedEmail`
 ## Remove Cache / Coordination
 
 1. Stop application calls/subscriptions and await connection close. Close caller-owned `createCache` instances explicitly; `closeCache` closes/resets only the process singleton. Remove `'@repo/nuxt-cache'` from Nuxt modules, its root dependency and `cache-coordination` from reference enablement.
-2. Remove `server/utils/observed-cache.ts`, `server/plugins/cache.ts`, `scripts/cache.ts`, `scripts/cache-dev.ts`, Cache call sites and root `cache:*` aliases/catalog script declarations. Remove Cache-specific tests when pruning the reference integration.
+2. If retaining Realtime, remove Cache imports/subscription/publish composition from `server/realtime/application.ts` and retain only the local hub path. Remove `tests/unit/realtime-cache.test.ts`. Remove `server/utils/observed-cache.ts`, `server/plugins/cache.ts`, `scripts/cache.ts`, `scripts/cache-dev.ts`, Cache call sites and root `cache:*` aliases/catalog script declarations. Remove Cache-specific tests when pruning the reference integration.
 3. Remove CACHE_URL/CACHE_KEY_PREFIX/CACHE_DEFAULT_TTL_SECONDS/CACHE_MAX_VALUE_BYTES from server config/environment and optional `compose.cache.yaml`. Stop only `starter-cache-dev` via its helper before removing helpers; local data is disposable. Retain fixture-owned assets if keeping independent package tests.
 4. Clear generated `.nuxt`/`.output`, reinstall and run catalog/typecheck/build/normal verification. The generic fixture proves redis-owned dependencies disappear when unused. No persistent data migration exists. **Never issue FLUSH against external Cache as part of removal.**
 
@@ -128,3 +135,20 @@ For permanent pruning, consistently update catalog/docs before removing `package
 4. Reinstall, clear generated state, run capabilities:check, typecheck/build, ordinary checks and the production migration/container smoke. No worker or daemon needs draining.
 
 A deployed table drop requires a new explicit destructive migration and a deliberate retention/privacy decision. For permanent pruning, update the catalog/roadmap/docs and remove package, fixture, contract, evaluation and audit-log-change skill only after all imports are gone; preserve the roadmap ID for optional relationships.
+
+## Remove Realtime
+
+1. Close active transports/hubs and stop application event producers. Remove the module, root dependency and `realtime` from reference enablement.
+2. Remove `server/api/realtime`, `server/realtime/application.ts`, `server/plugins/realtime.ts`, `server/utils/observed-realtime.ts` and Realtime-only tests. Remove the optional hint import/call from `server/notifications/create.ts`; keep notification commit/enqueue unchanged. Remove realtime assertions from shared E2E while retaining Notifications ownership checks.
+3. Remove REALTIME_TRANSPORTS from server environment/Compose. Reinstall/clear generated output and verify the remaining packages/app/worker. Module shutdown/experimental WebSocket configuration leaves with module enablement; no migration or data deletion. Retain independently selected Cache/Notifications/Observability.
+4. Permanent pruning updates catalog/docs before removing package/fixture/contract/evaluation/skill, retaining roadmap IDs referenced by optional integrations.
+
+## Remove Notifications
+
+1. Stop notification producers and drain/stop `notifications.deliver` work. Remove module/dependency and `notifications` from reference enablement, retaining Jobs and other independently selected capabilities.
+2. Remove `server/api/notifications`, `server/notifications`, `server/plugins/notifications.ts`, `server/utils/observed-notifications.ts`, the notification delivery import/definition from `server/jobs/registry.ts`, and delivery-database shutdown from `scripts/jobs-worker.ts`. Preserve the existing worker lifecycle/other tasks. Remove notification-specific tests and replace its Realtime event/schema/callers if retaining Realtime for other application events.
+3. Remove package schema import/export/object entry from `server/database/schema.ts`; preserve notification table/data and applied `0004_notifications.sql`, journal/snapshots. Retain an equivalent application-owned table definition for future schema generation so removal cannot accidentally propose/apply DROP TABLE.
+4. Remove NTFY settings and unused worker Email settings from Compose/environment only when no retained integration uses them. Reinstall/clear generated output, run catalog checks, Jobs/retained fixtures, full checks and production migration/app/worker. Never delete remote ntfy resources.
+5. `bun fixtures/notifications-consumer/.fixture/removal-data.ts` proves independent notification rows, migration history and Jobs survive the generic packed removal workflow. Permanent pruning updates all metadata/docs before package/fixture/contract/evaluation/skill deletion; preserve roadmap ID references.
+
+When removing **Observability while retaining Realtime/Notifications**, remove only their observed wrappers and wrapper imports/calls. Keep plain event publication, transactional notification operations and adapters. These are optional application integrations, not hard dependencies.
