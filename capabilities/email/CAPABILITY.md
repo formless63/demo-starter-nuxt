@@ -1,6 +1,6 @@
 # Email
 
-Private `@repo/nuxt-email` provides optional server-only transactional SMTP, with Nodemailer 10.0.13. Requires no database or other capability. Root authentication and telemetry are deliberate consumer integrations; clean consumers opt in. Evaluation: [EMAIL_MODULE_EVALUATION.md](../../EMAIL_MODULE_EVALUATION.md).
+Private `@repo/nuxt-email` provides optional server-only transactional SMTP, with Nodemailer 10.0.13. Requires the Node production runtime, with no database or other capability dependency. Root authentication and telemetry are deliberate consumer integrations; clean consumers opt in. Evaluation: [EMAIL_MODULE_EVALUATION.md](../../EMAIL_MODULE_EVALUATION.md).
 
 ## Install and configure
 
@@ -8,16 +8,16 @@ Retain the workspace dependency and add `'@repo/nuxt-email'` to Nuxt `modules`. 
 
 Required on use: `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURITY`, `EMAIL_FROM_ADDRESS`. Optional `EMAIL_FROM_NAME`, paired `SMTP_USER`/`SMTP_PASSWORD`, `EMAIL_REPLY_TO_ADDRESS`/`EMAIL_REPLY_TO_NAME`, `EMAIL_MAX_RECIPIENTS` (default 50; 1–100). Server overrides may use `createEmail(config)`. All credentials remain server-only.
 
-Security is explicit, independent of port: `tls` → secure=true; `starttls` → secure=false, requireTLS=true; `opportunistic` → secure=false, requireTLS=false. Certificate validation is never disabled. Opportunistic is appropriate for the local sink; production operators should require TLS. Timeouts: connection/greeting 5 seconds, socket 10 seconds. Transport is not pooled; close manually created instances and the module closes its singleton on Nitro shutdown.
+Security is explicit, independent of port: `tls` → secure=true; `starttls` → secure=false, requireTLS=true; `opportunistic` → secure=false, requireTLS=false. Certificate validation is never disabled. Opportunistic is appropriate for the local sink; production operators should require TLS. Timeouts: connection/greeting/DNS 5 seconds, socket 10 seconds. Transport is not pooled; close manually created instances and the module closes its singleton on Nitro shutdown.
 
 ```ts
 import { getEmail } from '@repo/nuxt-email/server'
 await getEmail().send({ to: [{ address: 'user@example.test', name: 'User' }], subject: 'Welcome', text: 'Welcome.' })
 ```
 
-From belongs to configuration. To/Cc/Bcc and optional Reply-To are structured addresses. Subject ≤998 characters, combined UTF-8 body ≤1 MiB, conservative mailbox/name/control validation, bounded recipients. File/URL access is disabled; unknown fields, raw MIME, headers, path/href/content objects and attachments are rejected. No HTML fetching, tracking, template system or provider API.
+From belongs to configuration. To/Cc/Bcc and optional Reply-To are structured addresses. Addresses ≤254 characters, display names ≤128 and subject ≤200 characters, combined UTF-8 body ≤1 MiB, conservative mailbox/name/control validation, bounded recipients. File/URL access is disabled; unknown fields, raw MIME, headers, path/href/content objects and attachments are rejected. No HTML fetching, tracking, template system or provider API.
 
-Each call sends once. Results expose `accepted`/`rejected`/`partial` outcome, counts and generated Message-ID, without address lists or raw SMTP response. Partial acceptance is returned, not retried. `EmailError` exposes bounded `code`/`retryable`; raw cause is server-only and JSON/inspection are safe. Explicit 4xx rejection is retryable; 5xx is permanent; timeout/reset/unknown acceptance is conservatively non-retryable. Even a retryable error is advice, never automatic retries. Network failure after acceptance can duplicate delivery; consuming applications own idempotency and retry policy.
+Each call sends once. Results expose `accepted`/`rejected`/`partial` outcome, counts and generated Message-ID, without address lists or raw SMTP response. Partial acceptance is returned, not retried. `EmailError` exposes bounded `code`/`retryable` (configuration, connection, timeout, tls, authentication, temporary-rejection, permanent-rejection, message, unknown); raw cause is server-only and JSON/inspection are safe. Explicit 4xx rejection is retryable; 5xx is permanent; timeout/reset/unknown acceptance is conservatively non-retryable. Even a retryable error is advice, never automatic retries. Network failure after acceptance can duplicate delivery; consuming applications own idempotency and retry policy.
 
 ## Local sink and verification
 

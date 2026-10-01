@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { createClient, RESP_TYPES } from 'redis'
+import { ConnectionTimeoutError, createClient, ErrorReply, RESP_TYPES, SocketTimeoutError, TimeoutError } from 'redis'
 import { CacheError, resolveCacheConfig, validateCacheKey, validateCacheTtl } from './config'
 import type { CacheConfig } from './config'
 import { incrementValue, readValue, releaseToken, renewToken } from './scripts'
@@ -7,7 +7,7 @@ import { incrementValue, readValue, releaseToken, renewToken } from './scripts'
 export { CacheError, resolveCacheConfig, validateCacheKey, validateCacheTtl } from './config'
 export type { CacheConfig, CacheErrorCode } from './config'
 
-export type CacheOperation = 'check' | 'get' | 'set' | 'set-persistent' | 'delete' | 'increment' | 'publish' | 'subscribe' | 'unsubscribe' | 'acquire-lease' | 'renew-lease' | 'release-lease' | 'close'
+export type CacheOperation = 'check' | 'get' | 'set' | 'set-without-expiry' | 'delete' | 'increment' | 'publish' | 'subscribe' | 'unsubscribe' | 'acquire-lease' | 'renew-lease' | 'release-lease' | 'close'
 export interface CacheMeasurement {
   operation: CacheOperation
   outcome: 'success' | 'error'
@@ -26,7 +26,13 @@ export interface CacheWriteOptions { ttlSeconds?: number, ifAbsent?: boolean }
 // a timeout/disconnect may have committed a write; callers must not blindly retry increments.
 const CONNECT_TIMEOUT_MS = 2000
 const OPERATION_TIMEOUT_MS = 5000
-const instances = new Set<ReturnType<typeof createCache>>()
+
+function safeError(error: unknown): CacheError {
+  if (error instanceof CacheError) return error
+  if (error instanceof ConnectionTimeoutError || error instanceof SocketTimeoutError || error instanceof TimeoutError) return new CacheError('timeout')
+  if (error instanceof ErrorReply && /^(WRONGPASS|NOAUTH|NOPERM)(?:\s|$)/.test(error.message)) return new CacheError('authentication')
+  return new CacheError('unavailable')
+}
 
 function newClient(url: string) {
   return createClient({
@@ -48,8 +54,8 @@ export function createCache(options: CacheOptions = {}) {
 
   function settings() { return config ??= resolveCacheConfig(options, options.env ?? process.env) }
   function assertOpen() { if (closed) throw new CacheError('closed') }
-  function reportError(code: 'unavailable' | 'callback-failed') {
-    try { options.onError?.(new CacheError(code)) }
+  function reportCallbackError() {
+    try { Promise.resolve(options.onError?.(new CacheError('callback-failed'))).catch(() => {}) }
     catch { /* User diagnostics must not escape an EventEmitter callback. */ }
   }
   function destroy(slot: Connection) {
@@ -62,7 +68,7 @@ export function createCache(options: CacheOptions = {}) {
     let timer: ReturnType<typeof setTimeout> | undefined
     try {
       return await Promise.race([action, new Promise<never>((_, reject) => {
-        timer = setTimeout(() => { destroy(slot); reject(new CacheError('unavailable')) }, OPERATION_TIMEOUT_MS)
+        timer = setTimeout(() => { reject(new CacheError('timeout')); destroy(slot) }, OPERATION_TIMEOUT_MS)
         timer.unref()
       })])
     }
@@ -75,11 +81,11 @@ export function createCache(options: CacheOptions = {}) {
     catch (error) { throw error instanceof CacheError ? error : new CacheError('configuration') }
     const slot = { client, ready: undefined as unknown as Promise<Client> }
     connections.add(slot)
-    client.on('error', () => { reportError('unavailable') })
+    client.on('error', () => { /* Transport errors are sanitized at the operation boundary. */ })
     slot.ready = bounded(client.connect().then(() => {
       assertOpen()
       return client
-    }), slot).catch(() => { destroy(slot); throw new CacheError(closed ? 'closed' : 'unavailable') })
+    }), slot).catch((error) => { destroy(slot); throw closed ? new CacheError('closed') : safeError(error) })
     return slot
   }
   async function command<T>(action: (client: Client) => Promise<T>): Promise<T> {
@@ -93,7 +99,9 @@ export function createCache(options: CacheOptions = {}) {
     try { return await bounded(action(client), slot) }
     catch (error) {
       if (error instanceof Error && ['value bound', 'integer required', 'integer bound', 'value size', 'ERR value is not an integer or out of range'].includes(error.message)) throw new CacheError('invalid-input')
-      throw error
+      const safe = safeError(error)
+      if (safe.code === 'timeout') destroy(slot)
+      throw safe
     }
   }
   async function operation<T>(name: CacheOperation, action: () => Promise<T>): Promise<T> {
@@ -108,10 +116,10 @@ export function createCache(options: CacheOptions = {}) {
     }
     catch (error) {
       outcome = 'error'
-      throw error instanceof CacheError ? error : new CacheError('unavailable')
+      throw safeError(error)
     }
     finally {
-      try { options.onOperation?.({ operation: name, outcome, duration: (performance.now() - start) / 1000, ...(hit === undefined ? {} : { hit }) }) }
+      try { Promise.resolve(options.onOperation?.({ operation: name, outcome, duration: (performance.now() - start) / 1000, ...(hit === undefined ? {} : { hit }) })).catch(() => {}) }
       catch { /* Optional telemetry cannot alter operation results. */ }
     }
   }
@@ -150,7 +158,7 @@ export function createCache(options: CacheOptions = {}) {
     }),
     set: (key: string, value: string | Uint8Array, input: CacheWriteOptions = {}) => operation('set', () => write(key, value, input, false)),
     // Deliberate escape hatch, never the default cache write.
-    setPersistent: (key: string, value: string | Uint8Array, input: Pick<CacheWriteOptions, 'ifAbsent'> = {}) => operation('set-persistent', () => write(key, value, input, true)),
+    setWithoutExpiry: (key: string, value: string | Uint8Array, input: Pick<CacheWriteOptions, 'ifAbsent'> = {}) => operation('set-without-expiry', () => write(key, value, input, true)),
     delete: (key: string) => operation('delete', async () => {
       const name = physical(key)
       return (await command(client => client.del(name))) === 1
@@ -185,14 +193,15 @@ export function createCache(options: CacheOptions = {}) {
     subscribe: (channel: string, listener: (message: Buffer) => void | Promise<void>) => operation('subscribe', async () => {
       const name = physical(channel, 'channel')
       if (typeof listener !== 'function') throw new CacheError('invalid-input')
+      if (unsubscribers.size >= 32) throw new CacheError('invalid-input')
       const slot = connect() // Dedicated connection per subscription; command client remains independent.
       let stopped = false
       let stopping: Promise<void> | undefined
       const receive = (message: Buffer) => {
         if (stopped || closed) return
-        if (message.length > settings().maxValueBytes) { reportError('callback-failed'); return }
-        try { Promise.resolve(listener(message)).catch(() => reportError('callback-failed')) }
-        catch { reportError('callback-failed') }
+        if (message.length > settings().maxValueBytes) { reportCallbackError(); return }
+        try { Promise.resolve(listener(message)).catch(() => reportCallbackError()) }
+        catch { reportCallbackError() }
       }
       const unsubscribe = () => stopping ??= (async () => {
         stopped = true
@@ -204,6 +213,7 @@ export function createCache(options: CacheOptions = {}) {
         finally { destroy(slot); unsubscribers.delete(unsubscribe) }
       })()
       unsubscribers.add(unsubscribe)
+      slot.client.on('error', () => { void unsubscribe() })
       try {
         const client = await slot.ready
         await bounded(client.subscribe(name, receive, true), slot)
@@ -223,10 +233,8 @@ export function createCache(options: CacheOptions = {}) {
         catch { /* Shutdown remains bounded when the backend is unavailable. */ }
         finally { destroy(slot) }
       }))
-      instances.delete(cache)
     }),
   }
-  instances.add(cache)
   return cache
 }
 
@@ -235,6 +243,7 @@ let singleton: Cache | undefined
 export function getCache() { return singleton ??= createCache() }
 export function checkCache() { return getCache().checkCache() }
 export async function closeCache() {
-  await Promise.all([...instances].map(cache => cache.close()))
+  const cache = singleton
   singleton = undefined
+  await cache?.close()
 }

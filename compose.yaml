@@ -86,7 +86,7 @@ services:
       STORAGE_KEY_PREFIX: ${STORAGE_KEY_PREFIX:-}
       # Optional Cache configuration; no startup connection or bundled backend.
       CACHE_URL: ${CACHE_URL:-}
-      CACHE_KEY_PREFIX: ${CACHE_KEY_PREFIX:-nuxt-cache}
+      CACHE_KEY_PREFIX: ${CACHE_KEY_PREFIX:-app}
       CACHE_DEFAULT_TTL_SECONDS: ${CACHE_DEFAULT_TTL_SECONDS:-300}
       CACHE_MAX_VALUE_BYTES: ${CACHE_MAX_VALUE_BYTES:-1048576}
     ports: ["${APP_PORT:-3000}:3000"]

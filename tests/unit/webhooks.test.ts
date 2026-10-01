@@ -2,7 +2,7 @@
 import { createHmac, randomBytes } from 'node:crypto'
 import { createServer } from 'node:http'
 import { once } from 'node:events'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { Webhook } from 'standardwebhooks'
 import { createWebhookEvent, createWebhookJobs, defineWebhookEvents, deliverWebhook, handoffWebhook, isRetryableWebhookStatus, signWebhook, validateWebhookTarget, verifyWebhookRequest, verifyWebhookSignature, WebhookError, type WebhookIdempotency } from '@repo/nuxt-webhooks/server'
@@ -12,11 +12,21 @@ const rotated = `whsec_${Buffer.alloc(32, 8).toString('base64')}`
 const events = defineWebhookEvents({ 'test.created': z.object({ message: z.string() }).strict() })
 const event = createWebhookEvent(events, 'test.created', { message: 'snowman ☃' })
 const bytes = Buffer.from(event.body)
+afterEach(() => { vi.unstubAllGlobals() })
 function request(body: string | Uint8Array = bytes, headers = signWebhook(event.id, bytes, secret)) {
   return new Request('https://receiver.example/webhook', { method: 'POST', body, headers })
 }
 
 describe('Standard Webhooks interoperability', () => {
+  it('accepts exactly ±300 seconds and rejects ±301 using a fixed clock', () => {
+    const now = 1700000000000
+    for (const offset of [-300, 300]) {
+      expect(verifyWebhookSignature(bytes, new Headers(signWebhook(event.id, bytes, secret, now + offset * 1000)), [secret], { now })).toBe(event.id)
+    }
+    for (const offset of [-301, 301]) {
+      expect(() => verifyWebhookSignature(bytes, new Headers(signWebhook(event.id, bytes, secret, now + offset * 1000)), [secret], { now })).toThrow(WebhookError)
+    }
+  })
   it('matches current reference signatures in both directions', () => {
     const date = new Date()
     const reference = new Webhook(secret)
@@ -85,11 +95,25 @@ describe('inbound boundaries and replay handoff', () => {
 })
 
 describe('outbound policy and Jobs composition', () => {
+  it('allows only lowercase event names and JSON-safe schema output in both directions', async () => {
+    for (const name of ['Order.created', '1created', 'a'.repeat(129), 'order created']) expect(() => defineWebhookEvents({ [name]: z.string() })).toThrow()
+    expect(() => defineWebhookEvents({ 'order.created_v1-final': z.string() })).not.toThrow()
+    const cycle: Record<string, unknown> = {}; cycle.self = cycle
+    const accessor = Object.defineProperty({}, 'value', { enumerable: true, get() { throw new Error('must not invoke') } })
+    for (const output of [new Date(), new (class { value = 1 })(), () => 1, undefined, BigInt(1), { value: undefined }, cycle, accessor, Array(2), { value: NaN }]) {
+      const transformed = defineWebhookEvents({ 'test.created': z.object({ message: z.string() }).transform(() => output) })
+      expect(() => createWebhookEvent(transformed, 'test.created', { message: 'valid input' })).toThrow(WebhookError)
+      await expect(verifyWebhookRequest(request(), { events: transformed, secrets: [secret] })).rejects.toMatchObject({ code: 'invalid-event' })
+    }
+  })
   it('enforces synchronized default body and timestamp bounds', () => {
     const large = defineWebhookEvents({ 'large.event': z.object({ value: z.string() }) })
     expect(() => createWebhookEvent(large, 'large.event', { value: 'x'.repeat(64 * 1024) })).toThrow(WebhookError)
     expect(() => createWebhookEvent(large, 'large.event', { value: 'x'.repeat(64 * 1024) }, { maxBytes: 1024 * 1024 })).not.toThrow()
     expect(() => createWebhookEvent(large, 'large.event', { value: 'x' }, { maxBytes: 1024 * 1024 + 1 })).toThrow()
+    expect(() => createWebhookJobs({ events: large, resolveTarget: () => ({ url: 'https://example.com', secret }), maxBytes: 64 * 1024 + 1 })).toThrow()
+    const oversized = createWebhookEvent(large, 'large.event', { value: 'x'.repeat(64 * 1024) }, { maxBytes: 1024 * 1024 })
+    expect(() => createWebhookJobs({ events: large, resolveTarget: () => ({ url: 'https://example.com', secret }) }).prepare('target', oversized)).toThrow()
     const headers = new Headers(signWebhook(event.id, Buffer.from(event.body), secret))
     expect(verifyWebhookSignature(Buffer.from(event.body), headers, [secret], { toleranceSeconds: 900 })).toBe(event.id)
     expect(() => verifyWebhookSignature(Buffer.from(event.body), headers, [secret], { toleranceSeconds: 901 })).toThrow()
@@ -107,7 +131,41 @@ describe('outbound policy and Jobs composition', () => {
     expect(Object.keys(prepared).sort()).toEqual(['body', 'id', 'targetRef', 'type'])
     expect(jobs.delivery.payload.safeParse({ ...prepared, secret }).success).toBe(false)
     expect(jobs.delivery.payload.safeParse({ ...prepared, id: 'different' }).success).toBe(false)
-    expect(jobs.delivery.send).toMatchObject({ retryLimit: 5, retryDelay: 30, retryBackoff: true, retryDelayMax: 900 })
+    expect(jobs.delivery.send).toMatchObject({ retryLimit: 5, retryDelay: 30, retryBackoff: true, retryDelayMax: 900, expireInSeconds: 60, deleteAfterSeconds: 86400 })
+    expect(jobs.delivery.send).not.toHaveProperty('id')
+    expect(jobs.delivery.send).not.toHaveProperty('singletonKey')
+  })
+  it('includes resolver and policy time in one abortable attempt deadline', async () => {
+    const signals: AbortSignal[] = []
+    const stalled = (signal: AbortSignal) => { signals.push(signal); return new Promise<never>(() => {}) }
+    await expect(deliverWebhook({ targetRef: 'target', ...event }, { timeoutMs: 100, resolveTarget: (_, signal) => stalled(signal) })).rejects.toMatchObject({ code: 'timeout', retryable: true })
+    await expect(deliverWebhook({ targetRef: 'target', ...event }, { timeoutMs: 100, resolveTarget: () => ({ url: 'https://example.com', secret }), targetPolicy: { validate: (_, signal) => stalled(signal) } })).rejects.toMatchObject({ code: 'timeout', retryable: true })
+    expect(signals).toHaveLength(2)
+    expect(signals.every(signal => signal.aborted)).toBe(true)
+  })
+  it('sanitizes unexpected resolver failures as retryable and classified absent targets as permanent', async () => {
+    const context = { id: 'job', signal: new AbortController().signal }
+    const unexpected = createWebhookJobs({ events, resolveTarget: () => { throw new Error('SECRET_URL_CREDENTIAL') } })
+    await expect(unexpected.delivery.handler(unexpected.prepare('target', event), context)).rejects.toMatchObject({ code: 'target-resolution', retryable: true, message: 'Webhook target-resolution' })
+    for (const code of ['configuration', 'invalid-target'] as const) {
+      const permanent = createWebhookJobs({ events, resolveTarget: () => { throw new WebhookError(code) } })
+      await expect(permanent.delivery.handler(permanent.prepare('target', event), context)).resolves.toMatchObject({ outcome: 'rejected', code })
+    }
+    await expect(deliverWebhook({ targetRef: 'target', ...event }, { resolveTarget: () => undefined as never })).rejects.toMatchObject({ code: 'invalid-target', retryable: false })
+  })
+  it('cancels remote bodies without calling any body reader for success or rejection', async () => {
+    for (const status of [200, 429, 400]) {
+      const cancel = vi.fn().mockResolvedValue(undefined)
+      const read = vi.fn(() => { throw new Error('Response bytes must not be read') })
+      const send = vi.fn().mockResolvedValue({ status, body: { cancel, getReader: read }, text: read, json: read, arrayBuffer: read })
+      vi.stubGlobal('fetch', send)
+      const delivery = deliverWebhook({ targetRef: 'target', ...event }, { resolveTarget: () => ({ url: 'https://example.com', secret }) })
+      if (status === 200) await expect(delivery).resolves.toMatchObject({ outcome: 'delivered' })
+      else await expect(delivery).rejects.toMatchObject({ code: 'remote-status', status })
+      expect(cancel).toHaveBeenCalledOnce()
+      expect(read).not.toHaveBeenCalled()
+      expect(send).toHaveBeenCalledWith(expect.any(URL), expect.objectContaining({ redirect: 'manual', body: bytes }))
+    }
   })
   it('classifies HTTP status codes and safely returns permanent resolver failures', async () => {
     for (const status of [408, 425, 429, 500, 503, 599]) expect(isRetryableWebhookStatus(status)).toBe(true)

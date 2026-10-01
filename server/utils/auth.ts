@@ -40,7 +40,8 @@ export function configuredAuthPlugins(config: AuthConfiguration) {
       sendMagicLink: async ({ email, url }) => {
         const content = renderMagicLinkEmail(url, config.public?.appBaseUrl ?? '')
         const result = await sendObservedEmail({ to: [{ address: email }], ...content })
-        if (result.outcome !== 'accepted') throw new EmailError('partial-delivery')
+        // The app requires full acceptance; ambiguity is not an automatic retry.
+        if (result.outcome !== 'accepted') throw new EmailError('unknown')
       },
     }))
   }

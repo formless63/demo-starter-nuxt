@@ -23,11 +23,34 @@ const envelope = z.object({
   data: z.json(),
 }).strict()
 
+// Schema transforms must return JSON data themselves, without toJSON coercion or
+// silently losing unsupported properties during serialization.
+function assertJsonData(value: unknown, ancestors = new Set<object>()): void {
+  if (value === null || typeof value === 'boolean' || typeof value === 'string') return
+  if (typeof value === 'number' && Number.isFinite(value)) return
+  if (typeof value !== 'object' || !value || ancestors.has(value)) throw new WebhookError('invalid-event')
+  const array = Array.isArray(value)
+  const prototype = Object.getPrototypeOf(value)
+  if (array ? prototype !== Array.prototype : prototype !== Object.prototype && prototype !== null) throw new WebhookError('invalid-event')
+  const keys = Reflect.ownKeys(value)
+  if (array && keys.length !== value.length + 1) throw new WebhookError('invalid-event')
+  ancestors.add(value)
+  try {
+    for (const key of array ? Array.from({ length: value.length }, (_, i) => String(i)) : keys) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, key)
+      if (typeof key !== 'string' || !descriptor?.enumerable || !('value' in descriptor)) throw new WebhookError('invalid-event')
+      assertJsonData(descriptor.value, ancestors)
+    }
+  }
+  finally { ancestors.delete(value) }
+}
+
 export function parseWebhookEvent<Registry extends WebhookEventRegistry>(value: unknown, registry: Registry): WebhookEvent<Registry> {
   try {
     const parsed = envelope.parse(value)
     if (!Object.hasOwn(registry, parsed.type)) throw new WebhookError('invalid-event')
     const data = registry[parsed.type]!.parse(parsed.data)
+    assertJsonData(data)
     return { ...parsed, data } as WebhookEvent<Registry>
   }
   catch { throw new WebhookError('invalid-event') }
@@ -47,6 +70,7 @@ export function createWebhookEvent<Registry extends WebhookEventRegistry, Type e
   try {
     if (!Object.hasOwn(registry, type)) throw new WebhookError('invalid-event')
     const event = { id: randomUUID(), type, createdAt: new Date().toISOString(), data: registry[type]!.parse(data) }
+    assertJsonData(event.data)
     envelope.parse(event)
     const body = JSON.stringify(event)
     if (Buffer.byteLength(body) > bodyLimit(options.maxBytes)) throw new WebhookError('body-too-large')

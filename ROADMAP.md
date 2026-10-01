@@ -91,7 +91,8 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 ### Email (`done`)
 
 - Requires: none
-- Integrates with: Jobs, Observability, baseline Better Auth magic links
+- Integrates with: Jobs, Observability; baseline Better Auth magic links
+- Baseline requirement: Node production runtime
 - External: SMTP required only on use; Mailpit 1.31.3 is an optional disposable development/test sink.
 - Implementation (#5): private `@repo/nuxt-email`, lazy Nodemailer 10.0.13 SMTP, explicit transport security, bounded text/HTML/addresses and safe single-attempt delivery/errors; root hashed-token magic links and optional application-owned telemetry. No durable queue, database dependency, attachments or provider SDK.
 - Default installed: no; the reference application explicitly opts in.
@@ -101,6 +102,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 ### Webhooks (`done`)
 
 - Requires: Jobs (hard catalog/module/peer dependency)
+- Baseline requirement: Node production runtime; PostgreSQL is supplied through Jobs
 - Integrates with: Audit Log, Observability, API Platform
 - External: remote webhook endpoints only for outbound use; build/boot/health need none
 - Default installed: no; root explicitly opts in. `@repo/nuxt-webhooks` supplies Standard Webhooks HMAC signing, bounded raw-body verification, target policy, replay handoff and durable Jobs definitions with no second worker/routes/UI.
@@ -126,7 +128,8 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 ### Cache / Coordination (`done`)
 
 - Requires: none
-- Integrates with: Realtime, API Platform, Jobs
+- Integrates with: Realtime, API Platform, Jobs, Observability
+- Baseline requirement: Node production runtime
 - External: Valkey/Redis-compatible service (required only on use)
 - Default installed: no; reference application explicitly opts in.
 - Implementation: `@repo/nuxt-cache`, ephemeral exact namespaced strings/bytes, TTL/NX, atomic counters, advisory token-safe single-backend leases (no fencing/Redlock), non-durable pub/sub and lazy lifecycle. Pinned Valkey 9.1.2 / node-redis 6.3.0; independent packed fixture. No future Realtime/API/Jobs integrations implemented.

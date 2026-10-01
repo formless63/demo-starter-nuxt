@@ -84,7 +84,8 @@ try {
   }
   await assert.rejects(audit.queryAuditEvents(db, { from: new Date('invalid') }))
   await assert.rejects(audit.queryAuditEvents(db, { from: earliest, until: earliest }))
-  for (const key of ['password', 'PASSWORD_HASH', 'secret', 'token', 'authorization', 'Cookie', 'apiKey', 'api_key', 'accessToken', 'refresh-token', 'client.secret', 'request', 'session', 'body', 'headers']) {
+  await assert.rejects(audit.queryAuditEvents(db, { from: new Date(earliest.getTime() + 1), until: earliest }))
+  for (const key of ['password', 'PASSWORD_HASH', 'secret', 'token', 'authorization', 'Cookie', 'apiKey', 'api_key', 'accessToken', 'refresh-token', 'client.secret', 'credential', 'CLIENT_CREDENTIAL', 'client.credential', 'request', 'r_e_q_u_e_s_t', 'session', 'body', 'header', 'headers']) {
     await assert.rejects(audit.appendAuditEvent(db, { ...event, metadata: { nested: [{ [key]: 'sensitive' }] } }))
   }
   let deep: unknown = {}
@@ -100,6 +101,10 @@ try {
   }
   assert.equal((await audit.queryAuditEvents(db)).items.length, 8, 'Rejected events must never insert')
   await audit.appendAuditEvent(db, { ...event, metadata: { ok: [null, true, 1, 'safe', { nested: 'id-1' }] } })
+  const override = { ...event, createdAt: new Date('1900-01-01T00:00:00.000Z'), id: crypto.randomUUID(), metadata: { ['x'.repeat(64)]: 'x'.repeat(1024) } }
+  const owned = await audit.appendAuditEvent(db, override)
+  assert.notEqual(owned.id, override.id, 'Caller cannot override the primitive UUID')
+  assert(owned.createdAt.getTime() > Date.now() - 60_000, 'Caller cannot backdate the primitive timestamp')
   assert(!Object.keys(audit).some(key => /update|delete|remove/i.test(key)), 'No mutation/removal public API')
   console.info('[audit fixture] migrations, indexes, append/query, filters/cursors, commit/rollback and metadata safety passed')
 }

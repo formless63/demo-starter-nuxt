@@ -25,7 +25,7 @@ export async function runWebhookSmoke(startWorker?: (url: string, secret: string
       assert.equal(event.data.message, 'signed smoke')
       const count = (attempts.get(incoming.url!) ?? 0) + 1
       attempts.set(incoming.url!, count)
-      response.statusCode = incoming.url === '/permanent' ? 400 : incoming.url === '/exhaust' || count === 1 ? 503 : 204
+      response.statusCode = incoming.url === '/duplicate' ? 204 : incoming.url === '/permanent' ? 400 : incoming.url === '/exhaust' || count === 1 ? 503 : 204
       response.end(response.statusCode === 204 ? undefined : 'private response body')
     }
     catch { response.statusCode = 400; response.end() }
@@ -74,6 +74,13 @@ export async function runWebhookSmoke(startWorker?: (url: string, secret: string
       assert(settled, 'Job must settle within bounded smoke deadline')
     }
     assert(received.length === 6 && received.every(body => body === event.body), 'All attempts must reuse exact bytes')
+    const duplicate = webhooks.prepare('duplicate', event)
+    const first = await sendRegisteredJob(boss, registry, 'webhooks.deliver', duplicate)
+    const second = await sendRegisteredJob(boss, registry, 'webhooks.deliver', duplicate)
+    assert.notEqual(first, second, 'Every deliberate enqueue creates separate delivery work')
+    const deadline = Date.now() + 15_000
+    while ((attempts.get('/duplicate') ?? 0) < 2 && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 100))
+    assert.equal(attempts.get('/duplicate'), 2, 'Retained scheduler IDs are not an outbound idempotency feature')
     console.info('[webhooks] signed outbound, inbound verification, durable retries and terminal outcomes passed')
   }
   finally {
