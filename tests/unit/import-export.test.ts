@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { parseCsv, exportCsv, spreadsheetSafe, transferConfig, createTransferRegistry, trustedContext } from '../../packages/nuxt-import-export/src/runtime/server/index'
+import { parseCsv, exportCsv, spreadsheetSafe, transferConfig, createTransferRegistry, trustedContext, safeTransferError } from '../../packages/nuxt-import-export/src/runtime/server/index'
 const config = transferConfig({})
 const schema = z.object({ name: z.string().trim().min(1).max(120), description: z.string().trim().max(1000).transform(value => value || null) })
 const csv = (text: string, settings = config) => parseCsv(Buffer.from(text), ['name', 'description'], schema, settings)
@@ -49,6 +49,20 @@ describe('Import / Export shared CSV contract', () => {
       }
     }
     expect(exportCsv([[-65536]], ['value'], config).toString()).toBe('value\r\n-65536\r\n')
+  })
+  it('quotes lone CR/LF cells, preserves trusted headers and transforms only data', () => {
+    const columns = ['=name'], rowSchema = z.object({ '=name': z.string() })
+    const output = exportCsv([['=danger'], ['line1\nline2'], ['line1\rline2']], columns, config)
+    expect(output.toString()).toBe('=name\r\n\'=danger\r\n"line1\nline2"\r\n"line1\rline2"\r\n')
+    expect(parseCsv(output, columns, rowSchema, config)).toEqual([{ '=name': "'=danger" }, { '=name': 'line1\nline2' }, { '=name': 'line1\rline2' }])
+    expect(() => parseCsv(Buffer.from('=other\r\nvalue\r\n'), columns, rowSchema, config)).toThrow('CSV format is invalid.')
+  })
+  it('classifies nested statement/transaction SQL timeouts without exposing driver errors', () => {
+    for (const code of ['57014', '25P04']) {
+      const safe = safeTransferError({ cause: { cause: { code, message: 'private-driver-value' } } })
+      expect(safe.toJSON()).toEqual({ code: 'timeout', message: 'Transfer deadline exceeded.', retryable: true })
+      expect(JSON.stringify(safe)).not.toContain('private-driver-value')
+    }
   })
   it('validates lazy configuration and exact trusted scope', () => {
     expect(transferConfig({ IMPORT_EXPORT_MAX_BYTES: '' }).maxBytes).toBe(16777216)

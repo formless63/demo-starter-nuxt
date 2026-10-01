@@ -78,8 +78,22 @@ export function createTransferService(options: TransferServiceOptions) {
   }
   async function timeouts(tx: TransferTransaction, deadline: ReturnType<typeof attemptDeadline>) {
     deadline.check()
-    const budget = Math.max(1, Math.floor(Math.min(30000, deadline.remaining())))
+    const budget = Math.floor(Math.min(30000, deadline.remaining()))
+    if (budget < 2) throw new TransferError('timeout')
     await tx.execute(sql`select set_config('transaction_timeout', ${`${budget}ms`}, true), set_config('statement_timeout', ${`${Math.max(1, budget - 500)}ms`}, true), set_config('lock_timeout', ${`${Math.min(5000, budget)}ms`}, true)`)
+  }
+  // Preserve a known callback timeout if a driver rollback failure replaces its cause.
+  // These transactions are owned convenience operations, never caller transactions.
+  async function attemptTransaction<T>(deadline: ReturnType<typeof attemptDeadline>, run: (tx: TransferTransaction) => Promise<T>, configuration?: Parameters<Database['transaction']>[1]): Promise<T> {
+    let timeout: TransferError | undefined
+    deadline.check()
+    try {
+      return await options.database().transaction(async (tx) => {
+        try { return await run(tx) }
+        catch (error) { const safe = safeTransferError(error); if (safe.code === 'timeout') timeout = safe; throw error }
+      }, configuration)
+    }
+    catch (error) { throw timeout ?? error }
   }
   // Lazy queue policy: no configuration or dependency checks at module import/build/start.
   const runJob = defineJob({
@@ -102,7 +116,7 @@ export function createTransferService(options: TransferServiceOptions) {
     try {
       deadline.check()
       const storage = options.storage(), sourceKey = storage.createKey('transfers')
-      const row = await options.database().transaction(async (tx) => {
+      const row = await attemptTransaction(deadline, async (tx) => {
         await timeouts(tx, deadline)
         const [created] = await tx.insert(transfer).values({ id, requesterId: context.requesterId, scopeKind: context.scope.kind, scopeId: context.scope.id, definition: definition.name, version: definition.version, direction: 'import', status: 'uploading', sourceKey }).returning()
         deadline.check()
@@ -115,7 +129,7 @@ export function createTransferService(options: TransferServiceOptions) {
       const head = await storage.headObject(sourceKey, { signal: deadline.signal })
       if (head.size !== source.bytes) throw new TransferError('invalid-format')
       deadline.check()
-      const updated = await options.database().transaction(async (tx) => {
+      const updated = await attemptTransaction(deadline, async (tx) => {
         await timeouts(tx, deadline)
         const current = await locked(tx, id)
         if (current.status !== 'uploading') throw new TransferError('cancelled')
@@ -214,7 +228,7 @@ export function createTransferService(options: TransferServiceOptions) {
       const settings = config()
       deadline.close()
       deadline = attemptDeadline(Math.max(0.001, settings.timeoutSeconds - (Date.now() - attemptStarted) / 1000), job.signal)
-      const original = await options.database().transaction(async (tx) => {
+      const original = await attemptTransaction(deadline, async (tx) => {
         await timeouts(tx, deadline)
         const [row] = await tx.select().from(transfer).where(eq(transfer.id, transferId(id))).limit(1)
         if (!row || row.status !== 'pending') return undefined
@@ -234,7 +248,7 @@ export function createTransferService(options: TransferServiceOptions) {
         if (source.hash !== original.sourceHash || source.bytes !== original.sourceBytes) throw new TransferError('invalid-format')
         const rows = parseCsv(source.body, definition.columns, definition.rowSchema, settings)
         deadline.check()
-        await options.database().transaction(async (tx) => {
+        await attemptTransaction(deadline, async (tx) => {
           await timeouts(tx, deadline)
           const row = await locked(tx, id)
           if (row.status !== 'pending') return
@@ -250,7 +264,7 @@ export function createTransferService(options: TransferServiceOptions) {
       else {
         const rows: (readonly CsvCell[])[] = []
         let normalized = 0, snapshotAt = new Date()
-        await options.database().transaction(async (tx) => {
+        await attemptTransaction(deadline, async (tx) => {
           await timeouts(tx, deadline)
           const [clock] = await tx.execute(sql`select CURRENT_TIMESTAMP as snapshot_at`) as unknown as { snapshot_at: Date }[]
           snapshotAt = new Date(clock!.snapshot_at)
@@ -266,7 +280,7 @@ export function createTransferService(options: TransferServiceOptions) {
         const body = exportCsv(rows, definition.columns, settings)
         deadline.check()
         const storage = options.storage(), artifactKey = storage.createKey('transfers')
-        const reserved = await options.database().transaction(async (tx) => {
+        const reserved = await attemptTransaction(deadline, async (tx) => {
           await timeouts(tx, deadline)
           const row = await locked(tx, id)
           if (row.status !== 'pending') return false
@@ -279,7 +293,7 @@ export function createTransferService(options: TransferServiceOptions) {
         await storage.putObject(artifactKey, body, { contentType: 'text/csv', signal: deadline.signal })
         const head = await storage.headObject(artifactKey, { signal: deadline.signal })
         if (head.size !== body.byteLength) throw new TransferError('invalid-format')
-        await options.database().transaction(async (tx) => {
+        await attemptTransaction(deadline, async (tx) => {
           await timeouts(tx, deadline)
           const row = await locked(tx, id)
           if (row.status !== 'pending') return

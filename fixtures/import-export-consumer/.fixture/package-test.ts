@@ -11,9 +11,9 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import { eq, sql } from 'drizzle-orm'
 import { pgTable, text, uuid } from 'drizzle-orm/pg-core'
 import { z } from 'zod'
-import { createTransferRegistry, createTransferService, defineTransfer } from '@repo/nuxt-import-export/server'
+import { createTransferRegistry, createTransferService, defineTransfer, safeTransferError } from '@repo/nuxt-import-export/server'
 import { transfer } from '@repo/nuxt-import-export/schema'
-import { createJobsBoss, defineQueues } from '@repo/nuxt-jobs/server'
+import { createJobsBoss, defineQueues, registerWorkers } from '@repo/nuxt-jobs/server'
 import { compose, startProvider } from './providers'
 const domain = pgTable('fixture_project', { id: uuid().primaryKey(), owner: text().notNull(), name: text().notNull(), description: text() })
 const originalUrl = process.env.DATABASE_URL
@@ -160,6 +160,52 @@ try {
     await assert.rejects(guarded.runJob.handler({ transferId: guardedReceipt.id }, { id: randomUUID(), signal: new AbortController().signal, retryCount: 5, retryLimit: 5 }), { code: 'timeout' })
     slowAuthorization = false
     const [guardedRow] = await db.select().from(transfer).where(eq(transfer.id, guardedReceipt.id)); assert.equal(guardedRow!.errorCode, 'timeout'); assert.equal(guardedRow!.artifactKeys.length, 0)
+    // Real 30-second SQL cap with a longer 90-second attempt; no shortened production cap.
+    let rollbackFault = true, observedTimeout: string | undefined
+    const rollbackDatabase = { select: db.select.bind(db), insert: db.insert.bind(db), update: db.update.bind(db),
+      transaction: ((...args: Parameters<typeof db.transaction>) => db.transaction(...args).catch(error => {
+        if (rollbackFault && safeTransferError(error).code === 'timeout') { rollbackFault = false; throw Object.assign(new Error('private rollback fault'), { code: '08006' }) }
+        throw error
+      })) as typeof db.transaction }
+    const capped = createTransferService({ database: () => rollbackDatabase, boss: async () => boss!, storage: () => backend!.storage, env: { DATABASE_URL: url.href, IMPORT_EXPORT_TIMEOUT_SECONDS: '90' }, registry: createTransferRegistry([defineTransfer({ name: 'sql-cap', version: '1', columns: ['name'], rowSchema: z.object({ name: z.string() }), async authorize() { return true },
+      async importRows(tx, context, rows) {
+        const [bounds] = await tx.execute(sql`select extract(epoch from current_setting('statement_timeout')::interval) * 1000 as statement_ms, extract(epoch from current_setting('transaction_timeout')::interval) * 1000 as transaction_ms`) as unknown as { statement_ms: string, transaction_ms: string }[]
+        assert.equal(Number(bounds!.statement_ms), 29500); assert.equal(Number(bounds!.transaction_ms), 30000)
+        await tx.insert(domain).values({ id: randomUUID(), owner: context.requesterId, name: rows[0]!.name })
+        await tx.execute(sql`select pg_sleep(31)`)
+      }, async *exportRows() {} })]) })
+    const cappedReceipt = await capped.stageImport(owner, { definition: 'sql-cap', body: Readable.from([Buffer.from('name\nSQL rollback fixture\n')]) })
+    await capped.startImport(owner, { transferId: cappedReceipt.id, idempotencyKey: randomUUID() })
+    const [cappedRow] = await db.select().from(transfer).where(eq(transfer.id, cappedReceipt.id)), cappedNativeId = cappedRow!.jobId!
+    await boss.update(service.runJob.name, undefined, { id: cappedNativeId, priority: 700 })
+    const beforeCapped = await count(), actualWorker = createJobsBoss({ databaseUrl: url.href, schema: 'pgboss', concurrency: 1, useListenNotify: false }, 'worker')
+    try {
+      await actualWorker.start()
+      await registerWorkers(actualWorker, { [capped.runJob.name]: { ...capped.runJob, work: { minPriority: 700, maxPriority: 700 }, async handler(payload, context) {
+        try { await capped.runJob.handler(payload, context) } catch (error) { observedTimeout = safeTransferError(error).code; throw error }
+      } } }, 1)
+      const retryDeadline = Date.now() + 40000
+      while (Date.now() < retryDeadline && (await boss.getJobById(service.runJob.name, cappedNativeId))?.state !== 'retry') await new Promise(resolve => setTimeout(resolve, 200))
+      assert.equal((await boss.getJobById(service.runJob.name, cappedNativeId))?.state, 'retry')
+    }
+    finally { await actualWorker.stop({ graceful: true }) }
+    assert.equal(observedTimeout, 'timeout', 'Known SQL timeout survives a cause-replacing rollback connection failure')
+    assert.equal(await count(), beforeCapped, 'Nonfinal actual SQL timeout rolls back every domain write')
+    assert.equal((await capped.getTransfer(owner, { transferId: cappedReceipt.id })).status, 'pending')
+    // Supported native claims/failures accelerate only retry scheduling, not policy or SQL caps.
+    for (let retry = 1; retry < 5; retry++) {
+      const [claim] = await boss.fetch(service.runJob.name, { includeMetadata: true, minPriority: 700, maxPriority: 700, ignoreStartAfter: true })
+      assert.equal(claim!.id, cappedNativeId); assert.equal(claim!.retryCount, retry)
+      await boss.fail(service.runJob.name, { id: cappedNativeId, retryCount: retry })
+      assert.equal((await capped.getTransfer(owner, { transferId: cappedReceipt.id })).status, 'pending')
+    }
+    const [finalClaim] = await boss.fetch(service.runJob.name, { includeMetadata: true, minPriority: 700, maxPriority: 700, ignoreStartAfter: true })
+    assert.equal(finalClaim!.retryCount, 5); assert.equal(finalClaim!.retryLimit, 5)
+    await assert.rejects(capped.runJob.handler({ transferId: cappedReceipt.id }, { id: finalClaim!.id, signal: new AbortController().signal, retryCount: finalClaim!.retryCount, retryLimit: finalClaim!.retryLimit }), { code: 'timeout' })
+    await boss.fail(service.runJob.name, { id: cappedNativeId, retryCount: 5 })
+    assert.equal(await count(), beforeCapped, 'Exhausted timeout also rolls back every domain write')
+    assert.equal((await capped.getTransfer(owner, { transferId: cappedReceipt.id })).errorCode, 'timeout')
+    assert.equal((await boss.getJobById(service.runJob.name, cappedNativeId))?.state, 'failed')
     // Exhaust the real six-attempt budget through supported APIs, then kill the final claim.
     // ignoreStartAfter accelerates fixture scheduling without altering production queue policy.
     const crashService = createTransferService({ database: () => db, boss: async () => boss!, storage: () => backend!.storage, registry, env: { DATABASE_URL: url.href, IMPORT_EXPORT_TIMEOUT_SECONDS: '5' } })

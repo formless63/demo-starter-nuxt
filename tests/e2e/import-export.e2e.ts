@@ -66,7 +66,7 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     await page.goto(`${base}/app/projects`)
     await expect(page.getByRole('heading', { name: 'Project CSV transfers' })).toBeVisible()
     await expect(page.getByLabel('CSV file')).toBeEnabled({ timeout: 15000 })
-    await page.getByLabel('CSV file').setInputFiles({ name: 'local-fixture.csv', mimeType: 'text/csv', buffer: Buffer.from('name,description\r\nBrowser CSV,"quoted\nline"\r\n') })
+    await page.getByLabel('CSV file').setInputFiles({ name: 'local-fixture.csv', mimeType: 'text/csv', buffer: Buffer.from('name,description\r\nBrowser CSV,"line1\nline2"\r\n') })
     await expect(page.getByRole('button', { name: 'Upload CSV', exact: true })).toBeEnabled({ timeout: 15000 })
     await page.getByRole('button', { name: 'Upload CSV', exact: true }).click({ timeout: 15000 })
     await expect(page.getByRole('button', { name: 'Start import', exact: true })).toBeEnabled()
@@ -91,15 +91,21 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     const exported = list.items.find(item => item.direction === 'export')!
     const signed = await (await context.request.get(`/api/transfers/${exported.id}/download`, { headers: sessionHeaders })).json() as { url: string }
     const output = await (await fetch(signed.url)).text()
-    expect(output).toBe('name,description\r\nBrowser CSV,"quoted\nline"\r\n')
+    expect(output).toBe('name,description\r\nBrowser CSV,"line1\nline2"\r\n')
     expect(output).not.toContain('Foreign project')
+    await page.getByLabel('CSV file').setInputFiles({ name: 'round-trip.csv', mimeType: 'text/csv', buffer: Buffer.from(output) })
+    await page.getByRole('button', { name: 'Upload CSV', exact: true }).click(); await expect(page.getByRole('button', { name: 'Start import', exact: true })).toBeEnabled(); await page.getByRole('button', { name: 'Start import', exact: true }).click()
+    await expect.poll(async () => { await page.getByRole('button', { name: 'Refresh transfers', exact: true }).click(); return await page.getByText('import — succeeded', { exact: false }).count() }, { timeout: 30000 }).toBe(2)
+    const roundTrip = await db.select().from(tables.project).where(eq(tables.project.ownerId, owner))
+    expect(roundTrip).toHaveLength(2); expect(new Set(roundTrip.map(row => row.id)).size).toBe(2)
+    for (const row of roundTrip) expect(row).toMatchObject({ name: 'Browser CSV', description: 'line1\nline2', ownerId: owner })
     // Validation failure is safe and creates no extra domain rows.
     await page.getByLabel('CSV file').setInputFiles({ name: 'invalid.csv', mimeType: 'text/csv', buffer: Buffer.from('name,description\n,private-cell\n') })
     await page.getByRole('button', { name: 'Upload CSV', exact: true }).click(); await expect(page.getByRole('button', { name: 'Start import', exact: true })).toBeEnabled(); await page.getByRole('button', { name: 'Start import', exact: true }).click()
     await expect.poll(async () => { await page.getByRole('button', { name: 'Refresh transfers', exact: true }).click(); return await page.getByText('validation-failed', { exact: true }).count() }, { timeout: 30000 }).toBe(1)
     await expect(page.getByText('Row 1, name: invalid-value', { exact: false })).toBeVisible()
     expect(await page.locator('body').innerText()).not.toContain('private-cell')
-    expect((await db.select().from(tables.project).where(eq(tables.project.ownerId, owner))).length).toBe(1)
+    expect((await db.select().from(tables.project).where(eq(tables.project.ownerId, owner))).length).toBe(2)
     const staged = await (await context.request.post('/api/transfers/stage', { data: 'name,description\nCancel me,text\n', headers: { ...sessionHeaders, 'content-type': 'text/csv' } })).json() as { id: string }
     expect((await context.request.post(`/api/transfers/${staged.id}/cancel`, { headers: sessionHeaders })).status()).toBe(200)
     await page.getByRole('button', { name: 'Refresh transfers', exact: true }).click()
