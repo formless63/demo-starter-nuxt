@@ -247,6 +247,16 @@ export function createTransferService(options: TransferServiceOptions) {
         const body = exportCsv(rows, definition.columns, settings)
         deadline.check()
         const storage = options.storage(), artifactKey = storage.createKey('transfers')
+        const reserved = await options.database().transaction(async (tx) => {
+          await timeouts(tx, deadline)
+          const row = await locked(tx, id)
+          if (row.status !== 'pending') return false
+          await authorize(context, row.definition, tx)
+          await tx.update(transfer).set({ artifactKeys: [...row.artifactKeys, artifactKey], updatedAt: new Date() }).where(eq(transfer.id, id))
+          deadline.check()
+          return true
+        })
+        if (!reserved) return
         await storage.putObject(artifactKey, body, { contentType: 'text/csv', signal: deadline.signal })
         const head = await storage.headObject(artifactKey, { signal: deadline.signal })
         if (head.size !== body.byteLength) throw new TransferError('invalid-format')
@@ -303,7 +313,7 @@ export function createTransferService(options: TransferServiceOptions) {
         if (row.status === 'uploading' && Date.now() - row.updatedAt.getTime() < config().timeoutSeconds * 1000) throw new TransferError('conflict')
         // Fence abandoned staging before releasing the lock; deletion happens outside SQL.
         if (input.execute && row.status === 'uploading') await finish(tx, row, { status: 'failed', errorCode: 'execution-lost' })
-        return { id: row.id, keys: [row.sourceKey, row.artifactKey].filter((key): key is string => Boolean(key)) }
+        return { id: row.id, keys: [...new Set([row.sourceKey, row.artifactKey, ...row.artifactKeys])].filter((key): key is string => Boolean(key)) }
       })
       if (input.execute) for (const key of selected.keys) await options.storage().deleteObject(key)
       results.push({ id: selected.id, artifactCount: selected.keys.length, executed: input.execute === true })
