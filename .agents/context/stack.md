@@ -25,3 +25,5 @@ Official Nuxt documentation should be the primary source. Agents supporting MCP 
 `@repo/nuxt-audit-log` uses Nuxt/Drizzle peers and @nuxt/kit only; no API/Jobs/auth dependency. Application-generated UUIDs, timestamptz(3), bounded JSONB metadata and four B-tree indexes support append-oriented records and exact keyset queries.
 
 `@repo/nuxt-cache` owns stable redis/node-redis 6.3.0 with Nuxt peer and official Valkey 9.1.2 disposable fixture. Node 24 production and Bun tooling share the verified protocol subset; TLS verification stays enabled. Additive `compose.cache.yaml` is loopback-only with no AOF/RDB/data volume. Cache is ephemeral; Jobs remains PostgreSQL-durable. See `CACHE_COORDINATION_MODULE_EVALUATION.md`.
+
+`@repo/nuxt-ai` owns OpenAI SDK 7.25.0 and Zod 4.6.5 with Nuxt peer/module-builder. Chat Completions SSE supports configured compatible endpoints on Node 24/Nitro; retries/logging are explicitly disabled. Default provider openai-compatible, timeout 60 seconds, optional key, lazy required model; see AI_MODULE_EVALUATION.md for the prompt-derived v1 contract.

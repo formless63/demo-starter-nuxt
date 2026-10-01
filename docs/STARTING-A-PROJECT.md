@@ -1,12 +1,12 @@
 # Starting a project
 
-The repository is both a baseline starter and a reference application. Choose which of the eight completed capabilities belong in the product before building domain features around them.
+The repository is both a baseline starter and a reference application. Choose which of the nine completed capabilities belong in the product before building domain features around them.
 
 ## Full/reference setup
 
 Keep the completed capabilities when durable background work, a machine-facing API and server telemetry, object storage or ephemeral coordination are useful. The root application already:
 
-- depends on and registers `@repo/nuxt-jobs`, `@repo/nuxt-api`, `@repo/nuxt-observability`, `@repo/nuxt-storage`, `@repo/nuxt-email`, `@repo/nuxt-webhooks`, `@repo/nuxt-audit-log` and `@repo/nuxt-cache`;
+- depends on and registers `@repo/nuxt-jobs`, `@repo/nuxt-api`, `@repo/nuxt-observability`, `@repo/nuxt-storage`, `@repo/nuxt-email`, `@repo/nuxt-webhooks`, `@repo/nuxt-audit-log` `@repo/nuxt-cache` and `@repo/nuxt-ai`;
 - includes a Jobs registry and `starter.echo` demonstration task;
 - composes API Platform into Better Auth and exposes project API contracts;
 - includes explicit application, API-key and Audit migrations plus separate pg-boss migration commands;
@@ -17,7 +17,7 @@ Keep the completed capabilities when durable background work, a machine-facing A
 - adds lazy ephemeral Cache/Coordination primitives and optional safe telemetry, with explicit disposable local Valkey helpers; and
 - supports lazy SMTP and opt-in hashed-token magic links, with disposable Mailpit verification;
 - composes signed Webhooks deliveries into the same Jobs worker, with no configured remote target at startup; and
-- exercises all eight packages through catalog-driven fixture tests and CI.
+- exercises all nine packages through catalog-driven fixture tests and CI.
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
 
@@ -128,3 +128,11 @@ For permanent pruning, consistently update catalog/docs before removing `package
 4. Reinstall, clear generated state, run capabilities:check, typecheck/build, ordinary checks and the production migration/container smoke. No worker or daemon needs draining.
 
 A deployed table drop requires a new explicit destructive migration and a deliberate retention/privacy decision. For permanent pruning, update the catalog/roadmap/docs and remove package, fixture, contract, evaluation and audit-log-change skill only after all imports are gone; preserve the roadmap ID for optional relationships.
+
+## Remove AI
+
+1. Remove `@repo/nuxt-ai` module/dependency and `ai` from reference enablement. Cancel/drain active consumer streams.
+2. Remove `server/utils/observed-ai.ts`, `scripts/ai-smoke.ts`, `ai:smoke` alias/catalog script declaration, AI-specific tests and all application AI call sites. Remove AI_PROVIDER/AI_MODEL/AI_API_KEY/AI_BASE_URL/AI_TIMEOUT_SECONDS config/environment, including Compose/example entries.
+3. Clear generated output, reinstall and run catalog checks, normal typecheck/build/tests and production verification. No schema/data migration exists. The packed fixture proves provider SDK removal when unused; shared Zod may remain.
+
+Never delete/revoke external provider accounts or secrets automatically. Removing Observability while retaining AI replaces the optional wrapper with plain package generation. Permanent pruning updates catalog/docs before removing package/fixture/contract/evaluation/ai-change skill, retaining the roadmap ID where referenced.

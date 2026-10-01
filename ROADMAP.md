@@ -43,7 +43,7 @@ The generic `packages:*` commands build and exercise the catalog entries. Hard c
 
 | Status | Capability |
 | --- | --- |
-| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination |
+| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; AI |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
 API Platform is capability #2. Observability is capability #3: server-only logs, request correlation, explicit spans/metrics, optional OTLP export and a clean-consumer lifecycle. No new service is required.
@@ -117,11 +117,15 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Implementation: `@repo/nuxt-audit-log`, application-owned schema/migrations, transactional append, bounded metadata and keyset queries; no UI or retention daemon.
 - Contract: [`capabilities/audit-log/CAPABILITY.md`](capabilities/audit-log/CAPABILITY.md)
 
-### AI (`planned`)
+### AI (`done`)
 
 - Requires: none
 - Integrates with: Jobs, Object Storage, Observability, Audit Log
-- External: configured model provider (required)
+- Baseline requirement: Node production runtime
+- External: configured model provider only when used; install/build/boot/health remain backendless
+- Default installed: no; root explicitly opts in.
+- Implementation: `@repo/nuxt-ai`, OpenAI-compatible text/streaming/Zod structured generation, bounded output, cancellation/deadline and safe errors. No UI/history/tools/RAG or generic queued AI.
+- Contract: [`capabilities/ai/CAPABILITY.md`](capabilities/ai/CAPABILITY.md)
 
 ## Application infrastructure
 
