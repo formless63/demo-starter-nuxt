@@ -96,7 +96,6 @@ bun run packages:test email
 bun run packages:test webhooks
 bun run packages:test audit-log
 bun run packages:test cache-coordination
-bun run packages:test cache-coordination
 bun run check
 bun run test:e2e
 ```
