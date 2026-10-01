@@ -1,6 +1,6 @@
 # Stack
 
-Exact versions are pinned in `package.json`, capability package manifests, and `bun.lock`; key versions are Nuxt 4.5.2, Vue 3.5.43, TypeScript 5.9.3, Bun 1.4.2, Node 24, Better Auth 1.7.6, `@better-auth/api-key` 1.7.6, Drizzle ORM 0.45.3, pg-boss 12.35.0, `zod-openapi` 6.0.2, `@scalar/nuxt` 0.6.75, PostgreSQL 18, Tailwind CSS 4.3.3, shadcn-nuxt 2.8.2, Reka UI 2.10.5, Tabler Icons 3.48.0, Vitest 5.0.1, and Playwright 1.63.0.
+Exact versions are pinned in `package.json`, capability package manifests, and `bun.lock`; key versions are Nuxt 4.5.2, Vue 3.5.43, TypeScript 5.9.3, Bun 1.4.2, Node 24, Better Auth 1.7.7, `@better-auth/api-key` 1.7.7, Drizzle ORM 0.45.3, pg-boss 12.35.0, `zod-openapi` 6.0.2, `@scalar/nuxt` 0.6.75, PostgreSQL 18, Tailwind CSS 4.3.3, shadcn-nuxt 2.8.2, Reka UI 2.10.5, Tabler Icons 3.48.0, Vitest 5.0.1, and Playwright 1.63.0.
 
 Nuxt/Nitro provides routing, SSR, server routes, runtime configuration, and portable Node output. Better Auth provides database sessions and OAuth; its Nuxt session integration receives `useFetch` for cookie-forwarding SSR. Drizzle/postgres provide typed SQL. `shadcn-nuxt` discovers the restrained components configured by `components.json`; Tailwind provides styling, Reka UI provides primitives, vue-sonner supplies toasts, and color-mode supplies SSR-safe theming. Icons remain Tabler-only. The runtime image uses supported Nitro Node output rather than Bun-specific APIs.
 
@@ -29,3 +29,7 @@ Official Nuxt documentation should be the primary source. Agents supporting MCP 
 `@repo/nuxt-realtime` uses H3/Zod peers and current Nitro2.13.4/CrossWS0.3.5 mechanisms; no Socket.IO or new transport dependency. Node PassThrough/H3 sendStream provides SSE comments/drain; native H3 WebSocket hooks provide authenticated Upgrade and send-buffer signals. Nitro's experimental websocket flag is necessary; Node24 global WebSocket is a stable client API. Runtime default SSE; both adapters always available.
 
 `@repo/nuxt-notifications` uses Jobs/Drizzle/Zod peers and native Node24 fetch for optional ntfy JSON. Schema has its own entry for Drizzle Kit compatibility. Actual fixture uses pinned stable ntfy2.28.0 (disposable local server); root Email adapter reuses Nodemailer10.0.13/Mailpit1.31.3 rather than adding SMTP. No optional capability dependency or new mandatory service.
+
+@repo/nuxt-search uses normal Nuxt module-builder and compatible Nuxt/Drizzle peers; existing PostgreSQL 18 FTS only. simple weighted vectors, parameterized websearch_to_tsquery and ts_rank_cd normalization 32; no external search service or pg_trgm.
+
+`@repo/nuxt-ai` owns OpenAI SDK 7.25.0 and Zod 4.6.5 with Nuxt peer/module-builder. Chat Completions SSE supports configured compatible endpoints on Node 24/Nitro; retries/logging are explicitly disabled. Default provider openai-compatible, timeout 60 seconds, optional key, lazy required model; see AI_MODULE_EVALUATION.md for the prompt-derived v1 contract.

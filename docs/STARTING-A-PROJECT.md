@@ -1,24 +1,18 @@
 # Starting a project
 
-The repository is both a baseline starter and a reference application. Choose which of the ten completed capabilities belong in the product before building domain features around them.
+The repository is both a baseline starter and a reference application. Choose which of the twelve completed capabilities belong in the product before building domain features around them.
 
 ## Full/reference setup
 
-Keep the completed capabilities when durable background work, a machine-facing API and server telemetry, object storage or ephemeral coordination are useful. The root application already:
+The root application explicitly registers Jobs, API Platform, Observability, Object Storage, Email, Webhooks, Audit Log, Cache / Coordination, Realtime, Notifications, Search and AI. It includes:
 
-- depends on and registers `@repo/nuxt-jobs`, `@repo/nuxt-api`, `@repo/nuxt-observability`, `@repo/nuxt-storage`, `@repo/nuxt-email`, `@repo/nuxt-webhooks`, `@repo/nuxt-audit-log`, `@repo/nuxt-cache`, `@repo/nuxt-realtime` and `@repo/nuxt-notifications`;
-- includes a Jobs registry and `starter.echo` demonstration task;
-- composes API Platform into Better Auth and exposes project API contracts;
-- includes explicit application, API-key, Audit and Notification migrations plus separate pg-boss migration commands;
-- builds the app, migration tools, and Jobs worker into one production image; and
-- adds safe JSON logs/request IDs, explicit server telemetry and optional Jobs/API wrappers; and
-- exposes lazy server-only S3 primitives, optional app-owned telemetry and explicit local provider commands, with no File UI or required storage backend at startup; and
-- appends stable actor/Project IDs transactionally to application-owned audit history; and
-- adds lazy ephemeral Cache/Coordination primitives and optional safe telemetry, with explicit disposable local Valkey helpers; and
-- supports lazy SMTP and opt-in hashed-token magic links, with disposable Mailpit verification;
-- composes signed Webhooks deliveries into the same Jobs worker, with no configured remote target at startup; and
-- provides both authenticated SSE/WebSocket transports and durable notifications with ID-only post-commit hints; and
-- exercises all ten packages through catalog-driven fixture tests and CI.
+- one Jobs registry and standalone worker with transactional enqueue;
+- Better Auth and owner-scoped browser and machine API routes;
+- explicit application/API/Audit/Notification migrations, a Projects search vector/index, and separate pg-boss migrations;
+- one production image for the app, migration tools and worker;
+- lazy optional S3, SMTP, Cache and AI adapters with no provider required at startup;
+- transactionally appended audit history and notifications, plus ID-only post-commit hints over authenticated SSE/WebSocket transports;
+- all twelve catalog-driven package install/runtime/removal/rebuild checks in generic CI.
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
 
@@ -149,6 +143,20 @@ A deployed table drop requires a new explicit destructive migration and a delibe
 2. Remove `server/api/notifications`, `server/notifications`, `server/plugins/notifications.ts`, `server/utils/observed-notifications.ts`, the notification delivery import/definition from `server/jobs/registry.ts`, and delivery-database shutdown from `scripts/jobs-worker.ts`. Preserve the existing worker lifecycle/other tasks. Remove notification-specific tests and replace its Realtime event/schema/callers if retaining Realtime for other application events.
 3. Remove package schema import/export/object entry from `server/database/schema.ts`; preserve notification table/data and applied `0004_notifications.sql`, journal/snapshots. Retain an equivalent application-owned table definition for future schema generation so removal cannot accidentally propose/apply DROP TABLE.
 4. Remove NTFY settings and unused worker Email settings from Compose/environment only when no retained integration uses them. Reinstall/clear generated output, run catalog checks, Jobs/retained fixtures, full checks and production migration/app/worker. Never delete remote ntfy resources.
-5. `bun fixtures/notifications-consumer/.fixture/removal-data.ts` proves independent notification rows, migration history and Jobs survive the generic packed removal workflow. Permanent pruning updates all metadata/docs before package/fixture/contract/evaluation/skill deletion; preserve roadmap ID references.
+5. `bun run packages:test notifications` retains its disposable database through final rebuild and proves notification rows, indexes, migration history and Jobs survive packed removal. Permanent pruning updates all metadata/docs before package/fixture/contract/evaluation/skill deletion; preserve roadmap ID references.
 
 When removing **Observability while retaining Realtime/Notifications**, remove only their observed wrappers and wrapper imports/calls. Keep plain event publication, transactional notification operations and adapters. These are optional application integrations, not hard dependencies.
+
+## Remove Search
+
+1. Remove the Projects search route and searchProjects service imports/function, Search module entry and dependency, and `search` reference enablement. Remove Search tests if pruning its reference integration.
+2. Preserve application rows, generated vector/index declarations and committed migration history. The schema declaration does not depend on the package. Package removal applies no SQL; physical removal requires a new explicit reviewed migration.
+3. Reinstall, clear generated Nuxt output, and run catalog/typecheck/build checks. Permanent pruning updates metadata/docs before deleting package/fixture/evaluation/skill; preserve the roadmap ID for optional relationships.
+
+## Remove AI
+
+1. Remove `@repo/nuxt-ai` module/dependency and `ai` from reference enablement. Cancel/drain active consumer streams.
+2. Remove `server/utils/observed-ai.ts`, `scripts/ai-smoke.ts`, `ai:smoke` alias/catalog script declaration, AI-specific tests and all application AI call sites. Remove AI_PROVIDER/AI_MODEL/AI_API_KEY/AI_BASE_URL/AI_TIMEOUT_SECONDS config/environment, including Compose/example entries.
+3. Clear generated output, reinstall and run catalog checks, normal typecheck/build/tests and production verification. No schema/data migration exists. The packed fixture proves provider SDK removal when unused; shared Zod may remain.
+
+Never delete/revoke external provider accounts or secrets automatically. Removing Observability while retaining AI replaces the optional wrapper with plain package generation. Permanent pruning updates catalog/docs before removing package/fixture/contract/evaluation/ai-change skill, retaining the roadmap ID where referenced.

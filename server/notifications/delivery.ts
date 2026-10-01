@@ -5,6 +5,7 @@ import { createNotificationJobs, createNtfyAdapter, getNotification, Notificatio
 import { user } from '../database/schema'
 import { observeNotificationAdapter } from '../utils/observed-notifications'
 import { createNotificationEmailAdapter } from './email-adapter'
+import { loadNotificationState } from './loading'
 
 // Runtime-neutral lazy database access shared by Nitro and the existing Jobs worker.
 let client: ReturnType<typeof postgres> | undefined
@@ -15,12 +16,12 @@ function deliveryDb() {
   return drizzle(client)
 }
 export const notificationJobs = createNotificationJobs({
-  load: id => getNotification(deliveryDb(), id),
+  load: id => loadNotificationState(() => getNotification(deliveryDb(), id)),
   adapters: {
-    email: observeNotificationAdapter('email', createNotificationEmailAdapter(async (id) => {
+    email: observeNotificationAdapter('email', createNotificationEmailAdapter(id => loadNotificationState(async () => {
       const [recipient] = await deliveryDb().select({ email: user.email }).from(user).where(eq(user.id, id)).limit(1)
       return recipient?.email
-    })),
+    }))),
     // An application must supply its current recipient-to-topic policy here.
     // No public ntfy service, guessed topic or remote provisioning by default.
     ntfy: observeNotificationAdapter('ntfy', createNtfyAdapter(async () => undefined)),

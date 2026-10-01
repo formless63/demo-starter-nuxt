@@ -2,6 +2,8 @@
 
 All commands use Bun. PostgreSQL is required for migrations, authenticated runtime behavior, integration tests, and health checks.
 
+CI pins Bun 1.4.2 independently and uses `actions/setup-node` for Node 24 in both the application check and every catalog-derived package lifecycle job. Each runtime job logs the exact Node/Bun versions and asserts Node major 24 before installation/runtime fixtures.
+
 - `bun install --frozen-lockfile`: reproduce dependencies.
 - `bun run agents:check`: read-only validation of canonical guidance/skills, project adapters and shared hook paths; no agent CLIs or authentication required.
 - `bun run agents:test`: synthetic client payloads and temporary Git-fixture tests for hooks and capability governance.
@@ -53,5 +55,11 @@ All commands use Bun. PostgreSQL is required for migrations, authenticated runti
 - Cache: `bun run packages:test cache-coordination` owns real Valkey 9.1.2 Node/Bun protocol, lazy production boot, install/removal and explicit reconnect. `cache:check` pings configured server; `cache:smoke` uses unique exact keys. `cache:dev:valkey` starts explicit disposable loopback infrastructure, `cache:dev:down` stops it. No external FLUSH or migration exists. `bun fixtures/cache-consumer/.fixture/removal-data.ts` runs the generic Cache lifecycle while retaining an independent disposable backend to prove existing data survives removal.
 
 - Realtime: `bun run packages:test realtime` verifies both actual Node SSE/WebSocket transports, all runtime config modes, auth/isolation,20sec heartbeats, bounded queues and clean removal. REALTIME_TRANSPORTS choices are sse(default),websocket,sse,websocket (Both); no generic client RPC.
-- Notifications: `bun run packages:test notifications` verifies application migrations, transactional domain/notification/Jobs commit/rollback, recipient read/query, current-target delivery and disposable ntfy2.28.0. `bun fixtures/notifications-consumer/.fixture/removal-data.ts` wraps that same generic lifecycle to witness retained data/history/Jobs; `email-reference.ts` proves actual root Email adapter using disposable Mailpit. No public ntfy call.
+- Notifications: `bun run packages:test notifications` verifies application migrations, transactional domain/notification/Jobs commit/rollback, recipient read/query, current-target delivery and disposable ntfy2.28.0. Generic runtime/post-removal/cleanup hooks retain and witness data/indexes/history/Jobs through final rebuild; `email-reference.ts` proves actual root Email adapter using disposable Mailpit. No public ntfy call. `bun run test:notification-email` runs actual disposable Mailpit from root check/production CI.
 - Notifications tables require explicit `db:migrate`; deliveries use existing `jobs:migrate`/worker. Root E2E must exercise both transports with `REALTIME_TRANSPORTS=sse,websocket`; default production remains SSE unless chosen otherwise.
+
+Search verification: bun run packages:test search retains an independent disposable PostgreSQL 18 database through removal and the final rebuild, then verifies exact rows/vector/GIN/migration hashes before cleanup. It tests shared canonical codec vectors and B-rank ties/microseconds at pages 1/default25/100, owner/keyset/privacy checks; apply root bun run db:migrate explicitly before Projects search. No additional worker or external service.
+
+Production CI runs the full E2E suite against the built container with its disposable database. `DISPOSABLE_DATABASE_TESTS=true` permits a restored Search column-rename failure probe; `PRODUCTION_COMPOSE_PROJECT` selects only that test stack for safe-error/log privacy verification. Generic package-test metadata optionally declares `postRemovalScript` (after final rebuild) and `cleanupScript` (in finally) for retained external-state proofs. Both scripts must survive removal.
+
+AI: `bun run packages:test ai` verifies packed install/backendless Node boot/actual local HTTP SDK adapter/disconnect/removal/post-removal build. `bun run ai:smoke` is a deliberately invoked single configured model operation, logging only safe finish/usage. No provider is required for ordinary check/build/start/health.

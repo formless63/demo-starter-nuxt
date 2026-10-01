@@ -28,8 +28,14 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/nuxt_starter
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 24 }
       - uses: oven-sh/setup-bun@v2
         with: { bun-version: 1.4.2 }
+      - name: Verify lifecycle runtimes
+        run: |
+          node -e "console.log('Node', process.version); if (Number(process.versions.node.split('.')[0]) !== 24) process.exit(1)"
+          bun --version
       - run: bun install --frozen-lockfile
       - run: bun run packages:test ${{ matrix.capability }}
 
@@ -46,8 +52,10 @@ jobs:
       NUXT_AUTH_SECRET: ci-secret-that-is-at-least-thirty-two-characters
       NUXT_PUBLIC_APP_BASE_URL: http://127.0.0.1:3001
       APP_IMAGE: nuxt-starter:ci
+      COMPOSE_PROJECT_NAME: nuxt-ci
       APP_PORT: 3001
       POSTGRES_PORT: 5433
+      REALTIME_TRANSPORTS: sse,websocket
       APP_VERSION: ci
       APP_REVISION: ${{ github.sha }}
       DEPLOYMENT_ENVIRONMENT: ci
@@ -57,6 +65,10 @@ jobs:
         with: { node-version: 24 }
       - uses: oven-sh/setup-bun@v2
         with: { bun-version: 1.4.2 }
+      - name: Verify application runtimes
+        run: |
+          node -e "console.log('Node', process.version); if (Number(process.versions.node.split('.')[0]) !== 24) process.exit(1)"
+          bun --version
       - run: bun install --frozen-lockfile
       - run: bun run capabilities:check
       - run: bun run agents:check
@@ -68,6 +80,7 @@ jobs:
       - run: bun run lint
       - run: bun run typecheck
       - run: bun run test
+      - run: bun run test:notification-email
       - run: bunx playwright install --with-deps chromium
       - run: bun run test:e2e
       - run: bun run build
@@ -81,6 +94,15 @@ jobs:
         run: docker compose up -d --wait app worker
       - name: Verify production health endpoint
         run: curl --fail --show-error --silent http://127.0.0.1:3001/api/health
+      - name: Verify authenticated production HTTP and browser contracts
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:3001
+          DATABASE_URL: postgres://postgres:postgres@localhost:5433/nuxt_starter
+          DISPOSABLE_DATABASE_TESTS: 'true'
+          PRODUCTION_COMPOSE_PROJECT: nuxt-ci
+        run: bun run test:e2e
+      - name: Verify production SMTP composition
+        run: bun run test:notification-email
       - name: Verify production worker is running
         run: docker compose ps --status running worker | grep worker
       - name: Verify instrumented production job execution

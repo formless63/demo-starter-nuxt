@@ -18,14 +18,14 @@ function invalid(): never {
 }
 
 export function boundedString(value: unknown, max: number): string {
-  if (typeof value !== 'string' || !value.length || value.length > max || !value.isWellFormed() || Array.from(value).some(character => character.charCodeAt(0) < 32 || (character.charCodeAt(0) >= 127 && character.charCodeAt(0) <= 159))) invalid()
+  if (typeof value !== 'string' || !value.trim().length || value.length > max || !value.isWellFormed() || Array.from(value).some(character => character.charCodeAt(0) < 32 || (character.charCodeAt(0) >= 127 && character.charCodeAt(0) <= 159))) invalid()
   return value
 }
 
 /** Namespaced lowercase notification identifiers. */
 export function notificationType(value: unknown): string {
   const type = boundedString(value, 128)
-  if (!/^[a-z][a-z0-9._-]{0,127}$/.test(type) || !type.includes('.')) invalid()
+  if (!/^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/.test(type) || !type.includes('.')) invalid()
   return type
 }
 
@@ -66,7 +66,9 @@ export function validateMetadata(value: unknown = {}): NotificationMetadata {
       if (keys.length > notificationLimits.objectKeys) invalid()
       const result: NotificationMetadata = {}
       for (const key of keys) {
-        boundedString(key, notificationLimits.keyLength)
+        // Preserve keys verbatim; whitespace is valid, but empty/control/malformed keys are not.
+        if (typeof key !== 'string' || !key.length || key.length > notificationLimits.keyLength || !key.isWellFormed()
+          || Array.from(key).some(character => character.charCodeAt(0) < 32 || (character.charCodeAt(0) >= 127 && character.charCodeAt(0) <= 159))) invalid()
         const normalized = String(key).toLowerCase().replace(/[^a-z0-9]/g, '')
         if (/password|passwd|pwd|secret|token|authorization|cookie|apikey|credential/.test(normalized)
           || ['request', 'session', 'body', 'headers', 'header', 'proto', 'constructor', 'prototype'].includes(normalized)) invalid()

@@ -26,6 +26,8 @@ interface Capability {
   packageTest?: {
     ownedDependencies: string[]
     runtimeScript?: string
+    postRemovalScript?: string
+    cleanupScript?: string
     removal: {
       scripts: string[]
       paths: string[]
@@ -213,8 +215,10 @@ for (const capability of catalog.capabilities) {
           errors.push(`${capability.id} consumer fixture is missing ${script} script`)
         }
       }
-      if (capability.packageTest?.runtimeScript && !fixtureManifest.scripts?.[capability.packageTest.runtimeScript]) {
-        errors.push(`${capability.id} consumer fixture is missing runtime script ${capability.packageTest.runtimeScript}`)
+      for (const hook of ['runtimeScript', 'postRemovalScript', 'cleanupScript'] as const) {
+        const script = capability.packageTest?.[hook]
+        if (script && !fixtureManifest.scripts?.[script]) errors.push(`${capability.id} consumer fixture is missing ${hook} script ${script}`)
+        if (hook !== 'runtimeScript' && script && capability.packageTest?.removal.scripts.includes(script)) errors.push(`${capability.id} ${hook} must remain after removal`)
       }
       for (const script of capability.packageTest?.removal.scripts ?? []) {
         if (!fixtureManifest.scripts?.[script]) {
