@@ -1,0 +1,1 @@
+ALTER TABLE "transfer" ADD COLUMN "artifact_keys" jsonb DEFAULT '[]'::jsonb NOT NULL;

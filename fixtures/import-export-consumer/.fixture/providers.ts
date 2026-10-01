@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { resolve } from 'node:path'
 import { CreateBucketCommand, PutBucketCorsCommand } from '@aws-sdk/client-s3'
@@ -10,10 +11,12 @@ const docker = process.env.STORAGE_DOCKER_SUDO === 'true'
   : ['docker']
 
 export async function compose(project: string, args: string[], env: NodeJS.ProcessEnv = {}) {
-  const child = Bun.spawn([...docker, 'compose', '-p', project, '-f', composeFile, '--profile', 'rustfs', '--profile', 'garage', '--profile', 'garage-ui', ...args], {
-    env: { ...process.env, ...env }, stdout: 'pipe', stderr: 'pipe',
-  })
-  const [stdout, stderr, exit] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited])
+  const child = spawn(docker[0]!, [...docker.slice(1), 'compose', '-p', project, '-f', composeFile, '--profile', 'rustfs', '--profile', 'garage', '--profile', 'garage-ui', ...args], { env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'] })
+  const stdoutChunks: Buffer[] = [], stderrChunks: Buffer[] = []
+  child.stdout.on('data', chunk => stdoutChunks.push(chunk))
+  child.stderr.on('data', chunk => stderrChunks.push(chunk))
+  const exit = await new Promise<number | null>((resolve, reject) => { child.once('error', reject); child.once('exit', resolve) })
+  const stdout = Buffer.concat(stdoutChunks).toString(), stderr = Buffer.concat(stderrChunks).toString()
   if (exit) throw new Error(`Storage development infrastructure failed (${args[0]}): ${stderr}`)
   return stdout.trim()
 }
@@ -51,7 +54,7 @@ export async function startProvider(provider: Provider, project: string, tempora
       ready = true
       break
     }
-    catch { await Bun.sleep(500) }
+    catch { await new Promise(resolve => setTimeout(resolve, 500)) }
   }
   if (!ready) throw new Error(`Storage ${provider} bootstrap did not become ready`)
   // Garage implements bucket CORS. RustFS additionally has listener origin config.

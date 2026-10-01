@@ -10,6 +10,7 @@ export const transfer = pgTable('transfer', {
   status: varchar('status', { length: 12 }).$type<TransferStatus>().notNull(),
   idempotencyKey: varchar('idempotency_key', { length: 128 }), fingerprint: varchar('fingerprint', { length: 256 }),
   sourceKey: text('source_key'), sourceHash: varchar('source_hash', { length: 64 }), sourceBytes: bigint('source_bytes', { mode: 'number' }),
+  artifactKeys: jsonb('artifact_keys').$type<string[]>().notNull().default([]),
   artifactKey: text('artifact_key'), artifactExpiresAt: timestamp('artifact_expires_at', { withTimezone: true, precision: 3 }),
   jobId: uuid('job_id'), rowCount: integer('row_count'), byteCount: bigint('byte_count', { mode: 'number' }),
   errorCode: varchar('error_code', { length: 32 }).$type<TransferErrorCode>(),
