@@ -68,6 +68,12 @@ test('done governance requires evaluation, complete lifecycle metadata and compl
   expect(check({ evaluationDocument: 'missing.md' }).stderr).toContain('does not exist')
   expect(check({ agentSkill: '.agents/skills/missing/SKILL.md' }).stderr).toContain('agent skill')
   expect(check({ packageTest: undefined }).stderr).toContain('packageTest is required')
+  expect(check({ packageTest: { ...capability.packageTest, postRemovalScript: 'missing' } }).stderr).toContain('missing postRemovalScript')
+  expect(check({ packageTest: { ...capability.packageTest, cleanupScript: 'missing' } }).stderr).toContain('missing cleanupScript')
+  write(root, 'fixtures/demo/package.json', { scripts: { typecheck: 'tsc', build: 'nuxt build', survival: 'verify', cleanup: 'cleanup' } })
+  const hooks = { ...capability.packageTest, postRemovalScript: 'survival', cleanupScript: 'cleanup' }
+  expect(check({ packageTest: hooks }).status).toBe(0)
+  expect(check({ packageTest: { ...hooks, removal: { ...hooks.removal, scripts: ['survival', 'cleanup'] } } }).stderr).toContain('must remain after removal')
   expect(check({ fixturePath: undefined }).stderr).toContain('fixturePath is required')
   expect(check({ status: 'in-progress' }).stderr).toContain('completed, installed')
 })

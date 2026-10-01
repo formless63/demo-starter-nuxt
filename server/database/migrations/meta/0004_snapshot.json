@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "id": "e694003b-e0e3-45e4-a686-747df18b3248",
+=======
+  "id": "63d8d8cd-5be5-4de4-a213-32cc4cc0bfbc",
+>>>>>>> c0708e1d2eeec7367fb616e3e5acbffd7162105d
   "prevId": "37ef542c-8915-4ddc-8320-4b4271064d94",
   "version": "7",
   "dialect": "postgresql",
@@ -535,6 +539,7 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+<<<<<<< HEAD
     "public.notification": {
       "name": "notification",
       "schema": "",
@@ -692,6 +697,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+=======
+>>>>>>> c0708e1d2eeec7367fb616e3e5acbffd7162105d
     "public.project": {
       "name": "project",
       "schema": "",
@@ -714,6 +721,19 @@
           "primaryKey": false,
           "notNull": false
         },
+<<<<<<< HEAD
+=======
+        "search_vector": {
+          "name": "search_vector",
+          "type": "tsvector",
+          "primaryKey": false,
+          "notNull": false,
+          "generated": {
+            "as": "setweight(to_tsvector('simple', coalesce(name, '')), 'A') || setweight(to_tsvector('simple', coalesce(description, '')), 'B')",
+            "type": "stored"
+          }
+        },
+>>>>>>> c0708e1d2eeec7367fb616e3e5acbffd7162105d
         "owner_id": {
           "name": "owner_id",
           "type": "text",
@@ -756,6 +776,24 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+<<<<<<< HEAD
+=======
+        },
+        "project_search_vector_gin_idx": {
+          "name": "project_search_vector_gin_idx",
+          "columns": [
+            {
+              "expression": "search_vector",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+>>>>>>> c0708e1d2eeec7367fb616e3e5acbffd7162105d
         }
       },
       "foreignKeys": {

@@ -13,7 +13,11 @@
         "@repo/nuxt-jobs": "workspace:*",
         "@repo/nuxt-notifications": "workspace:*",
         "@repo/nuxt-observability": "workspace:*",
+<<<<<<< HEAD
         "@repo/nuxt-realtime": "workspace:*",
+=======
+        "@repo/nuxt-search": "workspace:*",
+>>>>>>> c0708e1d2eeec7367fb616e3e5acbffd7162105d
         "@repo/nuxt-storage": "workspace:*",
         "@repo/nuxt-webhooks": "workspace:*",
         "@tabler/icons-vue": "3.48.0",
@@ -143,6 +147,7 @@
         "vue-tsc": "3.1.7",
       },
     },
+<<<<<<< HEAD
     "fixtures/realtime-consumer": {
       "name": "realtime-consumer-fixture",
       "dependencies": {
@@ -153,6 +158,18 @@
       },
       "devDependencies": {
         "@types/node": "24.10.1",
+=======
+    "fixtures/search-consumer": {
+      "name": "search-consumer-fixture",
+      "dependencies": {
+        "@repo/nuxt-search": "workspace:*",
+        "drizzle-orm": "0.45.3",
+        "nuxt": "4.5.2",
+        "postgres": "3.4.9",
+      },
+      "devDependencies": {
+        "drizzle-kit": "0.31.11",
+>>>>>>> c0708e1d2eeec7367fb616e3e5acbffd7162105d
         "typescript": "5.9.3",
         "vue-tsc": "3.1.7",
       },
@@ -324,14 +341,20 @@
         "nuxt": ">=4.0.0 <5",
       },
     },
+<<<<<<< HEAD
     "packages/nuxt-realtime": {
       "name": "@repo/nuxt-realtime",
+=======
+    "packages/nuxt-search": {
+      "name": "@repo/nuxt-search",
+>>>>>>> c0708e1d2eeec7367fb616e3e5acbffd7162105d
       "version": "0.1.0",
       "dependencies": {
         "@nuxt/kit": "4.5.2",
       },
       "devDependencies": {
         "@nuxt/module-builder": "1.0.3",
+<<<<<<< HEAD
         "h3": "1.15.11",
         "nuxt": "4.5.2",
         "zod": "4.6.5",
@@ -340,6 +363,14 @@
         "h3": ">=1.15.11 <2",
         "nuxt": ">=4.0.0 <5",
         "zod": ">=4.0.0 <5",
+=======
+        "drizzle-orm": "0.45.3",
+        "nuxt": "4.5.2",
+      },
+      "peerDependencies": {
+        "drizzle-orm": ">=0.45.0 <1",
+        "nuxt": ">=4.0.0 <5",
+>>>>>>> c0708e1d2eeec7367fb616e3e5acbffd7162105d
       },
     },
     "packages/nuxt-storage": {
@@ -860,7 +891,11 @@
 
     "@repo/nuxt-observability": ["@repo/nuxt-observability@workspace:packages/nuxt-observability"],
 
+<<<<<<< HEAD
     "@repo/nuxt-realtime": ["@repo/nuxt-realtime@workspace:packages/nuxt-realtime"],
+=======
+    "@repo/nuxt-search": ["@repo/nuxt-search@workspace:packages/nuxt-search"],
+>>>>>>> c0708e1d2eeec7367fb616e3e5acbffd7162105d
 
     "@repo/nuxt-storage": ["@repo/nuxt-storage@workspace:packages/nuxt-storage"],
 
@@ -2332,8 +2367,11 @@
 
     "real-require": ["real-require@0.2.0", "", {}, "sha512-57frrGM/OCTLqLOAh0mhVA9VBMHd+9U7Zb2THMGdBUoZVOtGbJzjxsYGDJ3A9AYYCP4hn6y1TVbaOfzWtm5GFg=="],
 
+<<<<<<< HEAD
     "realtime-consumer-fixture": ["realtime-consumer-fixture@workspace:fixtures/realtime-consumer"],
 
+=======
+>>>>>>> c0708e1d2eeec7367fb616e3e5acbffd7162105d
     "redis": ["redis@6.3.0", "", { "dependencies": { "@redis/bloom": "6.3.0", "@redis/client": "6.3.0", "@redis/json": "6.3.0", "@redis/search": "6.3.0", "@redis/time-series": "6.3.0" } }, "sha512-XFQbPie1lGpKeUZ8ySYY43yLnQy/iIQtHNvIr/1XdaABpb96rUSdm3Mfl+98FEVbv9ZJIzINMno5s0Nh8E5LEw=="],
 
     "redis-errors": ["redis-errors@1.2.0", "", {}, "sha512-1qny3OExCf0UvUV/5wpYKf2YwPcOqXzkwKKSmKHiE6ZMQs5heeE/c8eXK+PNllPvmjgAbfnsbpkGZWy8cBpn9w=="],
@@ -2415,6 +2453,8 @@
     "scslre": ["scslre@0.3.0", "", { "dependencies": { "@eslint-community/regexpp": "^4.8.0", "refa": "^0.12.0", "regexp-ast-analysis": "^0.7.0" } }, "sha512-3A6sD0WYP7+QrjbfNA2FN3FsOaGGFoekCVgTyypy53gPxhbkCIjtO6YWgdrfM+n/8sI8JeXZOIxsHjMTNxQ4nQ=="],
 
     "scule": ["scule@1.3.0", "", {}, "sha512-6FtHJEvt+pVMIB9IBY+IcCJ6Z5f1iQnytgyfKMhDKgmzYG+TeH/wx1y3l27rshSbLiSanrR9ffZDrEsmjlQF2g=="],
+
+    "search-consumer-fixture": ["search-consumer-fixture@workspace:fixtures/search-consumer"],
 
     "semver": ["semver@7.8.5", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA=="],
 

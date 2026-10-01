@@ -29,3 +29,5 @@ Official Nuxt documentation should be the primary source. Agents supporting MCP 
 `@repo/nuxt-realtime` uses H3/Zod peers and current Nitro2.13.4/CrossWS0.3.5 mechanisms; no Socket.IO or new transport dependency. Node PassThrough/H3 sendStream provides SSE comments/drain; native H3 WebSocket hooks provide authenticated Upgrade and send-buffer signals. Nitro's experimental websocket flag is necessary; Node24 global WebSocket is a stable client API. Runtime default SSE; both adapters always available.
 
 `@repo/nuxt-notifications` uses Jobs/Drizzle/Zod peers and native Node24 fetch for optional ntfy JSON. Schema has its own entry for Drizzle Kit compatibility. Actual fixture uses pinned stable ntfy2.28.0 (disposable local server); root Email adapter reuses Nodemailer10.0.13/Mailpit1.31.3 rather than adding SMTP. No optional capability dependency or new mandatory service.
+
+@repo/nuxt-search uses normal Nuxt module-builder and compatible Nuxt/Drizzle peers; existing PostgreSQL 18 FTS only. simple weighted vectors, parameterized websearch_to_tsquery and ts_rank_cd normalization 32; no external search service or pg_trgm.

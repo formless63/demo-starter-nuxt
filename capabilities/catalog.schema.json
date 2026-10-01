@@ -63,6 +63,8 @@
       "properties": {
         "ownedDependencies": { "$ref": "#/$defs/uniqueStringArray" },
         "runtimeScript": { "$ref": "#/$defs/nonEmptyString" },
+        "postRemovalScript": { "$ref": "#/$defs/nonEmptyString" },
+        "cleanupScript": { "$ref": "#/$defs/nonEmptyString" },
         "removal": {
           "type": "object",
           "additionalProperties": false,

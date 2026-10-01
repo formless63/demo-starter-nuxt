@@ -152,3 +152,9 @@ A deployed table drop requires a new explicit destructive migration and a delibe
 5. `bun fixtures/notifications-consumer/.fixture/removal-data.ts` proves independent notification rows, migration history and Jobs survive the generic packed removal workflow. Permanent pruning updates all metadata/docs before package/fixture/contract/evaluation/skill deletion; preserve roadmap ID references.
 
 When removing **Observability while retaining Realtime/Notifications**, remove only their observed wrappers and wrapper imports/calls. Keep plain event publication, transactional notification operations and adapters. These are optional application integrations, not hard dependencies.
+
+## Remove Search
+
+1. Remove the Projects search route and searchProjects service imports/function, Search module entry and dependency, and `search` reference enablement. Remove Search tests if pruning its reference integration.
+2. Preserve application rows, generated vector/index declarations and committed migration history. The schema declaration does not depend on the package. Package removal applies no SQL; physical removal requires a new explicit reviewed migration.
+3. Reinstall, clear generated Nuxt output, and run catalog/typecheck/build checks. Permanent pruning updates metadata/docs before deleting package/fixture/evaluation/skill; preserve the roadmap ID for optional relationships.

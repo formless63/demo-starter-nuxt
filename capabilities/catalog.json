@@ -1,7 +1,7 @@
 {
   "$schema": "./catalog.schema.json",
   "schemaVersion": 1,
-  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage", "email", "webhooks", "audit-log", "cache-coordination", "realtime", "notifications"] },
+  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage", "email", "webhooks", "audit-log", "cache-coordination", "realtime", "notifications", "search"] },
   "baseline": [
     { "id": "framework", "displayName": "Nuxt framework", "summary": "Nuxt 4 with Vue and Nitro routing, SSR, and server APIs." },
     { "id": "strict-typescript", "displayName": "Strict TypeScript", "summary": "Strict TypeScript checks across application and server code." },
@@ -355,13 +355,64 @@
       "id": "search",
       "displayName": "Search",
       "kind": "application-infrastructure",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["jobs", "object-storage", "organizations"],
-      "baselineRequirements": ["postgresql"],
-      "externalRequirements": [{ "name": "PostgreSQL", "required": true, "notes": "PostgreSQL-first; no separate search service initially." }],
-      "summary": "PostgreSQL-first application search with room for later indexing backends."
+      "integratesWith": [
+        "jobs",
+        "object-storage",
+        "organizations"
+      ],
+      "baselineRequirements": [
+        "postgresql",
+        "drizzle"
+      ],
+      "externalRequirements": [
+        {
+          "name": "PostgreSQL",
+          "required": true,
+          "notes": "Existing PostgreSQL only; no external index service in v1."
+        }
+      ],
+      "summary": "PostgreSQL-native weighted full-text search on application-owned rows.",
+      "documentationPath": "capabilities/search/CAPABILITY.md",
+      "evaluationDocument": "SEARCH_MODULE_EVALUATION.md",
+      "agentSkill": ".agents/skills/search-change/SKILL.md",
+      "packageName": "@repo/nuxt-search",
+      "packagePath": "packages/nuxt-search",
+      "fixturePath": "fixtures/search-consumer",
+      "scripts": [
+        "db:migrate",
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [
+        "DATABASE_URL"
+      ],
+      "migrations": [
+        "Application-owned generated project.search_vector and GIN index"
+      ],
+      "runtimeProcesses": [
+        "Nitro application"
+      ],
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "postRemovalScript": "package:test:survival",
+        "cleanupScript": "package:test:cleanup",
+        "removal": {
+          "scripts": [
+            "db:migrate",
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server/database/schema.ts",
+            "drizzle.config.ts",
+            ".fixture/package-test.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "realtime",

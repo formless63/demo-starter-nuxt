@@ -52,6 +52,7 @@ jobs:
       NUXT_AUTH_SECRET: ci-secret-that-is-at-least-thirty-two-characters
       NUXT_PUBLIC_APP_BASE_URL: http://127.0.0.1:3001
       APP_IMAGE: nuxt-starter:ci
+      COMPOSE_PROJECT_NAME: nuxt-ci
       APP_PORT: 3001
       POSTGRES_PORT: 5433
       APP_VERSION: ci
@@ -91,6 +92,13 @@ jobs:
         run: docker compose up -d --wait app worker
       - name: Verify production health endpoint
         run: curl --fail --show-error --silent http://127.0.0.1:3001/api/health
+      - name: Verify authenticated production HTTP and browser contracts
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:3001
+          DATABASE_URL: postgres://postgres:postgres@localhost:5433/nuxt_starter
+          DISPOSABLE_DATABASE_TESTS: 'true'
+          PRODUCTION_COMPOSE_PROJECT: nuxt-ci
+        run: bun run test:e2e
       - name: Verify production worker is running
         run: docker compose ps --status running worker | grep worker
       - name: Verify instrumented production job execution
