@@ -34,6 +34,10 @@ async function membership(ctx: AuthEndpointContext, organizationId: unknown) {
   if (!found) fail('not-found')
   return { ...found, role: memberRole(found.role) }
 }
+async function ownerPolicy(ctx: AuthEndpointContext, organizationId: unknown) {
+  const actor = await membership(ctx, organizationId)
+  if (actor.role !== 'owner') fail('forbidden')
+}
 async function invitePolicy(ctx: AuthEndpointContext, organizationId: unknown, role: unknown) {
   const desired = memberRole(role ?? 'member')
   if (desired === 'owner') fail('forbidden')
@@ -65,7 +69,10 @@ export function organizationsAuth(env: Record<string, string | undefined> = proc
         await session(endpoint())
         return { data: organizationFields(data, true) }
       },
-      async beforeUpdateOrganization({ organization: data }) { return { data: organizationFields(data, false) } },
+      async beforeUpdateOrganization({ organization: data, member: currentMember }) {
+        await ownerPolicy(endpoint(), currentMember.organizationId)
+        return { data: organizationFields(data, false) }
+      },
       async beforeAddMember({ member: data }) {
         const ctx = endpoint()
         const actor = await session(ctx)
@@ -149,6 +156,7 @@ export function organizationsAuth(env: Record<string, string | undefined> = proc
             if (ctx.path === '/organization/update') {
               allowedFields(body, ['organizationId', 'data'])
               ctx.body = { ...body, data: organizationFields(object(body.data), false) }
+              await ownerPolicy(ctx, orgId)
             }
             if (ctx.path === '/organization/invite-member') {
               allowedFields(body, ['organizationId', 'email', 'role', 'resend'])

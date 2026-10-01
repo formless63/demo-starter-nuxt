@@ -108,6 +108,16 @@ try {
       const accepted = await call(mode, 'acceptInvitation', headers, { invitationId: invited.body.id })
       assert.equal(accepted.status, 200)
     }
+    const updated = await call(mode, 'updateOrganization', owner, { organizationId: orgId, data: { name: '  Owner Updated  ', slug: `  ${prefix}-${mode}-UPDATED  ` } })
+    assert.equal(updated.status, 200)
+    const [beforeDenied] = await admin`SELECT id,name,slug FROM organization WHERE id=${orgId}`
+    assert.deepEqual(beforeDenied, { id: orgId, name: 'Owner Updated', slug: `${prefix}-${mode}-updated` })
+    for (const headers of [adminA, member]) {
+      await denied(call(mode, 'updateOrganization', headers, { organizationId: orgId, data: { name: 'Unauthorized change', slug: `${prefix}-${mode}-denied` } }), 403)
+      const [afterDenied] = await admin`SELECT id,name,slug FROM organization WHERE id=${orgId}`
+      assert.deepEqual(afterDenied, beforeDenied)
+    }
+    console.info(`[organizations fixture] owner-only update ${mode} passed`)
     const [adminRow] = await admin`SELECT id FROM member WHERE organization_id=${orgId} AND user_id=${actorIds['admin-b']!}`
     await denied(call(mode, 'updateMemberRole', adminA, { organizationId: orgId, memberId: adminRow!.id, role: 'member' }), 403)
     await denied(call(mode, 'removeMember', adminA, { organizationId: orgId, memberIdOrEmail: adminRow!.id }), 403)

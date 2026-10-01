@@ -12,6 +12,8 @@ Native dispatch and lifecycle hooks remain authoritative. No outer dispatch tran
 
 See [the evaluation and reproducible PostgreSQL probe](../../ORGANIZATIONS_MODULE_EVALUATION.md). The probe proves the crash window; its successful diagnostic exit is not an atomicity claim.
 
+Organization name/slug updates require current authoritative owner membership in both native dispatch and lifecycle hooks. Upstream default admin update permission does not relax this v1 rule.
+
 ## Operator recovery
 
 Use `diagnoseInvitation` only with an injected trusted operator guard and application-owned verified-email recipient resolver. It is read-only and returns status/membership consistency without email or invitation links. Do not log its input IDs or return its diagnostic to an untrusted caller.
