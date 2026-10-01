@@ -25,7 +25,6 @@ The root application deliberately enables every completed capability for continu
 | `audit-log` | `@repo/nuxt-audit-log` | Enabled | No | None | PostgreSQL (required) | [Audit Log](../capabilities/audit-log/CAPABILITY.md) |
 | `realtime` | `@repo/nuxt-realtime` | Enabled | No | None | None; Cache fanout optional | [Realtime](../capabilities/realtime/CAPABILITY.md) |
 | `notifications` | `@repo/nuxt-notifications` | Enabled | No | Jobs | ntfy optional; Email integration optional | [Notifications](../capabilities/notifications/CAPABILITY.md) |
-
 | `search` | `@repo/nuxt-search` | Enabled | No | None | Existing PostgreSQL | [Search](../capabilities/search/CAPABILITY.md) |
 
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.

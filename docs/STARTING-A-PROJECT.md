@@ -1,30 +1,18 @@
 # Starting a project
 
-The repository is both a baseline starter and a reference application. Choose which of the ten completed capabilities belong in the product before building domain features around them.
-
-The repository is both a baseline starter and a reference application. Choose which of the nine completed capabilities belong in the product before building domain features around them.
+The repository is both a baseline starter and a reference application. Choose which of the twelve completed capabilities belong in the product before building domain features around them.
 
 ## Full/reference setup
 
-Keep the completed capabilities when durable background work, a machine-facing API and server telemetry, object storage or ephemeral coordination are useful. The root application already:
+The root application explicitly registers Jobs, API Platform, Observability, Object Storage, Email, Webhooks, Audit Log, Cache / Coordination, Realtime, Notifications, Search and AI. It includes:
 
-- depends on and registers `@repo/nuxt-jobs`, `@repo/nuxt-api`, `@repo/nuxt-observability`, `@repo/nuxt-storage`, `@repo/nuxt-email`, `@repo/nuxt-webhooks`, `@repo/nuxt-audit-log`, `@repo/nuxt-cache`, `@repo/nuxt-realtime` and `@repo/nuxt-notifications`;
-
-- depends on and registers `@repo/nuxt-jobs`, `@repo/nuxt-api`, `@repo/nuxt-observability`, `@repo/nuxt-storage`, `@repo/nuxt-email`, `@repo/nuxt-webhooks`, `@repo/nuxt-audit-log` `@repo/nuxt-cache` and `@repo/nuxt-ai`;
-- includes a Jobs registry and `starter.echo` demonstration task;
-- composes API Platform into Better Auth and exposes project API contracts;
-- includes explicit application, API-key, Audit and Notification migrations plus separate pg-boss migration commands;
-- builds the app, migration tools, and Jobs worker into one production image; and
-- adds safe JSON logs/request IDs, explicit server telemetry and optional Jobs/API wrappers; and
-- exposes lazy server-only S3 primitives, optional app-owned telemetry and explicit local provider commands, with no File UI or required storage backend at startup; and
-- appends stable actor/Project IDs transactionally to application-owned audit history; and
-- adds lazy ephemeral Cache/Coordination primitives and optional safe telemetry, with explicit disposable local Valkey helpers; and
-- supports lazy SMTP and opt-in hashed-token magic links, with disposable Mailpit verification;
-- composes signed Webhooks deliveries into the same Jobs worker, with no configured remote target at startup; and
-- provides both authenticated SSE/WebSocket transports and durable notifications with ID-only post-commit hints; and
-- exercises all ten packages through catalog-driven fixture tests and CI.
-
-- exercises all nine packages through catalog-driven fixture tests and CI.
+- one Jobs registry and standalone worker with transactional enqueue;
+- Better Auth and owner-scoped browser and machine API routes;
+- explicit application/API/Audit/Notification migrations, a Projects search vector/index, and separate pg-boss migrations;
+- one production image for the app, migration tools and worker;
+- lazy optional S3, SMTP, Cache and AI adapters with no provider required at startup;
+- transactionally appended audit history and notifications, plus ID-only post-commit hints over authenticated SSE/WebSocket transports;
+- all twelve catalog-driven package install/runtime/removal/rebuild checks in generic CI.
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
 
