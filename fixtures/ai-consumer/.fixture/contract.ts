@@ -42,7 +42,7 @@ try {
   assert.equal(resolveAiConfig({ AI_MODEL: 'x' }).provider, 'openai-compatible')
   assert.equal(resolveAiConfig({ AI_MODEL: 'x' }).timeoutSeconds, 60)
   assert.equal(resolveAiConfig({ AI_MODEL: 'x' }).baseUrl, 'https://api.openai.com/v1')
-  for (const env of [{}, { AI_MODEL: '' }, { AI_MODEL: 'x\n' }, { AI_MODEL: 'x'.repeat(129) }, { AI_MODEL: 'x', AI_PROVIDER: 'other' }, ...['0','301','1.5','NaN',''].map(AI_TIMEOUT_SECONDS => ({ AI_MODEL: 'x', AI_TIMEOUT_SECONDS })), ...['http://127.1/v1','http://2130706433/v1','http://example.com/v1','ftp://localhost','https://user:secret@example.com','https://example.com?secret=x'].map(AI_BASE_URL => ({ AI_MODEL: 'x', AI_BASE_URL }))]) {
+  for (const env of [{}, { AI_MODEL: '' }, { AI_MODEL: 'x\n' }, { AI_MODEL: 'x'.repeat(129) }, { AI_MODEL: 'x', AI_PROVIDER: 'other' }, ...['0','301','1.5','NaN',''].map(AI_TIMEOUT_SECONDS => ({ AI_MODEL: 'x', AI_TIMEOUT_SECONDS })), ...['http://127.1/v1','http://2130706433/v1','http://example.com/v1','ftp://localhost','https://user:secret@example.com','https://example.com?secret=x','https://example.com?','https://example.com#','https://@example.com'].map(AI_BASE_URL => ({ AI_MODEL: 'x', AI_BASE_URL }))]) {
     assert.throws(() => resolveAiConfig(env), { code: 'configuration' })
   }
   for (const model of ['a', '😀'.repeat(128), '模型 😀 /punctuation!', '\ue000']) assert.equal(resolveAiConfig({ AI_MODEL: model }).model, model)
@@ -50,8 +50,9 @@ try {
   for (const key of ['x\r', 'x\n', 'x\0', 'x\t', 'x\u007f', 'x\u0080', 'x\ud800', 'x😀', 'x ']) assert.throws(() => resolveAiConfig({ AI_MODEL: 'x', AI_API_KEY: key }), { code: 'configuration' })
   assert.equal(resolveAiConfig({ AI_MODEL: 'x', AI_API_KEY: ' é:key' }).apiKey, ' é:key')
   for (const NODE_ENV of ['development', 'test']) for (const host of ['localhost', '127.0.0.1', '[::1]']) assert(resolveAiConfig({ NODE_ENV, AI_MODEL: 'x', AI_BASE_URL: `http://${host}/v1` }))
+  for (const AI_BASE_URL of ['http://127.1/v1', 'http://2130706433/v1', 'http://localhost.example/v1']) assert.throws(() => resolveAiConfig({ NODE_ENV: 'test', AI_MODEL: 'x', AI_BASE_URL }), { code: 'configuration' })
   for (const NODE_ENV of [undefined, 'production']) assert.throws(() => resolveAiConfig({ NODE_ENV, AI_MODEL: 'x', AI_BASE_URL: fixture.baseUrl }), { code: 'configuration' })
-  for (const options of [null, [], { signal: {} }, { signal: Object.create(AbortSignal.prototype) }, { signal: { aborted: true } }, { extra: true }]) await fails(() => ai.generateText(input('invalid-options'), options as never), 'invalid-request')
+  for (const options of [null, [], { get signal() { throw new Error('PRIVATE_SIGNAL') } }, { signal: {} }, { signal: Object.create(AbortSignal.prototype) }, { signal: { aborted: true } }, { extra: true }]) await fails(() => ai.generateText(input('invalid-options'), options as never), 'invalid-request')
   assert.equal(fixture.requests['invalid-options'], undefined)
   for (const content of ['', ' \t\n', '\0', '\u0085', '\ud800', '\udc00']) await fails(() => ai.generateText(input(content)), 'invalid-request')
   assert.equal(validateAiInput(input(' a\t\n\r')).messages[0]!.content, ' a\t\n\r')

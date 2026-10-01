@@ -53,8 +53,8 @@ function scope(seconds: number, caller?: AbortSignal) {
     if (!controller.signal.aborted) { code = reason; controller.abort() }
   }
   const onAbort = () => abort('cancelled')
-  if (caller?.aborted) onAbort()
-  else caller?.addEventListener('abort', onAbort, { once: true })
+  if (caller && Object.getOwnPropertyDescriptor(AbortSignal.prototype, 'aborted')!.get!.call(caller)) onAbort()
+  else if (caller) EventTarget.prototype.addEventListener.call(caller, 'abort', onAbort, { once: true })
   const timer = setTimeout(() => abort('timeout'), seconds * 1000)
   const check = () => {
     if (!code && performance.now() >= deadline) abort('timeout')
@@ -65,7 +65,7 @@ function scope(seconds: number, caller?: AbortSignal) {
     invalidOutput: () => abort('invalid-output'),
     cancel: () => abort('cancelled'),
     classify: (error: unknown) => code ? new AiError(code) : safeAiError(error),
-    dispose: () => { clearTimeout(timer); caller?.removeEventListener('abort', onAbort); controller.abort() },
+    dispose: () => { clearTimeout(timer); if (caller) EventTarget.prototype.removeEventListener.call(caller, 'abort', onAbort); controller.abort() },
     async wait<T>(promise: Promise<T>): Promise<T> {
       check()
       let listener: () => void = () => {}
@@ -83,15 +83,19 @@ function scope(seconds: number, caller?: AbortSignal) {
 // Clients use standard fetch and own no pools/background resources requiring Nitro hooks.
 export function createAi(env: Record<string, string | undefined> = process.env) {
   function start(input: AiInput, options: AiOperationOptions) {
-    if (!options || typeof options !== 'object' || Array.isArray(options) || Object.keys(options).some(key => key !== 'signal')
-      || (options.signal !== undefined && !(options.signal instanceof AbortSignal))) throw new AiError('invalid-request')
-    if (options.signal !== undefined) {
-      try { Object.getOwnPropertyDescriptor(AbortSignal.prototype, 'aborted')!.get!.call(options.signal) }
-      catch { throw new AiError('invalid-request') }
+    let caller: AbortSignal | undefined
+    try {
+      if (!options || typeof options !== 'object' || Array.isArray(options) || Object.keys(options).some(key => key !== 'signal')) throw new AiError('invalid-request')
+      caller = options.signal
+      if (caller !== undefined) {
+        if (!(caller instanceof AbortSignal)) throw new AiError('invalid-request')
+        Object.getOwnPropertyDescriptor(AbortSignal.prototype, 'aborted')!.get!.call(caller)
+      }
     }
+    catch { throw new AiError('invalid-request') }
     const validated = validateAiInput(input)
     const config = resolveAiConfig(env)
-    const operation = scope(config.timeoutSeconds, options.signal)
+    const operation = scope(config.timeoutSeconds, caller)
     return { input: validated, config, operation }
   }
   async function* providerEvents(input: AiInput, config: AiConfig, operation: ReturnType<typeof scope>, structured: boolean): AsyncGenerator<AiStreamEvent> {

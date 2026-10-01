@@ -14,11 +14,11 @@ export function resolveAiConfig(env: Record<string, string | undefined> = proces
   const timeout = env.AI_TIMEOUT_SECONDS ?? '60'
   const baseUrl = env.AI_BASE_URL ?? 'https://api.openai.com/v1'
   if (provider !== 'openai-compatible' || typeof model !== 'string' || !model.trim() || !model.isWellFormed() || [...model].length < 1 || [...model].length > 128 || /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(model)
-    || !/^\d+$/u.test(timeout) || Number(timeout) < 1 || Number(timeout) > 300) throw new AiError('configuration')
+    || typeof baseUrl !== 'string' || typeof timeout !== 'string' || !/^\d+$/u.test(timeout) || Number(timeout) < 1 || Number(timeout) > 300) throw new AiError('configuration')
   let url: URL
   try { url = new URL(baseUrl) }
   catch { throw new AiError('configuration') }
-  if (url.username || url.password || url.search || url.hash
+  if (url.username || url.password || url.search || url.hash || /[?#]/u.test(baseUrl) || /^[a-z]+:\/\/[^/]*@/iu.test(baseUrl)
     || !(url.protocol === 'https:' || (url.protocol === 'http:' && ['development', 'test'].includes(env.NODE_ENV ?? '') && /^http:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?(?:\/|$)/u.test(baseUrl) && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)))) throw new AiError('configuration')
   const apiKey = env.AI_API_KEY
   // Reject header controls without exposing the key or consulting OPENAI_* variables.
