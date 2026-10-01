@@ -9,14 +9,15 @@ Keep the completed capabilities when durable background work, a machine-facing A
 - depends on and registers `@repo/nuxt-jobs`, `@repo/nuxt-api`, `@repo/nuxt-observability`, `@repo/nuxt-storage`, `@repo/nuxt-email`, `@repo/nuxt-webhooks`, `@repo/nuxt-audit-log` and `@repo/nuxt-cache`;
 - includes a Jobs registry and `starter.echo` demonstration task;
 - composes API Platform into Better Auth and exposes project API contracts;
-- includes the application and API-key migration plus explicit pg-boss migration commands;
+- includes explicit application, API-key and Audit migrations plus separate pg-boss migration commands;
 - builds the app, migration tools, and Jobs worker into one production image; and
 - adds safe JSON logs/request IDs, explicit server telemetry and optional Jobs/API wrappers; and
 - exposes lazy server-only S3 primitives, optional app-owned telemetry and explicit local provider commands, with no File UI or required storage backend at startup; and
 - appends stable actor/Project IDs transactionally to application-owned audit history; and
-
 - adds lazy ephemeral Cache/Coordination primitives and optional safe telemetry, with explicit disposable local Valkey helpers; and
-- exercises all packages through catalog-driven fixture tests and CI.
+- supports lazy SMTP and opt-in hashed-token magic links, with disposable Mailpit verification;
+- composes signed Webhooks deliveries into the same Jobs worker, with no configured remote target at startup; and
+- exercises all eight packages through catalog-driven fixture tests and CI.
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
 

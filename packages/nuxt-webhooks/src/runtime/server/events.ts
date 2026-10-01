@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { boundedInteger, WebhookError } from './errors'
 
-export const DEFAULT_MAX_BODY_BYTES = 256 * 1024
+export const DEFAULT_MAX_BODY_BYTES = 64 * 1024
 export const MAX_BODY_BYTES = 1024 * 1024
 export const webhookIdSchema = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
 export const eventTypeSchema = z.string().regex(/^[a-z][a-z0-9._-]{0,127}$/)

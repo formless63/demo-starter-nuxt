@@ -59,7 +59,7 @@ export async function verifyWebhookRequest<Registry extends WebhookEventRegistry
       signal.removeEventListener('abort', cancel)
       reader.releaseLock()
     }
-  }, options.timeoutMs ?? 15_000, request.signal)
+  }, options.timeoutMs ?? 10_000, request.signal)
 }
 
 /** The callback can call sendJobInTransaction using the application's durable hook. */

@@ -39,5 +39,5 @@ export async function deliverWebhook(payload: { targetRef: string, id: string, b
     void response.body?.cancel().catch(() => {})
     if (response.status < 200 || response.status > 299) throw new WebhookError('remote-status', isRetryableWebhookStatus(response.status), response.status)
     return { outcome: 'delivered' as const, status: response.status }
-  }, options.timeoutMs ?? 15_000, signal)
+  }, options.timeoutMs ?? 10_000, signal)
 }

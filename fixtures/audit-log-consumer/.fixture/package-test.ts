@@ -25,8 +25,14 @@ try {
   assert(columns.some(c => c.column_name === 'created_at' && c.data_type === 'timestamp with time zone' && c.datetime_precision === 3))
   assert(columns.some(c => c.column_name === 'metadata' && c.data_type === 'jsonb'))
   const indexes = await client`SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'audit_event'`
-  for (const name of ['audit_event_created_id_idx', 'audit_event_actor_created_id_idx', 'audit_event_subject_created_id_idx']) {
+  for (const name of ['audit_event_created_id_idx', 'audit_event_actor_created_id_idx', 'audit_event_subject_created_id_idx', 'audit_event_action_created_id_idx']) {
     assert(indexes.some(i => i.indexname === name && /created_at DESC(?: NULLS LAST)?, id DESC/.test(i.indexdef)))
+  }
+  assert(indexes.some(i => i.indexname === 'audit_event_action_created_id_idx' && /action, created_at DESC(?: NULLS LAST)?, id DESC/.test(i.indexdef)))
+  assert.equal(audit.auditLimits.metadataBytes, 8192)
+  for (const action of ['project creation', 'Projects.create', 'projects', 'projects..create', '.create', 'projects.create!']) {
+    await assert.rejects(audit.appendAuditEvent(db, { ...event, action }))
+    await assert.rejects(audit.queryAuditEvents(db, { action }))
   }
   await db.transaction(async (tx) => {
     await tx.insert(domainRecord).values({ id: 'record-1' })

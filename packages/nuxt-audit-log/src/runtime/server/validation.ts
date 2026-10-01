@@ -2,11 +2,11 @@ export type AuditJson = null | boolean | number | string | AuditJson[] | { [key:
 export type AuditMetadata = { [key: string]: AuditJson }
 
 export const auditLimits = Object.freeze({
-  metadataBytes: 16_384,
+  metadataBytes: 8_192,
   depth: 6,
   objectKeys: 50,
   arrayItems: 100,
-  nodes: 1_000,
+  nodes: 1_024,
   keyLength: 64,
   stringLength: 1_024,
 })
@@ -19,6 +19,13 @@ function invalid(): never {
 export function boundedString(value: unknown, max: number): string {
   if (typeof value !== 'string' || !value.length || value.length > max || Array.from(value).some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)) invalid()
   return value
+}
+
+/** Lowercase domain.action identifiers, with conservative segment characters. */
+export function auditAction(value: unknown): string {
+  const action = boundedString(value, 128)
+  if (!/^[a-z][a-z0-9]*(?:[_-][a-z0-9]+)*(?:\.[a-z][a-z0-9]*(?:[_-][a-z0-9]+)*)+$/.test(action)) invalid()
+  return action
 }
 
 export function auditDate(value: unknown): Date {
