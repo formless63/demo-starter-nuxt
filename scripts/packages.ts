@@ -5,6 +5,8 @@ import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path'
 interface PackageTestConfig {
   ownedDependencies: string[]
   runtimeScript?: string
+  postRemovalScript?: string
+  cleanupScript?: string
   removal: {
     scripts: string[]
     paths: string[]
@@ -137,6 +139,7 @@ async function testPackage(capability: Capability) {
   const temporaryRoot = await mkdtemp(join(tmpdir(), `${capability.id}-package-install-`))
   const packRoot = join(temporaryRoot, 'package')
   const consumerRoot = join(temporaryRoot, 'consumer')
+  let runtimeStarted = false
 
   try {
     await mkdir(packRoot)
@@ -206,7 +209,10 @@ async function testPackage(capability: Capability) {
 
     await run(['bun', 'run', 'typecheck'], consumerRoot)
     await run(['bun', 'run', 'build'], consumerRoot)
-    if (config.runtimeScript) await run(['bun', 'run', config.runtimeScript], consumerRoot)
+    if (config.runtimeScript) {
+      runtimeStarted = true
+      await run(['bun', 'run', config.runtimeScript], consumerRoot)
+    }
 
     delete manifest.overrides?.[packageName]
     await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
@@ -242,11 +248,15 @@ async function testPackage(capability: Capability) {
     for (const dependency of packageClosure(capability).filter(entry => entry.id !== capability.id)) {
       if (!await exists(installedPackagePath(consumerRoot, dependency.packageName!))) fail(`Required package ${dependency.packageName} disappeared during removal`)
     }
+    if (config.postRemovalScript) await run(['bun', 'run', config.postRemovalScript], consumerRoot)
 
     console.info(`[packages] ${capability.id} clean install, runtime, and removal verification passed`)
   }
   finally {
-    await rm(temporaryRoot, { recursive: true, force: true })
+    try {
+      if (runtimeStarted && config.cleanupScript) await run(['bun', 'run', config.cleanupScript], consumerRoot)
+    }
+    finally { await rm(temporaryRoot, { recursive: true, force: true }) }
   }
 }
 

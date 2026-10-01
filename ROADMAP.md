@@ -43,7 +43,7 @@ The generic `packages:*` commands build and exercise the catalog entries. Hard c
 
 | Status | Capability |
 | --- | --- |
-| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications |
+| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
 API Platform is capability #2. Observability is capability #3: server-only logs, request correlation, explicit spans/metrics, optional OTLP export and a clean-consumer lifecycle. No new service is required.
@@ -135,11 +135,14 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Implementation: `@repo/nuxt-cache`, ephemeral exact namespaced strings/bytes, TTL/NX, atomic counters, advisory token-safe single-backend leases (no fencing/Redlock), non-durable pub/sub and lazy lifecycle. Pinned Valkey 9.1.2 / node-redis 6.3.0; independent packed fixture. Optional application-owned Realtime fanout composes Cache pub/sub; no Cache-to-Realtime package dependency.
 - Contract: [`capabilities/cache-coordination/CAPABILITY.md`](capabilities/cache-coordination/CAPABILITY.md)
 
-### Search (`planned`)
+### Search (`done`)
 
-- Requires: none; PostgreSQL-first
-- Integrates with: Jobs, Object Storage, Organizations
-- External: PostgreSQL initially
+- Requires: none; baseline PostgreSQL and Drizzle
+- Integrates with: Jobs, Object Storage, Organizations (future optional enhancements)
+- External: existing PostgreSQL only; no external index service
+- Default installed: no; reference application explicitly opts in.
+- Implementation: private `@repo/nuxt-search`, application-owned generated weighted `simple` vector/GIN migration, parameterized websearch and normalization-32 rank, canonical numeric-float4 UTF-8 keyset cursors (2048 ASCII bound) and owner-scoped Projects service/endpoint with explicit CRUD projections. Existing-row/hash upgrade, retained-DB removal/rebuild and authenticated production/privacy regressions. No automatic routes, connections or migrations.
+- Contract: [`capabilities/search/CAPABILITY.md`](capabilities/search/CAPABILITY.md)
 
 ### Realtime (`done`)
 

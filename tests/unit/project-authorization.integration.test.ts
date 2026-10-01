@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import { project, user } from '../../server/database/schema'
-import { deleteProject, getProject, updateProject } from '../../server/services/projects'
+import { createProject, deleteProject, getProject, listProjects, updateProject } from '../../server/services/projects'
 
 const databaseUrl = process.env.DATABASE_URL
 const describeWithDatabase = databaseUrl ? describe : describe.skip
@@ -38,6 +38,16 @@ describeWithDatabase('project owner authorization', () => {
   it('allows the owner to read their project', async () => {
     const result = await getProject(db, userA, projectId)
     expect(result?.name).toBe('User A project')
+  })
+
+  it('preserves exactly the existing domain fields in every CRUD projection', async () => {
+    const fields = ['id', 'ownerId', 'name', 'description', 'createdAt', 'updatedAt'].sort()
+    const created = await createProject(db, userA, { name: 'Projected', description: 'indexed' })
+    const updated = await updateProject(db, userA, created!.id, { name: 'New projected', description: 'indexed' })
+    const fetched = await getProject(db, userA, created!.id)
+    const listed = await listProjects(db, userA)
+    for (const row of [created, updated, fetched, ...listed]) expect(Object.keys(row!).sort()).toEqual(fields)
+    await deleteProject(db, userA, created!.id)
   })
 
   it('prevents another user from reading, updating, or deleting the project', async () => {

@@ -43,6 +43,7 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Audit Log | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; optional authentication | Transactional append-oriented history and bounded keyset queries |
 | Realtime | Available (`done`) | Optional | Node runtime; application session policy; no capability dependency | Bounded server-to-browser SSE and WebSocket event adapters |
 | Notifications | Available (`done`) | Optional | Jobs; PostgreSQL/Drizzle; optional Email/Realtime/ntfy | Recipient-scoped persistent notifications and transactional delivery |
+| Search | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; no extra service | Owner-scoped weighted FTS and deterministic keyset pages |
 
 `defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email and Cache remain lazy with no provider required to boot/build.
 
@@ -61,7 +62,7 @@ bun run jobs:migrate
 bun run dev
 ```
 
-Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all ten completed capability packages; `db:migrate` applies the application/API/Audit/Notification tables and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
+Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all eleven completed capability packages; `db:migrate` applies the application/API/Audit/Notification tables and Projects search vector/index and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
 
 ## Authentication notes
 
@@ -162,3 +163,7 @@ Explicitly enabled in the reference app and lazy at boot/build. Server-only `@re
 Choose **SSE**, **WebSocket**, or **Both** with server-only `REALTIME_TRANSPORTS=sse` (default), `websocket`, or `sse,websocket`. Both adapters are included. WebSocket v1 carries the same server event stream, not generic RPC, and uses transport-only ping/pong heartbeats. Session-authenticated routes authorize exact channels; reconnect then refetch authoritative state because events and optional Cache fanout have no replay guarantee. See the [Realtime contract](capabilities/realtime/CAPABILITY.md).
 
 Notifications stores recipient-scoped plain records in an application-migrated table. The existing Jobs worker reloads records/current destinations for optional Email/ntfy delivery; queued data contains only notification ID and channel. The reference demo publishes an ID-only realtime hint after commit. ntfy requires an explicitly configured trusted server and application topic resolver; there is no public ntfy default. Optional transports are unnecessary for build/boot. See the [Notifications contract](capabilities/notifications/CAPABILITY.md).
+
+## Search
+
+Opt-in PostgreSQL-native `@repo/nuxt-search` server helpers; the reference Projects endpoint searches owner rows using weighted `simple` FTS. Apply the explicit application migration first. Page size 25 (1–100); canonical rank/timestamp/ID cursor. No query logs or extra service. See [Search contract](capabilities/search/CAPABILITY.md) and [evaluation](SEARCH_MODULE_EVALUATION.md).
