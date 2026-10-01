@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { EmailError } from '@repo/nuxt-email/server'
+import { loadNotificationState } from '../../server/notifications/loading'
 import { createNotificationEmailAdapter } from '../../server/notifications/email-adapter'
 import { createApplicationNotification } from '../../server/notifications/create'
 import type { NotificationRecord } from '@repo/nuxt-notifications/server'
@@ -14,6 +15,13 @@ const record: NotificationRecord = { id: crypto.randomUUID(), recipientId: 'stab
 beforeEach(() => { send.mockReset(); append.mockReset(); hint.mockReset(); vi.stubGlobal('useJobsBoss', vi.fn(async () => {})); vi.stubGlobal('sendJobInTransaction', vi.fn(async () => {})) })
 afterEach(() => vi.unstubAllGlobals())
 describe('Application-owned Notification integrations', () => {
+  it('recognizes bounded known database failures only before invocation', async () => {
+    for (const code of ['ECONNREFUSED', '40001', '57P03']) {
+      await expect(loadNotificationState(async () => { throw new Error('private SQL', { cause: { code } }) })).rejects.toMatchObject({ code: 'unavailable', retryable: true })
+    }
+    const unknown = new Error('unknown private database error')
+    await expect(loadNotificationState(async () => { throw unknown })).rejects.toBe(unknown)
+  })
   it('resolves current email and uses the existing Email capability once', async () => {
     const resolve = vi.fn(async () => 'current@example.test')
     send.mockResolvedValue({ outcome: 'accepted' })
