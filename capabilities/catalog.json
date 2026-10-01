@@ -14,7 +14,8 @@
       "realtime",
       "notifications",
       "search",
-      "ai"
+      "ai",
+      "import-export"
     ]
   },
   "baseline": [
@@ -906,7 +907,7 @@
       "id": "import-export",
       "displayName": "Import / Export",
       "kind": "application-infrastructure",
-      "status": "in-progress",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [
         "jobs",

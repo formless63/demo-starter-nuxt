@@ -1,6 +1,6 @@
 # Import / Export
 
-Work in progress: private `@repo/nuxt-import-export`, native Nuxt module-builder packaging. No release acceptance is claimed until the complete verification gate passes. [Evaluation](../../IMPORT_EXPORT_MODULE_EVALUATION.md).
+Completed opt-in private `@repo/nuxt-import-export`, native Nuxt module-builder packaging. Hosted CI and integration review remain release gates. [Evaluation](../../IMPORT_EXPORT_MODULE_EVALUATION.md).
 
 Requires Jobs and Object Storage. Baseline PostgreSQL, Drizzle and Node 24; optional baseline Authentication. Optional Audit and Notifications adapters belong to the application. Clean consumers explicitly opt in (`defaultInstalled:false`). Installation alone performs no database/provider work.
 
