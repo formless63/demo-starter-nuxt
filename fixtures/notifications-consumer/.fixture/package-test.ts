@@ -90,7 +90,7 @@ try {
   assert.notEqual(overridden.createdAt.getUTCFullYear(), 1900); assert.equal(overridden.readAt, null)
   for (const invalid of [
     { recipientId: '' }, { recipientId: 'x'.repeat(129) }, { title: 'x'.repeat(201) }, { title: 'bad\u0000title' },
-    { body: '☃'.repeat(1366) }, { body: 'x'.repeat(4097) }, { body: 'bad\u0000body' }, { type: 'Bad.created' }, { type: 'unqualified' },
+    { body: '☃'.repeat(1366) }, { body: 'x'.repeat(4097) }, { body: 'bad\u0000body' }, { type: 'Bad.created' }, { type: 'unqualified' }, { type: 'fixture..created' }, { type: 'fixture.' }, { type: 'fixture.1' }, { title: '   ' },
   ]) await assert.rejects(appendNotification(db, { ...input, ...invalid }), { code: 'invalid-input' })
   const boundary = await appendNotification(db, { ...input, recipientId: 'x'.repeat(128), title: 'x'.repeat(200), body: 'x'.repeat(4096) })
   assert.equal(Buffer.byteLength(boundary.body), 4096)
