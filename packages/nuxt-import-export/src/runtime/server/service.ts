@@ -102,7 +102,12 @@ export function createTransferService(options: TransferServiceOptions) {
     try {
       deadline.check()
       const storage = options.storage(), sourceKey = storage.createKey('transfers')
-      const [row] = await options.database().insert(transfer).values({ id, requesterId: context.requesterId, scopeKind: context.scope.kind, scopeId: context.scope.id, definition: definition.name, version: definition.version, direction: 'import', status: 'uploading', sourceKey }).returning()
+      const row = await options.database().transaction(async (tx) => {
+        await timeouts(tx, deadline)
+        const [created] = await tx.insert(transfer).values({ id, requesterId: context.requesterId, scopeKind: context.scope.kind, scopeId: context.scope.id, definition: definition.name, version: definition.version, direction: 'import', status: 'uploading', sourceKey }).returning()
+        deadline.check()
+        return created
+      })
       receipt = row!
       const source = await boundedBody(input.body, settings.maxBytes, deadline.signal)
       deadline.check()
@@ -123,7 +128,10 @@ export function createTransferService(options: TransferServiceOptions) {
     }
     catch (error) {
       const safe = deadline.isTimeout() ? new TransferError('timeout') : safeTransferError(error)
-      if (receipt) await options.database().update(transfer).set({ status: 'failed', errorCode: safe.code, updatedAt: new Date(), completedAt: new Date() }).where(and(eq(transfer.id, id), eq(transfer.status, 'uploading')))
+      if (receipt) await options.database().transaction(async (tx) => {
+        await tx.execute(sql`select set_config('transaction_timeout', '5000ms', true), set_config('statement_timeout', '4500ms', true), set_config('lock_timeout', '1000ms', true)`)
+        await tx.update(transfer).set({ status: 'failed', errorCode: safe.code, updatedAt: new Date(), completedAt: new Date() }).where(and(eq(transfer.id, id), eq(transfer.status, 'uploading')))
+      })
       throw safe
     }
     finally { deadline.close() }
@@ -200,13 +208,24 @@ export function createTransferService(options: TransferServiceOptions) {
     return options.storage().presignDownload(row.artifactKey, Math.min(600, remaining))
   }
   async function runTransfer(id: string, job: JobContext) {
-    const settings = config(), deadline = attemptDeadline(settings.timeoutSeconds, job.signal)
+    const attemptStarted = Date.now()
+    let deadline = attemptDeadline(300, job.signal)
     try {
-      const [original] = await options.database().select().from(transfer).where(eq(transfer.id, transferId(id))).limit(1)
-      if (!original || original.status !== 'pending') return
-      const context = rowContext(original), definition = await authorize(context, original.definition)
-      if (definition.version !== original.version) throw new TransferError('conflict')
-      await options.database().update(transfer).set({ startedAt: sql`COALESCE(${transfer.startedAt}, CURRENT_TIMESTAMP)`, updatedAt: new Date() }).where(and(eq(transfer.id, id), eq(transfer.status, 'pending')))
+      const settings = config()
+      deadline.close()
+      deadline = attemptDeadline(Math.max(0.001, settings.timeoutSeconds - (Date.now() - attemptStarted) / 1000), job.signal)
+      const original = await options.database().transaction(async (tx) => {
+        await timeouts(tx, deadline)
+        const [row] = await tx.select().from(transfer).where(eq(transfer.id, transferId(id))).limit(1)
+        if (!row || row.status !== 'pending') return undefined
+        const definition = await authorize(rowContext(row), row.definition, tx)
+        if (definition.version !== row.version) throw new TransferError('conflict')
+        await tx.update(transfer).set({ startedAt: sql`COALESCE(${transfer.startedAt}, CURRENT_TIMESTAMP)`, updatedAt: new Date() }).where(and(eq(transfer.id, id), eq(transfer.status, 'pending')))
+        deadline.check()
+        return row
+      })
+      if (!original) return
+      const context = rowContext(original), definition = options.registry.get(original.definition)
       deadline.check()
       if (original.direction === 'import') {
         if (!original.sourceKey || !original.artifactExpiresAt || original.artifactExpiresAt.getTime() <= Date.now()) throw new TransferError('expired')
@@ -277,6 +296,8 @@ export function createTransferService(options: TransferServiceOptions) {
       if (job.signal.aborted && !deadline.isTimeout()) throw safe
       const finalAttempt = job.retryLimit !== undefined && job.retryCount >= job.retryLimit
       if (!safe.retryable || finalAttempt) await options.database().transaction(async (tx) => {
+        // Bounded failure housekeeping after the attempt; reconciliation handles a lost catch.
+        await tx.execute(sql`select set_config('transaction_timeout', '5000ms', true), set_config('statement_timeout', '4500ms', true), set_config('lock_timeout', '1000ms', true)`)
         const row = await locked(tx, id)
         if (row.status === 'pending') await finish(tx, row, { status: 'failed', errorCode: safe.code, validationIssues: safe.issues, errorsTruncated: Number(safe.errorsTruncated) })
       })
@@ -311,7 +332,8 @@ export function createTransferService(options: TransferServiceOptions) {
         const row = await locked(tx, transferId(id))
         if (!terminal(row) && row.status !== 'uploading') throw new TransferError('conflict')
         if (row.status === 'uploading' && Date.now() - row.updatedAt.getTime() < config().timeoutSeconds * 1000) throw new TransferError('conflict')
-        // Fence abandoned staging before releasing the lock; deletion happens outside SQL.
+        // Fence abandoned staging and revoke future artifact URLs before deleting outside SQL.
+        if (input.execute && row.artifactKey) await tx.update(transfer).set({ artifactExpiresAt: new Date(), updatedAt: new Date() }).where(eq(transfer.id, row.id))
         if (input.execute && row.status === 'uploading') await finish(tx, row, { status: 'failed', errorCode: 'execution-lost' })
         return { id: row.id, keys: [...new Set([row.sourceKey, row.artifactKey, ...row.artifactKeys])].filter((key): key is string => Boolean(key)) }
       })

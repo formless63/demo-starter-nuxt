@@ -95,7 +95,8 @@ try {
     const signed = await service.getExportDownload(owner, { transferId: exported.id }); assert.equal(signed.expiresIn, 600); const body = await (await fetch(signed.url)).text(); assert(body.startsWith('name,description\r\n')); assert(!body.includes(`outside-snapshot-${provider}`))
     revoked.add(owner.requesterId); await assert.rejects(service.getExportDownload(owner, { transferId: exported.id }), { code: 'forbidden' }); revoked.clear()
     await db.update(transfer).set({ artifactExpiresAt: new Date(Date.now() + 29000) }).where(eq(transfer.id, exported.id)); await assert.rejects(service.getExportDownload(owner, { transferId: exported.id }), { code: 'expired' })
-    const [stored] = await db.select().from(transfer).where(eq(transfer.id, exported.id)); await service.purgeTransferArtifacts([exported.id]); await backend.storage.headObject(stored!.artifactKey!); await service.purgeTransferArtifacts([exported.id], { execute: true }); await assert.rejects(backend.storage.headObject(stored!.artifactKey!), { code: 'not-found' }); assert.equal((await service.getTransfer(owner, { transferId: exported.id })).status, 'succeeded')
+    await db.update(transfer).set({ artifactExpiresAt: new Date(Date.now() + 600000) }).where(eq(transfer.id, exported.id))
+    const [stored] = await db.select().from(transfer).where(eq(transfer.id, exported.id)); await service.purgeTransferArtifacts([exported.id]); await backend.storage.headObject(stored!.artifactKey!); await service.purgeTransferArtifacts([exported.id], { execute: true }); await assert.rejects(backend.storage.headObject(stored!.artifactKey!), { code: 'not-found' }); assert.equal((await service.getTransfer(owner, { transferId: exported.id })).status, 'succeeded'); await assert.rejects(service.getExportDownload(owner, { transferId: exported.id }), { code: 'expired' })
     const hardCrash = await stage('name,description\ncrash,text\n'); await service.startImport(owner, { transferId: hardCrash.id, idempotencyKey: randomUUID() }); const [crashReceipt] = await db.select().from(transfer).where(eq(transfer.id, hardCrash.id)); assert.equal((await service.reconcileTransfer(hardCrash.id)).status, 'pending'); await boss.cancel(service.runJob.name, crashReceipt!.jobId!); assert.equal((await service.reconcileTransfer(hardCrash.id)).status, 'cancelled')
     const page = await service.listTransfers(owner, { limit: 2 }); assert.equal(page.items.length, 2); assert(page.nextCursor); assert.equal((await service.listTransfers(other, { cursor: page.nextCursor! })).items.length, 0); await assert.rejects(service.listTransfers(owner, { cursor: page.nextCursor! + '=' }), { code: 'invalid-input' })
     // Cancel versus an already locked atomic apply: commit wins, cancellation observes conflict.
@@ -131,6 +132,17 @@ try {
     await assert.rejects(slow.runJob.handler({ transferId: timed.id }, { id: randomUUID(), signal: new AbortController().signal, retryCount: 5, retryLimit: 5 }), { code: 'timeout' })
     assert(Date.now() - timeStarted < 6500, 'PostgreSQL cancels underlying long-running query')
     assert.equal((await slow.getTransfer(owner, { transferId: timed.id })).errorCode, 'timeout')
+    const misconfiguredReceipt = await service.requestExport(owner, { definition: 'projects', idempotencyKey: randomUUID() })
+    const misconfigured = createTransferService({ database: () => db, boss: async () => boss!, storage: () => backend!.storage, registry, env: { DATABASE_URL: url.href, IMPORT_EXPORT_TIMEOUT_SECONDS: '1e2' } })
+    await misconfigured.runJob.handler({ transferId: misconfiguredReceipt.id }, { id: randomUUID(), signal: new AbortController().signal, retryCount: 0, retryLimit: 5 })
+    assert.equal((await service.getTransfer(owner, { transferId: misconfiguredReceipt.id })).errorCode, 'configuration')
+    // Resolution/current authorization SQL is bounded before any Storage acquisition.
+    let slowAuthorization = false
+    const guarded = createTransferService({ database: () => db, boss: async () => boss!, storage: () => backend!.storage, env: { DATABASE_URL: url.href, IMPORT_EXPORT_TIMEOUT_SECONDS: '5' }, registry: createTransferRegistry([defineTransfer({ name: 'guarded', version: '1', columns: ['name'], rowSchema: z.object({ name: z.string() }), async authorize(_context, tx) { if (slowAuthorization && tx) await tx.execute(sql`select pg_sleep(6)`); return true }, async importRows() {}, async *exportRows() { yield ['unpublished'] } })]) })
+    const guardedReceipt = await guarded.requestExport(owner, { definition: 'guarded', idempotencyKey: randomUUID() }); slowAuthorization = true
+    await assert.rejects(guarded.runJob.handler({ transferId: guardedReceipt.id }, { id: randomUUID(), signal: new AbortController().signal, retryCount: 5, retryLimit: 5 }), { code: 'timeout' })
+    slowAuthorization = false
+    const [guardedRow] = await db.select().from(transfer).where(eq(transfer.id, guardedReceipt.id)); assert.equal(guardedRow!.errorCode, 'timeout'); assert.equal(guardedRow!.artifactKeys.length, 0)
     // Exhaust the real six-attempt budget through supported APIs, then kill the final claim.
     // ignoreStartAfter accelerates fixture scheduling without altering production queue policy.
     const crashService = createTransferService({ database: () => db, boss: async () => boss!, storage: () => backend!.storage, registry, env: { DATABASE_URL: url.href, IMPORT_EXPORT_TIMEOUT_SECONDS: '5' } })
@@ -151,8 +163,8 @@ try {
     assert(new TextDecoder().decode(claimedLine.value).includes('claimed-final-attempt')); reader.releaseLock()
     killed.kill('SIGKILL'); assert.notEqual(await killed.exited, 0)
     assert.equal((await service.reconcileTransfer(exhausted.id)).status, 'pending', 'Active native claim is not failed based on wall time')
-    // Native supervision has a 60-second monitor gate; expiry is still 35 seconds.
-    const crashDeadline = Date.now() + 90000
+    // Native monitor can run immediately before expiry: allow expiry + one full gate + margin.
+    const crashDeadline = Date.now() + (35 + 60 + 15) * 1000
     while (Date.now() < crashDeadline) { await boss.supervise(service.runJob.name); if ((await boss.getJobById(service.runJob.name, nativeId))?.state === 'failed') break; await new Promise(resolve => setTimeout(resolve, 500)) }
     assert.equal((await boss.getJobById(service.runJob.name, nativeId))?.state, 'failed')
     assert.equal((await service.reconcileTransfer(exhausted.id)).errorCode, 'execution-lost')
