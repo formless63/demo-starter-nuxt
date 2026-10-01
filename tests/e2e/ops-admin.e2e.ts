@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test'
 import { createHmac } from 'node:crypto'
+import { betterAuth } from 'better-auth'
+import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { apiPlatformAuth } from '@repo/nuxt-api/server'
 import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
@@ -9,7 +12,8 @@ import * as tables from '../../server/database/schema'
 // No startup account promotion or test bypass exists in the application.
 test('Ops guards direct API/SSR, provides manual accessible refresh and clears stale work on navigation', async ({ page, request, context, baseURL }) => {
   const sql = postgres(process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', { max: 1 })
-  const db = drizzle(sql)
+  const db = drizzle(sql, { schema: tables })
+  let keyId: string | undefined
   const operator = 'ops-e2e-operator', outsider = crypto.randomUUID(), token = crypto.randomUUID(), outsideToken = crypto.randomUUID()
   const secret = process.env.NUXT_AUTH_SECRET || 'e2e-secret-that-is-at-least-thirty-two-chars'
   const name = process.env.PLAYWRIGHT_BASE_URL ? '__Secure-better-auth.session_token' : 'better-auth.session_token'
@@ -18,7 +22,11 @@ test('Ops guards direct API/SSR, provides manual accessible refresh and clears s
     await db.insert(tables.user).values([{ id: operator, name: 'Private Ops fixture', email: 'ops-fixture@example.test' }, { id: outsider, name: 'Organization owner', email: `${outsider}@example.test` }])
     await db.insert(tables.session).values([{ id: crypto.randomUUID(), token, userId: operator, expiresAt: new Date(Date.now() + 3600000) }, { id: crypto.randomUUID(), token: outsideToken, userId: outsider, expiresAt: new Date(Date.now() + 3600000) }])
     expect((await request.get('/api/ops/summary')).status()).toBe(401)
-    expect((await request.get('/api/ops/summary', { headers: { 'X-API-Key': 'credential-does-not-establish-human-session' } })).status()).toBe(401)
+    const auth = betterAuth({ baseURL: baseURL!, database: drizzleAdapter(db, { provider: 'pg', schema: tables }), secret, plugins: [apiPlatformAuth()], emailAndPassword: { enabled: false } })
+    const credential = await auth.api.createApiKey({ body: { name: 'Ops fixture key', userId: operator, permissions: { projects: ['read'] } } })
+    keyId = credential.id
+    expect((await request.get('/api/v1/projects', { headers: { 'X-API-Key': credential.key } })).status()).toBe(200)
+    expect((await request.get('/api/ops/summary', { headers: { 'X-API-Key': credential.key } })).status()).toBe(401)
     const forbidden = await request.get('/admin/ops', { headers: { cookie: `${name}=${value(outsideToken)}`, Purpose: 'prefetch' } })
     expect(forbidden.status()).toBe(403); expect(await forbidden.text()).toContain('Access denied')
     const response = await request.get('/api/ops/summary', { headers: { cookie: `${name}=${value(token)}` } })
@@ -55,5 +63,5 @@ test('Ops guards direct API/SSR, provides manual accessible refresh and clears s
     expect((await request.get('/api/ops/summary', { headers: { cookie: `${name}=${value(token)}` } })).status()).toBe(401)
     await page.goto('/admin/ops'); await expect(page).toHaveURL(/\/\?redirect=/u)
   }
-  finally { await db.delete(tables.user).where(eq(tables.user.id, operator)); await db.delete(tables.user).where(eq(tables.user.id, outsider)); await sql.end() }
+  finally { if (keyId) await db.delete(tables.apikey).where(eq(tables.apikey.id, keyId)); await db.delete(tables.user).where(eq(tables.user.id, operator)); await db.delete(tables.user).where(eq(tables.user.id, outsider)); await sql.end() }
 })
