@@ -398,6 +398,8 @@
       "packageTest": {
         "ownedDependencies": [],
         "runtimeScript": "package:test:runtime",
+        "postRemovalScript": "package:test:survival",
+        "cleanupScript": "package:test:cleanup",
         "removal": {
           "scripts": [
             "db:migrate",

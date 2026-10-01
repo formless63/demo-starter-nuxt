@@ -8,10 +8,12 @@ import type { useDb } from '../utils/db'
 
 type Database = ReturnType<typeof useDb>
 type ProjectInput = { name: string, description: string | null }
+// Public domain fields are stable as internal/generated columns are added.
+const projectFields = { id: project.id, name: project.name, description: project.description, ownerId: project.ownerId, createdAt: project.createdAt, updatedAt: project.updatedAt }
 
 export function listProjects(db: Database, ownerId: string) {
   return db
-    .select()
+    .select(projectFields)
     .from(project)
     .where(eq(project.ownerId, ownerId))
     .orderBy(desc(project.updatedAt))
@@ -19,7 +21,7 @@ export function listProjects(db: Database, ownerId: string) {
 
 export async function getProject(db: Database, ownerId: string, projectId: string) {
   const [row] = await db
-    .select()
+    .select(projectFields)
     .from(project)
     .where(and(eq(project.id, projectId), eq(project.ownerId, ownerId)))
     .limit(1)
@@ -32,7 +34,7 @@ export async function createProject(db: Database, ownerId: string, input: Projec
     const [row] = await tx
       .insert(project)
       .values({ id: crypto.randomUUID(), ownerId, ...input })
-      .returning()
+      .returning(projectFields)
 
     if (row) await appendAuditEvent(tx, { actorType: actor.type, actorId: actor.id, action: 'projects.create', subjectType: 'project', subjectId: row.id, outcome: 'success' })
     return row
@@ -51,7 +53,7 @@ export async function updateProject(
       .update(project)
       .set({ ...input, updatedAt: new Date() })
       .where(and(eq(project.id, projectId), eq(project.ownerId, ownerId)))
-      .returning()
+      .returning(projectFields)
 
     if (row) await appendAuditEvent(tx, { actorType: actor.type, actorId: actor.id, action: 'projects.update', subjectType: 'project', subjectId: row.id, outcome: 'success' })
     return row
@@ -72,7 +74,7 @@ export async function deleteProject(db: Database, ownerId: string, projectId: st
 
 export function searchProjects(db: Database, ownerId: string, input: SearchInput) {
   return searchRows({ vector: project.searchVector, updatedAt: project.updatedAt, id: project.id }, eq(project.ownerId, ownerId), input, plan => db
-    .select({ id: project.id, name: project.name, description: project.description, ownerId: project.ownerId, createdAt: project.createdAt, updatedAt: project.updatedAt, rank: plan.rank, cursorUpdatedAt: plan.cursorUpdatedAt })
+    .select({ ...projectFields, rank: plan.rank, cursorUpdatedAt: plan.cursorUpdatedAt })
     .from(project)
     .where(plan.where)
     .orderBy(...plan.orderBy)
