@@ -19,3 +19,5 @@ Release acceptance requires targeted regressions, both real storage providers, g
 ### Database timeout ordering
 
 [PostgreSQL18 documents](https://www.postgresql.org/docs/18/runtime-config-client.html) that transaction_timeout ≤ statement_timeout suppresses the longer statement timeout. Keep transaction timeout within min30sec/remaining budget and statement timeout500ms shorter, reserving time for safe rollback. This avoids relying on a terminated session for normal long-query cancellation; the transaction limit still bounds paused transactions. Drizzle can wrap driver SQLSTATE in cause; classification walks a bounded cause chain without exposing messages/SQL/values.
+
+Worker receipt resolution and current authorization run in a deadline-bounded PostgreSQL transaction before Storage acquisition. Final-error housekeeping has separate short database bounds; a lost catch remains recoverable through explicit reconciliation. Executing selected artifact cleanup expires its download permission before physical deletion, retaining receipt pointers and the attempt ledger for inspection or cleanup retry.
