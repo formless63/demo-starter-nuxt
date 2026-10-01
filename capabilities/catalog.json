@@ -15,7 +15,8 @@
       "notifications",
       "search",
       "ai",
-      "import-export"
+      "import-export",
+      "ops-admin"
     ]
   },
   "baseline": [
@@ -1114,7 +1115,7 @@
       "id": "ops-admin",
       "displayName": "Ops / Admin",
       "kind": "operations-ui",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1126,10 +1127,45 @@
         "webhooks"
       ],
       "baselineRequirements": [
-        "authentication"
+        "authentication",
+        "node-runtime"
       ],
       "externalRequirements": [],
-      "summary": "Authenticated operational and administrative surfaces for installed capabilities."
+      "summary": "Read-only operator summaries from explicit application-owned adapters.",
+      "packageName": "@repo/nuxt-ops-admin",
+      "packagePath": "packages/nuxt-ops-admin",
+      "fixturePath": "fixtures/ops-admin-consumer",
+      "documentationPath": "capabilities/ops-admin/CAPABILITY.md",
+      "evaluationDocument": "OPS_ADMIN_MODULE_EVALUATION.md",
+      "scripts": [
+        "packages:build",
+        "packages:test",
+        "test:ops-reference"
+      ],
+      "environmentVariables": [
+        "OPS_ADMIN_USER_IDS"
+      ],
+      "migrations": [],
+      "runtimeProcesses": [
+        "Nitro application"
+      ],
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server/ops",
+            ".fixture/package-test.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        },
+        "postRemovalScript": "package:test:survival",
+        "cleanupScript": "package:test:cleanup"
+      },
+      "agentSkill": ".agents/skills/ops-admin-change/SKILL.md"
     },
     {
       "id": "command-system",

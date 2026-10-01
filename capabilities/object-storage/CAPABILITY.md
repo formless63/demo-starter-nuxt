@@ -172,3 +172,5 @@ Use `capability-change` and `storage-change`. Keep S3 credentials server-only, o
 ## Request cancellation extension
 
 `putObject(key,body,{signal?})`, `getObject(key,{signal?})` and `headObject(key,{signal?})` accept an optional AbortSignal, forwarded to AWS SDK `send`. Existing names/defaults/results remain unchanged. Preaborted requests perform no provider I/O. Caller-requested SDK AbortError exposes safe `StorageError('cancelled')`; unrelated provider errors preserve their ordinary classification. GET cancellation also destroys the acquired Node body (or cancels a supported web body); callers must consume or close abandoned bodies. Import / Export owns deadline versus explicit cancellation mapping; Storage does not invent a timeout policy. Other Storage primitives retain their existing surface.
+
+Server-only `createStorage({maxAttempts})` accepts integer 1–3; default 3 preserves ordinary operation retries. Application diagnostics may select 1 on a separate caller-owned lazy client. No environment knob or SDK middleware mutation is introduced.

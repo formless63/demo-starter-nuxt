@@ -53,7 +53,8 @@
     "ai:smoke": "bun scripts/ai-smoke.ts",
     "test:notification-email": "bun fixtures/notifications-consumer/.fixture/email-reference.ts",
     "transfers:reconcile": "bun scripts/transfers.ts reconcile",
-    "transfers:purge": "bun scripts/transfers.ts purge"
+    "transfers:purge": "bun scripts/transfers.ts purge",
+    "test:ops-reference": "bun fixtures/ops-admin-consumer/.fixture/storage-retry.ts && bun fixtures/ops-admin-consumer/.fixture/reference-protocol.ts && bun fixtures/ops-admin-consumer/.fixture/reference-removal.ts"
   },
   "dependencies": {
     "@repo/nuxt-api": "workspace:*",
@@ -86,7 +87,8 @@
     "@repo/nuxt-notifications": "workspace:*",
     "@repo/nuxt-search": "workspace:*",
     "@repo/nuxt-ai": "workspace:*",
-    "@repo/nuxt-import-export": "workspace:*"
+    "@repo/nuxt-import-export": "workspace:*",
+    "@repo/nuxt-ops-admin": "workspace:*"
   },
   "devDependencies": {
     "@nuxt/eslint": "1.17.0",

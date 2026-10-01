@@ -52,6 +52,7 @@ services:
     environment:
       <<: [*database-environment, *observability-environment]
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-nuxt-starter}
+      OPS_ADMIN_USER_IDS: ${OPS_ADMIN_USER_IDS:-}
       NODE_ENV: production
       IMPORT_EXPORT_MAX_BYTES: ${IMPORT_EXPORT_MAX_BYTES:-16777216}
       IMPORT_EXPORT_MAX_ROWS: ${IMPORT_EXPORT_MAX_ROWS:-10000}

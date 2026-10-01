@@ -136,3 +136,7 @@ Keep `@repo/nuxt-ai: workspace:*` and register its module. Use server-only `getA
 ## Import / Export
 
 Private `@repo/nuxt-import-export` requires Jobs and Object Storage; PostgreSQL/Drizzle/Node baseline. Register application definitions and the existing worker handler, include transfer schema and apply the explicit additive migration. Personal Project CSV columns are `name,description`; imports create fresh Projects. S3 configuration is lazy. Cancellation is best effort until committed apply/publication. Explicit selected receipt reconciliation and dry-run artifact purge are operator actions. Optional Audit/Notifications stay application-owned. See [contract](../capabilities/import-export/CAPABILITY.md) and [evaluation](../IMPORT_EXPORT_MODULE_EVALUATION.md).
+
+Ops / Admin (`done`) is an optional private `@repo/nuxt-ops-admin` package. Enable with `opsAdmin.application` pointing to an application-owned baseline session resolver/static adapter registry. No service/migration or hard capability dependencies. [Contract](../capabilities/ops-admin/CAPABILITY.md).
+
+Ops reference verification uses `bun run test:ops-reference` after building the root. Its disposable protocol services and temporary source copies prove read-only inspection and independent adapter/full Ops removal; they are test-only, not an application installer.
