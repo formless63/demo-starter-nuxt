@@ -39,6 +39,17 @@ describe('Import / Export shared CSV contract', () => {
     expect(exportCsv([['name', 'quoted\nline']], ['name', 'description'], config).toString()).toBe('name,description\r\nname,"quoted\nline"\r\n')
     expect(() => exportCsv([[{} as string, '']], ['name', 'description'], config)).toThrow('Transfer operation is unsupported.')
   })
+  it('bounds the final formula-mitigated UTF8 field without changing numeric negatives', () => {
+    for (const bytes of [65535, 65536]) {
+      for (const prefix of ['=', '＝', '\t']) {
+        const value = prefix + '😀'.repeat(Math.floor((bytes - Buffer.byteLength(prefix)) / 4)) + 'x'.repeat((bytes - Buffer.byteLength(prefix)) % 4)
+        expect(Buffer.byteLength(value)).toBe(bytes)
+        if (bytes === 65535) expect(exportCsv([[value]], ['value'], config).toString()).toBe(`value\r\n'${value}\r\n`)
+        else expect(() => exportCsv([[value]], ['value'], config)).toThrow('Transfer exceeds a supported limit.')
+      }
+    }
+    expect(exportCsv([[-65536]], ['value'], config).toString()).toBe('value\r\n-65536\r\n')
+  })
   it('validates lazy configuration and exact trusted scope', () => {
     expect(transferConfig({ IMPORT_EXPORT_MAX_BYTES: '' }).maxBytes).toBe(16777216)
     for (const value of ['1e4', '1024x', ' 1024', '-1024', '1023', '67108865']) expect(() => transferConfig({ IMPORT_EXPORT_MAX_BYTES: value })).toThrow('Transfer configuration is invalid.')
