@@ -25,7 +25,7 @@ test('tenant boundaries, independent policy and private flags hold in HTTP and b
     for(const id of [owner,reader,outsider]) {const token=crypto.randomUUID();await db.insert(session).values({id:crypto.randomUUID(),token,userId:id,expiresAt:new Date(Date.now()+600000),activeOrganizationId:orgA});tokens.set(id,`${token}.${createHmac('sha256',secret).update(token).digest('base64')}`)}
     expect((await request.get(`/api/organizations/${orgA}/notes`)).status()).toBe(401)
     const created=await request.post(`/api/organizations/${orgA}/notes`,{headers:headers(owner),data:{title:'Organization A note'}})
-    expect(created.status()).toBe(200)
+    expect(created.status()).toBe(201)
     const note=await created.json()
     expect((await request.post(`/api/organizations/${orgA}/notes`,{headers:headers(reader),data:{title:'Forbidden'}})).status()).toBe(403)
     expect((await request.get(`/api/organizations/${orgA}/notes`,{headers:headers(outsider)})).status()).toBe(404)
@@ -47,7 +47,9 @@ test('tenant boundaries, independent policy and private flags hold in HTTP and b
     await policy.revokeRole(db,{userId:owner,scope:{kind:'user',id:owner}},assignment)
     expect((await request.get('/api/dashboard/beta',{headers:headers(owner)})).status()).toBe(403)
     await page.context().addCookies([{name:cookieName,value:encodeURIComponent(tokens.get(owner)!),url:baseURL!}])
+    const projected = page.waitForResponse(response => new URL(response.url()).pathname === '/api/feature-flags' && response.status() === 200)
     await page.goto('/app/projects')
+    expect(await (await projected).json()).toEqual({ 'beta.dashboard': true })
     await expect(page.getByRole('region',{name:'Beta dashboard preview'})).toBeVisible()
     await page.getByRole('button',{name:'Read preview'}).click()
     await expect(page.getByRole('status')).toContainText('separate read-only permission')
