@@ -3,13 +3,16 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { createTransferService, createTransferRegistry, defineTransfer } from '@repo/nuxt-import-export/server'
-import { createStorage } from '@repo/nuxt-storage/server'
+import { createStorage, StorageError } from '@repo/nuxt-storage/server'
 import { createJobsBoss, registerWorkers } from '@repo/nuxt-jobs/server'
 import { transfer } from '@repo/nuxt-import-export/schema'
 if (Number(process.versions.node.split('.')[0]) !== 24) throw new Error('Node24 fixture required')
 const databaseUrl = process.env.DATABASE_URL!
 const connection = postgres(databaseUrl, { max: 4 })
 const db = drizzle(connection), storage = createStorage()
+const put = storage.putObject.bind(storage)
+let transient = true
+storage.putObject = (...args) => { if (transient) { transient = false; return Promise.reject(new StorageError('unavailable')) } return put(...args) }
 const boss = createJobsBoss({ databaseUrl, schema: 'pgboss', concurrency: 1, useListenNotify: false }, 'worker')
 const service = createTransferService({ database: () => db, storage: () => storage, boss: async () => boss, registry: createTransferRegistry([defineTransfer({
   name: 'projects', version: '1', columns: ['name', 'description'], rowSchema: z.object({ name: z.string(), description: z.string() }),
@@ -18,7 +21,7 @@ const service = createTransferService({ database: () => db, storage: () => stora
 })]) })
 try {
   await boss.start(); await registerWorkers(boss, { [service.runJob.name]: service.runJob }, 1)
-  const deadline = Date.now() + 60000
+  const deadline = Date.now() + 90000
   let completed = false
   while (Date.now() < deadline) {
     const [row] = await db.select().from(transfer).where(eq(transfer.id, process.env.TRANSFER_FIXTURE_ID!))

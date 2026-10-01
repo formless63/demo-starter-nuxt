@@ -930,6 +930,7 @@
       "packagePath": "packages/nuxt-import-export",
       "fixturePath": "fixtures/import-export-consumer",
       "documentationPath": "capabilities/import-export/CAPABILITY.md",
+      "agentSkill": ".agents/skills/import-export-change/SKILL.md",
       "evaluationDocument": "IMPORT_EXPORT_MODULE_EVALUATION.md",
       "scripts": [
         "packages:build",
