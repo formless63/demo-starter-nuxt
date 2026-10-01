@@ -18,8 +18,10 @@ Reference Storage owns a separate lazy client with `maxAttempts:1` (ordinary Sto
 
 ## Removal
 
-Remove the root dependency/module and `opsAdmin` option, `server/ops`, `server/plugins/ops-admin.ts`, any navigation link, and the allowlist environment configuration. Remove each optional adapter/import independently when its capability is removed. Do not clean provider resources or database data. Package removal has no migration/worker/session cleanup. The generic `bun run packages:test ops-admin` packs real tarballs and verifies consumer install/runtime/removal/rebuild; no registry publication.
+Remove the root dependency/module and `opsAdmin` option, `server/ops`, `server/plugins/ops-admin-jobs.ts` and `server/plugins/ops-admin-storage.ts`, any navigation link, and the allowlist environment configuration. Remove each optional adapter/import independently when its capability is removed. Do not clean provider resources or database data. Package removal has no migration/worker/session cleanup. The generic `bun run packages:test ops-admin` packs real tarballs and verifies consumer install/runtime/removal/rebuild; no registry publication.
 
 ## Verification
 
 See [evaluation](../../OPS_ADMIN_MODULE_EVALUATION.md), [roadmap](../../ROADMAP.md) and [capability tooling](../../docs/CAPABILITIES.md). Status remains in-progress until the entire dispatch verification gate passes.
+
+Optional-provider removal also removes its Ops helper and shutdown hook: Storage removes its card/import, `server/ops/storage.ts` and `server/plugins/ops-admin-storage.ts`; removing Jobs (and its hard dependents, including Webhooks) removes the Jobs/Webhooks cards/imports, `server/ops/jobs.ts` and `server/plugins/ops-admin-jobs.ts`. Keeping Webhooks requires Jobs. Cache and Observability remove their direct application import/card; Audit removes its static card. Root provider removal separately follows each provider contract's normal application pruning recipe. Observability's count projects only the supported local `getObservabilityStatus().enabled` boolean and reflects disabled instrumentation without disclosing exporter configuration.
