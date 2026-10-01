@@ -5,7 +5,7 @@ const statePath = '.fixture/notifications-database.json'
 interface State { databaseName: string, url: string, snapshot?: unknown }
 export async function snapshot(client: ReturnType<typeof postgres>) {
   return {
-    rows: [...await client`SELECT * FROM notification ORDER BY id`],
+    rows: [...await client`SELECT id,recipient_id,type,title,body,metadata,created_at::text,read_at::text FROM notification ORDER BY id`],
     indexes: [...await client`SELECT indexname,indexdef FROM pg_indexes WHERE tablename='notification' ORDER BY indexname`],
     history: [...await client`SELECT id,hash,created_at FROM drizzle.__drizzle_migrations ORDER BY id`],
     jobs: [...await client`SELECT nspname FROM pg_namespace WHERE nspname='notifications_fixture_jobs'`],
