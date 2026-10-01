@@ -84,6 +84,12 @@ services:
       STORAGE_FORCE_PATH_STYLE: ${STORAGE_FORCE_PATH_STYLE:-}
       STORAGE_PRESIGN_TTL_SECONDS: ${STORAGE_PRESIGN_TTL_SECONDS:-600}
       STORAGE_KEY_PREFIX: ${STORAGE_KEY_PREFIX:-}
+      # Optional AI; no provider connection at startup.
+      AI_PROVIDER: ${AI_PROVIDER:-openai-compatible}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_BASE_URL: ${AI_BASE_URL:-https://api.openai.com/v1}
+      AI_TIMEOUT_SECONDS: ${AI_TIMEOUT_SECONDS:-60}
       # Optional Cache configuration; no startup connection or bundled backend.
       CACHE_URL: ${CACHE_URL:-}
       CACHE_KEY_PREFIX: ${CACHE_KEY_PREFIX:-app}

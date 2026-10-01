@@ -21,6 +21,7 @@ The root application deliberately enables every completed capability for continu
 | `object-storage` | `@repo/nuxt-storage` | Enabled | No | None | S3-compatible service when used | [Object Storage](../capabilities/object-storage/CAPABILITY.md) |
 | `email` | `@repo/nuxt-email` | Enabled | No | None | SMTP on use; Mailpit optional | [Email](../capabilities/email/CAPABILITY.md) |
 | `webhooks` | `@repo/nuxt-webhooks` | Enabled | No | Jobs | Remote endpoints when used | [Webhooks](../capabilities/webhooks/CAPABILITY.md) |
+| `ai` | `@repo/nuxt-ai` | Enabled | No | None | Configured model provider on use | [AI](../capabilities/ai/CAPABILITY.md) |
 | `audit-log` | `@repo/nuxt-audit-log` | Enabled | No | None | PostgreSQL (required) | [Audit Log](../capabilities/audit-log/CAPABILITY.md) |
 | `realtime` | `@repo/nuxt-realtime` | Enabled | No | None | None; Cache fanout optional | [Realtime](../capabilities/realtime/CAPABILITY.md) |
 | `notifications` | `@repo/nuxt-notifications` | Enabled | No | Jobs | ntfy optional; Email integration optional | [Notifications](../capabilities/notifications/CAPABILITY.md) |
@@ -128,3 +129,7 @@ Explicitly enable `@repo/nuxt-audit-log`, export its table in the application Dr
 ## Search
 
 Application-owned domain rows and explicit generated-vector/GIN migrations, reusable server helpers, no auto routes or connections. Root Projects searches always retain owner isolation. `simple` FTS, A name/B description, websearch input, rank normalization 32 and descending keyset pages. See [contract](../capabilities/search/CAPABILITY.md). Jobs/Storage/Organizations are future optional integrations, not requirements.
+
+### AI
+
+Keep `@repo/nuxt-ai: workspace:*` and register its module. Use server-only `getAi` or `@repo/nuxt-ai/server` for text, real incremental streams and Zod-validated structured output. Configure AI_MODEL lazily; provider defaults openai-compatible and timeout 60 seconds. No automatic retry, 1 MiB output maximum and safe errors. No routes/UI/history/tools/RAG are installed. Optional integrations are application-owned; the root telemetry wrapper emits only finite operation/provider/outcome/duration/usage/finish fields. Verify the actual local adapter with `bun run packages:test ai`; use `ai:smoke` only for an intentional provider call. See the [contract](../capabilities/ai/CAPABILITY.md) and [removal](STARTING-A-PROJECT.md#remove-ai).
