@@ -54,6 +54,7 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     const page = await context.newPage()
     await page.goto(`${base}/app/projects`)
     await expect(page.getByRole('heading', { name: 'Project CSV transfers' })).toBeVisible()
+    await expect(page.getByLabel('CSV file')).toBeEnabled({ timeout: 15000 })
     await page.getByLabel('CSV file').setInputFiles({ name: 'local-fixture.csv', mimeType: 'text/csv', buffer: Buffer.from('name,description\r\nBrowser CSV,"quoted\nline"\r\n') })
     await expect(page.getByRole('button', { name: 'Upload CSV', exact: true })).toBeEnabled({ timeout: 15000 })
     await page.getByRole('button', { name: 'Upload CSV', exact: true }).click({ timeout: 15000 })
@@ -61,6 +62,10 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     await page.getByRole('button', { name: 'Start import', exact: true }).click()
     await expect.poll(async () => {
       await page.getByRole('button', { name: 'Refresh transfers', exact: true }).click()
+      expect(worker!.exitCode, 'Existing worker remains running').toBeNull()
+      const visible = await (await context!.request.get('/api/transfers')).json() as { items: { status: string, errorCode: string | null }[] }
+      const failure = visible.items.find(item => item.status === 'failed')
+      if (failure) throw new Error(`Safe transfer failure: ${failure.errorCode}`)
       return await page.getByText('import — succeeded', { exact: false }).count()
     }, { timeout: 30000 }).toBe(1)
     await page.getByRole('button', { name: 'Export Projects', exact: true }).click()

@@ -3,6 +3,8 @@ import { IconDownload, IconUpload } from '@tabler/icons-vue'
 import { Button } from '@/components/ui/button'
 type Transfer = { id: string, direction: string, status: string, rowCount: number | null, errorCode: string | null, validationIssues: { row: number, field?: string, code: string }[], errorsTruncated: boolean }
 const { data, refresh } = await useFetch<{ items: Transfer[] }>('/api/transfers', { default: () => ({ items: [] }) })
+const mounted = ref(false)
+onMounted(() => { mounted.value = true })
 const selected = ref<File>(), staged = ref<string>(), busy = ref(false), message = ref('')
 const requestKeys = new Map<string, string>()
 function key(id: string) { if (!requestKeys.has(id)) requestKeys.set(id, crypto.randomUUID()); return requestKeys.get(id)! }
@@ -36,7 +38,7 @@ function download(id: string) { return action(async () => { const signed = await
     <p class="text-sm text-muted-foreground">Columns: name,description. Import creates new personal Projects. Export adds an apostrophe to strings that may be spreadsheet formulas.</p>
     <div class="flex flex-wrap items-center gap-3">
       <label for="project-csv">CSV file</label>
-      <input id="project-csv" type="file" accept=".csv,text/csv" :disabled="busy" @change="select">
+      <input id="project-csv" type="file" accept=".csv,text/csv" :disabled="busy || !mounted" @change="select">
       <Button :disabled="busy || !selected" variant="outline" @click="upload"><IconUpload class="size-4" />Upload CSV</Button>
       <Button :disabled="busy || !staged" @click="start">Start import</Button>
       <Button :disabled="busy" variant="outline" @click="exportProjects"><IconDownload class="size-4" />Export Projects</Button>

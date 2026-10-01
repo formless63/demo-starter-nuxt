@@ -11,7 +11,7 @@
     "jobs:worker": "nuxt-jobs worker --registry server/jobs/registry.ts",
     "package:test:runtime": "bun .fixture/package-test.ts",
     "package:test:survival": "bun .fixture/lifecycle.ts verify",
-    "package:test:cleanup": "bun .fixture/lifecycle.ts cleanup"
+    "package:test:cleanup": "bun .fixture/cleanup.ts"
   },
   "dependencies": {
     "nuxt": "4.5.2",

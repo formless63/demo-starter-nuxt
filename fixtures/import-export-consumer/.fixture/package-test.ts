@@ -131,6 +131,33 @@ try {
     await assert.rejects(slow.runJob.handler({ transferId: timed.id }, { id: randomUUID(), signal: new AbortController().signal, retryCount: 5, retryLimit: 5 }), { code: 'timeout' })
     assert(Date.now() - timeStarted < 6500, 'PostgreSQL cancels underlying long-running query')
     assert.equal((await slow.getTransfer(owner, { transferId: timed.id })).errorCode, 'timeout')
+    // Exhaust the real six-attempt budget through supported APIs, then kill the final claim.
+    // ignoreStartAfter accelerates fixture scheduling without altering production queue policy.
+    const crashService = createTransferService({ database: () => db, boss: async () => boss!, storage: () => backend!.storage, registry, env: { DATABASE_URL: url.href, IMPORT_EXPORT_TIMEOUT_SECONDS: '5' } })
+    const exhausted = await crashService.requestExport(owner, { definition: 'projects', idempotencyKey: randomUUID() })
+    const [exhaustedRow] = await db.select().from(transfer).where(eq(transfer.id, exhausted.id))
+    const nativeId = exhaustedRow!.jobId!
+    const initialNative = await boss.getJobById(service.runJob.name, nativeId)
+    assert.equal(initialNative!.retryLimit, 5); assert.equal(initialNative!.retryDelay, 30); assert.equal(initialNative!.retryBackoff, true); assert.equal(initialNative!.expireInSeconds, 35)
+    await boss.update(service.runJob.name, undefined, { id: nativeId, priority: 900 })
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const [claimed] = await boss.fetch(service.runJob.name, { includeMetadata: true, minPriority: 900, maxPriority: 900, ignoreStartAfter: true })
+      assert.equal(claimed!.id, nativeId); assert.equal(claimed!.retryCount, attempt)
+      await boss.fail(service.runJob.name, { id: nativeId, retryCount: attempt })
+      assert.equal((await service.reconcileTransfer(exhausted.id)).status, 'pending')
+    }
+    const killed = Bun.spawn(['node', '.fixture/hard-crash.mjs'], { env: { ...process.env, DATABASE_URL: url.href, TRANSFER_FIXTURE_JOB: nativeId }, stdout: 'pipe', stderr: 'pipe' })
+    const reader = killed.stdout.getReader(), claimedLine = await reader.read()
+    assert(new TextDecoder().decode(claimedLine.value).includes('claimed-final-attempt')); reader.releaseLock()
+    killed.kill('SIGKILL'); assert.notEqual(await killed.exited, 0)
+    assert.equal((await service.reconcileTransfer(exhausted.id)).status, 'pending', 'Active native claim is not failed based on wall time')
+    const crashDeadline = Date.now() + 45000
+    while (Date.now() < crashDeadline) { await boss.supervise(service.runJob.name); if ((await boss.getJobById(service.runJob.name, nativeId))?.state === 'failed') break; await new Promise(resolve => setTimeout(resolve, 500)) }
+    assert.equal((await boss.getJobById(service.runJob.name, nativeId))?.state, 'failed')
+    assert.equal((await service.reconcileTransfer(exhausted.id)).errorCode, 'execution-lost')
+    const lost = await service.requestExport(owner, { definition: 'projects', idempotencyKey: randomUUID() })
+    const [lostRow] = await db.select().from(transfer).where(eq(transfer.id, lost.id)); await boss.deleteJob(service.runJob.name, lostRow!.jobId!)
+    assert.equal((await service.reconcileTransfer(lost.id)).errorCode, 'execution-lost')
     const nodeTransfer = await service.requestExport(owner, { definition: 'projects', idempotencyKey: randomUUID() })
     const built = Bun.spawn(['bun', 'build', '.fixture/node-worker.ts', '--target=node', '--outfile=.fixture/node-worker.mjs'], { stdout: 'pipe', stderr: 'pipe' })
     assert.equal(await built.exited, 0, 'Node fixture bundle builds')
