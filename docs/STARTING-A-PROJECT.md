@@ -128,3 +128,9 @@ For permanent pruning, consistently update catalog/docs before removing `package
 4. Reinstall, clear generated state, run capabilities:check, typecheck/build, ordinary checks and the production migration/container smoke. No worker or daemon needs draining.
 
 A deployed table drop requires a new explicit destructive migration and a deliberate retention/privacy decision. For permanent pruning, update the catalog/roadmap/docs and remove package, fixture, contract, evaluation and audit-log-change skill only after all imports are gone; preserve the roadmap ID for optional relationships.
+
+## Remove Search
+
+1. Remove the Projects search route and searchProjects service imports/function, Search module entry and dependency, and `search` reference enablement. Remove Search tests if pruning its reference integration.
+2. Preserve application rows, generated vector/index declarations and committed migration history. The schema declaration does not depend on the package. Package removal applies no SQL; physical removal requires a new explicit reviewed migration.
+3. Reinstall, clear generated Nuxt output, and run catalog/typecheck/build checks. Permanent pruning updates metadata/docs before deleting package/fixture/evaluation/skill; preserve the roadmap ID for optional relationships.

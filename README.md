@@ -41,6 +41,7 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Email | Available (`done`) | Optional | SMTP only when used; no capability dependency | Safe text/HTML SMTP, Mailpit fixture and hashed-token magic links |
 | Webhooks | Available (`done`) | Optional | Jobs; remote endpoints only when delivering | Standard signed envelopes, durable delivery and bounded raw-body verification |
 | Audit Log | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; optional authentication | Transactional append-oriented history and bounded keyset queries |
+| Search | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; no extra service | Owner-scoped weighted FTS and deterministic keyset pages |
 
 `defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email and Cache remain lazy with no provider required to boot/build.
 
@@ -59,7 +60,7 @@ bun run jobs:migrate
 bun run dev
 ```
 
-Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all eight completed capability packages; `db:migrate` applies the application/API/Audit tables and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
+Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all nine completed capability packages; `db:migrate` applies the application/API/Audit tables and the Projects search vector/index and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
 
 ## Authentication notes
 
@@ -150,3 +151,7 @@ Webhooks is explicitly enabled as `@repo/nuxt-webhooks` and requires Jobs; see i
 ## Cache / Coordination
 
 Explicitly enabled in the reference app and lazy at boot/build. Server-only `@repo/nuxt-cache` supplies exact namespaced string/byte values, expiring writes, atomic counters, advisory leases and non-durable pub/sub. No Jobs/Realtime/queue integration is implemented. `cache:dev:valkey` starts pinned disposable localhost Valkey; `cache:check`, `cache:smoke` and `cache:dev:down` use explicit configuration. Leases have no fencing or quorum and cannot alone protect irreversible correctness. See the [contract](capabilities/cache-coordination/CAPABILITY.md) and [evaluation](CACHE_COORDINATION_MODULE_EVALUATION.md).
+
+## Search
+
+Opt-in PostgreSQL-native `@repo/nuxt-search` server helpers; the reference Projects endpoint searches owner rows using weighted `simple` FTS. Apply the explicit application migration first. Page size 25 (1–100); canonical rank/timestamp/ID cursor. No query logs or extra service. See [Search contract](capabilities/search/CAPABILITY.md) and [evaluation](SEARCH_MODULE_EVALUATION.md).

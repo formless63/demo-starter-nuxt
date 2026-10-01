@@ -25,3 +25,5 @@ Official Nuxt documentation should be the primary source. Agents supporting MCP 
 `@repo/nuxt-audit-log` uses Nuxt/Drizzle peers and @nuxt/kit only; no API/Jobs/auth dependency. Application-generated UUIDs, timestamptz(3), bounded JSONB metadata and four B-tree indexes support append-oriented records and exact keyset queries.
 
 `@repo/nuxt-cache` owns stable redis/node-redis 6.3.0 with Nuxt peer and official Valkey 9.1.2 disposable fixture. Node 24 production and Bun tooling share the verified protocol subset; TLS verification stays enabled. Additive `compose.cache.yaml` is loopback-only with no AOF/RDB/data volume. Cache is ephemeral; Jobs remains PostgreSQL-durable. See `CACHE_COORDINATION_MODULE_EVALUATION.md`.
+
+@repo/nuxt-search uses normal Nuxt module-builder and compatible Nuxt/Drizzle peers; existing PostgreSQL 18 FTS only. simple weighted vectors, parameterized websearch_to_tsquery and ts_rank_cd normalization 32; no external search service or pg_trgm.

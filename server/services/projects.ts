@@ -1,3 +1,5 @@
+import { searchRows } from '@repo/nuxt-search/server'
+import type { SearchInput } from '@repo/nuxt-search/server'
 import { appendAuditEvent } from '@repo/nuxt-audit-log/server'
 import type { AuditActor } from '@repo/nuxt-audit-log/server'
 import { and, desc, eq } from 'drizzle-orm'
@@ -66,4 +68,13 @@ export async function deleteProject(db: Database, ownerId: string, projectId: st
     if (row) await appendAuditEvent(tx, { actorType: actor.type, actorId: actor.id, action: 'projects.delete', subjectType: 'project', subjectId: row.id, outcome: 'success' })
     return row
   })
+}
+
+export function searchProjects(db: Database, ownerId: string, input: SearchInput) {
+  return searchRows({ vector: project.searchVector, updatedAt: project.updatedAt, id: project.id }, eq(project.ownerId, ownerId), input, plan => db
+    .select({ id: project.id, name: project.name, description: project.description, ownerId: project.ownerId, createdAt: project.createdAt, updatedAt: project.updatedAt, rank: plan.rank, cursorUpdatedAt: plan.cursorUpdatedAt })
+    .from(project)
+    .where(plan.where)
+    .orderBy(...plan.orderBy)
+    .limit(plan.limit))
 }
