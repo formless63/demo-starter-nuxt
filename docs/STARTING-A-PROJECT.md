@@ -160,3 +160,5 @@ When removing **Observability while retaining Realtime/Notifications**, remove o
 3. Clear generated output, reinstall and run catalog checks, normal typecheck/build/tests and production verification. No schema/data migration exists. The packed fixture proves provider SDK removal when unused; shared Zod may remain.
 
 Never delete/revoke external provider accounts or secrets automatically. Removing Observability while retaining AI replaces the optional wrapper with plain package generation. Permanent pruning updates catalog/docs before removing package/fixture/contract/evaluation/ai-change skill, retaining the roadmap ID where referenced.
+
+For Ops/Admin removal, remove `@repo/nuxt-ops-admin` from dependencies/modules, the `opsAdmin` option, `server/ops`, any navigation entry, and `OPS_ADMIN_USER_IDS`. Remove each optional adapter/import when pruning its provider capability. No data/provider cleanup exists. [Contract](../capabilities/ops-admin/CAPABILITY.md).

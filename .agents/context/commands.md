@@ -63,3 +63,5 @@ Search verification: bun run packages:test search retains an independent disposa
 Production CI runs the full E2E suite against the built container with its disposable database. `DISPOSABLE_DATABASE_TESTS=true` permits a restored Search column-rename failure probe; `PRODUCTION_COMPOSE_PROJECT` selects only that test stack for safe-error/log privacy verification. Generic package-test metadata optionally declares `postRemovalScript` (after final rebuild) and `cleanupScript` (in finally) for retained external-state proofs. Both scripts must survive removal.
 
 AI: `bun run packages:test ai` verifies packed install/backendless Node boot/actual local HTTP SDK adapter/disconnect/removal/post-removal build. `bun run ai:smoke` is a deliberately invoked single configured model operation, logging only safe finish/usage. No provider is required for ordinary check/build/start/health.
+
+Ops/Admin (`in-progress`): `bun run packages:test ops-admin` exercises packed baseline-only Better Auth/PostgreSQL auth, SSR/no-store/privacy and removal. No migration belongs to Ops.

@@ -132,3 +132,5 @@ Application-owned domain rows and explicit generated-vector/GIN migrations, reus
 ### AI
 
 Keep `@repo/nuxt-ai: workspace:*` and register its module. Use server-only `getAi` or `@repo/nuxt-ai/server` for text, real incremental streams and Zod-validated structured output. Configure AI_MODEL lazily; provider defaults openai-compatible and timeout 60 seconds. No automatic retry, 1 MiB output maximum and safe errors. No routes/UI/history/tools/RAG are installed. Optional integrations are application-owned; the root telemetry wrapper emits only finite operation/provider/outcome/duration/usage/finish fields. Verify the actual local adapter with `bun run packages:test ai`; use `ai:smoke` only for an intentional provider call. See the [contract](../capabilities/ai/CAPABILITY.md) and [removal](STARTING-A-PROJECT.md#remove-ai).
+
+Ops / Admin (`in-progress`) is an optional private `@repo/nuxt-ops-admin` package. Enable with `opsAdmin.application` pointing to an application-owned baseline session resolver/static adapter registry. No service/migration or hard capability dependencies. [Contract](../capabilities/ops-admin/CAPABILITY.md).
