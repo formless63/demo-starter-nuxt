@@ -2,6 +2,8 @@
 
 All commands use Bun. PostgreSQL is required for migrations, authenticated runtime behavior, integration tests, and health checks.
 
+CI pins Bun 1.4.2 independently and uses `actions/setup-node` for Node 24 in both the application check and every catalog-derived package lifecycle job. Each runtime job logs the exact Node/Bun versions and asserts Node major 24 before installation/runtime fixtures.
+
 - `bun install --frozen-lockfile`: reproduce dependencies.
 - `bun run agents:check`: read-only validation of canonical guidance/skills, project adapters and shared hook paths; no agent CLIs or authentication required.
 - `bun run agents:test`: synthetic client payloads and temporary Git-fixture tests for hooks and capability governance.
