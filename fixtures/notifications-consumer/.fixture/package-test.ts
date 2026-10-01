@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict'
+import * as notificationApi from '@repo/nuxt-notifications/server'
+import { verifyNotificationContract, validTitles, validMetadata } from './contract-vectors'
 import { saveState, snapshot } from './lifecycle'
 import { execFileSync } from 'node:child_process'
 import { eq } from 'drizzle-orm'
@@ -29,6 +31,7 @@ let app: ReturnType<typeof Bun.spawn> | undefined
 let appLogs: Promise<string[]> | undefined
 
 try {
+  await verifyNotificationContract(notificationApi)
   await migrate(db, { migrationsFolder: './server/database/migrations' })
   await migrate(db, { migrationsFolder: './server/database/migrations' })
   const columns = await client`SELECT column_name,data_type,datetime_precision FROM information_schema.columns WHERE table_name='notification'`
@@ -94,6 +97,11 @@ try {
   ]) await assert.rejects(appendNotification(db, { ...input, ...invalid }), { code: 'invalid-input' })
   const boundary = await appendNotification(db, { ...input, recipientId: 'x'.repeat(128), title: 'x'.repeat(200), body: 'x'.repeat(4096) })
   assert.equal(Buffer.byteLength(boundary.body), 4096)
+  for (const title of validTitles) {
+    const row = await appendNotification(db, { ...input, title, metadata: validMetadata[1] })
+    assert.equal((await getNotification(db, row.id))!.title, title)
+    assert.deepEqual((await getNotification(db, row.id))!.metadata, validMetadata[1])
+  }
   // Real stable local ntfy. No request ever goes to public ntfy.sh.
   execFileSync('docker', ['run', '-d', '--name', container, '-p', '127.0.0.1::80', 'binwiederhier/ntfy:v2.28.0', 'serve', '--listen-http', ':80', '--cache-file', '/tmp/cache.db', '--cache-duration', '1h'], { stdio: 'pipe' })
   ntfyStarted = true

@@ -1,10 +1,11 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { EmailError } from '@repo/nuxt-email/server'
+import { EmailError, classifyEmailError } from '@repo/nuxt-email/server'
 import { loadNotificationState } from '../../server/notifications/loading'
 import { createNotificationEmailAdapter } from '../../server/notifications/email-adapter'
 import { createApplicationNotification } from '../../server/notifications/create'
 import type { NotificationRecord } from '@repo/nuxt-notifications/server'
+import { validTitles, validMetadata } from '../../fixtures/notifications-consumer/.fixture/contract-vectors'
 const send = vi.hoisted(() => vi.fn())
 vi.mock('@repo/nuxt-email/server', async (original) => ({ ...await original<typeof import('@repo/nuxt-email/server')>(), getEmail: () => ({ send }) }))
 const append = vi.hoisted(() => vi.fn())
@@ -115,11 +116,38 @@ describe('Composed notification Jobs handler', () => {
     const job = await compose(async () => record, async () => 'current@example.test')
     send.mockRejectedValueOnce(new Error('private provider failure'))
     expect(await job.handler(payload, context(new AbortController().signal))).toEqual({ outcome: 'rejected', code: 'rejected' })
-    send.mockRejectedValueOnce(new EmailError('temporary-rejection', true))
-    await expect(job.handler(payload, context(new AbortController().signal))).rejects.toMatchObject({ code: 'unavailable', retryable: true })
-    for (const error of [new EmailError('timeout', true), new EmailError('unknown', true), new EmailError('permanent-rejection', true)]) {
+    for (const code of ['temporary-rejection', 'connection'] as const) {
+      send.mockRejectedValueOnce(new EmailError(code, true))
+      await expect(job.handler(payload, context(new AbortController().signal))).rejects.toMatchObject({ code: 'unavailable', retryable: true })
+    }
+    for (const error of [new EmailError('connection', false), new EmailError('temporary-rejection', false), new EmailError('timeout', true), new EmailError('unknown', true), new EmailError('permanent-rejection', true), classifyEmailError({ code: 'ECONNRESET' }), classifyEmailError({ code: 'ESOCKET', command: 'DATA' })]) {
       send.mockRejectedValueOnce(error)
       expect((await job.handler(payload, context(new AbortController().signal))).outcome).toBe('rejected')
+    }
+  })
+  it('keeps partial outcomes and cancellation after SMTP invocation terminal', async () => {
+    const job = await compose(async () => record, async () => 'current@example.test')
+    for (const outcome of ['partial', 'rejected']) {
+      send.mockResolvedValueOnce({ outcome })
+      expect(await job.handler(payload, context(new AbortController().signal))).toEqual({ outcome: 'rejected', code: 'rejected' })
+    }
+    let fail!: (reason: unknown) => void
+    send.mockImplementationOnce(() => new Promise((_, reject) => { fail = reject }))
+    const controller = new AbortController()
+    const pending = job.handler(payload, context(controller.signal))
+    await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(3))
+    controller.abort()
+    expect(await pending).toEqual({ outcome: 'rejected', code: 'timeout' })
+    fail(new EmailError('connection', true)); await Promise.resolve(); await Promise.resolve()
+    expect(send).toHaveBeenCalledTimes(3)
+  })
+  it('delivers shared plain-text title vectors verbatim without copying metadata into Email', async () => {
+    for (const title of validTitles) {
+      send.mockReset(); send.mockResolvedValue({ outcome: 'accepted' })
+      const current = { ...record, title, metadata: validMetadata[1]! }
+      const job = await compose(async () => current, async () => 'current@example.test')
+      expect(await job.handler(payload, context(new AbortController().signal))).toEqual({ outcome: 'delivered' })
+      expect(send).toHaveBeenCalledExactlyOnceWith({ to: [{ address: 'current@example.test' }], subject: title, text: record.body })
     }
   })
   it('filters private adapter extras and runtime-invalid error codes from Jobs output', async () => {

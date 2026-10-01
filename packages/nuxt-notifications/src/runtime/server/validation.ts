@@ -66,7 +66,9 @@ export function validateMetadata(value: unknown = {}): NotificationMetadata {
       if (keys.length > notificationLimits.objectKeys) invalid()
       const result: NotificationMetadata = {}
       for (const key of keys) {
-        boundedString(key, notificationLimits.keyLength)
+        // Preserve keys verbatim; whitespace is valid, but empty/control/malformed keys are not.
+        if (typeof key !== 'string' || !key.length || key.length > notificationLimits.keyLength || !key.isWellFormed()
+          || Array.from(key).some(character => character.charCodeAt(0) < 32 || (character.charCodeAt(0) >= 127 && character.charCodeAt(0) <= 159))) invalid()
         const normalized = String(key).toLowerCase().replace(/[^a-z0-9]/g, '')
         if (/password|passwd|pwd|secret|token|authorization|cookie|apikey|credential/.test(normalized)
           || ['request', 'session', 'body', 'headers', 'header', 'proto', 'constructor', 'prototype'].includes(normalized)) invalid()
