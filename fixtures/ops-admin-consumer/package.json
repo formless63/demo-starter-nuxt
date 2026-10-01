@@ -1,0 +1,26 @@
+{
+  "name": "ops-admin-consumer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck",
+    "package:test:runtime": "bun .fixture/package-test.ts",
+    "db:migrate": "drizzle-kit migrate",
+    "package:test:survival": "bun .fixture/survival.ts",
+    "package:test:cleanup": "bun .fixture/cleanup.ts"
+  },
+  "dependencies": {
+    "@repo/nuxt-ops-admin": "workspace:*",
+    "nuxt": "4.5.2",
+    "better-auth": "1.7.7",
+    "drizzle-orm": "0.45.3",
+    "postgres": "3.4.9"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vue-tsc": "3.1.7",
+    "drizzle-kit": "0.31.11",
+    "@types/node": "24.10.1"
+  }
+}
