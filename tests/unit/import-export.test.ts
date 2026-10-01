@@ -36,6 +36,7 @@ describe('Import / Export shared CSV contract', () => {
     for (const dangerous of ['=SUM(1)', '+1', '-1', '@name', '\tfoo', '\rfoo', '\nfoo', '  =1', '＝1', '＋1', '－1', '＠x', '  ＝1']) expect(spreadsheetSafe(dangerous)).toBe(`'${dangerous}`)
     for (const safe of ['ordinary', '  ordinary', "'=1", '1']) expect(spreadsheetSafe(safe)).toBe(safe)
     expect(exportCsv([['-1', -1], ['a,"b"', null]], ['name', 'description'], config).toString()).toBe('name,description\r\n\'-1,-1\r\n"a,""b""",\r\n')
+    expect(exportCsv([['name', 'quoted\nline']], ['name', 'description'], config).toString()).toBe('name,description\r\nname,"quoted\nline"\r\n')
     expect(() => exportCsv([[{} as string, '']], ['name', 'description'], config)).toThrow('Transfer operation is unsupported.')
   })
   it('validates lazy configuration and exact trusted scope', () => {

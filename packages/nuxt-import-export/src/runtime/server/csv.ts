@@ -100,13 +100,13 @@ export function exportCsv(rows: Iterable<readonly CsvCell[]>, columns: readonly 
       throw new TransferError('unsupported')
     })
     if (cells.reduce((size, cell) => size + Buffer.byteLength(cell), 0) > 262144) throw new TransferError('limit-exceeded')
-    const chunk = Buffer.from(stringify([cells], { record_delimiter: '\r\n', eof: true }))
+    const chunk = Buffer.from(stringify([cells], { record_delimiter: '\r\n', quoted_match: /[\r\n]/, eof: true }))
     bytes += chunk.byteLength
     if (bytes > config.maxBytes) throw new TransferError('limit-exceeded')
     chunks.push(chunk)
   }
   // Registered headers are authoritative and are never formula transformed.
-  const header = Buffer.from(stringify([columns], { record_delimiter: '\r\n', eof: true }))
+  const header = Buffer.from(stringify([columns], { record_delimiter: '\r\n', quoted_match: /[\r\n]/, eof: true }))
   bytes = header.byteLength; chunks.push(header)
   for (const row of rows) { if (++count > config.maxRows) throw new TransferError('limit-exceeded'); append(row) }
   if (bytes > config.maxBytes) throw new TransferError('limit-exceeded')

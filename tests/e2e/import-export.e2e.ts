@@ -71,6 +71,9 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     await page.getByRole('button', { name: 'Export Projects', exact: true }).click()
     await expect.poll(async () => {
       await page.getByRole('button', { name: 'Refresh transfers', exact: true }).click()
+      const visible = await (await context!.request.get('/api/transfers')).json() as { items: { direction: string, status: string, errorCode: string | null }[] }
+      const failure = visible.items.find(item => item.direction === 'export' && item.status === 'failed')
+      if (failure) throw new Error(`Safe export failure: ${failure.errorCode}`)
       return await page.getByRole('button', { name: 'Download CSV', exact: true }).count()
     }, { timeout: 30000 }).toBe(1)
     const list = await (await context.request.get('/api/transfers')).json() as { items: { id: string, direction: string, status: string }[] }
