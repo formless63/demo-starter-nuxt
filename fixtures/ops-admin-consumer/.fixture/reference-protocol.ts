@@ -44,13 +44,13 @@ const cacheProxy = createServer((socket) => {
       if (args.length !== count) break
       const command = args[0]!.toUpperCase(); commands.push(command)
       assert(['HELLO', 'AUTH', 'SELECT', 'CLIENT', 'PING'].includes(command), 'Ops cache allows connection/PING only')
-      if (command === 'CLIENT') assert(['SETINFO', 'SETNAME'].includes(args[1]!.toUpperCase()))
+      if (command === 'CLIENT') assert(['SETINFO', 'SETNAME', 'MAINT_NOTIFICATIONS'].includes(args[1]!.toUpperCase()))
       pending = pending.subarray(offset)
     }
     upstream.write(data)
   })
   upstream.on('data', data => socket.write(data))
-  upstream.on('error', () => socket.destroy()); socket.on('error', () => upstream.destroy()); socket.on('close', () => upstream.destroy())
+  upstream.on('error', () => { console.info('[ops-fixture] local upstream transport failed'); socket.destroy() }); socket.on('error', () => upstream.destroy()); socket.on('close', () => upstream.destroy())
 })
 async function listen(server: import('node:net').Server) { await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve)); return (server.address() as { port: number }).port }
 try {
@@ -72,7 +72,7 @@ try {
   assert(ready); assert.equal(heads, 0); assert.equal(commands.length, 0)
   assert.equal((await fetch(`${base}/api/ops/summary`)).status, 401); assert.equal(heads, 0); assert.equal(commands.length, 0)
   const signature = createHmac('sha256', secret).update(token).digest('base64')
-  const headers = { cookie: `better-auth.session_token=${encodeURIComponent(`${token}.${signature}`)}` }
+  const headers = { cookie: `__Secure-better-auth.session_token=${encodeURIComponent(`${token}.${signature}`)}` }
   const response = await fetch(`${base}/api/ops/summary`, { headers }); assert.equal(response.status, 200)
   const cards = (await response.json()).adapters
   assert.equal(cards.find((card: { id: string }) => card.id === 'storage').status, 'ok')

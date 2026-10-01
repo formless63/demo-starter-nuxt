@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { shallowRef, ref, onMounted, onBeforeUnmount } from 'vue'
+import { shallowRef, ref, onMounted, onScopeDispose } from 'vue'
 import { useRequestEvent, useRequestHeaders, useAsyncData, clearNuxtData, navigateTo } from '#imports'
 import type { OpsSummary } from '../server/index'
 const requestEvent = import.meta.server ? useRequestEvent() : undefined
@@ -35,16 +35,22 @@ async function refresh() {
 // Nuxt transfers the authorized initial result in this request's hydration payload.
 // Clear its entry as soon as local page state takes ownership.
 const initialKey = 'ops-admin-initial'
+const initialController = new AbortController()
+let disposed = false
+onScopeDispose(() => {
+  disposed = true; generation++; initialController.abort(); controller?.abort()
+  summary.value = undefined; clearNuxtData(initialKey)
+})
 const initial = await useAsyncData(initialKey, async () => {
-  try { return { summary: await $fetch<OpsSummary>('/api/ops/summary', { headers }), status: 200 } }
+  try { return { summary: await $fetch<OpsSummary>('/api/ops/summary', { headers, signal: initialController.signal }), status: 200 } }
   catch (error) { return { summary: undefined, status: (error as { statusCode?: number }).statusCode ?? 503 } }
 }, { deep: false })
-summary.value = initial.data.value?.summary
+if (!disposed) summary.value = initial.data.value?.summary
 if (initial.data.value?.status === 401) await navigateTo({ path: '/', query: { redirect: '/admin/ops' } })
 else if (initial.data.value?.status === 403) { denied.value = true; if (requestEvent) requestEvent.node.res.statusCode = 403 }
 else if (!summary.value) failed.value = true
 onMounted(() => { clearNuxtData(initialKey); mounted.value = true })
-onBeforeUnmount(() => { generation++; controller?.abort(); summary.value = undefined; clearNuxtData(initialKey) })
+
 </script>
 
 <template>

@@ -38,10 +38,13 @@ test('Ops guards direct API/SSR, provides manual accessible refresh and clears s
     for (const value of [token, secret, operator, 'ops-fixture@example.test']) expect(JSON.stringify(summary)).not.toContain(value)
     await context.addCookies([{ name, value: value(token), url: baseURL!, secure: Boolean(process.env.PLAYWRIGHT_BASE_URL), httpOnly: true, sameSite: 'Lax' }])
     await page.setViewportSize({ width: 375, height: 812 })
+    const hydrationWarnings: string[] = []
+    page.on('console', message => { if (/hydration/iu.test(message.text())) hydrationWarnings.push(message.text()) })
     await page.goto('/admin/ops')
     await expect(page.getByRole('heading', { name: 'Operations overview' })).toBeVisible()
     await expect(page.getByText('Last checked:')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled()
+    expect(hydrationWarnings).toEqual([])
     expect(await page.locator('body').innerText()).not.toContain('ops-fixture@example.test')
     let calls = 0
     await page.route('**/api/ops/summary', async (route) => {
