@@ -16,6 +16,7 @@ const title = ref('')
 const email = ref('')
 const role = ref<'admin' | 'member'>('member')
 const copyLink = ref('')
+const createdInvitationId = ref('')
 const message = ref('')
 const busy = ref(false)
 async function updateOrganization() {
@@ -40,10 +41,16 @@ async function invite() {
   const result = await authClient.organization.inviteMember({ organizationId: organizationId.value, email: email.value, role: role.value })
   if (result.error || !result.data) message.value = 'Invitation could not be created. Refresh state before retrying.'
   else {
+    createdInvitationId.value = result.data.id
     copyLink.value = new URL(`/app/invitations/${encodeURIComponent(result.data.id)}`, window.location.origin).toString()
     message.value = 'Invitation created. No email was sent. Copy this link for the recipient.'
   }
   busy.value = false
+}
+async function cancelInvitation() {
+  const result = await authClient.organization.cancelInvitation({ invitationId: createdInvitationId.value })
+  message.value = result.error ? 'Invitation could not be cancelled.' : 'Invitation cancelled.'
+  if (!result.error) { createdInvitationId.value = ''; copyLink.value = '' }
 }
 async function removeMember(id: string) {
   busy.value = true
@@ -100,7 +107,7 @@ async function leave() {
       <h2 class="font-semibold">Invite a member</h2><label for="invitation-email">Recipient email</label><Input id="invitation-email" v-model="email" type="email" required maxlength="254" />
       <template v-if="ownMembership?.role === 'owner'"><label for="invitation-role">Role</label><select id="invitation-role" v-model="role" class="rounded border p-2"><option value="member">Member</option><option value="admin">Admin</option></select></template>
       <Button type="submit" :disabled="busy">Create invitation</Button>
-      <template v-if="copyLink"><label for="invitation-link">Invitation link</label><Input id="invitation-link" :model-value="copyLink" readonly /><p class="text-xs text-muted-foreground">Share only with the intended recipient.</p></template>
+      <template v-if="copyLink"><label for="invitation-link">Invitation link</label><Input id="invitation-link" :model-value="copyLink" readonly /><p class="text-xs text-muted-foreground">Share only with the intended recipient.</p><Button type="button" variant="outline" @click="cancelInvitation">Cancel invitation</Button></template>
     </form>
   </div>
 </template>

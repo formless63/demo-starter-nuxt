@@ -12,4 +12,4 @@ Actions/roles are bounded code-owned registries. Persisted roles are exact `(sco
 
 Management has no default authority and no self-grant/bootstrap administrator. Caller transactions remain caller-owned; convenience mutations own one explicit transaction, with no ambiguous-write retry. Protected domain writes must share locked facts/SQL predicates with authorization. No cross-request cache, registry/assignment browser dump, policy network call, startup query, migration or seeding.
 
-The package/consumer, safe reasons/error behavior, pagination, schema, removal and reference composition are defined in capabilities/authorization/CAPABILITY.md when implemented. This evaluation does not mark the capability complete.
+The package/consumer, safe reasons/error behavior, pagination, schema, removal and reference composition are defined in capabilities/authorization/CAPABILITY.md with passing independent Bun/Node24 and postgres-js/pg lifecycle evidence. Root and release checks remain pending. This evaluation does not mark the capability complete.

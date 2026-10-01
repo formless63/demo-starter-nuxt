@@ -22,7 +22,8 @@ test('completed packages match the generic matrix and explicit reference modules
   }
   const result = spawnSync('bun', ['scripts/packages.ts', 'matrix'], { cwd: root, encoding: 'utf8' })
   expect(result.status).toBe(0)
-  expect(JSON.parse(result.stdout).capability.sort()).toEqual(done.map((entry: { id: string }) => entry.id).sort())
+  const testable = catalog.capabilities.filter((entry: { status: string, packageTest?: unknown }) => ['done', 'in-progress'].includes(entry.status) && entry.packageTest)
+  expect(JSON.parse(result.stdout).capability.sort()).toEqual(testable.map((entry: { id: string }) => entry.id).sort())
 })
 
 test('Webhooks and Notifications require Jobs; Audit, Cache and Realtime fixtures remain independent', () => {

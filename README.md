@@ -45,9 +45,9 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Realtime | Available (`done`) | Optional | Node runtime; application session policy; no capability dependency | Bounded server-to-browser SSE and WebSocket event adapters |
 | Notifications | Available (`done`) | Optional | Jobs; PostgreSQL/Drizzle; optional Email/Realtime/ntfy | Recipient-scoped persistent notifications and transactional delivery |
 | Search | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; no extra service | Owner-scoped weighted FTS and deterministic keyset pages |
-| Organizations / Tenancy | In progress; isolated consumer verification | Opt-in | Baseline Authentication/PostgreSQL/Drizzle/Node | [Native acceptance transaction finding](ORGANIZATIONS_MODULE_EVALUATION.md) |
-| Authorization | In progress; implementation pending | Opt-in | Baseline Authentication/PostgreSQL/Drizzle/Node | Exact-scope application policy; follows Organizations consumer proof |
-| Feature Flags | In progress; implementation pending | Opt-in | Baseline PostgreSQL/Drizzle/Node | Independent server boolean controls; follows Authorization |
+| Organizations / Tenancy | In progress; isolated lifecycle passed | Opt-in | Baseline Authentication/PostgreSQL/Drizzle/Node | [Native acceptance transaction finding](ORGANIZATIONS_MODULE_EVALUATION.md) |
+| Authorization | In progress; isolated lifecycle passed | Opt-in | Baseline Authentication/PostgreSQL/Drizzle/Node | [Exact-scope application policy](capabilities/authorization/CAPABILITY.md) |
+| Feature Flags | In progress; isolated lifecycle passed | Opt-in | Baseline PostgreSQL/Drizzle/Node | [Server boolean controls](capabilities/feature-flags/CAPABILITY.md) |
 
 `defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache and AI remain lazy with no provider required to boot/build.
 

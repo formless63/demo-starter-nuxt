@@ -176,7 +176,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 ### Organizations / Tenancy (`in-progress`)
 
-- Adopted compatibility revision: native Better Auth 1.7.7 acceptance uses a single-winner claim, transactional membership/session creation and best-effort compensation, without crash-atomicity; see the [reproducible evaluation](ORGANIZATIONS_MODULE_EVALUATION.md). No root capability is enabled.
+- Adopted compatibility revision: native Better Auth 1.7.7 acceptance uses a single-winner claim, transactional membership/session creation and best-effort compensation, without crash-atomicity; see the [reproducible evaluation](ORGANIZATIONS_MODULE_EVALUATION.md). Independent packed-consumer lifecycle passed; root composition and release verification are in progress.
 - Contract: [`capabilities/organizations/CAPABILITY.md`](capabilities/organizations/CAPABILITY.md)
 
 - Requires: starter authentication (baseline, not a capability edge)
@@ -185,11 +185,15 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 ### Authorization (`in-progress`)
 
+- Independent lifecycle passed; [contract](capabilities/authorization/CAPABILITY.md) and [decision](AUTHORIZATION_MODULE_EVALUATION.md).
+
 - Requires: starter authentication (baseline, not a capability edge)
 - Integrates with: Organizations, API Platform, Audit Log
 - External: PostgreSQL
 
 ### Feature Flags (`in-progress`)
+
+- Independent lifecycle passed; [contract](capabilities/feature-flags/CAPABILITY.md) and [decision](FEATURE_FLAGS_MODULE_EVALUATION.md).
 
 - Requires: none
 - Integrates with: Organizations, Authorization, Audit Log

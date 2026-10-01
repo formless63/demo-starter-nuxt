@@ -273,7 +273,8 @@ switch (command) {
     for (const capability of selectCapabilities(ids, true)) await testPackage(capability)
     break
   case 'matrix':
-    console.log(JSON.stringify({ capability: selectCapabilities([], true).map(capability => capability.id) }))
+    // Reviewable in-progress packages use the same lifecycle gate before completion.
+    console.log(JSON.stringify({ capability: packagedCapabilities.filter(capability => capability.packageTest).map(capability => capability.id) }))
     break
   default:
     fail(`Usage: bun scripts/packages.ts <prepare|build|test|matrix> [capability ...]`)
