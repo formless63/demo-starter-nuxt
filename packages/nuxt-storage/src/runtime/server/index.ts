@@ -19,6 +19,8 @@ export type StorageOperation = 'check' | 'put' | 'get' | 'head' | 'delete' | 'li
 export type StorageOperationRunner = <T>(operation: StorageOperation, action: () => Promise<T>, bytes?: number) => Promise<T>
 export interface StorageOptions extends StorageConfig {
   env?: NodeJS.ProcessEnv
+  /** Server-only construction override; ordinary Storage retains three attempts. */
+  maxAttempts?: number
   runOperation?: StorageOperationRunner
 }
 export interface ObjectMetadata {
@@ -75,8 +77,10 @@ export function createStorage(options: StorageOptions = {}) {
   let config: ReturnType<typeof resolveStorageConfig> | undefined
   function configured() { return config ??= resolveStorageConfig(options, options.env) }
   function getS3Client() {
+    if (options.maxAttempts !== undefined && (!Number.isInteger(options.maxAttempts) || options.maxAttempts < 1 || options.maxAttempts > 3)) throw new StorageError('configuration')
     return client ??= new S3Client({
       ...configured(),
+      maxAttempts: options.maxAttempts ?? 3,
       // Optional automatic CRC checksums break several S3-compatible stores. SigV4
       // still authenticates requests; applications may explicitly use the escape hatch.
       requestChecksumCalculation: 'WHEN_REQUIRED', responseChecksumValidation: 'WHEN_REQUIRED',

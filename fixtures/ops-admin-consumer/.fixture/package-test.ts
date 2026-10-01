@@ -65,6 +65,9 @@ try {
     assert.equal((await fetch(`${base}/api/ops/summary`, { headers: { cookie: operatorCookie } })).status, 401)
     await sql`INSERT INTO session (id,token,user_id,expires_at) VALUES (${crypto.randomUUID()},${token},${operator},now()+interval '1 hour')`
   })
+  await boot(Array(101).fill(operator).join(','), async (base) => {
+    assert.equal((await fetch(`${base}/api/ops/summary`, { headers: { cookie: operatorCookie } })).status, 200)
+  })
   for (const allowlist of ['', 'malformed\nidentifier', Array.from({ length: 101 }, (_, i) => `u${i}`).join(',')]) await boot(allowlist, async (base) => {
     const response = await fetch(`${base}/api/ops/summary`, { headers: { cookie: operatorCookie } })
     assert.equal(response.status, allowlist ? 503 : 403)

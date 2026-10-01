@@ -1,2 +1,5 @@
 import { closeOpsJobs } from '../ops/jobs'
-export default defineNitroPlugin((nitro) => { nitro.hooks.hook('close', closeOpsJobs) })
+import { closeOpsStorage } from '../ops/storage'
+export default defineNitroPlugin((nitro) => {
+  nitro.hooks.hook('close', async () => { closeOpsStorage(); await closeOpsJobs() })
+})
