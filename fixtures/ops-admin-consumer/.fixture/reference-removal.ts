@@ -32,6 +32,7 @@ for (const removed of [...ids, 'all', 'ops']) {
     let source = original
     const excluded = removed === 'all' ? ids : [removed]
     for (const id of excluded) source = source.replace(new RegExp(`    \\{ id: '${id}',[\\s\\S]*? \\},?\\n`, 'u'), '')
+    if (excluded.includes('webhooks')) source = source.replace("import { webhookJobs } from '../webhooks/registry'\n", '')
     if (excluded.includes('storage')) source = source.replace("import { inspectOpsStorage } from './storage'\n", '')
     if (excluded.includes('cache')) source = source.replace("import { getCache } from '@repo/nuxt-cache/server'\n", '')
     if (excluded.includes('jobs') && excluded.includes('webhooks')) source = source.replace("import { inspectOpsJobs } from './jobs'\n", '')

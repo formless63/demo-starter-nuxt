@@ -1,6 +1,5 @@
 import { createJobsBoss, resolveJobsConfig } from '@repo/nuxt-jobs/server'
 import { jobRegistry } from '../jobs/registry'
-import { webhookJobs } from '../webhooks/registry'
 
 const names = Object.values(jobRegistry).map(job => job.name)
 let reader: Promise<ReturnType<typeof createJobsBoss>> | undefined
@@ -21,9 +20,10 @@ async function sharedQueues() {
   inspection ??= readQueues().finally(() => { inspection = undefined })
   return inspection
 }
-export async function inspectOpsJobs(webhooksOnly = false) {
+export async function inspectOpsJobs(queueName?: string) {
   const rows = await sharedQueues()
-  const selected = webhooksOnly ? rows.filter(row => row.name === webhookJobs.delivery.name) : rows
+  if (queueName !== undefined && !names.includes(queueName)) throw new Error('Operations unavailable')
+  const selected = queueName === undefined ? rows : rows.filter(row => row.name === queueName)
   // getQueues does not expose the monitor sample time. Counts are cached and may
   // be initial defaults; omit them rather than label an unknown zero instantaneous.
   return { status: selected.length ? 'degraded' as const : 'unavailable' as const, code: 'sample-unknown' as const }
