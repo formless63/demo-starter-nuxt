@@ -1,0 +1,29 @@
+{
+  "name": "import-export-consumer-fixture",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck",
+    "db:migrate": "drizzle-kit migrate",
+    "jobs:migrate": "nuxt-jobs migrate",
+    "jobs:doctor": "nuxt-jobs doctor",
+    "jobs:worker": "nuxt-jobs worker --registry server/jobs/registry.ts",
+    "package:test:runtime": "bun .fixture/package-test.ts"
+  },
+  "dependencies": {
+    "nuxt": "4.5.2",
+    "@repo/nuxt-jobs": "workspace:*",
+    "drizzle-orm": "0.45.3",
+    "postgres": "3.4.9",
+    "zod": "4.6.5",
+    "@repo/nuxt-import-export": "workspace:*",
+    "@repo/nuxt-storage": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vue-tsc": "3.1.7",
+    "@types/node": "24.10.1",
+    "drizzle-kit": "0.31.11"
+  }
+}

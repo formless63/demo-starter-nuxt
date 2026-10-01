@@ -1,0 +1,49 @@
+services:
+  rustfs:
+    image: rustfs/rustfs:1.0.0
+    profiles: [rustfs]
+    command: ["/data"]
+    environment:
+      RUSTFS_ACCESS_KEY: ${STORAGE_DEV_ACCESS_KEY:-starter-storage-dev}
+      RUSTFS_SECRET_KEY: ${STORAGE_DEV_SECRET_KEY:-local-only-storage-secret-change-me}
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CONSOLE_ADDRESS: ":9001"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CORS_ALLOWED_ORIGINS: ${STORAGE_DEV_ORIGIN:-http://localhost:3000}
+      RUSTFS_OBS_LOGGER_LEVEL: error
+      RUSTFS_OBS_LOG_DIRECTORY: /data/logs
+    ports:
+      - "127.0.0.1:${RUSTFS_PORT:-9000}:9000"
+      - "127.0.0.1:${RUSTFS_CONSOLE_PORT:-9001}:9001"
+    volumes: [rustfs-data:/data]
+    restart: unless-stopped
+  garage:
+    image: dxflrs/garage:v2.4.1
+    profiles: [garage]
+    command: ["/garage", "server", "--single-node", "--default-bucket"]
+    environment:
+      GARAGE_DEFAULT_ACCESS_KEY: ${GARAGE_DEV_ACCESS_KEY:-GK0123456789abcdef0123456789abcdef}
+      GARAGE_DEFAULT_SECRET_KEY: ${STORAGE_DEV_SECRET_KEY:-local-only-storage-secret-change-me}
+      GARAGE_DEFAULT_BUCKET: ${STORAGE_DEV_BUCKET:-starter-storage}
+      RUST_LOG: warn
+    ports: ["127.0.0.1:${GARAGE_PORT:-3900}:3900"]
+    volumes:
+      - ./garage.toml:/etc/garage.toml:ro
+      - garage-data:/var/lib/garage
+    restart: unless-stopped
+  garage-ui:
+    image: noooste/garage-ui:v0.13.0
+    profiles: [garage-ui]
+    depends_on: [garage]
+    environment:
+      # Operator-only token/region come from Garage's config, never S3 credentials.
+      GARAGE_UI_GARAGE_TOML: /etc/garage.toml
+      GARAGE_UI_GARAGE_ENDPOINT: http://garage:3900
+      GARAGE_UI_GARAGE_ADMIN_ENDPOINT: http://garage:3903
+      GARAGE_UI_AUTH_TOKEN_ENABLED: "true"
+    volumes: [./garage.toml:/etc/garage.toml:ro]
+    ports: ["127.0.0.1:${GARAGE_UI_PORT:-3909}:8080"]
+    restart: unless-stopped
+volumes:
+  rustfs-data:
+  garage-data:

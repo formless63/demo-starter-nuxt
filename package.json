@@ -51,7 +51,9 @@
     "cache:dev:valkey": "bun scripts/cache-dev.ts valkey",
     "cache:dev:down": "bun scripts/cache-dev.ts down",
     "ai:smoke": "bun scripts/ai-smoke.ts",
-    "test:notification-email": "bun fixtures/notifications-consumer/.fixture/email-reference.ts"
+    "test:notification-email": "bun fixtures/notifications-consumer/.fixture/email-reference.ts",
+    "transfers:reconcile": "bun scripts/transfers.ts reconcile",
+    "transfers:purge": "bun scripts/transfers.ts purge"
   },
   "dependencies": {
     "@repo/nuxt-api": "workspace:*",
@@ -83,7 +85,8 @@
     "@repo/nuxt-realtime": "workspace:*",
     "@repo/nuxt-notifications": "workspace:*",
     "@repo/nuxt-search": "workspace:*",
-    "@repo/nuxt-ai": "workspace:*"
+    "@repo/nuxt-ai": "workspace:*",
+    "@repo/nuxt-import-export": "workspace:*"
   },
   "devDependencies": {
     "@nuxt/eslint": "1.17.0",
