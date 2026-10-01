@@ -63,3 +63,9 @@ Search verification: bun run packages:test search retains an independent disposa
 Production CI runs the full E2E suite against the built container with its disposable database. `DISPOSABLE_DATABASE_TESTS=true` permits a restored Search column-rename failure probe; `PRODUCTION_COMPOSE_PROJECT` selects only that test stack for safe-error/log privacy verification. Generic package-test metadata optionally declares `postRemovalScript` (after final rebuild) and `cleanupScript` (in finally) for retained external-state proofs. Both scripts must survive removal.
 
 AI: `bun run packages:test ai` verifies packed install/backendless Node boot/actual local HTTP SDK adapter/disconnect/removal/post-removal build. `bun run ai:smoke` is a deliberately invoked single configured model operation, logging only safe finish/usage. No provider is required for ordinary check/build/start/health.
+
+Organizations in-progress verification: `bun run packages:test organizations` exercises native HTTP/auth.api, postgres-js/pg on Bun/Node24 and retained-data removal. `bun fixtures/organizations-consumer/.fixture/upstream-atomicity.ts` reproduces the upstream crash window using only one uniquely owned loopback PostgreSQL18 database. This diagnostic is not an atomicity or completion claim.
+
+Identity-policy checks: `bun run packages:test authorization`, `bun run packages:test feature-flags`; each retains a uniquely owned local PostgreSQL18 database through removal/rebuild. `identity:fixture` requires explicit local operator/subject authority; never seed at startup. Run browser verification after package rebuilding completes because the shared generated artifacts are replaced by prepack.
+
+The generic CI matrix includes done/in-progress package pairs with packageTest metadata, so hosted lifecycle checks precede the status-done gate. Default local `packages:test` remains the completed-capability sweep; explicit IDs verify in-progress work.

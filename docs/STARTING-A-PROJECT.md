@@ -2,6 +2,8 @@
 
 The repository is both a baseline starter and a reference application. Choose which of the twelve completed capabilities belong in the product before building domain features around them.
 
+Organizations, Authorization and Feature Flags have independent packed-consumer lifecycle proofs and explicit root registrations. Their full release gates remain in progress. Follow each [capability contract](CAPABILITIES.md) for opt-in installation/schema composition; apply committed migrations explicitly. Personal Project ownership remains enforced, independent of active organization and feature controls.
+
 ## Full/reference setup
 
 The root application explicitly registers Jobs, API Platform, Observability, Object Storage, Email, Webhooks, Audit Log, Cache / Coordination, Realtime, Notifications, Search and AI. It includes:
@@ -160,3 +162,26 @@ When removing **Observability while retaining Realtime/Notifications**, remove o
 3. Clear generated output, reinstall and run catalog checks, normal typecheck/build/tests and production verification. No schema/data migration exists. The packed fixture proves provider SDK removal when unused; shared Zod may remain.
 
 Never delete/revoke external provider accounts or secrets automatically. Removing Observability while retaining AI replaces the optional wrapper with plain package generation. Permanent pruning updates catalog/docs before removing package/fixture/contract/evaluation/ai-change skill, retaining the roadmap ID where referenced.
+
+
+## Remove Organizations
+
+Remove the module/dependency, native client plugin, both native/guard auth plugins, direct organization error boundary, organization routes/pages/switcher, notes reference integration and four ORGANIZATIONS settings. Restore baseline auth options/hooks and keep password/account deletion disabled. Replace Authorization's optional tenant membership resolver with an application-owned authoritative resolver or deny tenant scopes; remove Flags' optional active-organization target resolver or replace it with a verified application source. Personal Projects never acquire tenant meaning.
+
+Remove package schema imports/composition, retaining equivalent local declarations as needed so later Drizzle generation cannot propose destructive SQL. Preserve organization/member/invitation/session active column/notes, applied0006 migration and history. The packed fixture proves package removal retains native tables/indexes and ordinary baseline sessions. Run remaining login/session/Projects and policy tests, normal checks and production explicit migration/worker/health verification. No operator data cleanup is implied.
+
+## Remove Authorization
+
+Remove module/dependency and application-policy imports/calls, assignment management fixture paths and preview permission surface. Explicitly restore original owner SQL and owner checks in Projects and member-read/owner-admin-write checks for organization notes within their caller transactions. Retain machine API-key verification/grants/rate limits. Retained routes must never be left with an absent guard. Organizations native administration and boolean flags stay independent.
+
+Remove package schema imports while retaining assignment table declarations/history as needed; preserve0007 applied SQL/journal/snapshots and assignments. Generic fixture removal proves rows/indexes/migrations survive and remaining owner predicates still exclude foreign records. Reinstall/clear generated output and verify all remaining packages/routes/browser/production gates.
+
+## Remove Feature Flags
+
+Remove module/dependency, application-flags utility, fixed client endpoint, useFeatureFlags/BetaDashboardPanel projection and local flag-management fixture operations. Restore explicit false product defaults; retain every authentication/authorization/tenant predicate and any separately selected preview action. Remove schema imports/composition while preserving definitions/overrides/indexes and0008 applied migration/history using equivalent local declarations when needed. No startup or removal data deletion exists.
+
+The generic fixture proves retained data/index/migration history after clean removal/rebuild. Reinstall/clear generated output and run remaining normal/browser/production checks. Removing Organizations/Authorization/Audit does not require removing the independent provider: replace only application-owned identity/management/audit adapters.
+
+## Explicit local identity demonstration
+
+`bun run identity:fixture seed OPERATOR_ID SUBJECT_ID --local-fixture` creates disabled beta.dashboard in a disposable loopback database, without automatic startup seeding. `toggle OPERATOR_ID SUBJECT_ID EXPECTED_REVISION true|false` requires the current revision. `grant`/`revoke` manage only the code-owned dashboard-reader role in the exact subject user scope; identities must already exist and operator authority is explicitly supplied. These commands are development/test fixtures, never production provisioning or a public IAM console. They log a safe operation outcome only.

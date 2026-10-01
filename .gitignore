@@ -13,3 +13,6 @@ packages/*/dist
 
 .nuxtrc
 .claude/settings.local.json
+
+# Fixture-owned disposable retention witnesses (never application config).
+fixtures/*/.fixture/state.json

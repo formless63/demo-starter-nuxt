@@ -4,7 +4,7 @@ COPY . .
 # Optional build-only trust for managed environments; never copied into the image.
 RUN --mount=type=secret,id=proxy_ca \
   if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
-  bun install --frozen-lockfile
+  bun install --frozen-lockfile --network-concurrency=4
 RUN --mount=type=secret,id=proxy_ca \
   if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
   NUXT_TYPECHECK=false bun run build \
