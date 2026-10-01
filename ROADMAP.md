@@ -165,7 +165,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Implementation: application-included Drizzle records, recipient keyset/read state, transactional Jobs delivery, optional app Email/post-commit Realtime integrations.
 - Contract: [`capabilities/notifications/CAPABILITY.md`](capabilities/notifications/CAPABILITY.md)
 
-### Import / Export (`planned`)
+### Import / Export (`in-progress`)
 
 - Requires: Jobs, Object Storage
 - Integrates with: Notifications, Audit Log
