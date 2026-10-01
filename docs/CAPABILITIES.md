@@ -27,6 +27,8 @@ The root application deliberately enables every completed capability for continu
 | `notifications` | `@repo/nuxt-notifications` | Enabled | No | Jobs | ntfy optional; Email integration optional | [Notifications](../capabilities/notifications/CAPABILITY.md) |
 | `search` | `@repo/nuxt-search` | Enabled | No | None | Existing PostgreSQL | [Search](../capabilities/search/CAPABILITY.md) |
 
+Organizations, Authorization and Feature Flags are in-progress roadmap work, not available packages or enabled root capabilities. Organizations first needs the [native acceptance transaction compatibility gate](../ORGANIZATIONS_MODULE_EVALUATION.md); the others follow its isolated-consumer proof. See the [Organizations contract](../capabilities/organizations/CAPABILITY.md).
+
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
 
 ## Adding or enabling a capability

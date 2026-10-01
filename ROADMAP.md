@@ -176,6 +176,9 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 ### Organizations / Tenancy (`in-progress`)
 
+- Launch compatibility gate: native Better Auth 1.7.7 acceptance does not atomically commit invitation claim with membership; see the [reproducible evaluation](ORGANIZATIONS_MODULE_EVALUATION.md). No root capability is enabled.
+- Contract: [`capabilities/organizations/CAPABILITY.md`](capabilities/organizations/CAPABILITY.md)
+
 - Requires: starter authentication (baseline, not a capability edge)
 - Integrates with: Audit Log, Notifications
 - External: PostgreSQL

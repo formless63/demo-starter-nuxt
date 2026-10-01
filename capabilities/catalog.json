@@ -942,7 +942,9 @@
           "required": true
         }
       ],
-      "summary": "Authenticated organization membership and tenant scoping."
+      "summary": "Authenticated organization membership and tenant scoping.",
+      "documentationPath": "capabilities/organizations/CAPABILITY.md",
+      "evaluationDocument": "ORGANIZATIONS_MODULE_EVALUATION.md"
     },
     {
       "id": "authorization",

@@ -2,6 +2,8 @@
 
 The repository is both a baseline starter and a reference application. Choose which of the twelve completed capabilities belong in the product before building domain features around them.
 
+Organizations, Authorization and Feature Flags are not yet installable. The [Organizations acceptance compatibility gate](../ORGANIZATIONS_MODULE_EVALUATION.md) is under investigation; the root continues to use its existing authenticated personal owner checks. The compatibility probe is disposable test tooling, not a runtime capability.
+
 ## Full/reference setup
 
 The root application explicitly registers Jobs, API Platform, Observability, Object Storage, Email, Webhooks, Audit Log, Cache / Coordination, Realtime, Notifications, Search and AI. It includes:
