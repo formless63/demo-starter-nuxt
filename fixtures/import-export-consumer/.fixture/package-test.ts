@@ -5,7 +5,8 @@ import postgres from 'postgres'
 import { PgBoss } from 'pg-boss'
 import { fileURLToPath } from 'node:url'
 import { migrate } from 'drizzle-orm/postgres-js/migrator'
-import { saveState, snapshot } from './lifecycle'
+import { digestObject, saveState, snapshot } from './lifecycle'
+import type { RetainedProvider } from './lifecycle'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { eq, sql } from 'drizzle-orm'
 import { pgTable, text, uuid } from 'drizzle-orm/pg-core'
@@ -26,7 +27,7 @@ let backend: Awaited<ReturnType<typeof startProvider>> | undefined
 let project: string | undefined
 const revoked = new Set<string>()
 let success = false
-const survivors: { project: string, config: Awaited<ReturnType<typeof startProvider>>['config'], key: string }[] = []
+const survivors: RetainedProvider[] = []
 let failSql = false, calls = 0, snapshotHook: (() => Promise<void>) | undefined
 try {
   await admin.unsafe(`CREATE DATABASE "${databaseName}"`)
@@ -65,6 +66,21 @@ try {
     await defineQueues(boss, { [service.runJob.name]: service.runJob })
     const run = (id: string, retryCount = 5) => service.runJob.handler({ transferId: id }, { id: randomUUID(), signal: new AbortController().signal, retryCount, retryLimit: 5 })
     const stage = (source: string) => service.stageImport(owner, { definition: 'projects', body: Readable.from((function* () { const data = Buffer.from(source); for (let offset = 0; offset < data.length; offset++) yield data.subarray(offset, offset + 1) })()) })
+    const tenantA = { requesterId: owner.requesterId, scope: { kind: 'tenant' as const, id: 'opaque:tenant-a' } }
+    const tenantB = { requesterId: owner.requesterId, scope: { kind: 'tenant' as const, id: 'opaque:tenant-b' } }
+    const tenantReceipts = await Promise.all([tenantA, tenantB].map(context => service.stageImport(context, { definition: 'projects', body: Readable.from([Buffer.from('name,description\n')]) })))
+    const tenantKey = randomUUID()
+    for (const [index, context] of [tenantA, tenantB].entries()) {
+      assert.equal((await service.getTransfer(context, { transferId: tenantReceipts[index]!.id })).status, 'staged')
+      await assert.rejects(service.getTransfer(context, { transferId: tenantReceipts[1 - index]!.id }), { code: 'not-found' })
+      await assert.rejects(service.startImport(context, { transferId: tenantReceipts[1 - index]!.id, idempotencyKey: tenantKey }), { code: 'not-found' })
+      await assert.rejects(service.cancelTransfer(context, { transferId: tenantReceipts[1 - index]!.id }), { code: 'not-found' })
+      await assert.rejects(service.getExportDownload(context, { transferId: tenantReceipts[1 - index]!.id }), { code: 'not-found' })
+      const listed = await service.listTransfers(context)
+      assert(listed.items.some(item => item.id === tenantReceipts[index]!.id)); assert(!listed.items.some(item => item.id === tenantReceipts[1 - index]!.id))
+      assert.equal((await service.startImport(context, { transferId: tenantReceipts[index]!.id, idempotencyKey: tenantKey })).id, tenantReceipts[index]!.id)
+      await service.cancelTransfer(context, { transferId: tenantReceipts[index]!.id })
+    }
     const successful = await stage('\ufeffname,description\r\ncafé,"line1\n""line2"""\r\n')
     await assert.rejects(service.getTransfer(other, { transferId: successful.id }), { code: 'not-found' })
     await assert.rejects(service.getTransfer({ ...owner, scope: { kind: 'tenant', id: 'different' } }, { transferId: successful.id }), { code: 'not-found' })
@@ -193,9 +209,12 @@ try {
     // No implicit cleanup: source remains through success until explicit selected purge.
     await backend.storage.headObject(source!.sourceKey!)
     console.info(`[import-export] ${provider} real protocol/atomicity/snapshot contract passed`)
-    const backendConfig = backend.config
+    const retained: RetainedProvider = { project, config: backend.config, objects: [
+      { kind: 'source', ...await digestObject(backend.storage, source!.sourceKey!) },
+      { kind: 'output', ...await digestObject(backend.storage, nodeReceipt!.artifactKey!) },
+    ], job: { queue: service.runJob.name, id: nodeReceipt!.jobId!, record: JSON.parse(JSON.stringify(nativeNodeJob)) } }
     backend.storage.close(); backend = undefined
-    survivors.push({ project, config: backendConfig, key: source!.sourceKey! }); project = undefined
+    survivors.push(retained); project = undefined
   }
   await saveState({ databaseName, url: url.href, snapshot: JSON.parse(JSON.stringify(await snapshot(connection))), providers: survivors })
   success = true
