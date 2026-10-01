@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IconFolder, IconKey, IconLogout, IconMenu2 } from '@tabler/icons-vue'
+import { IconBuilding, IconFolder, IconKey, IconLogout, IconMenu2 } from '@tabler/icons-vue'
 import { authClient } from '~~/lib/auth-client'
 import { Button } from '@/components/ui/button'
 
@@ -23,6 +23,7 @@ async function signOut() {
       <NuxtLink class="mb-8 block font-bold" to="/app">
         Nuxt Starter
       </NuxtLink>
+      <OrganizationSwitcher />
       <nav>
         <NuxtLink
           class="flex items-center gap-2 rounded-lg p-2 hover:bg-accent"
@@ -38,6 +39,7 @@ async function signOut() {
           <IconKey :size="18" />
           API keys
         </NuxtLink>
+        <NuxtLink class="flex items-center gap-2 rounded-lg p-2 hover:bg-accent" to="/app/organizations"><IconBuilding :size="18" />Organizations</NuxtLink>
       </nav>
     </aside>
 

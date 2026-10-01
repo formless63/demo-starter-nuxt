@@ -9,11 +9,13 @@
         "@repo/nuxt-ai": "workspace:*",
         "@repo/nuxt-api": "workspace:*",
         "@repo/nuxt-audit-log": "workspace:*",
+        "@repo/nuxt-authorization": "workspace:*",
         "@repo/nuxt-cache": "workspace:*",
         "@repo/nuxt-email": "workspace:*",
         "@repo/nuxt-jobs": "workspace:*",
         "@repo/nuxt-notifications": "workspace:*",
         "@repo/nuxt-observability": "workspace:*",
+        "@repo/nuxt-organizations": "workspace:*",
         "@repo/nuxt-realtime": "workspace:*",
         "@repo/nuxt-search": "workspace:*",
         "@repo/nuxt-storage": "workspace:*",
@@ -87,6 +89,22 @@
         "postgres": "3.4.9",
       },
       "devDependencies": {
+        "drizzle-kit": "0.31.11",
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7",
+      },
+    },
+    "fixtures/authorization-consumer": {
+      "name": "authorization-consumer-fixture",
+      "dependencies": {
+        "@repo/nuxt-authorization": "workspace:*",
+        "drizzle-orm": "0.45.3",
+        "nuxt": "4.5.2",
+        "pg": "8.23.0",
+        "postgres": "3.4.9",
+      },
+      "devDependencies": {
+        "@types/pg": "8.15.6",
         "drizzle-kit": "0.31.11",
         "typescript": "5.9.3",
         "vue-tsc": "3.1.7",
@@ -281,6 +299,21 @@
       },
       "peerDependencies": {
         "drizzle-orm": ">=0.45.0 <1",
+        "nuxt": ">=4.0.0 <5",
+      },
+    },
+    "packages/nuxt-authorization": {
+      "name": "@repo/nuxt-authorization",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+        "drizzle-orm": "0.45.3",
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "nuxt": "4.5.2",
+      },
+      "peerDependencies": {
         "nuxt": ">=4.0.0 <5",
       },
     },
@@ -945,6 +978,8 @@
 
     "@repo/nuxt-audit-log": ["@repo/nuxt-audit-log@workspace:packages/nuxt-audit-log"],
 
+    "@repo/nuxt-authorization": ["@repo/nuxt-authorization@workspace:packages/nuxt-authorization"],
+
     "@repo/nuxt-cache": ["@repo/nuxt-cache@workspace:packages/nuxt-cache"],
 
     "@repo/nuxt-email": ["@repo/nuxt-email@workspace:packages/nuxt-email"],
@@ -1406,6 +1441,8 @@
     "atomic-sleep": ["atomic-sleep@1.0.0", "", {}, "sha512-kNOjDqAh7px0XWNI+4QbzoiR/nTkHAWNud2uvnJquD1/x5a7EQZMJT0AczqK0Qn67oY/TTQ1LbUKajZpp3I9tQ=="],
 
     "audit-log-consumer-fixture": ["audit-log-consumer-fixture@workspace:fixtures/audit-log-consumer"],
+
+    "authorization-consumer-fixture": ["authorization-consumer-fixture@workspace:fixtures/authorization-consumer"],
 
     "autoprefixer": ["autoprefixer@10.6.1", "", { "dependencies": { "browserslist": "^4.28.9", "caniuse-lite": "^1.0.30001810", "fraction.js": "^5.3.4", "picocolors": "^1.1.1", "postcss-value-parser": "^4.2.0" }, "peerDependencies": { "postcss": "^8.1.0" }, "bin": { "autoprefixer": "bin/autoprefixer" } }, "sha512-cL1Qz6ADZhcEbny/8HPfe99J6HhNoYtpX2LFLIbhgGE7Q1hlQVkYFdetDN7Id3KiQxhDrHwzlHr/YQCnZ8+xSA=="],
 

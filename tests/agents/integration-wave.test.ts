@@ -7,12 +7,14 @@ const root = resolve(import.meta.dir, '../..')
 const catalog = JSON.parse(readFileSync(resolve(root, 'capabilities/catalog.json'), 'utf8'))
 const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai']
 
-test('all twelve completed packages are explicitly enabled and discovered by the generic matrix', () => {
+test('completed packages match the generic matrix and explicit reference modules', () => {
   const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
   const nuxt = readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')
-  expect(catalog.capabilities.filter((entry: { status: string }) => entry.status === 'done').map((entry: { id: string }) => entry.id).sort()).toEqual([...completed].sort())
-  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed].sort())
-  for (const id of completed) {
+  const done = catalog.capabilities.filter((entry: { status: string }) => entry.status === 'done')
+  const selected = catalog.capabilities.filter((entry: { packageName?: string, status: string }) => entry.packageName && manifest.dependencies[entry.packageName] && entry.status === 'done')
+  for (const id of completed) expect(done.some((entry: { id: string }) => entry.id === id)).toBe(true)
+  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual(selected.map((entry: { id: string }) => entry.id).sort())
+  for (const id of selected.map((entry: { id: string }) => entry.id)) {
     const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === id)
     expect(entry.defaultInstalled).toBe(false)
     expect(manifest.dependencies[entry.packageName]).toBe('workspace:*')
@@ -20,7 +22,7 @@ test('all twelve completed packages are explicitly enabled and discovered by the
   }
   const result = spawnSync('bun', ['scripts/packages.ts', 'matrix'], { cwd: root, encoding: 'utf8' })
   expect(result.status).toBe(0)
-  expect(JSON.parse(result.stdout).capability.sort()).toEqual([...completed].sort())
+  expect(JSON.parse(result.stdout).capability.sort()).toEqual(done.map((entry: { id: string }) => entry.id).sort())
 })
 
 test('Webhooks and Notifications require Jobs; Audit, Cache and Realtime fixtures remain independent', () => {

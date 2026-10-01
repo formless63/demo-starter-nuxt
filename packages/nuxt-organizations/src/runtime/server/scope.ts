@@ -6,7 +6,7 @@ import { OrganizationError, safeOrganizationError } from './errors'
 import { memberRole, opaqueId, type OrganizationRole } from './validation'
 
 type Connection = Pick<PgDatabase<PgQueryResultHKT>, 'select' | 'execute'>
-type Database = Pick<PgDatabase<PgQueryResultHKT>, 'transaction'>
+interface Database { transaction<T>(operation: (tx: Connection) => Promise<T>): Promise<T> }
 export interface TenantContext {
   readonly scope: Readonly<{ kind: 'tenant', id: string }>
   readonly userId: string

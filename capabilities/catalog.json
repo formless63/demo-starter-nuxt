@@ -991,7 +991,29 @@
           "required": true
         }
       ],
-      "summary": "Reusable application policy and permission primitives beyond the starter's owner checks."
+      "summary": "Reusable application policy and permission primitives beyond the starter's owner checks.",
+      "packageName": "@repo/nuxt-authorization",
+      "packagePath": "packages/nuxt-authorization",
+      "fixturePath": "fixtures/authorization-consumer",
+      "evaluationDocument": "AUTHORIZATION_MODULE_EVALUATION.md",
+      "documentationPath": "capabilities/authorization/CAPABILITY.md",
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server",
+            ".fixture/contract.ts",
+            ".fixture/package-test.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        },
+        "postRemovalScript": "package:test:survival",
+        "cleanupScript": "package:test:cleanup"
+      }
     },
     {
       "id": "feature-flags",

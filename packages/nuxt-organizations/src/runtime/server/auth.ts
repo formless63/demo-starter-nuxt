@@ -131,6 +131,12 @@ export function organizationsAuth(env: Record<string, string | undefined> = proc
             const body = ctx.body === undefined ? {} : object(ctx.body)
             if (ctx.path === '/organization/delete') fail('unsupported')
             const orgId = body.organizationId ?? (current.session as { activeOrganizationId?: string | null }).activeOrganizationId
+            if (body.organizationId !== undefined && body.organizationId !== null) opaqueId(body.organizationId)
+            if (body.memberId !== undefined) opaqueId(body.memberId)
+            if (body.memberIdOrEmail !== undefined) {
+              if (typeof body.memberIdOrEmail === 'string' && body.memberIdOrEmail.includes('@')) invitationEmail(body.memberIdOrEmail)
+              else opaqueId(body.memberIdOrEmail)
+            }
             if (ctx.path === '/organization/create') {
               allowedFields(body, ['name', 'slug', 'keepCurrentActiveOrganization'])
               const { name, slug } = organizationFields({ name: body.name, slug: body.slug }, true)
@@ -143,6 +149,11 @@ export function organizationsAuth(env: Record<string, string | undefined> = proc
             if (ctx.path === '/organization/invite-member') {
               allowedFields(body, ['organizationId', 'email', 'role', 'resend'])
               const role = await invitePolicy(ctx, orgId, body.role)
+              if (body.resend === true) {
+                const adapter = await getCurrentAdapter(ctx.context.adapter)
+                const existing = await adapter.findMany<{ role: string, expiresAt: Date }>({ model: 'invitation', where: [{ field: 'organizationId', value: opaqueId(orgId) }, { field: 'email', value: invitationEmail(body.email) }, { field: 'status', value: 'pending' }], limit: options.invitationLimit })
+                for (const pending of existing) if (new Date(pending.expiresAt).getTime() > Date.now()) await invitePolicy(ctx, orgId, pending.role)
+              }
               // Resend returns before beforeCreateInvitation; enforce the same policy here.
               ctx.body = { ...body, email: invitationEmail(body.email), role }
             }

@@ -1,10 +1,12 @@
+import { roleAssignment } from '@repo/nuxt-authorization/schema'
 import { sql } from 'drizzle-orm'
 import { boolean, customType, index, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
 import { auditEvent } from '@repo/nuxt-audit-log/server'
 import { notification } from '@repo/nuxt-notifications/schema'
+import { organization, member, invitation, activeOrganizationId } from '@repo/nuxt-organizations/schema'
 import { apikey } from '@repo/nuxt-api/server'
 
-export { apikey, auditEvent, notification }
+export { roleAssignment, apikey, auditEvent, notification, organization, member, invitation }
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -26,6 +28,7 @@ export const session = pgTable('session', {
   token: text('token').notNull(),
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
+  activeOrganizationId: activeOrganizationId(),
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   ...timestamps,
 }, table => [
@@ -70,4 +73,10 @@ export const project = pgTable('project', {
   ...timestamps,
 }, table => [index('project_owner_updated_idx').on(table.ownerId, table.updatedAt), index('project_search_vector_gin_idx').using('gin', table.searchVector)])
 
-export const schema = { user, session, account, verification, apikey, project, auditEvent, notification }
+export const organizationNote = pgTable('organization_note', {
+  id: text('id').primaryKey(), organizationId: text('organization_id').notNull(), title: text('title').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true, precision: 3 }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true, precision: 3 }).notNull().defaultNow(),
+}, table => [index('organization_note_scope_created_idx').on(table.organizationId, table.createdAt, table.id)])
+
+export const schema = { user, session, account, verification, apikey, project, auditEvent, notification, organization, member, invitation, organizationNote, roleAssignment }
