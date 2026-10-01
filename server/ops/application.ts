@@ -1,5 +1,5 @@
 import { createOpsService, type OpsApplication } from '@repo/nuxt-ops-admin/server'
-import { getStorage } from '@repo/nuxt-storage/server'
+import { inspectOpsStorage } from './storage'
 import { getCache } from '@repo/nuxt-cache/server'
 import { inspectOpsJobs } from './jobs'
 
@@ -11,7 +11,7 @@ export const opsApplication: OpsApplication = {
     { id: 'jobs', title: 'Jobs (sample time unknown)', isConfigured: () => Boolean(process.env.PGBOSS_DATABASE_URL || process.env.DATABASE_URL),
       inspect: () => inspectOpsJobs() },
     { id: 'storage', title: 'Private object storage', isConfigured: () => Boolean(process.env.STORAGE_BUCKET),
-      inspect: async () => { await getStorage().checkStorage(); return { status: 'ok' } } },
+      inspect: () => inspectOpsStorage() },
     { id: 'cache', title: 'Cache connection', isConfigured: () => Boolean(process.env.CACHE_URL),
       inspect: async () => { await getCache().checkCache(); return { status: 'ok' } } },
     { id: 'audit', title: 'Audit capability (history not scanned)', isConfigured: () => true,

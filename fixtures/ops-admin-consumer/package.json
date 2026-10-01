@@ -3,7 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "postinstall": "nuxt prepare",
     "build": "nuxt build",
     "typecheck": "nuxt typecheck",
     "package:test:runtime": "bun .fixture/package-test.ts",

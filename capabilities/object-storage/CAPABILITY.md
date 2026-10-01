@@ -168,3 +168,5 @@ The fixture owns backendless production boot, real pinned containers, explicit b
 ## Agent guidance
 
 Use `capability-change` and `storage-change`. Keep S3 credentials server-only, objects private, configuration lazy, bootstrap explicit, streams consumed/closed, signed headers exact and metric dimensions bounded. No File UI, attachment/files table, transforms, scanner, CDN policy, upload intent or processing jobs belong in this capability.
+
+Server-only `createStorage({maxAttempts})` accepts integer 1–3; default 3 preserves ordinary operation retries. Application diagnostics may select 1 on a separate caller-owned lazy client. No environment knob or SDK middleware mutation is introduced.

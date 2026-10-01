@@ -12,6 +12,7 @@ describe('Ops access and sanitized summary', () => {
     await expect(authorizeOps(app('organization-owner'), event, 'operator')).rejects.toMatchObject({ code: 'forbidden' })
     expect([...parseOpsAllowlist(' a, ,a,b ')]).toEqual(['a', 'b'])
     expect(parseOpsAllowlist('x'.repeat(128)).size).toBe(1)
+    expect(parseOpsAllowlist(Array(101).fill('x'.repeat(128)).join(',')).size).toBe(1)
     expect(parseOpsAllowlist(Array.from({ length: 100 }, (_, i) => `id${i}`).join(',')).size).toBe(100)
     for (const value of ['x'.repeat(129), 'unsafe\nvalue', 'unsafe\u0085value', Array.from({ length: 101 }, (_, i) => `id${i}`).join(',')]) expect(() => parseOpsAllowlist(value)).toThrow('Operations unavailable')
   })

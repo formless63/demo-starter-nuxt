@@ -54,3 +54,5 @@ The shared non-root production image passed the explicit container migration gat
 ## Publication and lessons
 
 Compared with Jobs/API/Observability, Storage owns no database migration, durable worker or auth boundary. Its risky contracts are signed-header enforcement, stream lifecycle, credential-chain portability and real provider parity. One package-owned smoke contract with capability-local provider bootstrap is simpler than custom package-matrix orchestration. Before npm publication choose a scope, audit tarball/API/peer/license support, separate fixture/dev assets as appropriate, review stable provider/UI versions and document any provider-specific supported-feature limits. Nothing is published now.
+
+Ops composition uses a narrow optional server construction retry override passed to public S3Client `maxAttempts`; ordinary default remains 3. [Official AWS retry configuration](https://docs.aws.amazon.com/sdkref/latest/guide/feature-retry-behavior.html) was checked 2026-10-01: attempts include the first request and 1 disables retry. No SDK middleware internals are changed.

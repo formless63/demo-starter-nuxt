@@ -38,10 +38,15 @@ export function validOpsUserId(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= 128 && !/\p{Cc}/u.test(value)
 }
 export function parseOpsAllowlist(value = ''): Set<string> {
-  if (typeof value !== 'string' || value.length > 12900) throw new OpsError('configuration')
+  if (typeof value !== 'string') throw new OpsError('configuration')
   const entries = value.split(',').map(id => id.trim()).filter(Boolean)
-  if (entries.length > 100 || entries.some(id => !validOpsUserId(id))) throw new OpsError('configuration')
-  return new Set(entries)
+  const members = new Set<string>()
+  for (const id of entries) {
+    if (!validOpsUserId(id)) throw new OpsError('configuration')
+    members.add(id)
+    if (members.size > 100) throw new OpsError('configuration')
+  }
+  return members
 }
 export async function authorizeOps(application: OpsApplication, event: H3Event, allowlist = process.env.OPS_ADMIN_USER_IDS ?? '') {
   let session
