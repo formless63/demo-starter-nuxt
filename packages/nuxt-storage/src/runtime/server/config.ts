@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 
-export type StorageErrorCode = 'configuration' | 'invalid-input' | 'unavailable' | 'not-found' | 'verification-failed'
+export type StorageErrorCode = 'configuration' | 'invalid-input' | 'unavailable' | 'not-found' | 'verification-failed' | 'cancelled'
 export class StorageError extends Error {
   constructor(public readonly code: StorageErrorCode) {
     super(`Storage: ${code}`)

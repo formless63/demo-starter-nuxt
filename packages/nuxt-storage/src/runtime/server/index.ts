@@ -30,7 +30,8 @@ export interface ObjectMetadata {
   modifiedAt?: Date
   metadata: Record<string, string>
 }
-export interface UploadOptions {
+export interface StorageRequestOptions { signal?: AbortSignal }
+export interface UploadOptions extends StorageRequestOptions {
   contentType?: string
   cacheControl?: string
   metadata?: Record<string, string>
@@ -93,6 +94,14 @@ export function createStorage(options: StorageOptions = {}) {
     }
     return options.runOperation ? options.runOperation(operation, safeAction, bytes) : safeAction()
   }
+  function checkAbort(signal?: AbortSignal) {
+    if (signal?.aborted) throw new StorageError('cancelled')
+  }
+  function abortError(error: unknown, signal?: AbortSignal): never {
+    // A requested abort does not reclassify unrelated provider failures.
+    if (signal?.aborted && (error as { name?: string })?.name === 'AbortError') throw new StorageError('cancelled')
+    throw error
+  }
   function input(key: string) { return { Bucket: configured().bucket, Key: validateStorageKey(key) } }
   function uploadOptions(value: UploadOptions) {
     return { ContentType: safeHeader(value.contentType), CacheControl: safeHeader(value.cacheControl), Metadata: safeMetadata(value.metadata) }
@@ -119,19 +128,36 @@ export function createStorage(options: StorageOptions = {}) {
     putObject(key: string, body: PutObjectCommandInput['Body'], value: UploadOptions = {}) {
       const bytes = typeof body === 'string' ? Buffer.byteLength(body) : body instanceof Uint8Array ? body.byteLength : undefined
       return run('put', async () => {
-        const result = await getS3Client().send(new PutObjectCommand({ ...input(key), ...uploadOptions(value), Body: body }))
+        checkAbort(value.signal)
+        const result = await getS3Client().send(new PutObjectCommand({ ...input(key), ...uploadOptions(value), Body: body }), { abortSignal: value.signal }).catch(error => abortError(error, value.signal))
         return { key, etag: result.ETag }
       }, bytes)
     },
-    getObject(key: string) {
+    getObject(key: string, value: StorageRequestOptions = {}) {
       return run('get', async () => {
-        const result = await getS3Client().send(new GetObjectCommand(input(key)))
+        checkAbort(value.signal)
+        const result = await getS3Client().send(new GetObjectCommand(input(key)), { abortSignal: value.signal }).catch(error => abortError(error, value.signal))
         if (!result.Body) throw new StorageError('unavailable')
+        if (value.signal) {
+          const body = result.Body as typeof result.Body & { destroy?: (error?: Error) => void, once?: (event: string, listener: () => void) => void, cancel?: () => Promise<void> }
+          const abort = () => {
+            if (body.destroy) body.destroy(new StorageError('cancelled'))
+            else void body.cancel?.().catch(() => {})
+          }
+          const cleanup = () => value.signal!.removeEventListener('abort', abort)
+          value.signal.addEventListener('abort', abort, { once: true })
+          body.once?.('end', cleanup)
+          body.once?.('close', cleanup)
+          if (value.signal.aborted) abort()
+        }
         return { ...metadata(key, result), body: result.Body }
       })
     },
-    headObject(key: string) {
-      return run('head', async () => metadata(key, await getS3Client().send(new HeadObjectCommand(input(key)))))
+    headObject(key: string, value: StorageRequestOptions = {}) {
+      return run('head', async () => {
+        checkAbort(value.signal)
+        return metadata(key, await getS3Client().send(new HeadObjectCommand(input(key)), { abortSignal: value.signal }).catch(error => abortError(error, value.signal)))
+      })
     },
     deleteObject(key: string) {
       return run('delete', async () => { await getS3Client().send(new DeleteObjectCommand(input(key))) })
