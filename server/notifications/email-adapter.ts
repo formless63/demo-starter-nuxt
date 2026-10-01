@@ -12,7 +12,8 @@ export function createNotificationEmailAdapter(resolveEmail: (recipientId: strin
       return { outcome: result.outcome === 'accepted' ? 'delivered' : 'rejected' }
     }
     catch (error) {
-      // Email's uncertainty/partial-delivery policy remains authoritative.
+      // Email marks proven pre-send connection failures and SMTP temporary rejections safe.
+      // Timeout/reset/unknown acceptance stays terminal even if a caller sets retryable.
       if (error instanceof EmailError) {
         const retryable = error.retryable && ['temporary-rejection', 'connection'].includes(error.code)
         throw new NotificationError(error.code === 'timeout' ? 'timeout' : 'unavailable', retryable)
