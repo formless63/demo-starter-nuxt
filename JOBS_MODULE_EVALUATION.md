@@ -1,5 +1,11 @@
 # Jobs module evaluation (September 2026)
 
+## Canonical baseline repair (October 2026)
+
+Pinned pg-boss remains 12.35.0. Producers and operational readers now disable supervision/scheduling; standalone worker/smoke enable them. Migration remains an explicit role only. Worker concurrency defaults to 4 and strictly accepts decimal integers 1–100. Transactional sends compare canonical host/effective port/database, permit different role credentials and refuse mismatches; host aliases must use the same spelling and cross-database atomicity is never claimed.
+
+The installed native `Job` type exposes `retryCount` and `signal`; `JobWithMetadata` adds `retryLimit`, so workers explicitly use `includeMetadata:true`. Handler context is an optional second argument for consumers to use, with no fabricated registry-derived retry limit and no blanket terminal classification for cancellation. The packed fixture proves real commit/rollback/refusal, failed initialization recovery, bounded shutdown, per-send retries, expiry signals, shutdown retry, and pending-version/structural drift without runtime DDL. pg-boss owns settlement policy and supported migration SQL.
+
 ## Optional Observability integration (capability #3)
 
 Jobs retains no hard capability dependency and its registry, migration policy and `migrate:false` runtime behavior are unchanged. The reference application wraps `starter.echo` with Observability's operation helper; safe job ID/name/outcome/duration are logged, never payloads. A small generic CLI lifecycle extension (`onError`, `onShutdown`) lets the application capture safe worker errors and flush its optional telemetry after graceful drain or fatal initialization. Default callers still use the original behavior. No cross-process enqueue trace propagation or trace fields in payload schemas are claimed. The independent Jobs fixture still installs/builds/runs/removes Jobs without Observability.

@@ -16,7 +16,7 @@ export default defineNuxtModule<JobsModuleOptions>({
   },
   defaults: {
     schema: 'pgboss',
-    concurrency: 5,
+    concurrency: 4,
     useListenNotify: false,
     registry: 'server/jobs/registry',
   },

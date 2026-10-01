@@ -6,7 +6,7 @@ import type { JobName, JobPayload, JobRegistry } from '../runtime/server/types'
 
 export async function runJobsMigration() {
   const config = resolveJobsConfig()
-  const boss = createJobsBoss(config, true)
+  const boss = createJobsBoss(config, 'migration')
 
   try {
     await boss.start()
@@ -19,7 +19,7 @@ export async function runJobsMigration() {
 
 export async function runJobsDoctor() {
   const config = resolveJobsConfig()
-  const boss = createJobsBoss(config)
+  const boss = createJobsBoss(config, 'reader')
 
   try {
     await boss.start()
@@ -39,7 +39,7 @@ export async function runJobsWorker(registry: JobRegistry, lifecycle: {
   onShutdown?: () => Promise<void>
 } = {}) {
   const config = resolveJobsConfig()
-  const boss = createJobsBoss(config)
+  const boss = createJobsBoss(config, 'worker')
   let stopping = false
 
   boss.on('error', error => lifecycle.onError ? lifecycle.onError(error) : console.error('[jobs] pg-boss error', error))
@@ -47,6 +47,7 @@ export async function runJobsWorker(registry: JobRegistry, lifecycle: {
   async function stop(signal: string) {
     if (stopping) return
     stopping = true
+    removeSignals()
     console.info(`[jobs] ${signal} received; stopping worker`)
     try { await boss.stop({ graceful: true, timeout: 30_000 }) }
     finally { await lifecycle.onShutdown?.() }
@@ -56,12 +57,20 @@ export async function runJobsWorker(registry: JobRegistry, lifecycle: {
   async function fatal(error: unknown) {
     if (lifecycle.onError) lifecycle.onError(error)
     else console.error('[jobs] fatal worker error', error)
-    await lifecycle.onShutdown?.()
+    removeSignals()
+    try { await boss.stop({ graceful: false }) }
+    finally { await lifecycle.onShutdown?.() }
     process.exit(1)
   }
 
-  process.once('SIGTERM', () => void stop('SIGTERM').catch(fatal))
-  process.once('SIGINT', () => void stop('SIGINT').catch(fatal))
+  const terminate = () => { void stop('SIGTERM').catch(fatal) }
+  const interrupt = () => { void stop('SIGINT').catch(fatal) }
+  function removeSignals() {
+    process.removeListener('SIGTERM', terminate)
+    process.removeListener('SIGINT', interrupt)
+  }
+  process.once('SIGTERM', terminate)
+  process.once('SIGINT', interrupt)
 
   try {
     await boss.start()
@@ -81,7 +90,7 @@ export async function runJobsSmoke<Registry extends JobRegistry, Name extends Jo
   verifyOutput?: (output: unknown) => void | Promise<void>,
 ) {
   const config = resolveJobsConfig()
-  const boss = createJobsBoss(config)
+  const boss = createJobsBoss(config, 'worker')
   const definition = registry[name]
   if (!definition) throw new Error(`Unknown smoke job: ${String(name)}`)
 
