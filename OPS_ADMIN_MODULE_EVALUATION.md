@@ -14,4 +14,6 @@ Reference Storage uses a separate application-owned lazy instance with public `m
 
 ## Verification evidence
 
+The reference removal proof stages actual application-owned Ops helpers and independently removable Jobs/Storage shutdown hooks in the baseline authenticated consumer. Removed private packages are absent from dependency resolution before typecheck/build; each remaining registry is exercised through authenticated API/SSR and baseline session/login/health. Unrelated root product handlers are outside this composition fixture. Observability uses the supported local status API: `OTEL_SDK_DISABLED=true` yields enabled0, with a local collector canary proving no contact or endpoint disclosure.
+
 Implementation verification pending. Status is in-progress; exact run evidence belongs in the draft PR. Full completed-capability lifecycle, root checks, dev/production browser, production image/migration/worker/health and exact-head hosted CI remain required.
