@@ -36,7 +36,7 @@ test('Ops guards direct API/SSR, provides manual accessible refresh and clears s
     const summary = await response.json()
     expect(summary.adapters.map((card: { id: string }) => card.id)).toEqual(['jobs', 'storage', 'cache', 'audit', 'webhooks', 'observability'])
     for (const value of [token, secret, operator, 'ops-fixture@example.test']) expect(JSON.stringify(summary)).not.toContain(value)
-    await context.addCookies([{ name, value: value(token), url: baseURL!, secure: Boolean(process.env.PLAYWRIGHT_BASE_URL), httpOnly: true, sameSite: 'Lax' }])
+    await context.addCookies([{ name, value: value(token), domain: new URL(baseURL!).hostname, path: '/', secure: Boolean(process.env.PLAYWRIGHT_BASE_URL), httpOnly: true, sameSite: 'Lax' }])
     await page.setViewportSize({ width: 375, height: 812 })
     const hydrationWarnings: string[] = []
     page.on('console', message => { if (/hydration/iu.test(message.text())) hydrationWarnings.push(message.text()) })
