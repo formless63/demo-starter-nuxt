@@ -14,7 +14,8 @@
       "realtime",
       "notifications",
       "search",
-      "ai"
+      "ai",
+      "ops-admin"
     ]
   },
   "baseline": [
@@ -1058,7 +1059,7 @@
       "id": "ops-admin",
       "displayName": "Ops / Admin",
       "kind": "operations-ui",
-      "status": "in-progress",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [

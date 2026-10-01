@@ -1,6 +1,6 @@
 # Ops / Admin
 
-Status: in-progress. Private `@repo/nuxt-ops-admin`, opt-in for clean consumers; explicitly enabled in the reference application. Requires baseline Authentication and Node runtime, no capability dependency, service, migration, worker or persistence. Optional application-owned integrations: Observability, Jobs, Audit Log, Object Storage, Cache / Coordination, Webhooks.
+Status: done. Private `@repo/nuxt-ops-admin`, opt-in for clean consumers; explicitly enabled in the reference application. Requires baseline Authentication and Node runtime, no capability dependency, service, migration, worker or persistence. Optional application-owned integrations: Observability, Jobs, Audit Log, Object Storage, Cache / Coordination, Webhooks.
 
 Enable the package in `modules` and configure `opsAdmin.application` to a server module exporting `opsApplication`. That application supplies the baseline Better Auth `resolveSession(event)`, a static `createOpsService(registry)` and optional guard. Missing configuration defaults to no authenticated session. Never resolve API keys as human sessions. Server GET `/api/ops/summary` authorizes every request; the native `/admin/ops` page uses cookie-forwarded server data fetching, accessible denial and manual refresh only.
 
@@ -22,6 +22,6 @@ Remove the root dependency/module and `opsAdmin` option, `server/ops`, `server/p
 
 ## Verification
 
-See [evaluation](../../OPS_ADMIN_MODULE_EVALUATION.md), [roadmap](../../ROADMAP.md) and [capability tooling](../../docs/CAPABILITIES.md). Status remains in-progress until the entire dispatch verification gate passes.
+See [evaluation](../../OPS_ADMIN_MODULE_EVALUATION.md), [roadmap](../../ROADMAP.md) and [capability tooling](../../docs/CAPABILITIES.md). The full dispatch verification gate passed; exact-head run evidence is retained in the draft PR pending parent integration.
 
 Optional-provider removal also removes its Ops helper and shutdown hook: Storage removes its card/import, `server/ops/storage.ts` and `server/plugins/ops-admin-storage.ts`; removing Jobs (and its hard dependents, including Webhooks) removes the Jobs/Webhooks cards/imports, `server/ops/jobs.ts` and `server/plugins/ops-admin-jobs.ts`. Keeping Webhooks requires Jobs. Cache and Observability remove their direct application import/card; Audit removes its static card. Root provider removal separately follows each provider contract's normal application pruning recipe. Observability's count projects only the supported local `getObservabilityStatus().enabled` boolean and reflects disabled instrumentation without disclosing exporter configuration.

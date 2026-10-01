@@ -213,7 +213,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 ## Operations / UI infrastructure
 
-### Ops / Admin (`in-progress`)
+### Ops / Admin (`done`)
 
 - Requires: starter authentication (baseline, not a capability edge)
 - Integrates with: Observability, Jobs, Audit Log, Object Storage, Cache / Coordination, Webhooks
