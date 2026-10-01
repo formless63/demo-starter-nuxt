@@ -1,10 +1,11 @@
+import { transfer } from '@repo/nuxt-import-export/schema'
 import { sql } from 'drizzle-orm'
 import { boolean, customType, index, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
 import { auditEvent } from '@repo/nuxt-audit-log/server'
 import { notification } from '@repo/nuxt-notifications/schema'
 import { apikey } from '@repo/nuxt-api/server'
 
-export { apikey, auditEvent, notification }
+export { apikey, auditEvent, notification, transfer }
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -70,4 +71,4 @@ export const project = pgTable('project', {
   ...timestamps,
 }, table => [index('project_owner_updated_idx').on(table.ownerId, table.updatedAt), index('project_search_vector_gin_idx').using('gin', table.searchVector)])
 
-export const schema = { user, session, account, verification, apikey, project, auditEvent, notification }
+export const schema = { user, session, account, verification, apikey, project, auditEvent, notification, transfer }

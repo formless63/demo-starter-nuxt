@@ -29,16 +29,14 @@ export async function getProject(db: Database, ownerId: string, projectId: strin
   return row
 }
 
+type ProjectTransaction = import('drizzle-orm/pg-core').PgDatabase<import('drizzle-orm/pg-core').PgQueryResultHKT>
+export async function insertProjectInTransaction(tx: Pick<ProjectTransaction, 'insert'>, ownerId: string, input: ProjectInput, actor: AuditActor = { type: 'user', id: ownerId }) {
+  const [row] = await tx.insert(project).values({ id: crypto.randomUUID(), ownerId, ...input }).returning(projectFields)
+  if (row) await appendAuditEvent(tx, { actorType: actor.type, actorId: actor.id, action: 'projects.create', subjectType: 'project', subjectId: row.id, outcome: 'success' })
+  return row
+}
 export async function createProject(db: Database, ownerId: string, input: ProjectInput, actor: AuditActor = { type: 'user', id: ownerId }) {
-  return db.transaction(async (tx) => {
-    const [row] = await tx
-      .insert(project)
-      .values({ id: crypto.randomUUID(), ownerId, ...input })
-      .returning(projectFields)
-
-    if (row) await appendAuditEvent(tx, { actorType: actor.type, actorId: actor.id, action: 'projects.create', subjectType: 'project', subjectId: row.id, outcome: 'success' })
-    return row
-  })
+  return db.transaction(tx => insertProjectInTransaction(tx, ownerId, input, actor))
 }
 
 export async function updateProject(

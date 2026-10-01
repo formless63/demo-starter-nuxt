@@ -14,7 +14,8 @@
       "realtime",
       "notifications",
       "search",
-      "ai"
+      "ai",
+      "import-export"
     ]
   },
   "baseline": [
@@ -906,7 +907,7 @@
       "id": "import-export",
       "displayName": "Import / Export",
       "kind": "application-infrastructure",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [
         "jobs",
@@ -916,8 +917,63 @@
         "notifications",
         "audit-log"
       ],
+      "baselineRequirements": [
+        "postgresql",
+        "drizzle",
+        "node-runtime"
+      ],
+      "baselineIntegrations": [
+        "authentication"
+      ],
       "externalRequirements": [],
-      "summary": "Asynchronous bulk import and export workflows backed by durable files."
+      "summary": "Asynchronous bulk import and export workflows backed by durable files.",
+      "packageName": "@repo/nuxt-import-export",
+      "packagePath": "packages/nuxt-import-export",
+      "fixturePath": "fixtures/import-export-consumer",
+      "documentationPath": "capabilities/import-export/CAPABILITY.md",
+      "agentSkill": ".agents/skills/import-export-change/SKILL.md",
+      "evaluationDocument": "IMPORT_EXPORT_MODULE_EVALUATION.md",
+      "scripts": [
+        "packages:build",
+        "packages:test",
+        "db:migrate",
+        "transfers:reconcile",
+        "transfers:purge"
+      ],
+      "environmentVariables": [
+        "IMPORT_EXPORT_MAX_BYTES",
+        "IMPORT_EXPORT_MAX_ROWS",
+        "IMPORT_EXPORT_TIMEOUT_SECONDS",
+        "IMPORT_EXPORT_ARTIFACT_TTL_SECONDS"
+      ],
+      "migrations": [
+        "Application-owned additive transfer receipt migration; existing Jobs explicit migration prerequisite"
+      ],
+      "runtimeProcesses": [
+        "Nitro application and existing Jobs worker"
+      ],
+      "packageTest": {
+        "ownedDependencies": [
+          "csv-parse",
+          "csv-stringify"
+        ],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "db:migrate",
+            "jobs:migrate",
+            "jobs:doctor",
+            "jobs:worker",
+            "package:test:runtime"
+          ],
+          "paths": [
+            ".fixture/package-test.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        },
+        "postRemovalScript": "package:test:survival",
+        "cleanupScript": "package:test:cleanup"
+      }
     },
     {
       "id": "organizations",

@@ -165,11 +165,13 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Implementation: application-included Drizzle records, recipient keyset/read state, transactional Jobs delivery, optional app Email/post-commit Realtime integrations.
 - Contract: [`capabilities/notifications/CAPABILITY.md`](capabilities/notifications/CAPABILITY.md)
 
-### Import / Export (`planned`)
+### Import / Export (`done`)
 
 - Requires: Jobs, Object Storage
 - Integrates with: Notifications, Audit Log
-- External: none
+- External: none additional; S3 supplied by Object Storage, on use
+- Private `@repo/nuxt-import-export`, transfer receipt schema, Jobs worker handler and personal Project CSV reference are implemented with packed consumer removal/rebuild verification.
+- Contract: [`capabilities/import-export/CAPABILITY.md`](capabilities/import-export/CAPABILITY.md)
 
 ## Identity / policy
 

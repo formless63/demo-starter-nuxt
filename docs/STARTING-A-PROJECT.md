@@ -1,18 +1,18 @@
 # Starting a project
 
-The repository is both a baseline starter and a reference application. Choose which of the twelve completed capabilities belong in the product before building domain features around them.
+The repository is both a baseline starter and a reference application. Choose which of the thirteen completed capabilities belong in the product before building domain features around them.
 
 ## Full/reference setup
 
-The root application explicitly registers Jobs, API Platform, Observability, Object Storage, Email, Webhooks, Audit Log, Cache / Coordination, Realtime, Notifications, Search and AI. It includes:
+The root application explicitly registers Jobs, API Platform, Observability, Object Storage, Email, Webhooks, Audit Log, Cache / Coordination, Realtime, Notifications, Search, AI and Import / Export. It includes:
 
 - one Jobs registry and standalone worker with transactional enqueue;
 - Better Auth and owner-scoped browser and machine API routes;
-- explicit application/API/Audit/Notification migrations, a Projects search vector/index, and separate pg-boss migrations;
+- explicit application/API/Audit/Notification/Transfer migrations, a Projects search vector/index, and separate pg-boss migrations;
 - one production image for the app, migration tools and worker;
 - lazy optional S3, SMTP, Cache and AI adapters with no provider required at startup;
 - transactionally appended audit history and notifications, plus ID-only post-commit hints over authenticated SSE/WebSocket transports;
-- all twelve catalog-driven package install/runtime/removal/rebuild checks in generic CI.
+- all thirteen catalog-driven package install/runtime/removal/rebuild checks in generic CI.
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
 
@@ -160,3 +160,7 @@ When removing **Observability while retaining Realtime/Notifications**, remove o
 3. Clear generated output, reinstall and run catalog checks, normal typecheck/build/tests and production verification. No schema/data migration exists. The packed fixture proves provider SDK removal when unused; shared Zod may remain.
 
 Never delete/revoke external provider accounts or secrets automatically. Removing Observability while retaining AI replaces the optional wrapper with plain package generation. Permanent pruning updates catalog/docs before removing package/fixture/contract/evaluation/ai-change skill, retaining the roadmap ID where referenced.
+
+## Remove Import / Export
+
+Stop transfer producers and drain or preserve pending work before unregistering `transferService.runJob` from `server/jobs/registry.ts`. Remove `server/api/transfers`, `server/transfers`, `scripts/transfers.ts`, the two transfers scripts, `ProjectTransfers.vue` and its Projects-page use, and the transfer resource shutdown hook. Remove the package root dependency/module and Import / Export limits from Compose/environment; keep Jobs/Storage and their data. Remove the transfer schema export only if generation is no longer needed; retain applied migrations0006/0007, its immutable history, transfer tables/receipts and source/output objects. Never drop retained data or delete buckets as code removal. Operator `transfers:purge <selected-uuid...>` is dry-run; explicit `--execute` is separate physical cleanup, retaining history/domain data. Rebuild/typecheck/test after pruning. [Contract](../capabilities/import-export/CAPABILITY.md).

@@ -38,7 +38,7 @@ Configuration is evaluated lazily at the first operation/client access; invalid 
 | `STORAGE_PRESIGN_TTL_SECONDS` | Default 600; integer 30–3600; per-request override uses the same bounds |
 | `STORAGE_KEY_PREFIX` | Optional safe prefix; trailing slashes normalized for generated keys |
 
-When static credentials are absent, the SDK's standard Node credential chain remains intact (including environment, profile, container/task, instance and workload mechanisms supported by AWS). Do not configure empty/static credentials in place of that chain. Production deployments supply these server variables through secrets/environment; none belongs in `runtimeConfig.public`. Root Compose forwards Storage settings to the app only and does not start storage infrastructure. Inside containers use a reachable service/address, not host localhost. A presigned URL's endpoint must also be reachable by the browser; do not rewrite its signed host/path afterward.
+When static credentials are absent, the SDK's standard Node credential chain remains intact (including environment, profile, container/task, instance and workload mechanisms supported by AWS). Do not configure empty/static credentials in place of that chain. Production deployments supply these server variables through secrets/environment; none belongs in `runtimeConfig.public`. Root Compose forwards optional Storage settings to app and worker for explicitly used transfers and does not start storage infrastructure. Inside containers use a reachable service/address, not host localhost. A presigned URL's endpoint must also be reachable by the browser; do not rewrite its signed host/path afterward.
 
 ### Scripts
 
@@ -168,3 +168,7 @@ The fixture owns backendless production boot, real pinned containers, explicit b
 ## Agent guidance
 
 Use `capability-change` and `storage-change`. Keep S3 credentials server-only, objects private, configuration lazy, bootstrap explicit, streams consumed/closed, signed headers exact and metric dimensions bounded. No File UI, attachment/files table, transforms, scanner, CDN policy, upload intent or processing jobs belong in this capability.
+
+## Request cancellation extension
+
+`putObject(key,body,{signal?})`, `getObject(key,{signal?})` and `headObject(key,{signal?})` accept an optional AbortSignal, forwarded to AWS SDK `send`. Existing names/defaults/results remain unchanged. Preaborted requests perform no provider I/O. Caller-requested SDK AbortError exposes safe `StorageError('cancelled')`; unrelated provider errors preserve their ordinary classification. GET cancellation also destroys the acquired Node body (or cancels a supported web body); callers must consume or close abandoned bodies. Import / Export owns deadline versus explicit cancellation mapping; Storage does not invent a timeout policy. Other Storage primitives retain their existing surface.
