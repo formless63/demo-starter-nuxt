@@ -24,6 +24,7 @@ export function validateAiInput(input: AiInput): AiInput {
   if (!parsed.success) throw new AiError('invalid-request')
   let bytes = 0
   for (const message of parsed.data.messages) {
+    if (!message.content.trim() || !message.content.isWellFormed() || /\p{Cc}/u.test(message.content.replace(/[\t\n\r]/gu, ''))) throw new AiError('invalid-request')
     const size = Buffer.byteLength(message.content, 'utf8')
     if (size > AI_LIMITS.messageBytes) throw new AiError('invalid-request')
     bytes += size
@@ -47,8 +48,8 @@ function usage(value: unknown): AiUsage | undefined {
 function scope(seconds: number, caller?: AbortSignal) {
   const controller = new AbortController()
   const deadline = performance.now() + seconds * 1000
-  let code: 'timeout' | 'cancelled' | undefined
-  const abort = (reason: 'timeout' | 'cancelled') => {
+  let code: 'timeout' | 'cancelled' | 'invalid-output' | undefined
+  const abort = (reason: 'timeout' | 'cancelled' | 'invalid-output') => {
     if (!controller.signal.aborted) { code = reason; controller.abort() }
   }
   const onAbort = () => abort('cancelled')
@@ -61,6 +62,7 @@ function scope(seconds: number, caller?: AbortSignal) {
   }
   return {
     signal: controller.signal, check,
+    invalidOutput: () => abort('invalid-output'),
     cancel: () => abort('cancelled'),
     classify: (error: unknown) => code ? new AiError(code) : safeAiError(error),
     dispose: () => { clearTimeout(timer); caller?.removeEventListener('abort', onAbort); controller.abort() },
@@ -81,6 +83,12 @@ function scope(seconds: number, caller?: AbortSignal) {
 // Clients use standard fetch and own no pools/background resources requiring Nitro hooks.
 export function createAi(env: Record<string, string | undefined> = process.env) {
   function start(input: AiInput, options: AiOperationOptions) {
+    if (!options || typeof options !== 'object' || Array.isArray(options) || Object.keys(options).some(key => key !== 'signal')
+      || (options.signal !== undefined && !(options.signal instanceof AbortSignal))) throw new AiError('invalid-request')
+    if (options.signal !== undefined) {
+      try { Object.getOwnPropertyDescriptor(AbortSignal.prototype, 'aborted')!.get!.call(options.signal) }
+      catch { throw new AiError('invalid-request') }
+    }
     const validated = validateAiInput(input)
     const config = resolveAiConfig(env)
     const operation = scope(config.timeoutSeconds, options.signal)
@@ -98,11 +106,35 @@ export function createAi(env: Record<string, string | undefined> = process.env) 
         defaultHeaders: config.apiKey ? {} : { Authorization: null },
         // SDK custom-header environment settings are outside the finite AI config.
         // Rebuild wire headers explicitly and reject redirects for credential privacy.
-        fetch: (url, init) => fetch(url, {
-          ...init, redirect: 'error',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream',
-            ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}) },
-        }),
+        fetch: async (url, init) => {
+          const response = await fetch(url, {
+            ...init, redirect: 'error',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream',
+              ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}) },
+          })
+          if (!response.body) return response
+          const reader = response.body.getReader()
+          let bytes = 0
+          // Bound every raw body before SDK JSON/SSE buffering, including error envelopes.
+          const body = new ReadableStream<Uint8Array>({
+            async pull(controller) {
+              try {
+                const result = await reader.read()
+                if (result.done) { controller.close(); reader.releaseLock(); return }
+                bytes += result.value.byteLength
+                if (bytes > 33554432) {
+                  operation.invalidOutput()
+                  await reader.cancel().catch(() => {})
+                  throw new AiError('invalid-output')
+                }
+                controller.enqueue(result.value)
+              }
+              catch (error) { controller.error(operation.classify(error)) }
+            },
+            async cancel() { await reader.cancel().catch(() => {}) },
+          })
+          return new Response(body, { status: response.status, statusText: response.statusText, headers: response.headers })
+        },
       })
       stream = await client.chat.completions.create({
         model: config.model, messages: input.messages,
@@ -111,17 +143,27 @@ export function createAi(env: Record<string, string | undefined> = process.env) 
         stream: true, stream_options: { include_usage: true },
       }, { signal: operation.signal })
       let bytes = 0
+      let pendingHigh = ''
       let reason: AiFinishReason | undefined
       let counts: AiUsage | undefined
       for await (const chunk of stream) {
         operation.check()
-        const choice = chunk.choices?.find(value => value.index === 0)
+        if (!chunk || !Array.isArray(chunk.choices) || chunk.choices.some(value => !value || typeof value !== 'object' || !Number.isInteger(value.index) || !value.delta || typeof value.delta !== 'object')) throw new AiError('invalid-output')
+        const choice = chunk.choices.find(value => value.index === 0)
+        if (choice?.delta && Object.keys(choice.delta).some(key => !['content', 'role'].includes(key))) throw new AiError('invalid-output')
         const text = choice?.delta?.content
         if (text !== undefined && text !== null) {
           if (typeof text !== 'string' || reason !== undefined) throw new AiError('invalid-output')
-          bytes += Buffer.byteLength(text, 'utf8')
-          if (bytes > AI_LIMITS.outputBytes) throw new AiError('invalid-output')
-          if (text) yield { type: 'text-delta', text }
+          if (text) {
+            let delta = pendingHigh + text
+            pendingHigh = ''
+            const last = delta.charCodeAt(delta.length - 1)
+            if (last >= 0xd800 && last <= 0xdbff) { pendingHigh = delta.slice(-1); delta = delta.slice(0, -1) }
+            if (!delta.isWellFormed()) throw new AiError('invalid-output')
+            bytes += Buffer.byteLength(delta, 'utf8')
+            if (bytes > AI_LIMITS.outputBytes) throw new AiError('invalid-output')
+            if (delta) yield { type: 'text-delta', text: delta }
+          }
         }
         if (choice?.finish_reason != null) {
           if (reason !== undefined || typeof choice.finish_reason !== 'string') throw new AiError('invalid-output')
@@ -130,7 +172,7 @@ export function createAi(env: Record<string, string | undefined> = process.env) 
         counts = usage(chunk.usage) ?? counts
       }
       operation.check()
-      if (reason === undefined) throw new AiError('invalid-output')
+      if (reason === undefined || pendingHigh) throw new AiError('invalid-output')
       yield { type: 'finish', finishReason: reason, ...(counts ? { usage: counts } : {}) }
     }
     catch (error) { throw operation.classify(error) }

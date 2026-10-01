@@ -25,4 +25,29 @@ describe('optional AI telemetry privacy', () => {
     }
     finally { vi.restoreAllMocks() }
   })
+  it.each(['throw', 'reject'] as const)('preserves success and safe failure when telemetry functions %s', async (mode) => {
+    const fail = () => { if (mode === 'throw') throw new Error('PRIVATE_TELEMETRY'); return Promise.reject(new Error('PRIVATE_TELEMETRY')) }
+    const generate = vi.spyOn(getAi(), 'generateText')
+    const original = new AiError('authentication')
+    generate.mockResolvedValueOnce({ text: 'PRIVATE_OUTPUT', finishReason: 'stop' }).mockRejectedValueOnce(original)
+    vi.spyOn(getMeter(), 'createHistogram').mockReturnValue({ record: fail } as never)
+    vi.spyOn(getLogger(), 'info').mockImplementation(fail as never)
+    const unhandled = vi.fn()
+    process.on('unhandledRejection', unhandled)
+    try {
+      const input = { messages: [{ role: 'user' as const, content: 'PRIVATE_PROMPT' }] }
+      expect((await generateObservedText(input)).text).toBe('PRIVATE_OUTPUT')
+      await expect(generateObservedText(input)).rejects.toBe(original)
+      await new Promise(resolve => setTimeout(resolve, 20))
+      expect(unhandled).not.toHaveBeenCalled()
+    }
+    finally { process.off('unhandledRejection', unhandled); vi.restoreAllMocks() }
+  })
+  it('preserves success when obtaining the meter throws', async () => {
+    vi.spyOn(getAi(), 'generateText').mockResolvedValue({ text: 'ok', finishReason: 'stop' })
+    vi.spyOn(getMeter(), 'createHistogram').mockImplementation(() => { throw new Error('PRIVATE_METER') })
+    try { expect((await generateObservedText({ messages: [{ role: 'user', content: 'hello' }] })).text).toBe('ok') }
+    finally { vi.restoreAllMocks() }
+  })
+
 })

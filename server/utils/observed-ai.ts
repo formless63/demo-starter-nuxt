@@ -9,12 +9,17 @@ export async function generateObservedText(input: AiInput, options?: AiOperation
   let outcome: 'success' | 'error' = 'error'
   try { result = await getAi().generateText(input, options); outcome = 'success'; return result }
   finally {
+    // Instrumentation is fail-open, including implementations returning promises.
+    const observe = (action: () => unknown) => {
+      try { void Promise.resolve(action()).catch(() => {}) }
+      catch { /* Optional telemetry cannot replace an AI result or safe failure. */ }
+    }
     const duration = (performance.now() - start) / 1000
     const attributes = { operation: 'generate-text', provider: 'openai-compatible', outcome }
-    getMeter().createHistogram('app.ai.duration', { unit: 's' }).record(duration, attributes)
+    observe(() => getMeter().createHistogram('app.ai.duration', { unit: 's' }).record(duration, attributes))
     for (const [name, count] of Object.entries(result?.usage ?? {})) {
-      if (count !== undefined) getMeter().createHistogram(`app.ai.${name}`).record(count, attributes)
+      if (count !== undefined) observe(() => getMeter().createHistogram(`app.ai.${name}`).record(count, attributes))
     }
-    getLogger().info({ ...attributes, duration, ...(result ? { finishReason: result.finishReason, usage: result.usage } : {}) }, 'ai.operation')
+    observe(() => getLogger().info({ ...attributes, duration, ...(result ? { finishReason: result.finishReason, usage: result.usage } : {}) }, 'ai.operation'))
   }
 }
