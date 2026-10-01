@@ -4,7 +4,7 @@ export function observeNotificationAdapter(channel: 'email' | 'ntfy', adapter: N
   return async (...args) => {
     const start = performance.now()
     let outcome = 'error'
-    try { const result = await adapter(...args); outcome = result.outcome; return result }
+    try { const result = await adapter(...args); outcome = result.outcome === 'delivered' ? 'delivered' : result.outcome === 'rejected' ? 'rejected' : 'error'; return result }
     finally {
       const duration = (performance.now() - start) / 1000
       getMeter().createHistogram('app.notifications.delivery.duration', { unit: 's' }).record(duration, { 'app.notifications.operation': 'deliver', 'app.notifications.channel': channel, 'app.notifications.outcome': outcome })
