@@ -1,4 +1,6 @@
-export { createJobsBoss, resolveJobsConfig } from './boss'
+export { createJobsBoss, resolveJobsConfig, parseJobsConcurrency, assertJobsTransactionDatabase } from './boss'
+export type { JobsBossRole } from './boss'
+export { createJobsClient } from './lifecycle'
 export {
   defineQueues,
   registerWorkers,

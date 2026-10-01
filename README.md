@@ -40,11 +40,13 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Object Storage | Available (`done`) | Optional | S3-compatible service only when used; no capability dependency | Private objects, streaming, signed GET/PUT, multipart and post-upload policy verification |
 | Email | Available (`done`) | Optional | SMTP only when used; no capability dependency | Safe text/HTML SMTP, Mailpit fixture and hashed-token magic links |
 | Webhooks | Available (`done`) | Optional | Jobs; remote endpoints only when delivering | Standard signed envelopes, durable delivery and bounded raw-body verification |
+| AI | Available (`done`) | Optional | Configured OpenAI-compatible model provider only when used | Text, streaming, Zod structured generation, cancellation and safe errors |
 | Audit Log | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; optional authentication | Transactional append-oriented history and bounded keyset queries |
 | Realtime | Available (`done`) | Optional | Node runtime; application session policy; no capability dependency | Bounded server-to-browser SSE and WebSocket event adapters |
 | Notifications | Available (`done`) | Optional | Jobs; PostgreSQL/Drizzle; optional Email/Realtime/ntfy | Recipient-scoped persistent notifications and transactional delivery |
+| Search | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; no extra service | Owner-scoped weighted FTS and deterministic keyset pages |
 
-`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email and Cache remain lazy with no provider required to boot/build.
+`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache and AI remain lazy with no provider required to boot/build.
 
 See [Using capabilities](docs/CAPABILITIES.md) for installation and removal guidance and [ROADMAP.md](ROADMAP.md) for the future design plan.
 
@@ -61,7 +63,7 @@ bun run jobs:migrate
 bun run dev
 ```
 
-Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all ten completed capability packages; `db:migrate` applies the application/API/Audit/Notification tables and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
+Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all twelve completed capability packages; `db:migrate` applies the application/API/Audit/Notification tables and Projects search vector/index and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
 
 ## Authentication notes
 
@@ -100,6 +102,7 @@ bun run packages:test audit-log
 bun run packages:test cache-coordination
 bun run packages:test realtime
 bun run packages:test notifications
+bun run packages:test ai
 bun run check
 bun run test:e2e
 ```
@@ -147,7 +150,9 @@ Use the standard AWS credential chain or paired server-only static credentials. 
 
 The private `@repo/*` package scope means “inside this workspace.” These packages are not published; choose a real npm scope deliberately before any future release. Nuxt's module system remains the integration mechanism—there is no custom installer or runtime capability manager.
 
-Email (#5) is an optional server-only SMTP package. See the [Email contract](capabilities/email/CAPABILITY.md) for lazy configuration, local Mailpit, safe magic links and removal.
+Email (#5) is an optional server-only SMTP package. See the [Email contract](capabilities/email/CAPABILITY.md) for lazy configuration, local Mailpit, safe magic links and removal. Better Auth 1.7.7 upgrades require a coordinated cutover of nodes sharing verification storage: request new magic links and restart pending OAuth/SAML sign-in or linking flows. Existing hashed Magic Link tokens with global identifier storage unset already match the advisory mitigation; this upgrade does not establish prior vulnerability. No auth schema or user/account migration is required. See the [upstream advisory](https://github.com/better-auth/better-auth/security/advisories/GHSA-965c-763c-88jm).
+
+The root sample Project accepts a trimmed name of 1–120 characters and an optional description of at most 1000 characters; empty descriptions become `null`. Browser inputs, session/machine APIs and generated OpenAPI share these limits. PostgreSQL keeps the existing text columns, with input limits enforced at HTTP validation; applied migrations remain unchanged.
 
 Webhooks is explicitly enabled as `@repo/nuxt-webhooks` and requires Jobs; see its [contract](capabilities/webhooks/CAPABILITY.md). Run `bun run webhooks:smoke` for a local receiver test.
 
@@ -160,3 +165,11 @@ Explicitly enabled in the reference app and lazy at boot/build. Server-only `@re
 Choose **SSE**, **WebSocket**, or **Both** with server-only `REALTIME_TRANSPORTS=sse` (default), `websocket`, or `sse,websocket`. Both adapters are included. WebSocket v1 carries the same server event stream, not generic RPC, and uses transport-only ping/pong heartbeats. Session-authenticated routes authorize exact channels; reconnect then refetch authoritative state because events and optional Cache fanout have no replay guarantee. See the [Realtime contract](capabilities/realtime/CAPABILITY.md).
 
 Notifications stores recipient-scoped plain records in an application-migrated table. The existing Jobs worker reloads records/current destinations for optional Email/ntfy delivery; queued data contains only notification ID and channel. The reference demo publishes an ID-only realtime hint after commit. ntfy requires an explicitly configured trusted server and application topic resolver; there is no public ntfy default. Optional transports are unnecessary for build/boot. See the [Notifications contract](capabilities/notifications/CAPABILITY.md).
+
+## Search
+
+Opt-in PostgreSQL-native `@repo/nuxt-search` server helpers; the reference Projects endpoint searches owner rows using weighted `simple` FTS. Apply the explicit application migration first. Page size 25 (1–100); canonical rank/timestamp/ID cursor. No query logs or extra service. See [Search contract](capabilities/search/CAPABILITY.md) and [evaluation](SEARCH_MODULE_EVALUATION.md).
+
+## AI
+
+Explicitly enabled, server-only and operation-lazy. `@repo/nuxt-ai/server` provides text, incremental streaming and Zod structured generation; default provider openai-compatible, timeout 60 seconds, no retries, 1 MiB output cap. Set AI_MODEL and optional server AI_API_KEY/AI_BASE_URL only when used. `bun run ai:smoke` performs one intentional configured operation without logging generated content. See the [contract](capabilities/ai/CAPABILITY.md) and [evaluation](AI_MODULE_EVALUATION.md).

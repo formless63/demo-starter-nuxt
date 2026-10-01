@@ -21,9 +21,11 @@ The root application deliberately enables every completed capability for continu
 | `object-storage` | `@repo/nuxt-storage` | Enabled | No | None | S3-compatible service when used | [Object Storage](../capabilities/object-storage/CAPABILITY.md) |
 | `email` | `@repo/nuxt-email` | Enabled | No | None | SMTP on use; Mailpit optional | [Email](../capabilities/email/CAPABILITY.md) |
 | `webhooks` | `@repo/nuxt-webhooks` | Enabled | No | Jobs | Remote endpoints when used | [Webhooks](../capabilities/webhooks/CAPABILITY.md) |
+| `ai` | `@repo/nuxt-ai` | Enabled | No | None | Configured model provider on use | [AI](../capabilities/ai/CAPABILITY.md) |
 | `audit-log` | `@repo/nuxt-audit-log` | Enabled | No | None | PostgreSQL (required) | [Audit Log](../capabilities/audit-log/CAPABILITY.md) |
 | `realtime` | `@repo/nuxt-realtime` | Enabled | No | None | None; Cache fanout optional | [Realtime](../capabilities/realtime/CAPABILITY.md) |
 | `notifications` | `@repo/nuxt-notifications` | Enabled | No | Jobs | ntfy optional; Email integration optional | [Notifications](../capabilities/notifications/CAPABILITY.md) |
+| `search` | `@repo/nuxt-search` | Enabled | No | None | Existing PostgreSQL | [Search](../capabilities/search/CAPABILITY.md) |
 
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
 
@@ -122,3 +124,11 @@ Install and explicitly enable Jobs and Webhooks together; compose `createWebhook
 ## Audit Log
 
 Explicitly enable `@repo/nuxt-audit-log`, export its table in the application Drizzle schema and apply a committed migration. Append within the domain transaction; query using bounded exact filters, inclusive `from`/exclusive `until` and an opaque cursor. Event identity/time are primitive-owned, and credential/raw-container metadata keys are rejected recursively. Root Projects record stable user/machine IDs only. Authentication and all other capabilities remain optional. See the [contract](../capabilities/audit-log/CAPABILITY.md) and [removal recipe](STARTING-A-PROJECT.md#remove-audit-log). No UI or retention service is supplied.
+
+## Search
+
+Application-owned domain rows and explicit generated-vector/GIN migrations, reusable server helpers, no auto routes or connections. Root Projects searches always retain owner isolation. `simple` FTS, A name/B description, websearch input, rank normalization 32 and descending keyset pages. See [contract](../capabilities/search/CAPABILITY.md). Jobs/Storage/Organizations are future optional integrations, not requirements.
+
+### AI
+
+Keep `@repo/nuxt-ai: workspace:*` and register its module. Use server-only `getAi` or `@repo/nuxt-ai/server` for text, real incremental streams and Zod-validated structured output. Configure AI_MODEL lazily; provider defaults openai-compatible and timeout 60 seconds. No automatic retry, 1 MiB output maximum and safe errors. No routes/UI/history/tools/RAG are installed. Optional integrations are application-owned; the root telemetry wrapper emits only finite operation/provider/outcome/duration/usage/finish fields. Verify the actual local adapter with `bun run packages:test ai`; use `ai:smoke` only for an intentional provider call. See the [contract](../capabilities/ai/CAPABILITY.md) and [removal](STARTING-A-PROJECT.md#remove-ai).

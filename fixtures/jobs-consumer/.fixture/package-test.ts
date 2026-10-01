@@ -16,6 +16,8 @@ if (!jobRegistry['fixture.echo']) throw new Error('Fixture registry extension wa
 
 const databaseUrl = process.env.DATABASE_URL
 if (!databaseUrl) throw new Error('DATABASE_URL is required for the Jobs package runtime test')
+const { verifyJobsContracts } = await import('./contracts')
+await verifyJobsContracts(databaseUrl)
 
 const jobsEnvironment = {
   DATABASE_URL: databaseUrl,

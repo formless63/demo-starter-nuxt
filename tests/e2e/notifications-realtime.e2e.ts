@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 import { createHmac } from 'node:crypto'
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
+import { invalidTypes } from '../../fixtures/notifications-consumer/.fixture/contract-vectors'
 import { eq } from 'drizzle-orm'
 import * as tables from '../../server/database/schema'
 
@@ -41,7 +42,9 @@ test('real session recipient isolation and post-commit ID-only hints over SSE an
         new Promise<void>((resolve, reject) => { state.socket.onopen = () => resolve(); state.socket.onerror = () => reject(new Error('WS denied')) }),
       ])
     })
-    const created = await request.post('/api/notifications/demo', { headers, data: { title: 'Private title', body: 'Private body' } })
+    for (const type of invalidTypes) expect((await request.get(`/api/notifications?type=${encodeURIComponent(type)}`, { headers })).status()).toBe(400)
+    const title = '  <tag> & Private title  '
+    const created = await request.post('/api/notifications/demo', { headers, data: { title, body: 'Private body' } })
     expect(created.status()).toBe(201)
     const notification = await created.json() as { id: string }
     await expect.poll(() => page.evaluate(() => {
@@ -56,8 +59,9 @@ test('real session recipient isolation and post-commit ID-only hints over SSE an
     expect(envelopes[0]).toMatchObject({ type: 'notifications.created', data: { notificationId: notification.id } })
     expect(Object.keys((envelopes[0] as { data: object }).data)).toEqual(['notificationId'])
     for (const privateValue of ['Private', recipientId, token]) expect(JSON.stringify(envelopes)).not.toContain(privateValue)
-    const list = await (await request.get('/api/notifications', { headers })).json() as { items: Array<{ id: string, readAt: string | null }> }
+    const list = await (await request.get('/api/notifications', { headers })).json() as { items: Array<{ id: string, title: string, readAt: string | null }> }
     expect(list.items.map(row => row.id)).toEqual([notification.id])
+    expect(list.items[0]!.title).toBe(title)
     for (const read of [true, true, false, false]) expect((await request.patch(`/api/notifications/${notification.id}/read`, { headers, data: { read } })).status()).toBe(200)
     const unread = await (await request.get('/api/notifications?unreadOnly=true', { headers })).json() as { items: unknown[] }
     expect(unread.items).toHaveLength(1)

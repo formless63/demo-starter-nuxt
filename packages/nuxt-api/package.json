@@ -29,7 +29,7 @@
     "prepack": "nuxt-module-build prepare && nuxt-module-build build"
   },
   "dependencies": {
-    "@better-auth/api-key": "1.7.6",
+    "@better-auth/api-key": "1.7.7",
     "@nuxt/kit": "4.5.2",
     "@scalar/nuxt": "0.6.75",
     "h3": "1.15.11",
@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@nuxt/module-builder": "1.0.3",
-    "better-auth": "1.7.6",
+    "better-auth": "1.7.7",
     "drizzle-orm": "0.45.3",
     "nuxt": "4.5.2",
     "zod": "4.6.5"
