@@ -92,8 +92,9 @@ export function exportCsv(rows: Iterable<readonly CsvCell[]>, columns: readonly 
     const cells = row.map((cell) => {
       if (cell === null || cell === undefined) return ''
       if (typeof cell === 'string') {
-        if (Buffer.byteLength(cell) > 65536) throw new TransferError('limit-exceeded')
-        return spreadsheetSafe(cell)
+        const transformed = spreadsheetSafe(cell)
+        if (Buffer.byteLength(transformed) > 65536) throw new TransferError('limit-exceeded')
+        return transformed
       }
       if (typeof cell === 'boolean') return String(cell)
       if (typeof cell === 'number' && Number.isFinite(cell)) return String(cell)

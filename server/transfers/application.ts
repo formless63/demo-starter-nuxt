@@ -1,6 +1,6 @@
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
-import { and, asc, eq, gt, or } from 'drizzle-orm'
+import { and, asc, eq, sql } from 'drizzle-orm'
 import { createTransferRegistry, createTransferService, defineTransfer, TransferError } from '@repo/nuxt-import-export/server'
 import { createJobsClient, resolveJobsConfig } from '@repo/nuxt-jobs/server'
 import { getStorage } from '@repo/nuxt-storage/server'
@@ -14,7 +14,7 @@ function database() {
   client ??= postgres(process.env.DATABASE_URL, { max: 4, idle_timeout: 20 })
   return drizzle(client)
 }
-const projects = defineTransfer({
+export const projectsTransferDefinition = defineTransfer({
   name: 'projects', version: '1', columns: ['name', 'description'], rowSchema: projectInput,
   async authorize(context, tx) {
     if (context.scope.kind !== 'user' || context.scope.id !== context.requesterId) return false
@@ -28,10 +28,10 @@ const projects = defineTransfer({
     }
   },
   async *exportRows(tx, context, signal) {
-    let after: { id: string, createdAt: Date } | undefined
+    let after: { id: string, createdAt: string } | undefined
     while (true) {
-      const rows = await tx.select({ id: project.id, createdAt: project.createdAt, name: project.name, description: project.description }).from(project)
-        .where(and(eq(project.ownerId, context.requesterId), after ? or(gt(project.createdAt, after.createdAt), and(eq(project.createdAt, after.createdAt), gt(project.id, after.id))) : undefined))
+      const rows = await tx.select({ id: project.id, createdAt: sql<string>`to_char(${project.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`, name: project.name, description: project.description }).from(project)
+        .where(and(eq(project.ownerId, context.requesterId), after ? sql`(${project.createdAt}, ${project.id}) > (${after.createdAt}::timestamptz, ${after.id}::text)` : undefined))
         .orderBy(asc(project.createdAt), asc(project.id)).limit(100)
       for (const row of rows) { if (signal.aborted) throw new TransferError('cancelled'); yield [row.name, row.description] }
       if (rows.length < 100) break
@@ -39,7 +39,7 @@ const projects = defineTransfer({
     }
   },
 })
-const registry = createTransferRegistry([projects])
+const registry = createTransferRegistry([projectsTransferDefinition])
 export const transferService = createTransferService({
   database, storage: getStorage, registry, boss: () => producer.use(),
   async onCompletion(tx, receipt) {
