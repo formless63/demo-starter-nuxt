@@ -906,7 +906,7 @@
       "id": "import-export",
       "displayName": "Import / Export",
       "kind": "application-infrastructure",
-      "status": "planned",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [
         "jobs",
@@ -916,6 +916,8 @@
         "notifications",
         "audit-log"
       ],
+      "baselineRequirements": ["postgresql", "drizzle", "node-runtime"],
+      "baselineIntegrations": ["authentication"],
       "externalRequirements": [],
       "summary": "Asynchronous bulk import and export workflows backed by durable files."
     },
