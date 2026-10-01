@@ -157,16 +157,20 @@
       },
     },
     "fixtures/organizations-consumer": {
-      "name": "organizations-consumer",
+      "name": "organizations-consumer-fixture",
       "dependencies": {
         "@better-auth/core": "1.7.7",
+        "@repo/nuxt-organizations": "workspace:*",
         "better-auth": "1.7.7",
         "drizzle-orm": "0.45.3",
+        "nuxt": "4.5.2",
         "pg": "8.23.0",
         "postgres": "3.4.9",
       },
       "devDependencies": {
         "@types/pg": "8.15.6",
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7",
       },
     },
     "fixtures/realtime-consumer": {
@@ -377,6 +381,23 @@
       },
       "peerDependencies": {
         "h3": ">=1.15.0 <2",
+        "nuxt": ">=4.0.0 <5",
+      },
+    },
+    "packages/nuxt-organizations": {
+      "name": "@repo/nuxt-organizations",
+      "version": "0.1.0",
+      "dependencies": {
+        "@better-auth/core": "1.7.7",
+        "@nuxt/kit": "4.5.2",
+        "better-auth": "1.7.7",
+        "drizzle-orm": "0.45.3",
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "nuxt": "4.5.2",
+      },
+      "peerDependencies": {
         "nuxt": ">=4.0.0 <5",
       },
     },
@@ -933,6 +954,8 @@
     "@repo/nuxt-notifications": ["@repo/nuxt-notifications@workspace:packages/nuxt-notifications"],
 
     "@repo/nuxt-observability": ["@repo/nuxt-observability@workspace:packages/nuxt-observability"],
+
+    "@repo/nuxt-organizations": ["@repo/nuxt-organizations@workspace:packages/nuxt-organizations"],
 
     "@repo/nuxt-realtime": ["@repo/nuxt-realtime@workspace:packages/nuxt-realtime"],
 
@@ -2218,7 +2241,7 @@
 
     "optionator": ["optionator@0.9.4", "", { "dependencies": { "deep-is": "^0.1.3", "fast-levenshtein": "^2.0.6", "levn": "^0.4.1", "prelude-ls": "^1.2.1", "type-check": "^0.4.0", "word-wrap": "^1.2.5" } }, "sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g=="],
 
-    "organizations-consumer": ["organizations-consumer@workspace:fixtures/organizations-consumer"],
+    "organizations-consumer-fixture": ["organizations-consumer-fixture@workspace:fixtures/organizations-consumer"],
 
     "oxc-parser": ["oxc-parser@0.102.0", "", { "dependencies": { "@oxc-project/types": "^0.102.0" }, "optionalDependencies": { "@oxc-parser/binding-android-arm64": "0.102.0", "@oxc-parser/binding-darwin-arm64": "0.102.0", "@oxc-parser/binding-darwin-x64": "0.102.0", "@oxc-parser/binding-freebsd-x64": "0.102.0", "@oxc-parser/binding-linux-arm-gnueabihf": "0.102.0", "@oxc-parser/binding-linux-arm64-gnu": "0.102.0", "@oxc-parser/binding-linux-arm64-musl": "0.102.0", "@oxc-parser/binding-linux-riscv64-gnu": "0.102.0", "@oxc-parser/binding-linux-s390x-gnu": "0.102.0", "@oxc-parser/binding-linux-x64-gnu": "0.102.0", "@oxc-parser/binding-linux-x64-musl": "0.102.0", "@oxc-parser/binding-openharmony-arm64": "0.102.0", "@oxc-parser/binding-wasm32-wasi": "0.102.0", "@oxc-parser/binding-win32-arm64-msvc": "0.102.0", "@oxc-parser/binding-win32-x64-msvc": "0.102.0" } }, "sha512-xMiyHgr2FZsphQ12ZCsXRvSYzmKXCm1ejmyG4GDZIiKOmhyt5iKtWq0klOfFsEQ6jcgbwrUdwcCVYzr1F+h5og=="],
 

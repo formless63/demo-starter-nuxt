@@ -33,3 +33,5 @@ Official Nuxt documentation should be the primary source. Agents supporting MCP 
 @repo/nuxt-search uses normal Nuxt module-builder and compatible Nuxt/Drizzle peers; existing PostgreSQL 18 FTS only. simple weighted vectors, parameterized websearch_to_tsquery and ts_rank_cd normalization 32; no external search service or pg_trgm.
 
 `@repo/nuxt-ai` owns OpenAI SDK 7.25.0 and Zod 4.6.5 with Nuxt peer/module-builder. Chat Completions SSE supports configured compatible endpoints on Node 24/Nitro; retries/logging are explicitly disabled. Default provider openai-compatible, timeout 60 seconds, optional key, lazy required model; see AI_MODULE_EVALUATION.md for the prompt-derived v1 contract.
+
+Organizations uses the official Better Auth1.7.7 plugin and explicitly matching @better-auth/core1.7.7 context exports. Its native acceptance contract is a single-winner claim, transactional member/session creation and best-effort compensation, without crash-atomicity. Use the direct auth option error boundary and authoritative tenant helper; no provider service or implicit provisioning. See ORGANIZATIONS_MODULE_EVALUATION.md.
