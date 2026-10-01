@@ -169,7 +169,9 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 - Requires: Jobs, Object Storage
 - Integrates with: Notifications, Audit Log
-- External: none
+- External: none additional; S3 supplied by Object Storage, on use
+- Private `@repo/nuxt-import-export`, transfer receipt schema, Jobs worker handler and personal Project CSV reference are under verification.
+- Contract: [`capabilities/import-export/CAPABILITY.md`](capabilities/import-export/CAPABILITY.md)
 
 ## Identity / policy
 

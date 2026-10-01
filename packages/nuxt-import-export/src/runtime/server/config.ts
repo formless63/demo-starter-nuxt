@@ -19,7 +19,7 @@ export type TransferConfig = ReturnType<typeof transferConfig>
 export type Scope = { kind: 'user', id: string } | { kind: 'tenant', id: string }
 export interface TransferContext { requesterId: string, scope: Scope }
 export function opaqueId(value: unknown): string {
-  if (typeof value !== 'string' || !value || value.length > 128 || /[\u0000-\u001f\u007f-\u009f]/.test(value)) throw new TransferError('invalid-input')
+  if (typeof value !== 'string' || !value || value.length > 128 || Array.from(value).some(char => char.charCodeAt(0) < 32 || (char.charCodeAt(0) >= 127 && char.charCodeAt(0) <= 159))) throw new TransferError('invalid-input')
   return value
 }
 export function trustedContext(context: TransferContext) {

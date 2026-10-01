@@ -132,6 +132,7 @@ export function createTransferService(options: TransferServiceOptions) {
     const original = await owned(context, input.transferId), key = idempotencyKey(input.idempotencyKey)
     if (original.direction !== 'import') throw new TransferError('conflict')
     return options.database().transaction(async (tx) => {
+      await tx.execute(sql`select set_config('transaction_timeout', '30000ms', true), set_config('statement_timeout', '30000ms', true), set_config('lock_timeout', '5000ms', true)`)
       const row = await locked(tx, original.id)
       await authorize(context, row.definition, tx)
       const fingerprint = JSON.stringify([1, row.definition, row.version, row.sourceHash, row.sourceBytes])
@@ -147,6 +148,7 @@ export function createTransferService(options: TransferServiceOptions) {
     const definition = await authorize(context, input.definition), key = idempotencyKey(input.idempotencyKey)
     const fingerprint = JSON.stringify([1, definition.name, definition.version])
     return options.database().transaction(async (tx) => {
+      await tx.execute(sql`select set_config('transaction_timeout', '30000ms', true), set_config('statement_timeout', '30000ms', true), set_config('lock_timeout', '5000ms', true)`)
       await authorize(context, definition.name, tx)
       const [inserted] = await tx.insert(transfer).values({ id: randomUUID(), requesterId: context.requesterId, scopeKind: context.scope.kind, scopeId: context.scope.id, definition: definition.name, version: definition.version, direction: 'export', status: 'pending', idempotencyKey: key, fingerprint }).onConflictDoNothing().returning()
       if (!inserted) {
@@ -180,6 +182,7 @@ export function createTransferService(options: TransferServiceOptions) {
   async function cancelTransfer(context: TransferContext, input: { transferId: string }) {
     const original = await owned(context, input.transferId)
     const row = await options.database().transaction(async (tx) => {
+      await tx.execute(sql`select set_config('transaction_timeout', '30000ms', true), set_config('statement_timeout', '30000ms', true), set_config('lock_timeout', '5000ms', true)`)
       const row = await locked(tx, original.id)
       await authorize(context, row.definition, tx)
       if (row.status === 'cancelled') return row

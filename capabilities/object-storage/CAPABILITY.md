@@ -168,3 +168,7 @@ The fixture owns backendless production boot, real pinned containers, explicit b
 ## Agent guidance
 
 Use `capability-change` and `storage-change`. Keep S3 credentials server-only, objects private, configuration lazy, bootstrap explicit, streams consumed/closed, signed headers exact and metric dimensions bounded. No File UI, attachment/files table, transforms, scanner, CDN policy, upload intent or processing jobs belong in this capability.
+
+## Request cancellation extension
+
+`putObject(key,body,{signal?})`, `getObject(key,{signal?})` and `headObject(key,{signal?})` accept an optional AbortSignal, forwarded to AWS SDK `send`. Existing names/defaults/results remain unchanged. Preaborted requests perform no provider I/O. Caller-requested SDK AbortError exposes safe `StorageError('cancelled')`; unrelated provider errors preserve their ordinary classification. GET cancellation also destroys the acquired Node body (or cancels a supported web body); callers must consume or close abandoned bodies. Import / Export owns deadline versus explicit cancellation mapping; Storage does not invent a timeout policy. Other Storage primitives retain their existing surface.

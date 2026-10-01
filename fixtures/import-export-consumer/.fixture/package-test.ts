@@ -1,13 +1,15 @@
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
-import { readFile } from 'node:fs/promises'
 import { Readable } from 'node:stream'
 import postgres from 'postgres'
+import { fileURLToPath } from 'node:url'
+import { migrate } from 'drizzle-orm/postgres-js/migrator'
+import { saveState, snapshot } from './lifecycle'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { eq, sql } from 'drizzle-orm'
 import { pgTable, text, uuid } from 'drizzle-orm/pg-core'
 import { z } from 'zod'
-import { createTransferRegistry, createTransferService, defineTransfer, TransferError } from '@repo/nuxt-import-export/server'
+import { createTransferRegistry, createTransferService, defineTransfer } from '@repo/nuxt-import-export/server'
 import { transfer } from '@repo/nuxt-import-export/schema'
 import { createJobsBoss, defineQueues } from '@repo/nuxt-jobs/server'
 import { compose, startProvider } from './providers'
@@ -22,16 +24,18 @@ let boss: ReturnType<typeof createJobsBoss> | undefined
 let backend: Awaited<ReturnType<typeof startProvider>> | undefined
 let project: string | undefined
 const revoked = new Set<string>()
+let success = false
+const survivors: { project: string, config: Awaited<ReturnType<typeof startProvider>>['config'], key: string }[] = []
 let failSql = false, calls = 0, snapshotHook: (() => Promise<void>) | undefined
 try {
   await admin.unsafe(`CREATE DATABASE "${databaseName}"`)
   process.env.DATABASE_URL = url.href
-  connection = postgres(url.href, { max: 6 }), boss = createJobsBoss({ databaseUrl: url.href, schema: 'pgboss', concurrency: 1, useListenNotify: false }, 'migration')
+  connection = postgres(url.href, { max: 6 }); boss = createJobsBoss({ databaseUrl: url.href, schema: 'pgboss', concurrency: 1, useListenNotify: false }, 'migration')
   await boss.start(); await boss.stop()
   boss = createJobsBoss({ databaseUrl: url.href, schema: 'pgboss', concurrency: 1, useListenNotify: false }, 'producer')
   await boss.start()
   const db = drizzle(connection)
-  for (const statement of (await readFile(new URL('./transfer.sql', import.meta.url), 'utf8')).split('--> statement-breakpoint')) await connection.unsafe(statement)
+  await migrate(db, { migrationsFolder: fileURLToPath(new URL('./migrations', import.meta.url)) })
   await connection.unsafe('CREATE TABLE fixture_project (id uuid primary key, owner text not null, name text not null, description text)')
   const owner = { requesterId: 'opaque:owner', scope: { kind: 'user' as const, id: 'opaque:owner' } }
   const other = { requesterId: 'opaque:other', scope: { kind: 'user' as const, id: 'opaque:other' } }
@@ -94,18 +98,31 @@ try {
     const [stored] = await db.select().from(transfer).where(eq(transfer.id, exported.id)); await service.purgeTransferArtifacts([exported.id]); await backend.storage.headObject(stored!.artifactKey!); await service.purgeTransferArtifacts([exported.id], { execute: true }); await assert.rejects(backend.storage.headObject(stored!.artifactKey!), { code: 'not-found' }); assert.equal((await service.getTransfer(owner, { transferId: exported.id })).status, 'succeeded')
     const hardCrash = await stage('name,description\ncrash,text\n'); await service.startImport(owner, { transferId: hardCrash.id, idempotencyKey: randomUUID() }); const [crashReceipt] = await db.select().from(transfer).where(eq(transfer.id, hardCrash.id)); assert.equal((await service.reconcileTransfer(hardCrash.id)).status, 'pending'); await boss.cancel(service.runJob.name, crashReceipt!.jobId!); assert.equal((await service.reconcileTransfer(hardCrash.id)).status, 'cancelled')
     const page = await service.listTransfers(owner, { limit: 2 }); assert.equal(page.items.length, 2); assert(page.nextCursor); assert.equal((await service.listTransfers(other, { cursor: page.nextCursor! })).items.length, 0); await assert.rejects(service.listTransfers(owner, { cursor: page.nextCursor! + '=' }), { code: 'invalid-input' })
+    const nodeTransfer = await service.requestExport(owner, { definition: 'projects', idempotencyKey: randomUUID() })
+    const built = Bun.spawn(['bun', 'build', '.fixture/node-worker.ts', '--target=node', '--outfile=.fixture/node-worker.mjs'], { stdout: 'pipe', stderr: 'pipe' })
+    assert.equal(await built.exited, 0, 'Node fixture bundle builds')
+    const node = Bun.spawn(['node', '.fixture/node-worker.mjs'], { env: { ...process.env, DATABASE_URL: url.href, TRANSFER_FIXTURE_ID: nodeTransfer.id, STORAGE_BUCKET: backend.config.bucket, STORAGE_REGION: backend.config.region, STORAGE_ENDPOINT: backend.config.endpoint, STORAGE_ACCESS_KEY_ID: backend.config.accessKeyId, STORAGE_SECRET_ACCESS_KEY: backend.config.secretAccessKey }, stdout: 'pipe', stderr: 'pipe' })
+    const [nodeOutput, nodeError, nodeExit] = await Promise.all([new Response(node.stdout).text(), new Response(node.stderr).text(), node.exited])
+    assert.equal(nodeExit, 0, nodeError); assert(nodeOutput.includes('Node24 native Jobs worker'))
     // No implicit cleanup: source remains through success until explicit selected purge.
     await backend.storage.headObject(source!.sourceKey!)
     console.info(`[import-export] ${provider} real protocol/atomicity/snapshot contract passed`)
+    const backendConfig = backend.config
     backend.storage.close(); backend = undefined
-    await compose(project, ['down', '--volumes', '--remove-orphans']); project = undefined
+    survivors.push({ project, config: backendConfig, key: source!.sourceKey! }); project = undefined
   }
+  await saveState({ databaseName, url: url.href, snapshot: JSON.parse(JSON.stringify(await snapshot(connection))), providers: survivors })
+  success = true
 }
 finally {
   snapshotHook = undefined
   backend?.storage.close()
   if (project) await compose(project, ['down', '--volumes', '--remove-orphans'])
   await boss?.stop({ graceful: false }); await connection?.end()
-  await admin.unsafe(`DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`); await admin.end()
+  if (!success) {
+    for (const fixture of survivors) await compose(fixture.project, ['down', '--volumes', '--remove-orphans'])
+    await admin.unsafe(`DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`)
+  }
+  await admin.end()
   process.env.DATABASE_URL = originalUrl
 }

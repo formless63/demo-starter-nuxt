@@ -22,6 +22,16 @@ describe('Import / Export shared CSV contract', () => {
     try { csv('name,description\n' + ',secret\n'.repeat(101)) }
     catch (error) { expect(error).toMatchObject({ code: 'validation-failed', errorsTruncated: true }); expect((error as { issues: unknown[] }).issues).toHaveLength(100) }
   })
+  it('enforces column/header/UTF8 field/row and normalized JSON bounds', () => {
+    const columns = Array.from({ length: 65 }, (_, index) => `field${index}`)
+    expect(() => parseCsv(Buffer.from(columns.join(',')), columns, z.any(), config)).toThrow('Transfer input is invalid.')
+    expect(() => csv(`${'x'.repeat(65)},description\na,b`)).toThrow('Transfer exceeds a supported limit.')
+    expect(() => csv(`name,description\na,"${'😀'.repeat(16385)}"`)).toThrow('Transfer exceeds a supported limit.')
+    const five = ['a', 'b', 'c', 'd', 'e']
+    expect(() => parseCsv(Buffer.from(five.join(',') + '\n' + five.map(() => 'x'.repeat(60000)).join(',')), five, z.any(), config)).toThrow('Transfer exceeds a supported limit.')
+    expect(() => csv('name,description\na,' + String.fromCharCode(0).repeat(1000), { ...config, maxBytes: 1024 })).toThrow('Transfer exceeds a supported limit.')
+    expect(() => exportCsv([['a', 'b'], ['c', 'd']], ['name', 'description'], { ...config, maxRows: 1 })).toThrow('Transfer exceeds a supported limit.')
+  })
   it('applies one formula mitigation with numeric negatives preserved', () => {
     for (const dangerous of ['=SUM(1)', '+1', '-1', '@name', '\tfoo', '\rfoo', '\nfoo', '  =1', '＝1', '＋1', '－1', '＠x', '  ＝1']) expect(spreadsheetSafe(dangerous)).toBe(`'${dangerous}`)
     for (const safe of ['ordinary', '  ordinary', "'=1", '1']) expect(spreadsheetSafe(safe)).toBe(safe)

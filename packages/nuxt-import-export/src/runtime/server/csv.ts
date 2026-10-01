@@ -12,12 +12,35 @@ export function validateColumns(columns: readonly string[]) {
 export function spreadsheetSafe(value: string) {
   return /^(?:[=+\-@\t\r\n＝＋－＠]|\s+[=+\-@＝＋－＠])/u.test(value) ? `'${value}` : value
 }
+// Bound logical fields/records before csv-parse allocates its cell buffers.
+function guardCsv(text: string) {
+  let quoted = false, fieldBytes = 0, fieldUnits = 0, rowBytes = 0, fields = 1, header = true
+  for (let index = text.charCodeAt(0) === 0xfeff ? 1 : 0; index < text.length; index++) {
+    const char = text[index]!
+    if (char === '"') {
+      if (quoted && text[index + 1] === '"') { index++; fieldBytes++; fieldUnits++; rowBytes++ }
+      else quoted = !quoted
+    }
+    else if (!quoted && char === ',') { fieldBytes = 0; fieldUnits = 0; if (++fields > 64) throw new TransferError('limit-exceeded') }
+    else if (!quoted && (char === '\n' || char === '\r')) {
+      if (char === '\r' && text[index + 1] === '\n') index++
+      header = false; fieldBytes = 0; fieldUnits = 0; rowBytes = 0; fields = 1
+    }
+    else {
+      const point = text.codePointAt(index)!
+      const units = point > 0xffff ? 2 : 1, size = point > 0xffff ? 4 : point > 0x7ff ? 3 : point > 0x7f ? 2 : 1
+      index += units - 1; fieldBytes += size; fieldUnits += units; rowBytes += size
+    }
+    if (fieldBytes > 65536 || rowBytes > 262144 || (header && fieldUnits > 64)) throw new TransferError('limit-exceeded')
+  }
+}
 export function parseCsv<Row>(bytes: Uint8Array, columns: readonly string[], schema: ZodType<Row>, config: TransferConfig): Row[] {
   validateColumns(columns)
   if (bytes.byteLength > config.maxBytes) throw new TransferError('limit-exceeded')
   let text: string
   try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes) }
   catch { throw new TransferError('invalid-format') }
+  guardCsv(text)
   const rows: Row[] = [], issues: ValidationIssue[] = []
   let ordinal = 0, normalizedBytes = 0, errorsTruncated = false, header = false
   try {
