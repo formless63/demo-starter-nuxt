@@ -26,6 +26,7 @@
     "typescript": "5.9.3",
     "vue-tsc": "3.1.7",
     "@types/node": "24.10.1",
-    "drizzle-kit": "0.31.11"
+    "drizzle-kit": "0.31.11",
+    "pg-boss": "12.35.0"
   }
 }

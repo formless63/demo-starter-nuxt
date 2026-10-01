@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { Readable } from 'node:stream'
 import postgres from 'postgres'
+import { PgBoss } from 'pg-boss'
 import { fileURLToPath } from 'node:url'
 import { migrate } from 'drizzle-orm/postgres-js/migrator'
 import { saveState, snapshot } from './lifecycle'
@@ -163,10 +164,17 @@ try {
     assert(new TextDecoder().decode(claimedLine.value).includes('claimed-final-attempt')); reader.releaseLock()
     killed.kill('SIGKILL'); assert.notEqual(await killed.exited, 0)
     assert.equal((await service.reconcileTransfer(exhausted.id)).status, 'pending', 'Active native claim is not failed based on wall time')
-    // Native monitor can run immediately before expiry: allow expiry + one full gate + margin.
-    const crashDeadline = Date.now() + (35 + 60 + 15) * 1000
-    while (Date.now() < crashDeadline) { await boss.supervise(service.runJob.name); if ((await boss.getJobById(service.runJob.name, nativeId))?.state === 'failed') break; await new Promise(resolve => setTimeout(resolve, 500)) }
-    assert.equal((await boss.getJobById(service.runJob.name, nativeId))?.state, 'failed')
+    const finalNative = await boss.getJobById(service.runJob.name, nativeId)
+    assert.equal(finalNative!.retryCount, 5); assert.equal(finalNative!.expireInSeconds, 35)
+    // Fixture-only native supervisor cadence; retry policy and real expiry remain unchanged.
+    const supervisor = new PgBoss({ connectionString: url.href, schema: 'pgboss', migrate: false, supervise: true, schedule: false, monitorIntervalSeconds: 1, superviseIntervalSeconds: 1 })
+    try {
+      await supervisor.start()
+      const crashDeadline = Date.now() + 45000
+      while (Date.now() < crashDeadline) { await supervisor.supervise(service.runJob.name); if ((await boss.getJobById(service.runJob.name, nativeId))?.state === 'failed') break; await new Promise(resolve => setTimeout(resolve, 500)) }
+      assert.equal((await boss.getJobById(service.runJob.name, nativeId))?.state, 'failed')
+    }
+    finally { await supervisor.stop() }
     assert.equal((await service.reconcileTransfer(exhausted.id)).errorCode, 'execution-lost')
     const lost = await service.requestExport(owner, { definition: 'projects', idempotencyKey: randomUUID() })
     const [lostRow] = await db.select().from(transfer).where(eq(transfer.id, lost.id)); await boss.deleteJob(service.runJob.name, lostRow!.jobId!)
