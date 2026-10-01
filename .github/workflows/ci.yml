@@ -79,6 +79,7 @@ jobs:
       - run: bun run lint
       - run: bun run typecheck
       - run: bun run test
+      - run: bun run test:notification-email
       - run: bunx playwright install --with-deps chromium
       - run: bun run test:e2e
       - run: bun run build
@@ -99,6 +100,8 @@ jobs:
           DISPOSABLE_DATABASE_TESTS: 'true'
           PRODUCTION_COMPOSE_PROJECT: nuxt-ci
         run: bun run test:e2e
+      - name: Verify production SMTP composition
+        run: bun run test:notification-email
       - name: Verify production worker is running
         run: docker compose ps --status running worker | grep worker
       - name: Verify instrumented production job execution

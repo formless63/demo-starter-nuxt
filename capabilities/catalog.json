@@ -1,25 +1,108 @@
 {
   "$schema": "./catalog.schema.json",
   "schemaVersion": 1,
-  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage", "email", "webhooks", "audit-log", "cache-coordination", "realtime", "notifications", "search", "ai"] },
+  "referenceApplication": {
+    "enabledCapabilities": [
+      "jobs",
+      "api-platform",
+      "observability",
+      "object-storage",
+      "email",
+      "webhooks",
+      "audit-log",
+      "cache-coordination",
+      "realtime",
+      "notifications",
+      "search",
+      "ai"
+    ]
+  },
   "baseline": [
-    { "id": "framework", "displayName": "Nuxt framework", "summary": "Nuxt 4 with Vue and Nitro routing, SSR, and server APIs." },
-    { "id": "strict-typescript", "displayName": "Strict TypeScript", "summary": "Strict TypeScript checks across application and server code." },
-    { "id": "bun-tooling", "displayName": "Bun tooling", "summary": "Pinned Bun package management and repository scripts." },
-    { "id": "node-runtime", "displayName": "Node production runtime", "summary": "Portable Nitro Node output is the production runtime contract." },
-    { "id": "postgresql", "displayName": "PostgreSQL", "summary": "PostgreSQL 18 is the baseline relational database." },
-    { "id": "drizzle", "displayName": "Drizzle", "summary": "Drizzle ORM and committed SQL migrations provide typed database access." },
-    { "id": "authentication", "displayName": "Better Auth", "summary": "Database-backed sessions with password authentication disabled." },
-    { "id": "github-oauth", "displayName": "GitHub OAuth", "summary": "Optional GitHub sign-in is part of the base authentication contract." },
-    { "id": "oidc", "displayName": "Generic OIDC", "summary": "Provider-neutral OIDC sign-in is part of the base authentication contract." },
-    { "id": "pocket-id-provisioning", "displayName": "Pocket ID provisioning", "summary": "Development-only idempotent Pocket ID client provisioning." },
-    { "id": "tailwind", "displayName": "Tailwind CSS", "summary": "Tailwind CSS 4 provides baseline styling." },
-    { "id": "component-system", "displayName": "shadcn-style components", "summary": "shadcn-vue conventions and Reka UI primitives form the component baseline." },
-    { "id": "icons", "displayName": "Tabler Icons", "summary": "Tabler Icons is the baseline icon system." },
-    { "id": "container-orchestration", "displayName": "Docker and Compose", "summary": "Provider-neutral production image and Compose orchestration." },
-    { "id": "migrations", "displayName": "Explicit migrations", "summary": "Schema changes are explicit release operations, never runtime startup effects." },
-    { "id": "ci-testing", "displayName": "CI and testing", "summary": "Lint, typecheck, Vitest, Playwright, builds, and container smoke run in CI." },
-    { "id": "agent-scaffolding", "displayName": "Agent scaffolding", "summary": "Repository context, prompts, and focused skills guide maintenance." }
+    {
+      "id": "framework",
+      "displayName": "Nuxt framework",
+      "summary": "Nuxt 4 with Vue and Nitro routing, SSR, and server APIs."
+    },
+    {
+      "id": "strict-typescript",
+      "displayName": "Strict TypeScript",
+      "summary": "Strict TypeScript checks across application and server code."
+    },
+    {
+      "id": "bun-tooling",
+      "displayName": "Bun tooling",
+      "summary": "Pinned Bun package management and repository scripts."
+    },
+    {
+      "id": "node-runtime",
+      "displayName": "Node production runtime",
+      "summary": "Portable Nitro Node output is the production runtime contract."
+    },
+    {
+      "id": "postgresql",
+      "displayName": "PostgreSQL",
+      "summary": "PostgreSQL 18 is the baseline relational database."
+    },
+    {
+      "id": "drizzle",
+      "displayName": "Drizzle",
+      "summary": "Drizzle ORM and committed SQL migrations provide typed database access."
+    },
+    {
+      "id": "authentication",
+      "displayName": "Better Auth",
+      "summary": "Database-backed sessions with password authentication disabled."
+    },
+    {
+      "id": "github-oauth",
+      "displayName": "GitHub OAuth",
+      "summary": "Optional GitHub sign-in is part of the base authentication contract."
+    },
+    {
+      "id": "oidc",
+      "displayName": "Generic OIDC",
+      "summary": "Provider-neutral OIDC sign-in is part of the base authentication contract."
+    },
+    {
+      "id": "pocket-id-provisioning",
+      "displayName": "Pocket ID provisioning",
+      "summary": "Development-only idempotent Pocket ID client provisioning."
+    },
+    {
+      "id": "tailwind",
+      "displayName": "Tailwind CSS",
+      "summary": "Tailwind CSS 4 provides baseline styling."
+    },
+    {
+      "id": "component-system",
+      "displayName": "shadcn-style components",
+      "summary": "shadcn-vue conventions and Reka UI primitives form the component baseline."
+    },
+    {
+      "id": "icons",
+      "displayName": "Tabler Icons",
+      "summary": "Tabler Icons is the baseline icon system."
+    },
+    {
+      "id": "container-orchestration",
+      "displayName": "Docker and Compose",
+      "summary": "Provider-neutral production image and Compose orchestration."
+    },
+    {
+      "id": "migrations",
+      "displayName": "Explicit migrations",
+      "summary": "Schema changes are explicit release operations, never runtime startup effects."
+    },
+    {
+      "id": "ci-testing",
+      "displayName": "CI and testing",
+      "summary": "Lint, typecheck, Vitest, Playwright, builds, and container smoke run in CI."
+    },
+    {
+      "id": "agent-scaffolding",
+      "displayName": "Agent scaffolding",
+      "summary": "Repository context, prompts, and focused skills guide maintenance."
+    }
   ],
   "capabilities": [
     {
@@ -29,14 +112,42 @@
       "status": "done",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["observability", "ops-admin"],
-      "baselineRequirements": ["postgresql"],
-      "externalRequirements": [{ "name": "PostgreSQL", "required": true }],
+      "integratesWith": [
+        "observability",
+        "ops-admin"
+      ],
+      "baselineRequirements": [
+        "postgresql"
+      ],
+      "externalRequirements": [
+        {
+          "name": "PostgreSQL",
+          "required": true
+        }
+      ],
       "summary": "Typed pg-boss jobs with bounded concurrency, explicit producer/worker/migration roles, same-database transactions and native attempt context.",
-      "scripts": ["jobs:worker", "jobs:migrate", "jobs:doctor", "jobs:smoke", "packages:build", "packages:test"],
-      "environmentVariables": ["DATABASE_URL", "PGBOSS_DATABASE_URL", "PGBOSS_SCHEMA", "JOBS_CONCURRENCY", "PGBOSS_USE_LISTEN_NOTIFY"],
-      "migrations": ["Explicit pg-boss schema migration via jobs:migrate"],
-      "runtimeProcesses": ["worker", "migrate (one-shot)"],
+      "scripts": [
+        "jobs:worker",
+        "jobs:migrate",
+        "jobs:doctor",
+        "jobs:smoke",
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [
+        "DATABASE_URL",
+        "PGBOSS_DATABASE_URL",
+        "PGBOSS_SCHEMA",
+        "JOBS_CONCURRENCY",
+        "PGBOSS_USE_LISTEN_NOTIFY"
+      ],
+      "migrations": [
+        "Explicit pg-boss schema migration via jobs:migrate"
+      ],
+      "runtimeProcesses": [
+        "worker",
+        "migrate (one-shot)"
+      ],
       "documentationPath": "capabilities/jobs/CAPABILITY.md",
       "agentSkill": ".agents/skills/jobs-change/SKILL.md",
       "evaluationDocument": "JOBS_MODULE_EVALUATION.md",
@@ -44,11 +155,22 @@
       "packagePath": "packages/nuxt-jobs",
       "fixturePath": "fixtures/jobs-consumer",
       "packageTest": {
-        "ownedDependencies": ["pg-boss"],
+        "ownedDependencies": [
+          "pg-boss"
+        ],
         "runtimeScript": "package:test:runtime",
         "removal": {
-          "scripts": ["jobs:migrate", "jobs:doctor", "jobs:worker", "jobs:smoke", "package:test:runtime"],
-          "paths": ["server/jobs", "server/api/jobs.post.ts"],
+          "scripts": [
+            "jobs:migrate",
+            "jobs:doctor",
+            "jobs:worker",
+            "jobs:smoke",
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server/jobs",
+            "server/api/jobs.post.ts"
+          ],
           "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
         }
       }
@@ -60,14 +182,36 @@
       "status": "done",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["audit-log", "observability", "authorization", "organizations"],
-      "baselineRequirements": ["authentication", "postgresql", "drizzle", "framework"],
+      "integratesWith": [
+        "audit-log",
+        "observability",
+        "authorization",
+        "organizations"
+      ],
+      "baselineRequirements": [
+        "authentication",
+        "postgresql",
+        "drizzle",
+        "framework"
+      ],
       "externalRequirements": [],
       "summary": "User-owned machine credentials, stable Zod contracts, and OpenAPI 3.1.1 without replacing Nitro.",
-      "scripts": ["db:migrate", "packages:build", "packages:test"],
-      "environmentVariables": ["DATABASE_URL", "NUXT_AUTH_SECRET", "NUXT_PUBLIC_APP_BASE_URL"],
-      "migrations": ["Committed Drizzle migration for the Better Auth apikey table"],
-      "runtimeProcesses": ["Nitro application"],
+      "scripts": [
+        "db:migrate",
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [
+        "DATABASE_URL",
+        "NUXT_AUTH_SECRET",
+        "NUXT_PUBLIC_APP_BASE_URL"
+      ],
+      "migrations": [
+        "Committed Drizzle migration for the Better Auth apikey table"
+      ],
+      "runtimeProcesses": [
+        "Nitro application"
+      ],
       "documentationPath": "capabilities/api-platform/CAPABILITY.md",
       "agentSkill": ".agents/skills/api-contract-change/SKILL.md",
       "evaluationDocument": "API_PLATFORM_MODULE_EVALUATION.md",
@@ -75,11 +219,21 @@
       "packagePath": "packages/nuxt-api",
       "fixturePath": "fixtures/api-consumer",
       "packageTest": {
-        "ownedDependencies": ["@better-auth/api-key", "@scalar/nuxt", "zod-openapi"],
+        "ownedDependencies": [
+          "@better-auth/api-key",
+          "@scalar/nuxt",
+          "zod-openapi"
+        ],
         "runtimeScript": "package:test:runtime",
         "removal": {
-          "scripts": ["db:migrate", "package:test:runtime"],
-          "paths": ["server", "drizzle.config.ts"],
+          "scripts": [
+            "db:migrate",
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server",
+            "drizzle.config.ts"
+          ],
           "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
         }
       }
@@ -91,13 +245,58 @@
       "status": "done",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["jobs", "api-platform", "object-storage", "email", "webhooks", "audit-log", "ai", "cache-coordination", "search", "realtime", "notifications", "import-export", "organizations", "authorization", "feature-flags", "invoice-ninja", "stripe", "medusa", "ops-admin"],
-      "externalRequirements": [{ "name": "OTLP destination", "required": false }],
+      "integratesWith": [
+        "jobs",
+        "api-platform",
+        "object-storage",
+        "email",
+        "webhooks",
+        "audit-log",
+        "ai",
+        "cache-coordination",
+        "search",
+        "realtime",
+        "notifications",
+        "import-export",
+        "organizations",
+        "authorization",
+        "feature-flags",
+        "invoice-ninja",
+        "stripe",
+        "medusa",
+        "ops-admin"
+      ],
+      "externalRequirements": [
+        {
+          "name": "OTLP destination",
+          "required": false
+        }
+      ],
       "summary": "Server-only safe Pino logs, request correlation, OpenTelemetry traces/metrics and optional OTLP/HTTP export.",
-      "scripts": ["packages:build", "packages:test"],
-      "environmentVariables": ["LOG_LEVEL", "OTEL_SERVICE_NAME", "OTEL_SDK_DISABLED", "OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_EXPORTER_OTLP_HEADERS", "OTEL_TRACES_EXPORTER", "OTEL_METRICS_EXPORTER", "OTEL_RESOURCE_ATTRIBUTES", "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "APP_VERSION", "APP_REVISION", "DEPLOYMENT_ENVIRONMENT"],
+      "scripts": [
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [
+        "LOG_LEVEL",
+        "OTEL_SERVICE_NAME",
+        "OTEL_SDK_DISABLED",
+        "OTEL_EXPORTER_OTLP_ENDPOINT",
+        "OTEL_EXPORTER_OTLP_HEADERS",
+        "OTEL_TRACES_EXPORTER",
+        "OTEL_METRICS_EXPORTER",
+        "OTEL_RESOURCE_ATTRIBUTES",
+        "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+        "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT",
+        "APP_VERSION",
+        "APP_REVISION",
+        "DEPLOYMENT_ENVIRONMENT"
+      ],
       "migrations": [],
-      "runtimeProcesses": ["Nitro application", "Optional instrumented Jobs worker"],
+      "runtimeProcesses": [
+        "Nitro application",
+        "Optional instrumented Jobs worker"
+      ],
       "documentationPath": "capabilities/observability/CAPABILITY.md",
       "agentSkill": ".agents/skills/observability-change/SKILL.md",
       "evaluationDocument": "OBSERVABILITY_MODULE_EVALUATION.md",
@@ -105,11 +304,21 @@
       "packagePath": "packages/nuxt-observability",
       "fixturePath": "fixtures/observability-consumer",
       "packageTest": {
-        "ownedDependencies": ["pino", "@opentelemetry/sdk-trace-node", "@opentelemetry/sdk-metrics", "@opentelemetry/exporter-trace-otlp-http", "@opentelemetry/exporter-metrics-otlp-http"],
+        "ownedDependencies": [
+          "pino",
+          "@opentelemetry/sdk-trace-node",
+          "@opentelemetry/sdk-metrics",
+          "@opentelemetry/exporter-trace-otlp-http",
+          "@opentelemetry/exporter-metrics-otlp-http"
+        ],
         "runtimeScript": "package:test:runtime",
         "removal": {
-          "scripts": ["package:test:runtime"],
-          "paths": ["server"],
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server"
+          ],
           "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
         }
       }
@@ -121,13 +330,42 @@
       "status": "done",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["jobs", "observability"],
-      "externalRequirements": [{ "name": "S3-compatible storage", "required": true, "notes": "Required only for runtime storage operations, with explicit region. RustFS 1.0.0 preferred; Garage 2.4.1 tested with optional localhost third-party Noooste Garage UI v0.13.0 (not official or required for S3; privileged operator access only). MinIO is not the default." }],
+      "integratesWith": [
+        "jobs",
+        "observability"
+      ],
+      "externalRequirements": [
+        {
+          "name": "S3-compatible storage",
+          "required": true,
+          "notes": "Required only for runtime storage operations, with explicit region. RustFS 1.0.0 preferred; Garage 2.4.1 tested with optional localhost third-party Noooste Garage UI v0.13.0 (not official or required for S3; privileged operator access only). MinIO is not the default."
+        }
+      ],
       "summary": "Private server-only S3 objects, streaming, presigned GET/PUT, multipart and post-upload verification; RustFS preferred, Garage supported.",
-      "scripts": ["storage:check", "storage:smoke", "storage:dev:rustfs", "storage:dev:garage", "storage:dev:down", "packages:build", "packages:test"],
-      "environmentVariables": ["STORAGE_BUCKET", "STORAGE_REGION", "STORAGE_ENDPOINT", "STORAGE_ACCESS_KEY_ID", "STORAGE_SECRET_ACCESS_KEY", "STORAGE_SESSION_TOKEN", "STORAGE_FORCE_PATH_STYLE", "STORAGE_PRESIGN_TTL_SECONDS", "STORAGE_KEY_PREFIX"],
+      "scripts": [
+        "storage:check",
+        "storage:smoke",
+        "storage:dev:rustfs",
+        "storage:dev:garage",
+        "storage:dev:down",
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [
+        "STORAGE_BUCKET",
+        "STORAGE_REGION",
+        "STORAGE_ENDPOINT",
+        "STORAGE_ACCESS_KEY_ID",
+        "STORAGE_SECRET_ACCESS_KEY",
+        "STORAGE_SESSION_TOKEN",
+        "STORAGE_FORCE_PATH_STYLE",
+        "STORAGE_PRESIGN_TTL_SECONDS",
+        "STORAGE_KEY_PREFIX"
+      ],
       "migrations": [],
-      "runtimeProcesses": ["Nitro application; optional external S3 service"],
+      "runtimeProcesses": [
+        "Nitro application; optional external S3 service"
+      ],
       "documentationPath": "capabilities/object-storage/CAPABILITY.md",
       "agentSkill": ".agents/skills/storage-change/SKILL.md",
       "evaluationDocument": "OBJECT_STORAGE_MODULE_EVALUATION.md",
@@ -135,9 +373,20 @@
       "packagePath": "packages/nuxt-storage",
       "fixturePath": "fixtures/storage-consumer",
       "packageTest": {
-        "ownedDependencies": ["@aws-sdk/client-s3", "@aws-sdk/s3-request-presigner"],
+        "ownedDependencies": [
+          "@aws-sdk/client-s3",
+          "@aws-sdk/s3-request-presigner"
+        ],
         "runtimeScript": "package:test:runtime",
-        "removal": { "scripts": ["package:test:runtime"], "paths": ["server"], "replacementNuxtConfig": ".fixture/base-nuxt.config.ts" }
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
       }
     },
     {
@@ -154,7 +403,9 @@
       "baselineIntegrations": [
         "authentication"
       ],
-      "baselineRequirements": ["node-runtime"],
+      "baselineRequirements": [
+        "node-runtime"
+      ],
       "externalRequirements": [
         {
           "name": "SMTP",
@@ -216,8 +467,14 @@
       "kind": "foundational-backend",
       "status": "done",
       "defaultInstalled": false,
-      "requires": ["jobs"],
-      "integratesWith": ["audit-log", "observability", "api-platform"],
+      "requires": [
+        "jobs"
+      ],
+      "integratesWith": [
+        "audit-log",
+        "observability",
+        "api-platform"
+      ],
       "externalRequirements": [
         {
           "name": "Remote webhook endpoints",
@@ -226,11 +483,21 @@
         }
       ],
       "summary": "Reliable inbound and outbound webhook processing with durable delivery.",
-      "baselineRequirements": ["node-runtime"],
-      "scripts": ["webhooks:smoke", "packages:build", "packages:test"],
+      "baselineRequirements": [
+        "node-runtime"
+      ],
+      "scripts": [
+        "webhooks:smoke",
+        "packages:build",
+        "packages:test"
+      ],
       "environmentVariables": [],
-      "migrations": ["Uses explicit Jobs migration; no Webhooks table"],
-      "runtimeProcesses": ["Existing Jobs worker"],
+      "migrations": [
+        "Uses explicit Jobs migration; no Webhooks table"
+      ],
+      "runtimeProcesses": [
+        "Existing Jobs worker"
+      ],
       "documentationPath": "capabilities/webhooks/CAPABILITY.md",
       "agentSkill": ".agents/skills/webhooks-change/SKILL.md",
       "evaluationDocument": "WEBHOOKS_MODULE_EVALUATION.md",
@@ -241,8 +508,15 @@
         "ownedDependencies": [],
         "runtimeScript": "package:test:runtime",
         "removal": {
-          "scripts": ["package:test:runtime", "webhooks:worker"],
-          "paths": ["server/webhooks", "server/api/webhook.post.ts", ".fixture/smoke.ts"],
+          "scripts": [
+            "package:test:runtime",
+            "webhooks:worker"
+          ],
+          "paths": [
+            "server/webhooks",
+            "server/api/webhook.post.ts",
+            ".fixture/smoke.ts"
+          ],
           "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
         }
       }
@@ -254,15 +528,42 @@
       "status": "done",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["api-platform", "organizations", "jobs", "invoice-ninja", "stripe", "medusa"],
-      "baselineIntegrations": ["authentication"],
-      "externalRequirements": [{ "name": "PostgreSQL", "required": true }],
+      "integratesWith": [
+        "api-platform",
+        "organizations",
+        "jobs",
+        "invoice-ninja",
+        "stripe",
+        "medusa"
+      ],
+      "baselineIntegrations": [
+        "authentication"
+      ],
+      "externalRequirements": [
+        {
+          "name": "PostgreSQL",
+          "required": true
+        }
+      ],
       "summary": "Append-oriented application audit events with caller-owned transactions and bounded keyset queries.",
-      "baselineRequirements": ["postgresql", "drizzle"],
-      "scripts": ["db:migrate", "packages:build", "packages:test"],
-      "environmentVariables": ["DATABASE_URL"],
-      "migrations": ["Application-owned committed Drizzle migration for audit_event"],
-      "runtimeProcesses": ["Nitro application"],
+      "baselineRequirements": [
+        "postgresql",
+        "drizzle"
+      ],
+      "scripts": [
+        "db:migrate",
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [
+        "DATABASE_URL"
+      ],
+      "migrations": [
+        "Application-owned committed Drizzle migration for audit_event"
+      ],
+      "runtimeProcesses": [
+        "Nitro application"
+      ],
       "documentationPath": "capabilities/audit-log/CAPABILITY.md",
       "agentSkill": ".agents/skills/audit-log-change/SKILL.md",
       "evaluationDocument": "AUDIT_LOG_MODULE_EVALUATION.md",
@@ -273,8 +574,15 @@
         "ownedDependencies": [],
         "runtimeScript": "package:test:runtime",
         "removal": {
-          "scripts": ["db:migrate", "package:test:runtime"],
-          "paths": ["server/database/schema.ts", "drizzle.config.ts", ".fixture/package-test.ts"],
+          "scripts": [
+            "db:migrate",
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server/database/schema.ts",
+            "drizzle.config.ts",
+            ".fixture/package-test.ts"
+          ],
           "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
         }
       }
@@ -357,7 +665,9 @@
         "jobs",
         "observability"
       ],
-      "baselineRequirements": ["node-runtime"],
+      "baselineRequirements": [
+        "node-runtime"
+      ],
       "externalRequirements": [
         {
           "name": "Valkey/Redis-compatible service",
@@ -587,7 +897,9 @@
             "server/jobs/registry.ts"
           ],
           "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
-        }
+        },
+        "postRemovalScript": "package:test:survival",
+        "cleanupScript": "package:test:cleanup"
       }
     },
     {
@@ -596,8 +908,14 @@
       "kind": "application-infrastructure",
       "status": "planned",
       "defaultInstalled": false,
-      "requires": ["jobs", "object-storage"],
-      "integratesWith": ["notifications", "audit-log"],
+      "requires": [
+        "jobs",
+        "object-storage"
+      ],
+      "integratesWith": [
+        "notifications",
+        "audit-log"
+      ],
       "externalRequirements": [],
       "summary": "Asynchronous bulk import and export workflows backed by durable files."
     },
@@ -608,9 +926,19 @@
       "status": "planned",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["audit-log", "notifications"],
-      "baselineRequirements": ["authentication"],
-      "externalRequirements": [{ "name": "PostgreSQL", "required": true }],
+      "integratesWith": [
+        "audit-log",
+        "notifications"
+      ],
+      "baselineRequirements": [
+        "authentication"
+      ],
+      "externalRequirements": [
+        {
+          "name": "PostgreSQL",
+          "required": true
+        }
+      ],
       "summary": "Authenticated organization membership and tenant scoping."
     },
     {
@@ -620,9 +948,20 @@
       "status": "planned",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["organizations", "api-platform", "audit-log"],
-      "baselineRequirements": ["authentication"],
-      "externalRequirements": [{ "name": "PostgreSQL", "required": true }],
+      "integratesWith": [
+        "organizations",
+        "api-platform",
+        "audit-log"
+      ],
+      "baselineRequirements": [
+        "authentication"
+      ],
+      "externalRequirements": [
+        {
+          "name": "PostgreSQL",
+          "required": true
+        }
+      ],
       "summary": "Reusable application policy and permission primitives beyond the starter's owner checks."
     },
     {
@@ -632,8 +971,17 @@
       "status": "planned",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["organizations", "authorization", "audit-log"],
-      "externalRequirements": [{ "name": "PostgreSQL", "required": true }],
+      "integratesWith": [
+        "organizations",
+        "authorization",
+        "audit-log"
+      ],
+      "externalRequirements": [
+        {
+          "name": "PostgreSQL",
+          "required": true
+        }
+      ],
       "summary": "Database-backed feature rollout and targeting controls."
     },
     {
@@ -642,9 +990,21 @@
       "kind": "business-integration",
       "status": "planned",
       "defaultInstalled": false,
-      "requires": ["jobs", "webhooks"],
-      "integratesWith": ["organizations", "audit-log", "notifications"],
-      "externalRequirements": [{ "name": "Invoice Ninja", "required": true }],
+      "requires": [
+        "jobs",
+        "webhooks"
+      ],
+      "integratesWith": [
+        "organizations",
+        "audit-log",
+        "notifications"
+      ],
+      "externalRequirements": [
+        {
+          "name": "Invoice Ninja",
+          "required": true
+        }
+      ],
       "summary": "Invoice Ninja synchronization and webhook integration."
     },
     {
@@ -653,9 +1013,22 @@
       "kind": "business-integration",
       "status": "planned",
       "defaultInstalled": false,
-      "requires": ["jobs", "webhooks"],
-      "integratesWith": ["organizations", "authorization", "audit-log", "notifications"],
-      "externalRequirements": [{ "name": "Stripe", "required": true }],
+      "requires": [
+        "jobs",
+        "webhooks"
+      ],
+      "integratesWith": [
+        "organizations",
+        "authorization",
+        "audit-log",
+        "notifications"
+      ],
+      "externalRequirements": [
+        {
+          "name": "Stripe",
+          "required": true
+        }
+      ],
       "summary": "Stripe billing, synchronization, and webhook integration."
     },
     {
@@ -664,9 +1037,21 @@
       "kind": "business-integration",
       "status": "planned",
       "defaultInstalled": false,
-      "requires": ["jobs", "webhooks"],
-      "integratesWith": ["object-storage", "organizations", "search"],
-      "externalRequirements": [{ "name": "Medusa", "required": true }],
+      "requires": [
+        "jobs",
+        "webhooks"
+      ],
+      "integratesWith": [
+        "object-storage",
+        "organizations",
+        "search"
+      ],
+      "externalRequirements": [
+        {
+          "name": "Medusa",
+          "required": true
+        }
+      ],
       "summary": "Medusa commerce integration with durable synchronization and webhooks."
     },
     {
@@ -676,8 +1061,17 @@
       "status": "planned",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["observability", "jobs", "audit-log", "object-storage", "cache-coordination", "webhooks"],
-      "baselineRequirements": ["authentication"],
+      "integratesWith": [
+        "observability",
+        "jobs",
+        "audit-log",
+        "object-storage",
+        "cache-coordination",
+        "webhooks"
+      ],
+      "baselineRequirements": [
+        "authentication"
+      ],
       "externalRequirements": [],
       "summary": "Authenticated operational and administrative surfaces for installed capabilities."
     },
@@ -688,7 +1082,10 @@
       "status": "planned",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["search", "authorization"],
+      "integratesWith": [
+        "search",
+        "authorization"
+      ],
       "externalRequirements": [],
       "summary": "Composable commands and keyboard-driven action discovery."
     },
@@ -699,7 +1096,11 @@
       "status": "planned",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["search", "organizations", "authorization"],
+      "integratesWith": [
+        "search",
+        "organizations",
+        "authorization"
+      ],
       "externalRequirements": [],
       "summary": "Reusable tables for sorting, filtering, pagination, and actions."
     },
@@ -710,7 +1111,10 @@
       "status": "planned",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["object-storage", "ai"],
+      "integratesWith": [
+        "object-storage",
+        "ai"
+      ],
       "externalRequirements": [],
       "summary": "Safe Markdown rendering, code highlighting, and content primitives."
     },
@@ -721,7 +1125,10 @@
       "status": "planned",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["data-table", "realtime"],
+      "integratesWith": [
+        "data-table",
+        "realtime"
+      ],
       "externalRequirements": [],
       "summary": "Vue-native charting and application visualization primitives."
     },
@@ -731,8 +1138,13 @@
       "kind": "operations-ui",
       "status": "planned",
       "defaultInstalled": false,
-      "requires": ["object-storage"],
-      "integratesWith": ["jobs", "search"],
+      "requires": [
+        "object-storage"
+      ],
+      "integratesWith": [
+        "jobs",
+        "search"
+      ],
       "externalRequirements": [],
       "summary": "Upload, browse, manage, and select files stored by Object Storage."
     },
@@ -743,7 +1155,12 @@
       "status": "planned",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["object-storage", "markdown-code", "realtime", "organizations"],
+      "integratesWith": [
+        "object-storage",
+        "markdown-code",
+        "realtime",
+        "organizations"
+      ],
       "externalRequirements": [],
       "summary": "Rich-text editing built around Tiptap and Vue-native UI."
     },
@@ -754,7 +1171,11 @@
       "status": "planned",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["realtime", "object-storage", "audit-log"],
+      "integratesWith": [
+        "realtime",
+        "object-storage",
+        "audit-log"
+      ],
       "externalRequirements": [],
       "summary": "Interactive flow and canvas primitives for node-based applications."
     },
@@ -765,7 +1186,10 @@
       "status": "planned",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["notifications", "realtime"],
+      "integratesWith": [
+        "notifications",
+        "realtime"
+      ],
       "externalRequirements": [],
       "summary": "Installability, offline behavior, and resilient client synchronization."
     },
@@ -776,7 +1200,17 @@
       "status": "planned",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["ops-admin", "command-system", "data-table", "markdown-code", "charts-visualization", "file-ui", "rich-text", "flow-canvas", "pwa-offline"],
+      "integratesWith": [
+        "ops-admin",
+        "command-system",
+        "data-table",
+        "markdown-code",
+        "charts-visualization",
+        "file-ui",
+        "rich-text",
+        "flow-canvas",
+        "pwa-offline"
+      ],
       "externalRequirements": [],
       "summary": "Locale routing, translation, and formatting integration for UI-facing capabilities."
     }

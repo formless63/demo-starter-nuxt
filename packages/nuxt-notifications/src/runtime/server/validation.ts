@@ -18,14 +18,14 @@ function invalid(): never {
 }
 
 export function boundedString(value: unknown, max: number): string {
-  if (typeof value !== 'string' || !value.length || value.length > max || !value.isWellFormed() || Array.from(value).some(character => character.charCodeAt(0) < 32 || (character.charCodeAt(0) >= 127 && character.charCodeAt(0) <= 159))) invalid()
+  if (typeof value !== 'string' || !value.trim().length || value.length > max || !value.isWellFormed() || Array.from(value).some(character => character.charCodeAt(0) < 32 || (character.charCodeAt(0) >= 127 && character.charCodeAt(0) <= 159))) invalid()
   return value
 }
 
 /** Namespaced lowercase notification identifiers. */
 export function notificationType(value: unknown): string {
   const type = boundedString(value, 128)
-  if (!/^[a-z][a-z0-9._-]{0,127}$/.test(type) || !type.includes('.')) invalid()
+  if (!/^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/.test(type) || !type.includes('.')) invalid()
   return type
 }
 
