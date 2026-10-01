@@ -15,3 +15,7 @@ Import receipt/S3 staging is explicitly non-atomic. Domain writes+terminal recei
 ## Verification
 
 Release acceptance requires targeted regressions, both real storage providers, generic packed clean consumer install/runtime/removal/rebuild, all completed capability lifecycles, root checks, development/production browser checks, production image/app/explicit migration/worker/health checks, and exact-final-head hosted CI. Run-specific evidence belongs in the draft PR. This document makes no unrun verification claim.
+
+### Database timeout ordering
+
+[PostgreSQL18 documents](https://www.postgresql.org/docs/18/runtime-config-client.html) that transaction_timeout ≤ statement_timeout suppresses the longer statement timeout. Keep transaction timeout within min30sec/remaining budget and statement timeout500ms shorter, reserving time for safe rollback. This avoids relying on a terminated session for normal long-query cancellation; the transaction limit still bounds paused transactions. Drizzle can wrap driver SQLSTATE in cause; classification walks a bounded cause chain without exposing messages/SQL/values.

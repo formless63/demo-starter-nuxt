@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { createHmac, randomUUID } from 'node:crypto'
 import { spawn } from 'node:child_process'
-import { cp, mkdtemp, rm, symlink } from 'node:fs/promises'
+import { cp, mkdir, mkdtemp, readdir, rm, symlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createServer } from 'node:net'
@@ -36,13 +36,15 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     if (!production) {
       isolated = await mkdtemp(join(tmpdir(), 'nuxt-transfer-browser-'))
       await cp(root, isolated, { recursive: true, filter: source => !/(?:^|\/)(?:node_modules|\.git|\.nuxt|\.output|test-results|playwright-report)(?:\/|$)/.test(source) && !source.endsWith('/.env') })
-      await symlink(join(root, 'node_modules'), join(isolated, 'node_modules')); cwd = isolated
+      await mkdir(join(isolated, 'node_modules'))
+      for (const entry of await readdir(join(root, 'node_modules'))) if (!['.cache', '.vite'].includes(entry)) await symlink(join(root, 'node_modules', entry), join(isolated, 'node_modules', entry))
+      cwd = isolated
     }
-    app = spawn(production ? 'node' : 'bun', production ? ['.output/server/index.mjs'] : ['run', 'dev', '--host', '127.0.0.1', '--port', String(port)], { cwd, env, stdio: ['ignore', 'ignore', 'pipe'] })
+    app = spawn(production ? 'node' : 'bun', production ? ['.output/server/index.mjs'] : ['run', 'dev', '--host', '127.0.0.1', '--port', String(port)], { cwd, env, detached: true, stdio: ['ignore', 'ignore', 'pipe'] })
     // No raw application logs become test assertions or artifacts.
     app.stderr?.resume()
     await expect.poll(async () => { try { return (await fetch(`${base}/api/health`)).status } catch { return 0 } }, { timeout: 90000 }).toBe(200)
-    worker = spawn('bun', ['scripts/jobs-worker.ts'], { cwd: root, env, stdio: 'ignore' })
+    worker = spawn('bun', ['scripts/jobs-worker.ts'], { cwd: root, env, detached: true, stdio: 'ignore' })
     await db.insert(tables.user).values([{ id: owner, name: 'Transfer owner', email: `${owner}@example.test` }, { id: other, name: 'Other owner', email: `${other}@example.test` }])
     await db.insert(tables.session).values({ id: randomUUID(), token, userId: owner, expiresAt: new Date(Date.now() + 240000) })
     await db.insert(tables.project).values({ id: randomUUID(), ownerId: other, name: 'Foreign project must stay private' })
@@ -53,7 +55,8 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     await page.goto(`${base}/app/projects`)
     await expect(page.getByRole('heading', { name: 'Project CSV transfers' })).toBeVisible()
     await page.getByLabel('CSV file').setInputFiles({ name: 'local-fixture.csv', mimeType: 'text/csv', buffer: Buffer.from('name,description\r\nBrowser CSV,"quoted\nline"\r\n') })
-    await page.getByRole('button', { name: 'Upload CSV', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Upload CSV', exact: true })).toBeEnabled({ timeout: 15000 })
+    await page.getByRole('button', { name: 'Upload CSV', exact: true }).click({ timeout: 15000 })
     await expect(page.getByRole('button', { name: 'Start import', exact: true })).toBeEnabled()
     await page.getByRole('button', { name: 'Start import', exact: true }).click()
     await expect.poll(async () => {
@@ -84,8 +87,8 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     await expect(page.getByText('import — cancelled', { exact: false })).toBeVisible()
   }
   finally {
-    await context?.close()
-    for (const process of [worker, app]) if (process && process.exitCode === null) { process.kill('SIGTERM'); await Promise.race([new Promise(resolve => process.once('exit', resolve)), new Promise(resolve => setTimeout(resolve, 5000))]); if (process.exitCode === null) process.kill('SIGKILL') }
+    await context?.close().catch(() => {})
+    for (const process of [worker, app]) if (process && process.exitCode === null) { try { globalThis.process.kill(-process.pid!, 'SIGTERM') } catch { /* Already stopped. */ } await Promise.race([new Promise(resolve => process.once('exit', resolve)), new Promise(resolve => setTimeout(resolve, 5000))]); if (process.exitCode === null) { try { globalThis.process.kill(-process.pid!, 'SIGKILL') } catch { /* Already stopped. */ } } }
     await db.delete(tables.transfer).where(eq(tables.transfer.requesterId, owner))
     await db.delete(tables.notification).where(eq(tables.notification.recipientId, owner))
     await db.delete(tables.auditEvent).where(eq(tables.auditEvent.actorId, owner))
