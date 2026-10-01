@@ -36,7 +36,7 @@ The Jobs Nuxt module has no hard dependency on another Nuxt module and declares 
 - `DATABASE_URL`: default application and jobs database connection.
 - `PGBOSS_DATABASE_URL`: optional override for jobs processes or a separate migration role.
 - `PGBOSS_SCHEMA`: pg-boss schema, default `pgboss`.
-- `JOBS_CONCURRENCY`: worker concurrency, default `5`.
+- `JOBS_CONCURRENCY`: worker concurrency, default `4`; undefined/empty use the default. Decimal integers `1`–`100` only; signs, whitespace, fractions, exponents and out-of-range values are rejected.
 - `PGBOSS_USE_LISTEN_NOTIFY`: opt-in pg-boss LISTEN/NOTIFY, default `false`.
 - `JOBS_REGISTRY`: optional package-CLI registry path override, default `server/jobs/registry.ts`.
 
@@ -56,6 +56,8 @@ The long-term command contract is the package-provided `nuxt-jobs <worker|migrat
 ### Database/migrations
 
 pg-boss owns its schema and supported migrations. Only `jobs:migrate` may run them. Nitro clients, workers, doctor, and smoke runtime instances use `migrate: false`; normal startup never mutates the pg-boss schema.
+
+`createJobsBoss(config)` defaults to a producer: `supervise:false`, `schedule:false`, `migrate:false`. Operational readers/doctor use the same flags. Explicit `worker` clients (standalone worker and smoke) use `supervise:true`, `schedule:true`, `migrate:false`. Only the `migration` role enables migrations; legacy boolean migration arguments remain supported.
 
 ### Runtime processes
 
@@ -83,6 +85,10 @@ await db.transaction(async (tx) => {
   await sendJobInTransaction(tx, 'starter.echo', { message: 'committed' })
 })
 ```
+
+The caller owns the transaction and must create it from the application `DATABASE_URL`. Transactional enqueue refuses differing canonical host, effective port (default `5432`) or decoded database names between that URL and the Jobs client. Credentials may differ for application, worker and migration roles. `postgres:`/`postgresql:` and omitted/explicit default ports are equivalent; host case and a trailing DNS dot are normalized. DNS aliases, `localhost`/IP aliases, Unix sockets and routing query overrides are not resolved as equivalent: use one canonical destination spelling. The low-level helper accepts an optional final application URL for consumers without the environment variable. No cross-database atomicity is provided; separate Jobs databases support ordinary enqueue only.
+
+Handlers may ignore the second argument or consume `{ id, signal, retryCount, retryLimit? }`. Workers request native `includeMetadata:true`, so retry limits come from the actual job, including per-send overrides. `signal` is pg-boss's native signal; expiry, shutdown or loss of a claim can abort it. An aborted signal does not by itself mean terminal cancellation: pg-boss retains its native retry/expiry policy. Lazy producer initialization clears failed attempts, closes partial clients, retries on later use, and coordinates shutdown with in-flight initialization.
 
 Consumers import `defineJob` and `defineJobRegistry` from `@repo/nuxt-jobs/server`; the package root is the Nuxt module entry. Task definitions live in application `server/jobs/tasks/` and are collected by `server/jobs/registry.ts`. Zod validation runs before enqueue and again at the worker execution boundary. `starter.echo` is a removable reference-app demonstration task.
 

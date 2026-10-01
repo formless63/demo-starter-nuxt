@@ -56,7 +56,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Observability, Ops / Admin
 - External: PostgreSQL (required)
 - Default installed: no; a clean consumer must explicitly select it. Enabled in reference app: yes.
-- Current implementation: `@repo/nuxt-jobs` private workspace package, typed registry, Zod execution validation, transactional Drizzle enqueue, explicit migrations/doctor, package-owned CLI, clean consumer fixture, standalone worker, smoke test, and shared production image
+- Current implementation: `@repo/nuxt-jobs` private workspace package, typed registry, Zod execution validation, guarded same-database transactional Drizzle enqueue, concurrency `4` (decimal `1`–`100`), producer/reader and worker roles, native retry/cancellation context, explicit migrations/doctor, package-owned CLI, clean consumer fixture, standalone worker, smoke test, and shared production image
 - Contract: [`capabilities/jobs/CAPABILITY.md`](capabilities/jobs/CAPABILITY.md)
 
 ### API Platform / Machine Auth / OpenAPI (`done`)
