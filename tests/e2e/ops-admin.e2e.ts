@@ -61,7 +61,9 @@ test('Ops guards direct API/SSR, provides manual accessible refresh and clears s
     await page.getByRole('link', { name: 'Back to application' }).click()
     await expect(page).toHaveURL(/\/app\/projects$/u, { timeout: 30_000 })
     await expect(page.getByRole('heading', { name: 'Operations overview' })).toHaveCount(0)
-    await page.unroute('**/api/ops/summary')
+    // Let the delayed handler finish before removing its route; navigation has
+    // already disposed the view and cancelled its fetch.
+    await page.unrouteAll({ behavior: 'wait' })
     await db.delete(tables.session).where(eq(tables.session.token, token))
     expect((await request.get('/api/ops/summary', { headers: { cookie: `${name}=${value(token)}` } })).status()).toBe(401)
     await page.goto('/admin/ops'); await expect(page).toHaveURL(/\/\?redirect=/u)
