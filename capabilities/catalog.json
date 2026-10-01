@@ -1,7 +1,7 @@
 {
   "$schema": "./catalog.schema.json",
   "schemaVersion": 1,
-  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage", "email", "webhooks", "audit-log", "cache-coordination", "realtime", "notifications", "search"] },
+  "referenceApplication": { "enabledCapabilities": ["jobs", "api-platform", "observability", "object-storage", "email", "webhooks", "audit-log", "cache-coordination", "realtime", "notifications", "search", "ai"] },
   "baseline": [
     { "id": "framework", "displayName": "Nuxt framework", "summary": "Nuxt 4 with Vue and Nitro routing, SSR, and server APIs." },
     { "id": "strict-typescript", "displayName": "Strict TypeScript", "summary": "Strict TypeScript checks across application and server code." },
@@ -283,12 +283,66 @@
       "id": "ai",
       "displayName": "AI",
       "kind": "foundational-backend",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
-      "integratesWith": ["jobs", "object-storage", "observability", "audit-log"],
-      "externalRequirements": [{ "name": "Configured model provider", "required": true }],
-      "summary": "Provider-configurable model access and application AI primitives."
+      "integratesWith": [
+        "jobs",
+        "object-storage",
+        "observability",
+        "audit-log"
+      ],
+      "externalRequirements": [
+        {
+          "name": "Configured model provider",
+          "required": true,
+          "notes": "Only when used; install/build/boot/health remain backendless."
+        }
+      ],
+      "summary": "Lazy server-only text, incremental streaming and Zod-validated structured generation with safe errors.",
+      "baselineRequirements": [
+        "node-runtime"
+      ],
+      "scripts": [
+        "ai:smoke",
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [
+        "AI_PROVIDER",
+        "AI_MODEL",
+        "AI_API_KEY",
+        "AI_BASE_URL",
+        "AI_TIMEOUT_SECONDS"
+      ],
+      "migrations": [],
+      "runtimeProcesses": [
+        "Nitro application; configured provider only when used"
+      ],
+      "documentationPath": "capabilities/ai/CAPABILITY.md",
+      "agentSkill": ".agents/skills/ai-change/SKILL.md",
+      "evaluationDocument": "AI_MODULE_EVALUATION.md",
+      "packageName": "@repo/nuxt-ai",
+      "packagePath": "packages/nuxt-ai",
+      "fixturePath": "fixtures/ai-consumer",
+      "packageTest": {
+        "ownedDependencies": [
+          "openai"
+        ],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server",
+            ".fixture/contract.ts",
+            ".fixture/provider.ts",
+            ".fixture/package-test.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "cache-coordination",

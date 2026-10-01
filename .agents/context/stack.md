@@ -31,3 +31,5 @@ Official Nuxt documentation should be the primary source. Agents supporting MCP 
 `@repo/nuxt-notifications` uses Jobs/Drizzle/Zod peers and native Node24 fetch for optional ntfy JSON. Schema has its own entry for Drizzle Kit compatibility. Actual fixture uses pinned stable ntfy2.28.0 (disposable local server); root Email adapter reuses Nodemailer10.0.13/Mailpit1.31.3 rather than adding SMTP. No optional capability dependency or new mandatory service.
 
 @repo/nuxt-search uses normal Nuxt module-builder and compatible Nuxt/Drizzle peers; existing PostgreSQL 18 FTS only. simple weighted vectors, parameterized websearch_to_tsquery and ts_rank_cd normalization 32; no external search service or pg_trgm.
+
+`@repo/nuxt-ai` owns OpenAI SDK 7.25.0 and Zod 4.6.5 with Nuxt peer/module-builder. Chat Completions SSE supports configured compatible endpoints on Node 24/Nitro; retries/logging are explicitly disabled. Default provider openai-compatible, timeout 60 seconds, optional key, lazy required model; see AI_MODULE_EVALUATION.md for the prompt-derived v1 contract.
