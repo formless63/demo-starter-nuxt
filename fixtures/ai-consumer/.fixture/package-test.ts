@@ -40,12 +40,15 @@ async function boot(env: NodeJS.ProcessEnv = {}, check = false, fixture?: Awaite
   }
 }
 await boot()
-await boot({ AI_MODEL: 'fixture-model', AI_BASE_URL: 'http://127.0.0.1:1/v1' })
+await boot({ NODE_ENV: 'test', AI_MODEL: 'fixture-model', AI_BASE_URL: 'http://127.0.0.1:1/v1' })
+const version = Bun.spawnSync(['node', '--version'])
+console.info(`[ai] Node runtime ${version.stdout.toString().trim()}`)
+assert.match(version.stdout.toString(), /^v24\./u, 'Node 24 is required for adapter verification')
 const node = Bun.spawn(['node', '--experimental-strip-types', '.fixture/contract.ts'], { stdout: 'inherit', stderr: 'inherit' })
 assert.equal(await node.exited, 0, 'Full adapter contract on Node 24')
 const bun = Bun.spawn(['bun', '.fixture/contract.ts'], { stdout: 'inherit', stderr: 'inherit' })
 assert.equal(await bun.exited, 0, 'Full adapter contract on Bun tooling')
 const fixture = await startProvider()
-try { await boot({ AI_MODEL: 'fixture-model', AI_BASE_URL: fixture.baseUrl }, true, fixture) }
+try { await boot({ NODE_ENV: 'test', AI_MODEL: 'fixture-model', AI_BASE_URL: fixture.baseUrl }, true, fixture) }
 finally { await fixture.close() }
 console.info('[ai] Backendless boot, server import and Nitro disconnect passed')
