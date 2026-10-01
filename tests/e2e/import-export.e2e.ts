@@ -7,7 +7,8 @@ import { join } from 'node:path'
 import { createServer } from 'node:net'
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
-import { eq } from 'drizzle-orm'
+import { migrate } from 'drizzle-orm/postgres-js/migrator'
+import { createJobsBoss } from '@repo/nuxt-jobs/server'
 import { compose, startProvider } from '../../fixtures/import-export-consumer/.fixture/providers'
 import * as tables from '../../server/database/schema'
 async function freePort() {
@@ -25,13 +26,21 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
   const fixtureProject = `transfer-browser-${randomUUID().slice(0, 8)}`
   let backend: Awaited<ReturnType<typeof startProvider>> | undefined, isolated: string | undefined
   let app: ReturnType<typeof spawn> | undefined, worker: ReturnType<typeof spawn> | undefined
-  const connection = postgres(process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', { max: 4 }), db = drizzle(connection)
+  const originalDatabase = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter'
+  const databaseName = `transfer_browser_${randomUUID().replaceAll('-', '')}`, databaseUrl = new URL(originalDatabase)
+  databaseUrl.pathname = `/${databaseName}`
+  const admin = postgres(originalDatabase, { max: 1 }), connection = postgres(databaseUrl.href, { max: 4 }), db = drizzle(connection)
+  let createdDatabase = false
   const owner = randomUUID(), other = randomUUID(), token = randomUUID(), secret = 'disposable-transfer-browser-secret-at-least32'
   let context: Awaited<ReturnType<typeof browser.newContext>> | undefined
   try {
+    await admin.unsafe(`CREATE DATABASE "${databaseName}"`); createdDatabase = true
+    await migrate(db, { migrationsFolder: join(root, 'server/database/migrations') })
+    const migrationBoss = createJobsBoss({ databaseUrl: databaseUrl.href, schema: 'pgboss', concurrency: 1, useListenNotify: false }, 'migration')
+    try { await migrationBoss.start() } finally { await migrationBoss.stop() }
     backend = await startProvider('rustfs', fixtureProject, true)
     const port = await freePort(), base = `http://127.0.0.1:${port}`
-    const env = { ...process.env, DATABASE_URL: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', NUXT_AUTH_SECRET: secret, NUXT_PUBLIC_APP_BASE_URL: base, STORAGE_BUCKET: backend.config.bucket, STORAGE_REGION: backend.config.region, STORAGE_ENDPOINT: backend.config.endpoint, STORAGE_ACCESS_KEY_ID: backend.config.accessKeyId, STORAGE_SECRET_ACCESS_KEY: backend.config.secretAccessKey, PORT: String(port), HOST: '127.0.0.1', REALTIME_TRANSPORTS: 'sse,websocket' }
+    const env = { ...process.env, DATABASE_URL: databaseUrl.href, PGBOSS_DATABASE_URL: databaseUrl.href, NUXT_AUTH_SECRET: secret, NUXT_PUBLIC_APP_BASE_URL: base, STORAGE_BUCKET: backend.config.bucket, STORAGE_REGION: backend.config.region, STORAGE_ENDPOINT: backend.config.endpoint, STORAGE_ACCESS_KEY_ID: backend.config.accessKeyId, STORAGE_SECRET_ACCESS_KEY: backend.config.secretAccessKey, PORT: String(port), HOST: '127.0.0.1', REALTIME_TRANSPORTS: 'sse,websocket' }
     let cwd = root
     if (!production) {
       isolated = await mkdtemp(join(tmpdir(), 'nuxt-transfer-browser-'))
@@ -98,10 +107,9 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
   finally {
     await context?.close().catch(() => {})
     for (const process of [worker, app]) if (process && process.exitCode === null) { try { globalThis.process.kill(-process.pid!, 'SIGTERM') } catch { /* Already stopped. */ } await Promise.race([new Promise(resolve => process.once('exit', resolve)), new Promise(resolve => setTimeout(resolve, 5000))]); if (process.exitCode === null) { try { globalThis.process.kill(-process.pid!, 'SIGKILL') } catch { /* Already stopped. */ } } }
-    await db.delete(tables.transfer).where(eq(tables.transfer.requesterId, owner))
-    await db.delete(tables.notification).where(eq(tables.notification.recipientId, owner))
-    await db.delete(tables.auditEvent).where(eq(tables.auditEvent.actorId, owner))
-    await db.delete(tables.user).where(eq(tables.user.id, owner)); await db.delete(tables.user).where(eq(tables.user.id, other)); await connection.end()
+    await connection.end()
+    if (createdDatabase) await admin.unsafe(`DROP DATABASE "${databaseName}" WITH (FORCE)`)
+    await admin.end()
     backend?.storage.close(); await compose(fixtureProject, ['down', '--volumes', '--remove-orphans'])
     if (isolated) await rm(isolated, { recursive: true, force: true })
   }
