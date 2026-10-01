@@ -3,6 +3,7 @@ import { inspectOpsStorage } from './storage'
 import { getCache } from '@repo/nuxt-cache/server'
 import { inspectOpsJobs } from './jobs'
 import { webhookJobs } from '../webhooks/registry'
+import { getObservabilityStatus } from '@repo/nuxt-observability/server'
 
 // Static registry is deliberately owned here; removing an optional capability also
 // removes its import and adapter. Nothing runs during module setup/startup/health.
@@ -20,6 +21,6 @@ export const opsApplication: OpsApplication = {
     { id: 'webhooks', title: 'Webhooks (delivery sample unknown)', isConfigured: () => Boolean(process.env.PGBOSS_DATABASE_URL || process.env.DATABASE_URL),
       inspect: () => inspectOpsJobs(webhookJobs.delivery.name) },
     { id: 'observability', title: 'Local server instrumentation', countNames: ['enabled'], isConfigured: () => true,
-      inspect: async () => ({ status: 'ok', counts: { enabled: 1 } }) },
+      inspect: async () => ({ status: 'ok', counts: { enabled: getObservabilityStatus().enabled ? 1 : 0 } }) },
   ]),
 }
