@@ -28,8 +28,14 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/nuxt_starter
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 24 }
       - uses: oven-sh/setup-bun@v2
         with: { bun-version: 1.4.2 }
+      - name: Verify lifecycle runtimes
+        run: |
+          node -e "console.log('Node', process.version); if (Number(process.versions.node.split('.')[0]) !== 24) process.exit(1)"
+          bun --version
       - run: bun install --frozen-lockfile
       - run: bun run packages:test ${{ matrix.capability }}
 
@@ -57,6 +63,10 @@ jobs:
         with: { node-version: 24 }
       - uses: oven-sh/setup-bun@v2
         with: { bun-version: 1.4.2 }
+      - name: Verify application runtimes
+        run: |
+          node -e "console.log('Node', process.version); if (Number(process.versions.node.split('.')[0]) !== 24) process.exit(1)"
+          bun --version
       - run: bun install --frozen-lockfile
       - run: bun run capabilities:check
       - run: bun run agents:check

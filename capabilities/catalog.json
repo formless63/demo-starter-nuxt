@@ -32,7 +32,7 @@
       "integratesWith": ["observability", "ops-admin"],
       "baselineRequirements": ["postgresql"],
       "externalRequirements": [{ "name": "PostgreSQL", "required": true }],
-      "summary": "Typed PostgreSQL-backed background jobs using pg-boss, explicit migrations, and a standalone worker.",
+      "summary": "Typed pg-boss jobs with bounded concurrency, explicit producer/worker/migration roles, same-database transactions and native attempt context.",
       "scripts": ["jobs:worker", "jobs:migrate", "jobs:doctor", "jobs:smoke", "packages:build", "packages:test"],
       "environmentVariables": ["DATABASE_URL", "PGBOSS_DATABASE_URL", "PGBOSS_SCHEMA", "JOBS_CONCURRENCY", "PGBOSS_USE_LISTEN_NOTIFY"],
       "migrations": ["Explicit pg-boss schema migration via jobs:migrate"],

@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { fromDrizzle } from 'pg-boss'
 import type { DrizzleTransactionLike, PgBoss } from 'pg-boss'
+import { assertJobsTransactionDatabase, parseJobsConcurrency } from './boss'
 import { getJobDefinition } from './registry'
 import type { JobName, JobPayload, JobRegistry } from './types'
 
@@ -9,14 +10,15 @@ export async function defineQueues(boss: PgBoss, registry: JobRegistry) {
 }
 
 export async function registerWorkers(boss: PgBoss, registry: JobRegistry, concurrency: number) {
+  const localConcurrency = parseJobsConcurrency(concurrency)
   for (const definition of Object.values(registry)) {
     await boss.work(
       definition.name,
-      { ...definition.work, localConcurrency: concurrency },
+      { ...definition.work, localConcurrency, includeMetadata: true },
       async ([job]) => {
         if (!job) throw new Error(`Worker received an empty batch for ${definition.name}`)
         const payload = await definition.payload.parseAsync(job.data)
-        return definition.handler(payload, { id: job.id, signal: job.signal })
+        return definition.handler(payload, { id: job.id, signal: job.signal, retryCount: job.retryCount, retryLimit: job.retryLimit })
       },
     )
   }
@@ -44,7 +46,9 @@ export async function sendRegisteredJobInTransaction<
   transaction: DrizzleTransactionLike,
   name: Name,
   payload: JobPayload<Registry, Name>,
+  applicationDatabaseUrl = process.env.DATABASE_URL,
 ) {
+  assertJobsTransactionDatabase(boss, applicationDatabaseUrl)
   const definition = getJobDefinition(registry, name)
   const data = await definition.payload.parseAsync(payload)
   const id = await boss.send(definition.name, data as object, {

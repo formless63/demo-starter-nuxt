@@ -108,7 +108,7 @@ services:
       <<: [*database-environment, *observability-environment]
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-nuxt-starter-worker}
       NODE_ENV: production
-      JOBS_CONCURRENCY: ${JOBS_CONCURRENCY:-5}
+      JOBS_CONCURRENCY: ${JOBS_CONCURRENCY:-4}
       PGBOSS_USE_LISTEN_NOTIFY: ${PGBOSS_USE_LISTEN_NOTIFY:-false}
     depends_on:
       postgres:

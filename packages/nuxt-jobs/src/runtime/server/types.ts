@@ -4,6 +4,8 @@ import type { z, ZodType } from 'zod'
 export interface JobContext {
   id: string
   signal: AbortSignal
+  retryCount: number
+  retryLimit?: number
 }
 
 type JobHandler<Payload, Result> = {

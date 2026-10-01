@@ -7,7 +7,7 @@ import { eq, like } from 'drizzle-orm'
 import postgres from 'postgres'
 import { closeEmail, getEmail, renderMagicLinkEmail } from '@repo/nuxt-email/server'
 import { getLogger } from '@repo/nuxt-observability/server'
-import { configuredAuthPlugins } from '../../server/utils/auth'
+import { configuredAuthPlugins, configuredSocialProviders } from '../../server/utils/auth'
 import * as schema from '../../server/database/schema'
 import { mailpitEnv, startMailpit } from '../../fixtures/email-consumer/.fixture/mailpit'
 
@@ -47,6 +47,7 @@ const databaseUrl = process.env.DATABASE_URL
       for (const [key, value] of Object.entries(mailpitEnv(fixture.port))) vi.stubEnv(key, value)
       const auth = betterAuth({ baseURL, secret: 'email-fixture-secret-at-least-thirty-two-characters',
         database: drizzleAdapter(db, { provider: 'pg', schema }), emailAndPassword: { enabled: false },
+        socialProviders: configuredSocialProviders({ githubClientId: 'local-test-client', githubClientSecret: 'local-test-secret' }),
         plugins: configuredAuthPlugins({ magicLinkEnabled: true, public: { appBaseUrl: baseURL } }), trustedOrigins: [baseURL] })
       const request = await auth.handler(new Request(`${baseURL}/api/auth/sign-in/magic-link`, {
         method: 'POST', headers: { 'content-type': 'application/json', origin: baseURL }, body: JSON.stringify({ email: recipient, callbackURL: '/app/projects' }),
@@ -79,6 +80,54 @@ const databaseUrl = process.env.DATABASE_URL
       const reused = await auth.handler(new Request(url))
       expect(reused.status).toBe(302)
       expect(reused.headers.get('location')?.includes('error=')).toBe(true)
+
+      // The same SMTP configuration still mints new links; expire one in disposable storage.
+      await auth.handler(new Request(`${baseURL}/api/auth/sign-in/magic-link`, {
+        method: 'POST', headers: { 'content-type': 'application/json', origin: baseURL }, body: JSON.stringify({ email: recipient }),
+      }))
+      const expiredMail = await fixture.api(`message/${(await fixture.messages())[0]!.ID}`)
+      const expiredLink = expiredMail.Text.match(/https?:\/\/[^\s]+/u)?.[0]
+      expect(expiredLink).toBeTruthy()
+      await db.update(schema.verification).set({ expiresAt: new Date(Date.now() - 60_000) }).where(like(schema.verification.value, `%${recipient}%`))
+      const expired = await auth.handler(new Request(expiredLink))
+      expect(expired.headers.get('location')).toContain('error=')
+      expect(expired.headers.getSetCookie().some(value => value.includes('session_token'))).toBe(false)
+
+      // Initiating a fake provider redirect is local; no provider callback or credentials are used.
+      const oauth = await auth.handler(new Request(`${baseURL}/api/auth/sign-in/social`, {
+        method: 'POST', headers: { 'content-type': 'application/json', origin: baseURL },
+        body: JSON.stringify({ provider: 'github', callbackURL: '/app/projects', additionalData: { email: recipient } }),
+      }))
+      expect(oauth.status).toBe(200)
+      const state = new URL((await oauth.json()).url).searchParams.get('state')!
+      expect(state).toBeTruthy()
+      const stateRows = await db.select().from(schema.verification).where(eq(schema.verification.identifier, `auth-state:${state}`))
+      expect(stateRows).toHaveLength(1)
+      const confused = await auth.handler(new Request(`${baseURL}/api/auth/magic-link/verify?token=${encodeURIComponent(state)}`))
+      expect(confused.headers.get('location')).toContain('error=')
+      expect(confused.headers.getSetCookie().some(value => value.includes('session_token'))).toBe(false)
+      expect(await db.select().from(schema.verification).where(eq(schema.verification.id, stateRows[0]!.id))).toHaveLength(1)
+      // Unprefixed rows model pending 1.7.6 state, which the coordinated cutover invalidates.
+      await db.update(schema.verification).set({ identifier: state }).where(eq(schema.verification.id, stateRows[0]!.id))
+      const pendingState = await auth.handler(new Request(`${baseURL}/api/auth/callback/github?state=${encodeURIComponent(state)}&code=local-test-code`, {
+        headers: { cookie: oauth.headers.getSetCookie().map(value => value.split(';')[0]).join('; ') },
+      }))
+      expect(pendingState.headers.get('location')).toContain('error=')
+      expect(pendingState.headers.getSetCookie().some(value => value.includes('session_token'))).toBe(false)
+      await db.delete(schema.verification).where(eq(schema.verification.id, stateRows[0]!.id))
+
+      await auth.handler(new Request(`${baseURL}/api/auth/sign-in/magic-link`, {
+        method: 'POST', headers: { 'content-type': 'application/json', origin: baseURL }, body: JSON.stringify({ email: recipient }),
+      }))
+      const pendingMail = await fixture.api(`message/${(await fixture.messages())[0]!.ID}`)
+      const pendingLink = pendingMail.Text.match(/https?:\/\/[^\s]+/u)?.[0]
+      const pendingRows = await db.select().from(schema.verification).where(like(schema.verification.value, `%${recipient}%`))
+      const pendingRow = pendingRows.find(row => row.identifier.startsWith('magic-link:'))!
+      expect(pendingRow).toBeTruthy()
+      await db.update(schema.verification).set({ identifier: pendingRow.identifier.slice('magic-link:'.length) }).where(eq(schema.verification.id, pendingRow.id))
+      const pendingLinkResponse = await auth.handler(new Request(pendingLink))
+      expect(pendingLinkResponse.headers.get('location')).toContain('error=')
+      expect(pendingLinkResponse.headers.getSetCookie().some(value => value.includes('session_token'))).toBe(false)
     }
     finally {
       await db.delete(schema.verification).where(like(schema.verification.value, `%${recipient}%`))

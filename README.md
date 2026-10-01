@@ -143,7 +143,9 @@ Use the standard AWS credential chain or paired server-only static credentials. 
 
 The private `@repo/*` package scope means “inside this workspace.” These packages are not published; choose a real npm scope deliberately before any future release. Nuxt's module system remains the integration mechanism—there is no custom installer or runtime capability manager.
 
-Email (#5) is an optional server-only SMTP package. See the [Email contract](capabilities/email/CAPABILITY.md) for lazy configuration, local Mailpit, safe magic links and removal.
+Email (#5) is an optional server-only SMTP package. See the [Email contract](capabilities/email/CAPABILITY.md) for lazy configuration, local Mailpit, safe magic links and removal. Better Auth 1.7.7 upgrades require a coordinated cutover of nodes sharing verification storage: request new magic links and restart pending OAuth/SAML sign-in or linking flows. Existing hashed Magic Link tokens with global identifier storage unset already match the advisory mitigation; this upgrade does not establish prior vulnerability. No auth schema or user/account migration is required. See the [upstream advisory](https://github.com/better-auth/better-auth/security/advisories/GHSA-965c-763c-88jm).
+
+The root sample Project accepts a trimmed name of 1–120 characters and an optional description of at most 1000 characters; empty descriptions become `null`. Browser inputs, session/machine APIs and generated OpenAPI share these limits. PostgreSQL keeps the existing text columns, with input limits enforced at HTTP validation; applied migrations remain unchanged.
 
 Webhooks is explicitly enabled as `@repo/nuxt-webhooks` and requires Jobs; see its [contract](capabilities/webhooks/CAPABILITY.md). Run `bun run webhooks:smoke` for a local receiver test.
 
