@@ -57,7 +57,7 @@ try {
       if (removed === 'ops') unavailable.push('@repo/nuxt-ops-admin')
       const manifest = JSON.parse(await readFile(join(directory, 'package.json'), 'utf8'))
       for (const name of Object.values(providers)) if (!unavailable.includes(name)) manifest.dependencies[name] = 'workspace:*'
-      for (const name of unavailable) delete manifest.dependencies[name]
+      manifest.dependencies = Object.fromEntries(Object.entries(manifest.dependencies).filter(([name]) => !unavailable.includes(name)))
       await writeFile(join(directory, 'package.json'), JSON.stringify(manifest))
       // Isolated dependency visibility: do not symlink the whole root node_modules.
       // Excluded packages cannot resolve from this app, even though the reference
