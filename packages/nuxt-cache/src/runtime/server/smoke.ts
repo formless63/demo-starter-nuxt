@@ -40,7 +40,7 @@ export async function smokeCache(cache: Cache) {
     assert.equal(await cache.increment(keys[4]!, 1, 2), 1)
     assert.equal(await cache.increment(keys[4]!, 1, 60), 2)
     await waitFor(async () => await cache.get(keys[4]!) === null, 'Initial counter TTL retained')
-    await cache.setPersistent(keys[5]!, 'persistent')
+    await cache.setWithoutExpiry(keys[5]!, 'persistent')
     assert.equal((await cache.get(keys[5]!))?.toString(), 'persistent')
     const contenders = await Promise.all(Array.from({ length: 20 }, () => cache.acquireLease(leaseKey, 10)))
     assert.equal(contenders.filter(Boolean).length, 1)

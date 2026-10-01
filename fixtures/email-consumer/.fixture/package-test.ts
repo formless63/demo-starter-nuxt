@@ -28,6 +28,8 @@ try {
     const result = await email.send({ ...message, ...content, text: 'text' in content ? content.text : undefined,
       cc: [{ address: 'cc@example.test' }], bcc: [{ address: 'bcc@example.test' }] })
     assert.equal(result.outcome, 'accepted'); assert.equal(result.accepted, 3); assert(result.messageId)
+    assert.equal(typeof result.accepted, 'number'); assert.equal(typeof result.rejected, 'number')
+    assert.deepEqual(Object.keys(result).sort(), ['accepted', 'messageId', 'outcome', 'rejected'])
     const captured = await fixture.api(`message/${(await fixture.messages())[0]!.ID}`)
     assert.equal(captured.From.Address, config.from.address); assert.equal(captured.From.Name, config.from.name)
     assert.equal(captured.To[0].Address, 'to@example.test'); assert.equal(captured.Cc[0].Address, 'cc@example.test')
@@ -43,10 +45,12 @@ try {
   const partial = await email.send({ ...message, cc: [{ address: 'blocked@invalid.test' }] })
   assert.deepEqual({ outcome: partial.outcome, accepted: partial.accepted, rejected: partial.rejected }, { outcome: 'partial', accepted: 1, rejected: 1 })
   for (const bad of [{ ...message, raw: 'raw' }, { ...message, html: { href: 'http://127.0.0.1:9/private' } }, { ...message, text: { path: '/etc/passwd' } },
-    { ...message, headers: { Bcc: 'hidden' } }, { ...message, subject: 'x'.repeat(999) }, { ...message, text: 'x'.repeat(1048577) },
+    { ...message, headers: { Bcc: 'hidden' } }, { ...message, subject: 'x'.repeat(201) }, { ...message, text: 'x'.repeat(1048577) },
+    { ...message, text: 'x'.repeat(524288), html: 'x'.repeat(524289) },
     { ...message, to: Array.from({ length: 51 }, () => ({ address: 'to@example.test' })) }]) {
     await assert.rejects(() => email.send(bad as never), error => error instanceof EmailError && error.code === 'message')
   }
+  assert.equal((await email.send({ ...message, subject: 'x'.repeat(200) })).outcome, 'accepted')
   for (const [code, classification, retryable] of [[451, 'temporary-rejection', true], [550, 'permanent-rejection', false]] as const) {
     await fixture.chaos(code)
     const count = (await fixture.messages()).length

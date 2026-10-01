@@ -26,6 +26,7 @@ export async function deliverWebhook(payload: { targetRef: string, id: string, b
       if (error instanceof WebhookError) throw error
       throw new WebhookError('target-resolution', true)
     }
+    if (!target || typeof target.url !== 'string' || typeof target.secret !== 'string') throw new WebhookError('invalid-target')
     const url = await validateWebhookTarget(target.url, options.targetPolicy, combined)
     if (combined.aborted) throw new WebhookError('timeout', true)
     const body = Buffer.from(payload.body, 'utf8')

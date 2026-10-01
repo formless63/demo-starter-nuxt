@@ -2,7 +2,7 @@ import { defineJob } from '@repo/nuxt-jobs/server'
 import { z } from 'zod'
 import { deliverWebhook } from './delivery'
 import type { DeliveryOptions } from './delivery'
-import { bodyLimit, eventTypeSchema, parseWebhookEvent, webhookIdSchema } from './events'
+import { bodyLimit, DEFAULT_MAX_BODY_BYTES, eventTypeSchema, parseWebhookEvent, webhookIdSchema } from './events'
 import type { WebhookEventRegistry } from './events'
 import { boundedInteger, WebhookError } from './errors'
 
@@ -11,6 +11,7 @@ export function createWebhookJobs<Registry extends WebhookEventRegistry, const N
   options: DeliveryOptions & { events: Registry, name?: Name, maxBytes?: number, retryLimit?: number, retryDelaySeconds?: number },
 ) {
   const maxBytes = bodyLimit(options.maxBytes)
+  if (maxBytes > DEFAULT_MAX_BODY_BYTES) throw new WebhookError('configuration')
   const payload = z.object({
     targetRef: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/),
     id: webhookIdSchema,
@@ -33,6 +34,7 @@ export function createWebhookJobs<Registry extends WebhookEventRegistry, const N
       retryDelayMax: 900,
       expireInSeconds: 60,
       retentionSeconds: 7 * 24 * 3600,
+      deleteAfterSeconds: 24 * 3600,
     },
     handler: async (data, context) => {
       try { return await deliverWebhook(data, options, context.signal) }

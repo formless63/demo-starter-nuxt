@@ -154,6 +154,7 @@
       "baselineIntegrations": [
         "authentication"
       ],
+      "baselineRequirements": ["node-runtime"],
       "externalRequirements": [
         {
           "name": "SMTP",
@@ -225,7 +226,7 @@
         }
       ],
       "summary": "Reliable inbound and outbound webhook processing with durable delivery.",
-      "baselineRequirements": ["node-runtime", "postgresql"],
+      "baselineRequirements": ["node-runtime"],
       "scripts": ["webhooks:smoke", "packages:build", "packages:test"],
       "environmentVariables": [],
       "migrations": ["Uses explicit Jobs migration; no Webhooks table"],
@@ -299,8 +300,10 @@
       "integratesWith": [
         "realtime",
         "api-platform",
-        "jobs"
+        "jobs",
+        "observability"
       ],
+      "baselineRequirements": ["node-runtime"],
       "externalRequirements": [
         {
           "name": "Valkey/Redis-compatible service",

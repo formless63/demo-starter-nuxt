@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { betterAuth } from 'better-auth'
+import type { magicLink } from 'better-auth/plugins'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { eq, like } from 'drizzle-orm'
 import postgres from 'postgres'
-import { closeEmail, renderMagicLinkEmail } from '@repo/nuxt-email/server'
+import { closeEmail, getEmail, renderMagicLinkEmail } from '@repo/nuxt-email/server'
 import { getLogger } from '@repo/nuxt-observability/server'
 import { configuredAuthPlugins } from '../../server/utils/auth'
 import * as schema from '../../server/database/schema'
@@ -12,6 +13,16 @@ import { mailpitEnv, startMailpit } from '../../fixtures/email-consumer/.fixture
 
 afterEach(() => { closeEmail(); vi.unstubAllEnvs(); vi.restoreAllMocks() })
 describe('SMTP-backed root auth configuration', () => {
+  it('requires full magic-link acceptance without retrying partial or rejected delivery', async () => {
+    for (const [key, value] of Object.entries(mailpitEnv(1025))) vi.stubEnv(key, value)
+    const plugin = configuredAuthPlugins({ magicLinkEnabled: true, public: { appBaseUrl: 'https://canonical.test' } }).find(plugin => plugin.id === 'magic-link') as ReturnType<typeof magicLink>
+    const send = vi.spyOn(getEmail(), 'send')
+    for (const outcome of ['partial', 'rejected'] as const) {
+      send.mockResolvedValueOnce({ outcome, accepted: outcome === 'partial' ? 1 : 0, rejected: 1, messageId: 'private-id' })
+      await expect(plugin.options.sendMagicLink({ email: 'user@example.test', token: 'SECRET', url: 'https://canonical.test/api/auth/magic-link/verify?token=SECRET' })).rejects.toMatchObject({ code: 'unknown', retryable: false })
+    }
+    expect(send).toHaveBeenCalledTimes(2)
+  })
   it('needs no SMTP while disabled and validates structural config when enabled', () => {
     vi.stubEnv('SMTP_HOST', '')
     expect(configuredAuthPlugins({ magicLinkEnabled: false }).map(plugin => plugin.id)).toEqual(['api-key'])

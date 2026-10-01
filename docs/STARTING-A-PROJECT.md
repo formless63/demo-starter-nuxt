@@ -95,7 +95,7 @@ When removing **Observability but retaining Email**, replace `sendObservedEmail`
 
 ## Remove Cache / Coordination
 
-1. Stop application calls/subscriptions and await connection close. Remove `'@repo/nuxt-cache'` from Nuxt modules, its root dependency and `cache-coordination` from reference enablement.
+1. Stop application calls/subscriptions and await connection close. Close caller-owned `createCache` instances explicitly; `closeCache` closes/resets only the process singleton. Remove `'@repo/nuxt-cache'` from Nuxt modules, its root dependency and `cache-coordination` from reference enablement.
 2. Remove `server/utils/observed-cache.ts`, `server/plugins/cache.ts`, `scripts/cache.ts`, `scripts/cache-dev.ts`, Cache call sites and root `cache:*` aliases/catalog script declarations. Remove Cache-specific tests when pruning the reference integration.
 3. Remove CACHE_URL/CACHE_KEY_PREFIX/CACHE_DEFAULT_TTL_SECONDS/CACHE_MAX_VALUE_BYTES from server config/environment and optional `compose.cache.yaml`. Stop only `starter-cache-dev` via its helper before removing helpers; local data is disposable. Retain fixture-owned assets if keeping independent package tests.
 4. Clear generated `.nuxt`/`.output`, reinstall and run catalog/typecheck/build/normal verification. The generic fixture proves redis-owned dependencies disappear when unused. No persistent data migration exists. **Never issue FLUSH against external Cache as part of removal.**

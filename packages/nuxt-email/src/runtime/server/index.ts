@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer'
 import type SMTPTransport from 'nodemailer/lib/smtp-transport'
 import { inspect } from 'node:util'
 
-export type EmailErrorCode = 'configuration' | 'connection' | 'timeout' | 'tls' | 'authentication' | 'temporary-rejection' | 'permanent-rejection' | 'message' | 'partial-delivery' | 'unknown'
+export type EmailErrorCode = 'configuration' | 'connection' | 'timeout' | 'tls' | 'authentication' | 'temporary-rejection' | 'permanent-rejection' | 'message' | 'unknown'
 export class EmailError extends Error {
   constructor(public readonly code: EmailErrorCode, public readonly retryable = false, cause?: unknown) {
     super(`Email operation failed (${code})`, { cause })
@@ -40,7 +40,7 @@ export interface EmailSendResult {
   accepted: number
   rejected: number
 }
-export const EMAIL_LIMITS = { subject: 998, bodyBytes: 1024 * 1024, maxRecipients: 100 } as const
+export const EMAIL_LIMITS = { address: 254, displayName: 128, subject: 200, bodyBytes: 1024 * 1024, maxRecipients: 100 } as const
 // eslint-disable-next-line no-control-regex -- reject header injection explicitly
 const control = /[\u0000-\u001f\u007f]/u
 function fail(code: 'configuration' | 'message'): never { throw new EmailError(code) }
@@ -52,9 +52,9 @@ function address(value: unknown, code: 'configuration' | 'message'): EmailAddres
   if (!value || typeof value !== 'object' || Array.isArray(value)) fail(code)
   const v = value as Record<string, unknown>
   if (Object.keys(v).some(key => !['address', 'name'].includes(key))) fail(code)
-  const mailbox = label(v.address, code, 254)
+  const mailbox = label(v.address, code, EMAIL_LIMITS.address)
   if (!/^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?\.[A-Za-z]{2,63}$/u.test(mailbox)) fail(code)
-  return { address: mailbox, ...(v.name === undefined ? {} : { name: label(v.name, code, 200) }) }
+  return { address: mailbox, ...(v.name === undefined ? {} : { name: label(v.name, code, EMAIL_LIMITS.displayName) }) }
 }
 
 // Explicit server overrides are useful to standalone consumers; no runtimeConfig/public copy.
@@ -87,7 +87,7 @@ export function emailTransportOptions(config: EmailConfig): SMTPTransport.Option
   const c = validateEmailConfig(config)
   return { host: c.host, port: c.port, secure: c.security === 'tls', requireTLS: c.security === 'starttls',
     auth: c.user === undefined ? undefined : { user: c.user, pass: c.password },
-    connectionTimeout: 5000, greetingTimeout: 5000, socketTimeout: 10000,
+    connectionTimeout: 5000, greetingTimeout: 5000, dnsTimeout: 5000, socketTimeout: 10000,
     disableFileAccess: true, disableUrlAccess: true, maxRecipients: c.maxRecipients,
     logger: false, debug: false,
   }
