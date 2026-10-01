@@ -52,8 +52,10 @@ try {
   await db.insert(roleAssignment).values({ id: randomUUID(), scopeKind: 'user', scopeId: user, userId: user, roleId: 'removed-role' })
   assert.equal(await policy.can(db, context, 'dashboard.read'), false)
   await policy.revokeRole(db, actor, input('removed-role'))
-  await assert.rejects(db.transaction(async tx => { const grant = await policy.grantRoleTx(tx, actor, input('dashboard-reader')); assert(grant.changed); throw new Error('fixture rollback') }), /fixture rollback/)
+  let rollbackAssignmentId = ''
+  await assert.rejects(db.transaction(async tx => { const grant = await policy.grantRoleTx(tx, actor, input('dashboard-reader')); assert(grant.changed); rollbackAssignmentId = grant.assignment.id; throw new Error('fixture rollback') }), /fixture rollback/)
   assert.equal(await policy.can(db, context, 'dashboard.read'), false)
+  assert.equal((await db.select().from(fixtureAudit).where(eq(fixtureAudit.assignmentId, rollbackAssignmentId))).length, 0)
   const [auditCount] = await db.select({ count: sql<number>`count(*)::integer` }).from(fixtureAudit).where(eq(fixtureAudit.assignmentId, grants[0]!.assignment.id))
   assert.equal(auditCount!.count, 1)
   await db.insert(fixtureMembership).values({ id: randomUUID(), scopeId: tenant, userId: user, role: 'member' })
@@ -94,6 +96,11 @@ try {
   assert.deepEqual(await policy.authorize(failureDb, context, 'records.read', { ownerId: user }), { allowed: false, reason: 'error', errorCode: 'unavailable' })
   assert.equal(await policy.can(failureDb, context, 'records.read', { ownerId: user }), false)
   await assert.rejects(policy.requirePermission(failureDb, context, 'records.read', { ownerId: user }), errorCode('unavailable'))
+  let interruptionCalls = 0
+  const interrupted = defineAuthorization(registry, { managementGuard, onAssignmentChange: async tx => { interruptionCalls++; await tx.execute(sql`SELECT pg_terminate_backend(pg_backend_pid())`) } })
+  await assert.rejects(interrupted.grantRole(db, actor, input('dashboard-reader')), errorCode('unavailable'))
+  assert.equal(interruptionCalls, 1)
+  assert.equal(await policy.can(db, context, 'dashboard.read'), false)
   const timeout = defineAuthorization(registry, { resolveCodeRoles: async (_ctx, tx) => { await tx.execute(sql`SET LOCAL statement_timeout='20ms'`); await tx.execute(sql`SELECT pg_sleep(1)`); return ['reader'] } })
   assert.deepEqual(await timeout.authorize(db, context, 'records.read', { ownerId: user }), { allowed: false, reason: 'error', errorCode: 'timeout' })
   const decisions = await Promise.all(Array.from({ length: 20 }, (_, index) => policy.can(db, index % 2 ? context : { userId: other, scope: { kind: 'user', id: other } }, 'records.read', { ownerId: user })))

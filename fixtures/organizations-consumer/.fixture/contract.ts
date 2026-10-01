@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict'
 import { createHmac, randomUUID } from 'node:crypto'
 import { betterAuth } from 'better-auth'
+import { sql } from 'drizzle-orm'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { drizzle as postgresDrizzle } from 'drizzle-orm/postgres-js'
 import { drizzle as pgDrizzle } from 'drizzle-orm/node-postgres'
 import postgres from 'postgres'
 import pg from 'pg'
 import { organizationsAuth, organizationAuthErrorBoundary, resolveTenantContext, listOrganizations, listMembers, resolveOrganizationsConfig, diagnoseInvitation, addOrganizationMember, resolveTenantContextTx } from '@repo/nuxt-organizations/server'
-import * as schema from './upstream-schema.ts'
+import * as schema from '../server/database/schema.ts'
 
 const url = process.env.ORGANIZATIONS_PROBE_DATABASE_URL
 assert(url)
@@ -34,13 +35,13 @@ const routes: Record<string, string> = {
   updateMemberRole: 'update-member-role', createInvitation: 'invite-member', acceptInvitation: 'accept-invitation', rejectInvitation: 'reject-invitation', cancelInvitation: 'cancel-invitation', setActiveOrganization: 'set-active', deleteOrganization: 'delete',
 }
 type Result = { status: number, body: Record<string, unknown> }
-async function call(mode: 'api' | 'http', name: string, headers: Headers, body: Record<string, unknown>): Promise<Result> {
+async function call(mode: 'api' | 'http', name: string, headers: Headers, body: Record<string, unknown>, selectedAuth = auth): Promise<Result> {
   if (mode === 'http') {
-    const response = await auth.handler(new Request(`${origin}/api/auth/organization/${routes[name]}`, { method: 'POST', headers, body: JSON.stringify(body) }))
+    const response = await selectedAuth.handler(new Request(`${origin}/api/auth/organization/${routes[name]}`, { method: 'POST', headers, body: JSON.stringify(body) }))
     return { status: response.status, body: await response.json() as Record<string, unknown> }
   }
   try {
-    const api = auth.api as unknown as Record<string, (input: { headers: Headers, body: Record<string, unknown> }) => Promise<Record<string, unknown>>>
+    const api = selectedAuth.api as unknown as Record<string, (input: { headers: Headers, body: Record<string, unknown> }) => Promise<Record<string, unknown>>>
     const method = api[name]
     assert(method)
     return { status: 200, body: await method({ headers, body }) }
@@ -76,6 +77,9 @@ try {
     await assert.rejects(resolveTenantContextTx({ id: actorIds.owner! }, orgId, db), { code: 'invalid-input' })
     await assert.rejects(addOrganizationMember(auth, db, null, owner, { organizationId: orgId, userId: actorIds.stranger! }), { code: 'unauthenticated' })
     await assert.rejects(addOrganizationMember(auth, db, { id: actorIds.stranger! }, owner, { organizationId: orgId, userId: actorIds.stranger! }), { code: 'forbidden' })
+    await assert.rejects(admin`INSERT INTO member (id,organization_id,user_id,role) VALUES (${randomUUID()},${orgId},${actorIds.owner!},'member')`, { code: '23505' })
+    await assert.rejects(admin`INSERT INTO member (id,organization_id,user_id,role) VALUES (${randomUUID()},${orgId},${actorIds.stranger!},'owner')`, { code: '23505' })
+    await assert.rejects(admin`INSERT INTO member (id,organization_id,user_id,role) VALUES (${randomUUID()},${orgId},${actorIds.stranger!},'member,owner')`, { code: '23514' })
     assert.equal(context.role, 'owner')
     assert(Object.isFrozen(context) && Object.isFrozen(context.scope))
     await assert.rejects(resolveTenantContext({ id: actorIds.stranger! }, orgId, db), { code: 'not-found' })
@@ -163,6 +167,37 @@ try {
     await assert.rejects(resolveTenantContext({ id: actorIds.stranger! }, orgId, db), { code: 'not-found' })
     await assert.rejects(diagnoseInvitation(db, crashStateId, undefined, async () => actorIds.stranger!), { code: 'forbidden' })
   }
+  const limited = betterAuth({ baseURL: origin, secret, database: drizzleAdapter(db, { provider: 'pg', schema, transaction: true }), emailAndPassword: { enabled: false }, trustedOrigins: [origin], logger: { disabled: true }, onAPIError: organizationAuthErrorBoundary, plugins: [...organizationsAuth({ ORGANIZATIONS_CREATION_LIMIT: '1', ORGANIZATIONS_MEMBERSHIP_LIMIT: '2', ORGANIZATIONS_INVITATION_LIMIT: '1', ORGANIZATIONS_INVITATION_TTL_SECONDS: '300' })] })
+  for (const mode of ['api', 'http'] as const) {
+    const limitedOwner = await actor(`limit-owner-${mode}`)
+    const limitedRecipient = await actor(`limit-recipient-${mode}`)
+    const limitOther = await actor(`limit-other-${mode}`)
+    const created = await call(mode, 'createOrganization', limitedOwner, { name: 'Native admission bounds', slug: `${prefix}-limit-${mode}` }, limited)
+    assert.equal(created.status, 200)
+    const organizationId = created.body.id as string
+    await denied(call(mode, 'createOrganization', limitedOwner, { name: 'Over limit', slug: `${prefix}-over-${mode}` }, limited), 413)
+    const first = await call(mode, 'createInvitation', limitedOwner, { organizationId, email: `${actorIds[`limit-recipient-${mode}`]}@example.test` }, limited)
+    assert.equal(first.status, 200)
+    const remaining = new Date(first.body.expiresAt as string).getTime() - Date.now()
+    assert(remaining > 299000 && remaining <= 300000)
+    await denied(call(mode, 'createInvitation', limitedOwner, { organizationId, email: `${actorIds[`limit-other-${mode}`]}@example.test` }, limited), 413)
+    await admin`UPDATE invitation SET expires_at=now() WHERE id=${first.body.id as string}`
+    const second = await call(mode, 'createInvitation', limitedOwner, { organizationId, email: `${actorIds[`limit-other-${mode}`]}@example.test` }, limited)
+    assert.equal(second.status, 200)
+    assert.equal((await call(mode, 'acceptInvitation', limitOther, { invitationId: second.body.id }, limited)).status, 200)
+    const third = await call(mode, 'createInvitation', limitedOwner, { organizationId, email: `${actorIds[`limit-recipient-${mode}`]}@example.test` }, limited)
+    assert.equal(third.status, 200)
+    await denied(call(mode, 'acceptInvitation', limitedRecipient, { invitationId: third.body.id }, limited), 413)
+  }
+  // Real PostgreSQL lock timeout and connection loss; only this fixture's backend is terminated.
+  let locked!: () => void, unlock!: () => void
+  const ready = new Promise<void>(resolve => { locked = resolve }), release = new Promise<void>(resolve => { unlock = resolve })
+  const blocker = admin.begin(async tx => { await tx`LOCK TABLE member IN ACCESS EXCLUSIVE MODE`; locked(); await release })
+  await ready
+  try { await assert.rejects(resolveTenantContext({ id: actorIds.owner! }, 'probe-organization', db), { code: 'timeout' }) }
+  finally { unlock(); await blocker }
+  const interrupted = { transaction: async <T>(operation: (tx: Parameters<typeof resolveTenantContextTx>[2]) => Promise<T>) => db.transaction(async tx => { await tx.execute(sql`SELECT pg_terminate_backend(pg_backend_pid())`); return operation(tx) }) }
+  await assert.rejects(resolveTenantContext({ id: actorIds.owner! }, 'probe-organization', interrupted), { code: 'unavailable' })
   const failedSlug = `${prefix}-provisioning-failure`
   await admin.unsafe(`CREATE FUNCTION reject_fixture_owner() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.user_id = '${actorIds.owner!}' THEN RAISE EXCEPTION 'fixture failure' USING ERRCODE='23514'; END IF; RETURN NEW; END; $$; CREATE TRIGGER reject_fixture_owner BEFORE INSERT ON member FOR EACH ROW EXECUTE FUNCTION reject_fixture_owner()`)
   await assert.rejects(auth.api.createOrganization({ headers: owner, body: { name: 'Failed provisioning', slug: failedSlug } }))

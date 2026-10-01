@@ -10,6 +10,12 @@ export async function createProbeSchema(observer: ReturnType<typeof postgres>) {
     CREATE TABLE member (id text PRIMARY KEY, organization_id text NOT NULL, user_id text NOT NULL, role text NOT NULL CHECK(role IN ('owner','admin','member')), created_at timestamptz(3) NOT NULL DEFAULT now(), UNIQUE(organization_id,user_id));
     CREATE UNIQUE INDEX member_one_owner_idx ON member (organization_id) WHERE role = 'owner';
     CREATE TABLE invitation (id text PRIMARY KEY, organization_id text NOT NULL, email text NOT NULL, role text NOT NULL, status text NOT NULL, inviter_id text NOT NULL, expires_at timestamptz(3) NOT NULL, created_at timestamptz(3) NOT NULL DEFAULT now());
+  `)
+  await seedProbeRecords(observer)
+}
+
+export async function seedProbeRecords(observer: ReturnType<typeof postgres>) {
+  await observer.unsafe(`
     INSERT INTO "user" (id,name,email,email_verified) VALUES ('probe-owner','Owner','owner@example.test',true), ('probe-recipient','Recipient','recipient@example.test',true);
     INSERT INTO session (id,token,user_id,expires_at) VALUES ('probe-session','probe-session-token','probe-recipient', now() + interval '1 hour');
     INSERT INTO organization (id,name,slug) VALUES ('probe-organization','Probe','probe-organization');

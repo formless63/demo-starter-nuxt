@@ -65,6 +65,8 @@ function selectCapabilities(ids: string[], requireTest = false) {
 }
 
 async function run(command: string[], cwd: string) {
+  // Bound public registry bursts without changing dependency resolution or frozen checks.
+  if (command[0] === 'bun' && command[1] === 'install') command = [...command, '--network-concurrency=4']
   console.info(`[packages] ${command.join(' ')}`)
   const child = Bun.spawn(command, {
     cwd,

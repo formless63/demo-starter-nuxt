@@ -1,3 +1,4 @@
+import { verifyProductionBoot } from './boot.ts'
 import assert from 'node:assert/strict'
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -27,6 +28,7 @@ try {
     assert.equal(await child.exited, 0, 'Feature flags contract failed')
     console.info(`[feature flags fixture] ${runtime}/${driver} contract passed`)
   }
+  await verifyProductionBoot(parsed.toString(), true)
   await writeFile(new URL('./state.json', import.meta.url), JSON.stringify({ name, adminUrl: url, url: parsed.toString(), witness: await witness(observer) }), { mode: 0o600 })
   retained = true
 }

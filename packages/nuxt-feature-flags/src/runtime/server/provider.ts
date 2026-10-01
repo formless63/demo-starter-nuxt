@@ -13,6 +13,7 @@ async function bounds(tx:FlagsConnection, evaluation=false) { if(!(tx instanceof
 function validDefinition(row:typeof flagDefinition.$inferSelect) { try { key(row.key); fields({description:row.description,enabled:row.enabled,defaultValue:row.defaultValue,rolloutBasisPoints:row.rolloutBasisPoints}); revision(row.revision); return true } catch { return false } }
 function checkedKeys(input:readonly string[]) { if(!Array.isArray(input)||input.length>50||new Set(input).size!==input.length)throw new FeatureFlagsError('invalid-input'); return input.map(key) }
 export function defineFeatureFlags(options:FlagsOptions={}) {
+  if(!options||typeof options!=='object'||Array.isArray(options))throw new FeatureFlagsError('configuration')
   if(Object.values(options).some(callback=>callback!==undefined&&typeof callback!=='function'))throw new FeatureFlagsError('configuration')
   async function evaluateManyTx(tx:FlagsConnection,input:readonly string[],rawContext:FlagContext={}) {
     const keys=checkedKeys(input), ctx=context(rawContext)

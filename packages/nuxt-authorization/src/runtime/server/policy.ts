@@ -40,6 +40,7 @@ function checkedContext(context: AuthorizationContext): AuthorizationContext | n
 /** Eager, local validation. No database connection or role seeding. */
 export function defineAuthorization<Resource = unknown>(registry: AuthorizationRegistry<Resource>, options: AuthorizationOptions = {}) {
   if (!registry || !Array.isArray(registry.actions) || registry.actions.length > 256 || !Array.isArray(registry.roles) || registry.roles.length > 64) throw new AuthorizationError('configuration')
+  if (!options || typeof options !== 'object' || Array.isArray(options)) throw new AuthorizationError('configuration')
   for (const callback of Object.values(options)) if (callback !== undefined && typeof callback !== 'function') throw new AuthorizationError('configuration')
   const actions = new Map<string, AuthorizationRegistry<Resource>['actions'][number]>()
   const roles = new Map<string, ReadonlySet<string>>()

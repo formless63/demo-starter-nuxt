@@ -8,5 +8,6 @@ export async function witness(db: ReturnType<typeof postgres>) {
     rows.push({ table: name, count: row?.count, digest: row?.digest })
   }
   const indexes = await db`SELECT tablename,indexname,indexdef FROM pg_indexes WHERE schemaname='public' ORDER BY tablename,indexname`
-  return { rows, indexes: Array.from(indexes) }
+  const history = Array.from(await db`SELECT hash,created_at FROM drizzle.__drizzle_migrations ORDER BY id`)
+  return { rows, indexes: Array.from(indexes), history }
 }

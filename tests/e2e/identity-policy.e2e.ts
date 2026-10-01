@@ -37,6 +37,10 @@ test('tenant boundaries, independent policy and private flags hold in HTTP and b
     if(initial.reason==='not-found')await flags.createDefinition(db,{userId:owner},'beta.dashboard',{enabled:false})
     let revision=(await flags.evaluateBooleanDetails(db,'beta.dashboard')).revision!
     const changed=await flags.updateDefinition(db,{userId:owner},'beta.dashboard',revision,{enabled:true,defaultValue:true,rolloutBasisPoints:null});revision=changed.definition.revision
+    const personal = await request.post('/api/projects', { headers: headers(reader), data: { name: 'Personal fixture project' } })
+    expect(personal.status()).toBe(201)
+    const privateProject = await personal.json()
+    expect((await request.get(`/api/projects/${privateProject.id}`, { headers: headers(owner) })).status()).toBe(404)
     const projection=await request.get('/api/feature-flags?userId=forged&tenantId=forged&keys=private.flag',{headers:headers(owner)})
     expect(projection.status()).toBe(200);expect(projection.headers()['cache-control']).toBe('private, no-store');expect(await projection.json()).toEqual({'beta.dashboard':true})
     expect((await request.get('/api/dashboard/beta',{headers:headers(owner)})).status()).toBe(403)
@@ -46,7 +50,7 @@ test('tenant boundaries, independent policy and private flags hold in HTTP and b
     expect((await request.get('/api/dashboard/beta',{headers:headers(reader)})).status()).toBe(403)
     await policy.revokeRole(db,{userId:owner,scope:{kind:'user',id:owner}},assignment)
     expect((await request.get('/api/dashboard/beta',{headers:headers(owner)})).status()).toBe(403)
-    await page.context().addCookies([{name:cookieName,value:encodeURIComponent(tokens.get(owner)!),url:baseURL!}])
+    await page.context().addCookies([{name:cookieName,value:encodeURIComponent(tokens.get(owner)!),domain:new URL(baseURL!).hostname,path:'/',secure:!!process.env.PLAYWRIGHT_BASE_URL}])
     const projected = page.waitForResponse(response => new URL(response.url()).pathname === '/api/feature-flags' && response.status() === 200)
     await page.goto('/app/projects')
     expect(await (await projected).json()).toEqual({ 'beta.dashboard': true })
@@ -54,8 +58,32 @@ test('tenant boundaries, independent policy and private flags hold in HTTP and b
     await page.getByRole('button',{name:'Read preview'}).click()
     await expect(page.getByRole('status')).toContainText('separate read-only permission')
     await flags.setOverride(db,{userId:owner},'beta.dashboard',revision,{targetKind:'tenant',targetId:orgB},false)
+    let firstReady!: () => void, releaseFirst!: () => void, firstDone!: () => void, secondDone!: () => void
+    const held = new Promise<void>(resolve => { firstReady = resolve }), release = new Promise<void>(resolve => { releaseFirst = resolve }), firstFinished = new Promise<void>(resolve => { firstDone = resolve }), secondFinished = new Promise<void>(resolve => { secondDone = resolve })
+    let requestNumber = 0
+    await page.route('**/api/feature-flags', async route => {
+      const number = ++requestNumber
+      const response = await route.fetch()
+      const values = await response.json()
+      if (number === 1) {
+        expect(values).toEqual({ 'beta.dashboard': true })
+        firstReady()
+        await release
+        try { await route.fulfill({ response }) }
+        catch { /* The earlier browser request was cancelled by the tenant switch. */ }
+        finally { firstDone() }
+      }
+      else { expect(values).toEqual({ 'beta.dashboard': false }); await route.fulfill({ response }); secondDone() }
+    })
+    await page.getByLabel('Organization',{exact:true}).selectOption(orgA)
+    await held
     await page.getByLabel('Organization',{exact:true}).selectOption(orgB)
+    await secondFinished
+    releaseFirst()
+    await firstFinished
     await expect(page.getByRole('region',{name:'Beta dashboard preview'})).toHaveCount(0)
+    await page.unroute('**/api/feature-flags')
+    expect((await request.patch(`/api/projects/${privateProject.id}`, { headers: headers(owner), data: { name: 'Flag cannot grant access' } })).status()).toBe(404)
     await page.goto(`/app/organizations/${orgA}`)
     await expect(page.getByRole('heading',{name:'Organization notes',exact:true})).toBeVisible()
     await expect(page.getByText('Organization A note',{exact:true})).toBeVisible()

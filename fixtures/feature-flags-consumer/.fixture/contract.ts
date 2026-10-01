@@ -53,6 +53,12 @@ try {
   result=await flags.updateDefinition(db,actor,k,revision,{enabled:false});revision=result.definition.revision
   assert.equal(await flags.evaluateBoolean(db,k,{userId:'user-a'}),false)
   const all=await flags.evaluateMany(db,[k,'unknown.flag'],{userId:'user-a'});assert.equal(all[k]!.reason,'disabled');assert.equal(all['unknown.flag']!.value,false)
+  let interruptionCalls=0
+  const interrupted=defineFeatureFlags({managementGuard:async()=>true,onChange:async tx=>{interruptionCalls++;await tx.execute(sql`SELECT pg_terminate_backend(pg_backend_pid())`)}})
+  const interruptedKey=`connection.${randomUUID().replaceAll('-','')}`
+  await assert.rejects(interrupted.createDefinition(db,actor,interruptedKey,{enabled:true,defaultValue:true}),code('unavailable'))
+  assert.equal(interruptionCalls,1)
+  assert.deepEqual(await flags.evaluateBooleanDetails(db,interruptedKey),{value:false,reason:'not-found'})
   const failing={transaction:async()=>{throw new Error('private fixture database address')}}
   assert.deepEqual(await flags.evaluateBooleanDetails(failing,k),{value:false,reason:'error',errorCode:'unavailable'})
   await assert.rejects(flags.updateDefinition(failing,actor,k,revision,{enabled:true}),code('unavailable'))

@@ -1,3 +1,4 @@
+import { verifyProductionBoot } from './boot.ts'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { createHmac } from 'node:crypto'
@@ -12,6 +13,7 @@ import { witness } from './witness.ts'
 const state = JSON.parse(await readFile(new URL('./state.json', import.meta.url), 'utf8')) as { url: string, witness: Awaited<ReturnType<typeof witness>> }
 const client = postgres(state.url, { max: 2 })
 try {
+  await verifyProductionBoot(state.url, false)
   assert(JSON.stringify(await witness(client)) === JSON.stringify(state.witness), 'Capability removal/rebuild must preserve all rows and indexes')
   // Baseline auth schema has no organization composition, but the physical session column survives.
   const session = pgTable('session', {
