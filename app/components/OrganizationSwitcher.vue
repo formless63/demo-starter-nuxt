@@ -12,6 +12,7 @@ async function select(event: Event) {
   const result = await authClient.organization.setActive({ organizationId })
   if (result.error) message.value = 'Organization selection could not be changed.'
   await Promise.all([refreshCurrent(), refreshOrganizations(), refreshNuxtData('organization-notes')])
+  if (!result.error) window.dispatchEvent(new Event('organization:changed'))
   busy.value = false
 }
 </script>

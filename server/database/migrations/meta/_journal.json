@@ -57,6 +57,13 @@
       "when": 1790886989516,
       "tag": "0007_bored_shocker",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790887580842,
+      "tag": "0008_mushy_cannonball",
+      "breakpoints": true
     }
   ]
 }

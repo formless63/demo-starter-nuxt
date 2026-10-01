@@ -1,3 +1,4 @@
+import { flagDefinition, flagOverride } from '@repo/nuxt-feature-flags/schema'
 import { roleAssignment } from '@repo/nuxt-authorization/schema'
 import { sql } from 'drizzle-orm'
 import { boolean, customType, index, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
@@ -6,7 +7,7 @@ import { notification } from '@repo/nuxt-notifications/schema'
 import { organization, member, invitation, activeOrganizationId } from '@repo/nuxt-organizations/schema'
 import { apikey } from '@repo/nuxt-api/server'
 
-export { roleAssignment, apikey, auditEvent, notification, organization, member, invitation }
+export { flagDefinition, flagOverride, roleAssignment, apikey, auditEvent, notification, organization, member, invitation }
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -79,4 +80,4 @@ export const organizationNote = pgTable('organization_note', {
   updatedAt: timestamp('updated_at', { withTimezone: true, precision: 3 }).notNull().defaultNow(),
 }, table => [index('organization_note_scope_created_idx').on(table.organizationId, table.createdAt, table.id)])
 
-export const schema = { user, session, account, verification, apikey, project, auditEvent, notification, organization, member, invitation, organizationNote, roleAssignment }
+export const schema = { user, session, account, verification, apikey, project, auditEvent, notification, organization, member, invitation, organizationNote, roleAssignment, flagDefinition, flagOverride }

@@ -28,3 +28,10 @@ export const applicationPolicy = defineAuthorization<{ ownerId?: string, organiz
 export function personalPolicyContext(userId: string, credentialGrants?: ReadonlySet<string>): AuthorizationContext {
   return Object.freeze({ userId, scope: Object.freeze({ kind: 'user' as const, id: userId }), credentialGrants })
 }
+/** Existing credential write permission restricts the corresponding application mutations. */
+export function projectCredentialActions(permissions: Record<string, string[]>): ReadonlySet<string> {
+  const actions = new Set<string>()
+  if (permissions.projects?.includes('read')) actions.add('projects.read')
+  if (permissions.projects?.includes('write')) for (const action of ['projects.create', 'projects.update', 'projects.delete']) actions.add(action)
+  return actions
+}

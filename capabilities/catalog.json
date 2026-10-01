@@ -1041,7 +1041,29 @@
       ],
       "baselineIntegrations": [
         "authentication"
-      ]
+      ],
+      "packageName": "@repo/nuxt-feature-flags",
+      "packagePath": "packages/nuxt-feature-flags",
+      "fixturePath": "fixtures/feature-flags-consumer",
+      "evaluationDocument": "FEATURE_FLAGS_MODULE_EVALUATION.md",
+      "documentationPath": "capabilities/feature-flags/CAPABILITY.md",
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server",
+            ".fixture/contract.ts",
+            ".fixture/package-test.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        },
+        "postRemovalScript": "package:test:survival",
+        "cleanupScript": "package:test:cleanup"
+      }
     },
     {
       "id": "invoice-ninja",
