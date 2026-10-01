@@ -89,7 +89,7 @@ export function createOpsService(registry: readonly OpsAdapter[]) {
   let adapters: (OpsAdapter & { countNames: string[] })[] = []
   try { adapters = valid ? registry.map((adapter) => {
     const names = [...(adapter.countNames ?? [])]
-    if (!machine.test(adapter.id) || ids.has(adapter.id) || typeof adapter.title !== 'string' || !adapter.title.trim()
+    if (typeof adapter.id !== 'string' || (adapter.countNames !== undefined && !Array.isArray(adapter.countNames)) || !machine.test(adapter.id) || ids.has(adapter.id) || typeof adapter.title !== 'string' || !adapter.title.trim()
       || adapter.title.length > 80 || /[<>]|\p{Cc}/u.test(adapter.title)
       || typeof adapter.isConfigured !== 'function' || typeof adapter.inspect !== 'function'
       || names.length > 8 || new Set(names).size !== names.length || names.some(name => !machine.test(name))) valid = false
@@ -97,7 +97,8 @@ export function createOpsService(registry: readonly OpsAdapter[]) {
     return { ...adapter, countNames: names }
   }) : [] }
   catch { valid = false; adapters = [] }
-  const pending = new Map<string, Promise<Inspection>>()
+  type Pending = { result?: Inspection, listeners: Set<(result: Inspection) => void> }
+  const pending = new Map<string, Pending>()
   let active = 0
   const capacity = new Set<() => void>()
   async function acquire(signal: AbortSignal) {
@@ -115,14 +116,19 @@ export function createOpsService(registry: readonly OpsAdapter[]) {
   function inspect(adapter: typeof adapters[number], signal: AbortSignal) {
     const existing = pending.get(adapter.id)
     if (existing) return existing
-    const work = (async () => {
+    const entry: Pending = { listeners: new Set() }
+    pending.set(adapter.id, entry)
+    void (async () => {
       await acquire(signal)
       try { return cleanResult(await adapter.inspect({ signal }), adapter.countNames) }
       finally { active--; for (const wake of [...capacity]) wake() }
-    })().catch((): Inspection => ({ status: 'unavailable', code: 'unavailable' }))
-    pending.set(adapter.id, work)
-    void work.finally(() => { if (pending.get(adapter.id) === work) pending.delete(adapter.id) })
-    return work
+    })().catch((): Inspection => ({ status: 'unavailable', code: 'unavailable' })).then((result) => {
+      entry.result = result
+      for (const listener of entry.listeners) listener(result)
+      entry.listeners.clear()
+      if (pending.get(adapter.id) === entry) pending.delete(adapter.id)
+    })
+    return entry
   }
   async function summary(signal?: AbortSignal): Promise<OpsSummary> {
     if (!valid) throw new OpsError('configuration')
@@ -142,9 +148,16 @@ export function createOpsService(registry: readonly OpsAdapter[]) {
       try {
         if (scoped.aborted) return { ...card, status: 'timeout', code: 'timeout' }
         const result = await new Promise<Inspection>((resolve) => {
-          const abort = () => resolve({ status: 'timeout', code: 'timeout' })
+          const entry = inspect(adapter, scoped)
+          const finish = (result: Inspection) => {
+            entry.listeners.delete(finish)
+            scoped.removeEventListener('abort', abort)
+            resolve(result)
+          }
+          const abort = () => finish({ status: 'timeout', code: 'timeout' })
           scoped.addEventListener('abort', abort, { once: true })
-          void inspect(adapter, scoped).then((result) => { scoped.removeEventListener('abort', abort); resolve(result) })
+          if (entry.result) finish(entry.result)
+          else entry.listeners.add(finish)
           if (scoped.aborted) abort()
         })
         return { ...card, ...result, durationMs: Math.max(0, Math.round(performance.now() - start)) }

@@ -1,3 +1,4 @@
+import { writeFile } from 'node:fs/promises'
 import assert from 'node:assert/strict'
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
@@ -19,6 +20,7 @@ async function cookie(token: string) {
   return `better-auth.session_token=${encodeURIComponent(`${token}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`)}`
 }
 const operator = 'ops-opaque:操作者', outsider = 'organization-owner', token = crypto.randomUUID(), other = crypto.randomUUID()
+await writeFile('.fixture/state.json', JSON.stringify({ database, url: url.toString(), secret, operator, token }))
 async function boot(allowlist: string, check: (base: string) => Promise<void>) {
   const reservation = createServer(); await new Promise<void>(resolve => reservation.listen(0, '127.0.0.1', resolve))
   const port = (reservation.address() as { port: number }).port
@@ -61,7 +63,7 @@ try {
     assert.equal((await fetch(`${base}/api/ops/summary`, { method: 'POST', headers: { cookie: operatorCookie } })).status, 404)
     await sql`UPDATE session SET expires_at=now()-interval '1 second' WHERE token=${token}`
     assert.equal((await fetch(`${base}/api/ops/summary`, { headers: { cookie: operatorCookie } })).status, 401)
-    await sql`UPDATE session SET expires_at=now()+interval '1 hour' WHERE token=${token}`
+    await sql`INSERT INTO session (id,token,user_id,expires_at) VALUES (${crypto.randomUUID()},${token},${operator},now()+interval '1 hour')`
   })
   for (const allowlist of ['', 'malformed\nidentifier', Array.from({ length: 101 }, (_, i) => `u${i}`).join(',')]) await boot(allowlist, async (base) => {
     const response = await fetch(`${base}/api/ops/summary`, { headers: { cookie: operatorCookie } })
@@ -73,4 +75,4 @@ try {
   assert.equal(calls, 0); assert.equal((await service.summary()).adapters[0]!.status, 'not-configured'); assert.equal(calls, 0)
   console.info('[ops-admin] Packed baseline-only Better Auth/PostgreSQL access, SSR, privacy, empty/malformed allowlist, no startup inspection passed')
 }
-finally { await sql.end(); await admin.unsafe(`DROP DATABASE "${database}"`); await admin.end() }
+finally { await sql.end(); await admin.end() }
