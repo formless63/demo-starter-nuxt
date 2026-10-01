@@ -141,7 +141,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Jobs, Object Storage, Organizations (future optional enhancements)
 - External: existing PostgreSQL only; no external index service
 - Default installed: no; reference application explicitly opts in.
-- Implementation: private `@repo/nuxt-search`, application-owned generated weighted `simple` vector/GIN migration, parameterized websearch and normalization-32 rank, bounded exact keyset cursors and owner-scoped Projects service/endpoint. No automatic routes, connections or migrations.
+- Implementation: private `@repo/nuxt-search`, application-owned generated weighted `simple` vector/GIN migration, parameterized websearch and normalization-32 rank, canonical numeric-float4 UTF-8 keyset cursors (2048 ASCII bound) and owner-scoped Projects service/endpoint with explicit CRUD projections. Existing-row/hash upgrade, retained-DB removal/rebuild and authenticated production/privacy regressions. No automatic routes, connections or migrations.
 - Contract: [`capabilities/search/CAPABILITY.md`](capabilities/search/CAPABILITY.md)
 
 ### Realtime (`planned`)

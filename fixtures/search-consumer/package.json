@@ -6,7 +6,9 @@
     "build": "nuxt build",
     "typecheck": "nuxt typecheck",
     "db:migrate": "drizzle-kit migrate",
-    "package:test:runtime": "bun .fixture/package-test.ts"
+    "package:test:runtime": "bun .fixture/package-test.ts",
+    "package:test:survival": "bun .fixture/lifecycle.ts verify",
+    "package:test:cleanup": "bun .fixture/lifecycle.ts cleanup"
   },
   "dependencies": {
     "@repo/nuxt-search": "workspace:*",
