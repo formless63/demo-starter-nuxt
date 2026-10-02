@@ -12,7 +12,7 @@ The root application explicitly registers Jobs, API Platform, Observability, Obj
 - one production image for the app, migration tools and worker;
 - lazy optional S3, SMTP, Cache, AI, Invoice Ninja, Stripe and Medusa adapters with no provider required at startup;
 - transactionally appended audit history and notifications, plus ID-only post-commit hints over authenticated SSE/WebSocket transports;
-- all twenty catalog-driven package install/runtime/removal/rebuild checks in generic CI.
+- all twenty-one catalog-driven package install/runtime/removal/rebuild checks in generic CI.
 
 The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused and Identity remains separately paused.
 

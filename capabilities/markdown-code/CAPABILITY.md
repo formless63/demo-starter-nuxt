@@ -1,6 +1,6 @@
 # Markdown / Code Content
 
-Private optional Nuxt module `@repo/nuxt-markdown-code`. Status: **in-progress** until full CI passes. `defaultInstalled: false`; root deliberately enables the reference page `/markdown`. No hard capability dependencies, database, environment variables, startup services, fetches, migrations, background work or credentials. Object Storage and AI are optional application integrations only.
+Private optional Nuxt module `@repo/nuxt-markdown-code`. Status: **done**, backed by [full 23-job hosted CI](https://github.com/formless63/demo-starter-nuxt/actions/runs/37029379598) at `e99539d90020a70028545ac4f252c55c16e3f432`. `defaultInstalled: false`; root deliberately enables the reference page `/markdown`. No hard capability dependencies, database, environment variables, startup services, fetches, migrations, background work or credentials. Object Storage and AI are optional application integrations only.
 
 ## Install and boundaries
 
@@ -26,6 +26,10 @@ Links permit credential-free HTTPS, simple mailto, root-relative paths except `/
 
 ## Verification and removal
 
-`bun run packages:test markdown-code` runs the generic packed install, strict typecheck, production build, actual shipped parser/Vue SSR contract, mandatory Playwright hydration/copy/security/theme proof, clean removal and independent rebuild. The authored fixture participates in the generic CI matrix while in-progress. Runtime browsers are mandatory, not silently skipped on constrained hosts. Local OS restrictions on Chromium or Nitro sockets must be reported, with hosted CI providing those gates.
+`bun run packages:test markdown-code` runs the generic packed install, strict typecheck, production build, actual shipped parser/Vue SSR contract, mandatory Playwright hydration/copy/security/theme proof, clean removal and independent rebuild. The completed fixture participates in the generic CI matrix and unqualified package build/test selection. Runtime browsers are mandatory, not silently skipped on constrained hosts. Local OS restrictions on Chromium or Nitro sockets must be reported, with hosted CI providing those gates.
 
 Remove the root package dependency and module entry; remove `/markdown` and its application-owned `/api/markdown-reference` handler. Remove `markdown-code` from `referenceApplication.enabledCapabilities`, reinstall, typecheck and build. Application-owned content persists; no data cleanup or migrations are performed. A clean consumer removal fixture retains its baseline home page and public hydration marker.
+
+## Completion evidence
+
+Markdown / Code Content implementation `e99539d90020a70028545ac4f252c55c16e3f432` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37029379598): all 21 generic packed package lifecycles, corrected real-browser payload/hydration/copy checks, full root checks, production browser/container/health, migrations and worker verification. This is source evidence; metadata promotion and later revisions require their own exact-head CI.
