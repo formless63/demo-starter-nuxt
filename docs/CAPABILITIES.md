@@ -6,7 +6,7 @@ The baseline starter always includes Nuxt/Nitro, strict TypeScript, Bun tooling,
 
 A capability is an optional, independently maintained feature package layered onto that baseline. Package source existing under `packages/` does not activate anything. A consumer must keep the workspace dependency, register the Nuxt module, and perform the capability's documented application integration. Unused packages do not become modules, routes, workers, or runtime services merely because their source exists.
 
-The root application deliberately enables all seventeen completed capabilities for continuous integration, recorded in `referenceApplication.enabledCapabilities`. That is separate from `defaultInstalled`: this field means “will a clean consumer/base application receive this capability without explicitly selecting or enabling it?” All current capabilities answer no.
+The root application deliberately enables all eighteen completed capabilities for continuous integration, recorded in `referenceApplication.enabledCapabilities`. That is separate from `defaultInstalled`: this field means “will a clean consumer/base application receive this capability without explicitly selecting or enabling it?” All current capabilities answer no.
 
 `@repo/*` is the private internal workspace scope. The packages are not published, so commands such as `bun add @repo/nuxt-jobs` will not work in an unrelated external repository. A real npm scope will be chosen deliberately if publication happens later.
 
@@ -30,9 +30,10 @@ The root application deliberately enables all seventeen completed capabilities f
 | `invoice-ninja` | `@repo/nuxt-invoice-ninja` | Enabled | No | Jobs, Webhooks | Invoice Ninja on use | [Invoice Ninja](../capabilities/invoice-ninja/CAPABILITY.md) |
 | `stripe` | `@repo/nuxt-stripe` | Enabled | No | Jobs, Webhooks | Stripe on use | [Stripe](../capabilities/stripe/CAPABILITY.md) |
 | `medusa` | `@repo/nuxt-medusa` | Enabled | No | Jobs, Webhooks | Medusa on use; optional operator bridge | [Medusa](../capabilities/medusa/CAPABILITY.md) |
+| `data-table` | `@repo/nuxt-data-table` | Enabled | No | None | None | [Data Table](../capabilities/data-table/CAPABILITY.md) |
 | `ops-admin` | `@repo/nuxt-ops-admin` | Enabled | No | None | None; optional provider adapters | [Ops / Admin](../capabilities/ops-admin/CAPABILITY.md) |
 
-All seventeen entries above are `done`. Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/36978353705) passed all 19 jobs at `4478e41f2835bfe1495dab762756b2fec08bd98e`, including all 17 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
+All eighteen entries above are `done`. Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
 
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
 
@@ -161,3 +162,7 @@ Stripe v1 is available (`done`): `@repo/nuxt-stripe` requires Jobs and Webhooks;
 The reference app explicitly enables private `@repo/nuxt-medusa`; clean consumers default to uninstalled. Requires Jobs and Webhooks. [Provider contract](../capabilities/medusa/CAPABILITY.md) covers bounded scoped Admin reconciliation, the operator-installed application bridge, verification and independent removal. `/integrations/medusa` reads approved local product/order projections; no provider configuration is required for startup.
 
 The pinned disposable Medusa 2.21.2 backend/subscriber and packed lifecycle passed. The fixture uses real event infrastructure and source-verified `order.placed` payloads without invoking checkout/payment workflows; remote production event delivery remains an operator responsibility.
+
+### Data Table
+
+Keep `"@repo/nuxt-data-table": "workspace:*"` and register `'@repo/nuxt-data-table'` in Nuxt modules. The module registers the component and its owned Vite adapter prebundle; applications own data, stable row IDs, typed columns, controlled state and any server requests. The root `/data-table-test` reference covers interactive client/manual behavior. Verify packed SSR, install and removal with `bun run packages:test data-table`; no database or external provider is needed. See the [Data Table contract](../capabilities/data-table/CAPABILITY.md) and [removal recipe](STARTING-A-PROJECT.md#remove-data-table).

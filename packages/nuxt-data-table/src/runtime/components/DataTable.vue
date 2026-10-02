@@ -1,0 +1,45 @@
+<script setup lang="ts" generic="TData extends Record<string, unknown>">
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { createFilteredRowModel, createPaginatedRowModel, createSortedRowModel, filterFns, FlexRender, sortFns, stockFeatures, tableFeatures, useTable, type ColumnDef, type ColumnFiltersState, type PaginationState, type RowSelectionState, type SortingState, type VisibilityState } from '@tanstack/vue-table'
+import { computed, watchEffect } from 'vue'
+
+type Props = { data: TData[]; columns: ColumnDef<any, TData, any>[]; rowId: (row: TData, index: number) => string; sorting?: SortingState; globalFilter?: string; columnFilters?: ColumnFiltersState; pagination?: PaginationState; columnVisibility?: VisibilityState; rowSelection?: RowSelectionState; manualSorting?: boolean; manualFiltering?: boolean; manualPagination?: boolean; pageCount?: number; enableRowSelection?: boolean; pageSizeOptions?: number[]; loading?: boolean; error?: string | null }
+const props = withDefaults(defineProps<Props>(), { sorting: () => [], globalFilter: '', columnFilters: () => [], pagination: () => ({ pageIndex: 0, pageSize: 10 }), columnVisibility: () => ({}), rowSelection: () => ({}), pageSizeOptions: () => [10, 25, 50], pageCount: undefined, loading: false, error: null })
+const emit = defineEmits<{ 'update:sorting': [SortingState]; 'update:globalFilter': [string]; 'update:columnFilters': [ColumnFiltersState]; 'update:pagination': [PaginationState]; 'update:columnVisibility': [VisibilityState]; 'update:rowSelection': [RowSelectionState] }>()
+const features = tableFeatures({
+  ...stockFeatures,
+  filteredRowModel: createFilteredRowModel(),
+  sortedRowModel: createSortedRowModel(),
+  paginatedRowModel: createPaginatedRowModel(),
+  filterFns,
+  sortFns,
+})
+const table = useTable({ features, data: computed(() => props.data), columns: computed(() => props.columns) as any, getRowId: props.rowId, state: computed(() => ({ sorting: props.sorting, globalFilter: props.globalFilter, columnFilters: props.columnFilters, pagination: props.pagination, columnVisibility: props.columnVisibility, rowSelection: props.rowSelection })) as any, manualSorting: computed(() => props.manualSorting), manualFiltering: computed(() => props.manualFiltering), manualPagination: computed(() => props.manualPagination), enableRowSelection: computed(() => props.enableRowSelection), onSortingChange: (u: any) => emit('update:sorting', typeof u === 'function' ? u(props.sorting ?? []) : u), onGlobalFilterChange: (u: any) => emit('update:globalFilter', typeof u === 'function' ? u(props.globalFilter ?? '') : u), onColumnFiltersChange: (u: any) => emit('update:columnFilters', typeof u === 'function' ? u(props.columnFilters ?? []) : u), onPaginationChange: (u: any) => emit('update:pagination', typeof u === 'function' ? u(props.pagination ?? { pageIndex: 0, pageSize: 10 }) : u), onColumnVisibilityChange: (u: any) => emit('update:columnVisibility', typeof u === 'function' ? u(props.columnVisibility ?? {}) : u), onRowSelectionChange: (u: any) => emit('update:rowSelection', typeof u === 'function' ? u(props.rowSelection ?? {}) : u) })
+const rows = computed(() => table.getRowModel().rows)
+const currentPagination = computed(() => table.atoms.pagination.get())
+// v9.2.4's Vue option merger cannot clear an optional reactive pageCount.
+// Publish an explicit numeric count after construction so native pagination
+// handles both client and manual modes without undefined refs or null clamps.
+watchEffect(() => {
+  const rowCount = table.getPrePaginatedRowModel().rows.length
+  const pageSize = props.pagination.pageSize
+  const pageCount = props.manualPagination
+    ? props.pageCount ?? -1
+    : pageSize === Infinity && rowCount > 0 ? 1 : Math.ceil(rowCount / pageSize)
+  table.setOptions(options => ({ ...options, pageCount }))
+})
+function sort(column: any) { column.toggleSorting(column.getIsSorted() === 'asc') }
+</script>
+
+<template>
+  <div class="data-table" role="region" aria-label="Data table" tabindex="0">
+    <label v-if="!loading && !error">Rows per page <select aria-label="Rows per page" :value="currentPagination?.pageSize ?? 10" @change="table.setPageSize?.(Number(($event.target as HTMLSelectElement).value))"><option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option></select></label>
+    <p v-if="loading" role="status">Loading…</p>
+    <p v-else-if="error" role="alert">{{ error }}</p>
+    <template v-else>
+      <div class="data-table-controls"><label>Filter rows <input :value="globalFilter" aria-label="Filter rows" @input="table.setGlobalFilter?.(($event.target as HTMLInputElement).value)"></label><label v-for="column in table.getAllLeafColumns()" :key="column.id"><input type="checkbox" :checked="column.getIsVisible?.()" :aria-label="`${column.getIsVisible?.() ? 'Hide' : 'Show'} ${column.id} column`" @change="column.toggleVisibility?.()">{{ column.id }}</label></div>
+      <table><thead><tr v-for="group in table.getHeaderGroups()" :key="group.id"><th v-if="enableRowSelection" scope="col">Select rows</th><th v-for="header in group.headers" :key="header.id" scope="col" :aria-sort="header.column.getIsSorted?.() === 'asc' ? 'ascending' : header.column.getIsSorted?.() === 'desc' ? 'descending' : 'none'"><button v-if="!header.isPlaceholder && header.column.getCanSort?.()" type="button" :aria-label="`Sort by ${String(header.column.columnDef.header ?? header.id)}`" @click="sort(header.column)"><FlexRender :header="header" /></button><FlexRender v-else-if="!header.isPlaceholder" :header="header" /></th></tr></thead><tbody><tr v-for="row in rows" :key="row.id"><td v-if="enableRowSelection"><input type="checkbox" :checked="row.getIsSelected?.()" :aria-label="`Select row ${row.id}`" @change="row.toggleSelected?.()"></td><td v-for="cell in row.getVisibleCells()" :key="cell.id"><FlexRender :cell="cell" /></td></tr><tr v-if="rows.length === 0"><td :colspan="table.getVisibleLeafColumns().length + (enableRowSelection ? 1 : 0)">No results</td></tr></tbody></table>
+      <nav aria-label="Table pagination"><button type="button" :disabled="!table.getCanPreviousPage?.()" @click="table.previousPage?.()">Previous</button><span aria-live="polite">Page {{ (currentPagination?.pageIndex ?? 0) + 1 }}</span><button type="button" :disabled="!table.getCanNextPage?.()" @click="table.nextPage?.()">Next</button></nav>
+    </template>
+  </div>
+</template>
