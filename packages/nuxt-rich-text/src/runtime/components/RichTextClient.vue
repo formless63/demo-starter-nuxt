@@ -41,8 +41,9 @@ onMounted(() => {
       },
       handleDrop(_view, event) { event.preventDefault(); return true },
     },
-    onTransaction() { revision.value++ },
+    onTransaction() { if (alive) revision.value++ },
     onUpdate({ editor: updated }) {
+      if (!alive) return
       try { props.onChange(documentFromEditor(updated.getJSON())) }
       finally { void nextTick(reconcile) }
     },
