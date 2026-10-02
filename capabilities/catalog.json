@@ -1077,7 +1077,9 @@
             ".fixture/package-test.ts"
           ],
           "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
-        }
+        },
+        "postRemovalScript": "package:test:retention",
+        "cleanupScript": "package:test:cleanup"
       },
       "documentationPath": "capabilities/invoice-ninja/CAPABILITY.md",
       "evaluationDocument": "INVOICE_NINJA_MODULE_EVALUATION.md",

@@ -1,6 +1,6 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { InvoiceNinjaError, safeError } from './errors'
-import { parse, opaqueId } from './validation'
+import { parse, opaqueId, hasControls } from './validation'
 export interface Connection { baseUrl: string, apiToken: string, webhookSecret?: string, previousWebhookSecret?: string }
 export function resolveEnvironmentConnection(): Connection {
   const baseUrl = process.env.INVOICE_NINJA_BASE_URL, apiToken = process.env.INVOICE_NINJA_API_TOKEN
@@ -14,7 +14,7 @@ export function validateConnection(connection: Connection, allowLocal = process.
     const originalHost = /^[a-z]+:\/\/([^/?#]+)/i.exec(connection.baseUrl)?.[1]?.replace(/:\d+$/, '')
     const literalLoopback = originalHost === '[::1]' || originalHost === '127.0.0.1'
     if (url.username || url.password || url.hash || url.search || (url.protocol !== 'https:' && !(allowLocal && url.protocol === 'http:' && literalLoopback))) throw new Error()
-    if (!connection.apiToken || Buffer.byteLength(connection.apiToken) > 8192 || /[\u0000-\u001f\u007f-\u009f]/u.test(connection.apiToken)) throw new Error()
+    if (!connection.apiToken || Buffer.byteLength(connection.apiToken) > 8192 || hasControls(connection.apiToken)) throw new Error()
     return url
   }
   catch { throw new InvoiceNinjaError('unconfigured') }
@@ -81,7 +81,7 @@ export async function providerRequest(connection: Connection, kind: 'client' | '
   }
   catch (error) { checkSignal(signal); throw safeError(error, Boolean(body)) }
 }
-function validSecret(s: string | undefined) { return s !== undefined && Buffer.byteLength(s) >= 32 && Buffer.byteLength(s) <= 256 && !/[\u0000-\u001f\u007f-\u009f]/u.test(s) }
+function validSecret(s: string | undefined) { return s !== undefined && Buffer.byteLength(s) >= 32 && Buffer.byteLength(s) <= 256 && !hasControls(s) }
 export function verifyWebhookSecret(header: string | undefined, connection: Connection) {
   if (!validSecret(connection.webhookSecret) || (connection.previousWebhookSecret !== undefined && !validSecret(connection.previousWebhookSecret))) throw new InvoiceNinjaError('unconfigured')
   if (header && Buffer.byteLength(header) > 8192) throw new InvoiceNinjaError('limit_exceeded')

@@ -1,6 +1,6 @@
 import { InvoiceNinjaError } from './errors'
 import type { Binding, ClientProjection, InvoiceProjection, InvoiceStatus } from './schema'
-import { normalizeDecimal, opaqueId, parse } from './validation'
+import { normalizeDecimal, opaqueId, parse, hasControls } from './validation'
 export function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new InvoiceNinjaError('unavailable')
   return value as Record<string, unknown>
@@ -19,7 +19,7 @@ export function projectEntity(binding: Binding, value: unknown, currency: string
   if (currency !== null && !/^[A-Z]{3}$/.test(currency)) throw new InvoiceNinjaError('unsupported', false)
   let number: string | null = null
   if (data.number !== null && data.number !== undefined) {
-    if (typeof data.number !== 'string' || data.number.length > 128 || !data.number.isWellFormed() || /[\u0000-\u001f\u007f-\u009f]/u.test(data.number)) throw new InvoiceNinjaError('unsupported', false)
+    if (typeof data.number !== 'string' || data.number.length > 128 || !data.number.isWellFormed() || hasControls(data.number)) throw new InvoiceNinjaError('unsupported', false)
     number = data.number
   }
   let sourceUpdatedAt: string | null = null

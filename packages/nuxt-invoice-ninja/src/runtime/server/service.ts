@@ -206,7 +206,7 @@ export function createInvoiceNinjaService(options: InvoiceNinjaOptions) {
         if (!initial.intent || !options.resolveDraftPolicy) throw new InvoiceNinjaError('unsupported', false)
         const current = await options.resolveDraftPolicy(context, await bound(context, initial.bindingId, 'client'), initial.intent.input, signal)
         validatePolicy(current)
-        if (JSON.stringify(current) !== JSON.stringify(initial.intent.policy)) throw new InvoiceNinjaError('unsupported', false)
+        if (current.currencyId !== initial.intent.policy.currencyId || current.currency !== initial.intent.policy.currency || current.configurationIdentity !== initial.intent.policy.configurationIdentity) throw new InvoiceNinjaError('unsupported', false)
       }
       await db().transaction(async tx => {
         checkSignal(signal)
