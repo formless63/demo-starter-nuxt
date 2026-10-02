@@ -25,7 +25,8 @@
       "command-system",
       "markdown-code",
       "rich-text",
-      "file-ui"
+      "file-ui",
+      "flow-canvas"
     ]
   },
   "baseline": [
@@ -1571,7 +1572,7 @@
       "id": "flow-canvas",
       "displayName": "Flow / Canvas",
       "kind": "operations-ui",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1580,7 +1581,38 @@
         "audit-log"
       ],
       "externalRequirements": [],
-      "summary": "Interactive flow and canvas primitives for node-based applications."
+      "summary": "Interactive flow and canvas primitives for node-based applications.",
+      "packageName": "@repo/nuxt-flow-canvas",
+      "packagePath": "packages/nuxt-flow-canvas",
+      "fixturePath": "fixtures/flow-canvas-consumer",
+      "documentationPath": "capabilities/flow-canvas/CAPABILITY.md",
+      "evaluationDocument": "FLOW_CANVAS_MODULE_EVALUATION.md",
+      "scripts": [
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [],
+      "migrations": [],
+      "runtimeProcesses": [],
+      "packageTest": {
+        "ownedDependencies": [
+          "@vue-flow/core"
+        ],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "app/pages/flow-test.vue",
+            ".fixture/package-test.ts",
+            ".fixture/graph-contract.test.ts",
+            ".fixture/browser.ts",
+            "server/api/flow-reference.get.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "pwa-offline",

@@ -218,3 +218,9 @@ Rich Text removal: remove `@repo/nuxt-rich-text` from root dependencies and Nuxt
 ## Removing File UI
 
 Remove `@repo/nuxt-file-ui` from module/dependency lists, `app/pages/files.vue`, `server/api/files`, `server/utils/file-ui.ts`, `server/utils/file-ui-metadata.ts`, root reference capability enablement and File UI-specific test scripts, then regenerate the lockfile. Retain application file schema/export, all SQL/snapshots/journal history, metadata receipts and objects. No provider data or credentials are removed. Keep Object Storage for its other consumers.
+
+## Flow / Canvas
+
+Optional private `@repo/nuxt-flow-canvas` provides controlled native Vue editing and bounded server-safe graph JSON. Default installation remains false; this reference explicitly enables `/flow-test`. Applications own state and persistence. No database, migrations, network, or hard capability dependencies. See [contract](../capabilities/flow-canvas/CAPABILITY.md). Remove the explicit module/dependency and `app/pages/flow-test.vue`/`server/api/flow-reference.get.ts`, update reference enablement/tests, then install/typecheck/build; existing graph documents are application-owned. Source gates passed; combined exact-head hosted gates remain pending.
+
+Flow / Canvas source `1999dab23987aa90efa62411275b7075b974d593` passed [all 24 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040851945), including the real native browser and independent packed install/runtime/removal/rebuild gates, and independent review. The combined 24-capability tree adds accepted main `bf15830889757b76b44a71fac80461deaca22cd1`; its full exact-head CI remains pending.
