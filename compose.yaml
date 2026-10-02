@@ -21,6 +21,12 @@ x-observability-environment: &observability-environment
   APP_REVISION: ${APP_REVISION:-unknown}
   DEPLOYMENT_ENVIRONMENT: ${DEPLOYMENT_ENVIRONMENT:-production}
 
+x-invoice-ninja-environment: &invoice-ninja-environment
+  INVOICE_NINJA_BASE_URL: ${INVOICE_NINJA_BASE_URL:-}
+  INVOICE_NINJA_API_TOKEN: ${INVOICE_NINJA_API_TOKEN:-}
+  INVOICE_NINJA_WEBHOOK_SECRET: ${INVOICE_NINJA_WEBHOOK_SECRET:-}
+  INVOICE_NINJA_WEBHOOK_SECRET_PREVIOUS: ${INVOICE_NINJA_WEBHOOK_SECRET_PREVIOUS:-}
+
 x-stripe-environment: &stripe-environment
   STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
   STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
@@ -61,7 +67,7 @@ services:
   app:
     <<: *application-image
     environment:
-      <<: [*database-environment, *observability-environment, *stripe-environment]
+      <<: [*database-environment, *observability-environment, *invoice-ninja-environment, *stripe-environment]
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-nuxt-starter}
       OPS_ADMIN_USER_IDS: ${OPS_ADMIN_USER_IDS:-}
       NODE_ENV: production
@@ -135,7 +141,7 @@ services:
     <<: *application-image
     command: ["node", ".jobs/worker.mjs"]
     environment:
-      <<: [*database-environment, *observability-environment, *stripe-environment]
+      <<: [*database-environment, *observability-environment, *invoice-ninja-environment, *stripe-environment]
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-nuxt-starter-worker}
       NODE_ENV: production
       MEDUSA_BASE_URL: ${MEDUSA_BASE_URL:-}

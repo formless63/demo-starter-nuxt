@@ -56,3 +56,17 @@ test('standalone worker closes every provider-owned producer and database pool',
     expect(source).toContain(`await ${closer}()`)
   }
 })
+
+test('production Compose passes every optional provider variable to app and worker', () => {
+  const compose = Bun.YAML.parse(readFileSync(resolve(root, 'compose.yaml'), 'utf8')) as {
+    services: Record<string, { environment: Record<string, string> }>
+  }
+  const example = readFileSync(resolve(root, '.env.example'), 'utf8')
+  const providerKeys = [...example.matchAll(/^((?:INVOICE_NINJA|STRIPE|MEDUSA)_[A-Z_]+)=/gm)].map(match => match[1]!)
+  expect(providerKeys).toHaveLength(17)
+  for (const service of ['app', 'worker']) {
+    for (const key of providerKeys) {
+      expect(compose.services[service]!.environment[key]).toStartWith('${' + key + ':-')
+    }
+  }
+})
