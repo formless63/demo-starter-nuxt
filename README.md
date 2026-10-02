@@ -44,6 +44,7 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Audit Log | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; optional authentication | Transactional append-oriented history and bounded keyset queries |
 | Realtime | Available (`done`) | Optional | Node runtime; application session policy; no capability dependency | Bounded server-to-browser SSE and WebSocket event adapters |
 | Notifications | Available (`done`) | Optional | Jobs; PostgreSQL/Drizzle; optional Email/Realtime/ntfy | Recipient-scoped persistent notifications and transactional delivery |
+| Invoice Ninja | In progress | Optional | Jobs, Webhooks; configured provider on use | Scoped local projections, explicit reconciliation and durable draft ledger; actual pinned compatibility unverified |
 | Ops / Admin | Available (`done`) | Optional | Baseline human session; privileged server allowlist | Read-only sanitized application-owned diagnostic adapters |
 | Search | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; no extra service | Owner-scoped weighted FTS and deterministic keyset pages |
 | Import / Export | Available (`done`) | Optional | Jobs, Object Storage; PostgreSQL/Drizzle/Node | Durable bounded CSV transfer; personal Project round-trip |
@@ -65,7 +66,7 @@ bun run jobs:migrate
 bun run dev
 ```
 
-Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all fourteen completed capability packages; `db:migrate` applies the application/API/Audit/Notification/transfer tables and Projects search vector/index and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
+Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all fourteen completed capability packages plus the in-progress Invoice Ninja verification integration; `db:migrate` applies the application/API/Audit/Notification/transfer tables and Projects search vector/index and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
 
 ## Authentication notes
 
@@ -177,3 +178,9 @@ Opt-in PostgreSQL-native `@repo/nuxt-search` server helpers; the reference Proje
 Explicitly enabled, server-only and operation-lazy. `@repo/nuxt-ai/server` provides text, incremental streaming and Zod structured generation; default provider openai-compatible, timeout 60 seconds, no retries, 1 MiB output cap. Set AI_MODEL and optional server AI_API_KEY/AI_BASE_URL only when used. `bun run ai:smoke` performs one intentional configured operation without logging generated content. See the [contract](capabilities/ai/CAPABILITY.md) and [evaluation](AI_MODULE_EVALUATION.md).
 
 Ops / Admin is available (`done`): opt-in read-only `/admin/ops`, privileged server-only baseline-user allowlist and application-owned safe adapters. [Contract](capabilities/ops-admin/CAPABILITY.md).
+
+Stripe v1 is in progress, independently packaged as `@repo/nuxt-stripe` with Jobs/Webhooks hard dependencies. The `/stripe` reference requires authentication and explicit server customer bindings; optional operator-owned `STRIPE_REFERENCE_PRICE_ID`, `STRIPE_REFERENCE_CURRENCY`, `STRIPE_REFERENCE_SUCCESS_URL` and `STRIPE_REFERENCE_CANCEL_URL` configure the single registered `starter.one-time` offer. Missing configuration remains lazy503. [Contract](capabilities/stripe/CAPABILITY.md); [design/compatibility limits](STRIPE_MODULE_EVALUATION.md). No remote account, payment or registration is required for base startup or local verification.
+
+## Medusa (verification in progress)
+
+The reference app explicitly enables private `@repo/nuxt-medusa`; clean consumers default to uninstalled. Requires Jobs and Webhooks. [Provider contract](capabilities/medusa/CAPABILITY.md) covers bounded scoped Admin reconciliation, the operator-installed application bridge, verification and independent removal. `/integrations/medusa` reads approved local product/order projections; no provider configuration is required for startup.

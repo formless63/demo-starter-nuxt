@@ -195,23 +195,26 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 ## Business integrations
 
-### Invoice Ninja (`planned`)
+### Invoice Ninja (`in-progress`)
 
 - Requires: Jobs, Webhooks
 - Integrates with: Organizations, Audit Log, Notifications
 - External: Invoice Ninja
 
-### Stripe (`planned`)
+### Stripe (`in-progress`)
 
 - Requires: Jobs, Webhooks
 - Integrates with: Organizations, Authorization, Audit Log, Notifications
-- External: Stripe
+- External: Stripe; optional configuration is lazy and no startup provider calls occur.
+- Implementation: private `@repo/nuxt-stripe`, independent consumer, native Checkout/payment-status routes, trusted scoped bindings, durable ledger/inbox and existing Jobs; [contract](capabilities/stripe/CAPABILITY.md). Full acceptance gates pending.
 
-### Medusa (`planned`)
+### Medusa (`in-progress`)
 
 - Requires: Jobs, Webhooks
 - Integrates with: Object Storage, Organizations, Search
-- External: Medusa
+- External: Medusa2.21.2 required only when refreshing; optional bridge installed by operator in separate provider project.
+- Private `@repo/nuxt-medusa` and independent packed consumer fixture; application-included scoped schemas, native Admin GETs, existing Jobs reconciliation, application-owned Standard Webhooks bridge and authenticated reference UI. Verification in progress.
+- Contract: [`capabilities/medusa/CAPABILITY.md`](capabilities/medusa/CAPABILITY.md)
 
 ## Operations / UI infrastructure
 

@@ -33,3 +33,5 @@ Official Nuxt documentation should be the primary source. Agents supporting MCP 
 @repo/nuxt-search uses normal Nuxt module-builder and compatible Nuxt/Drizzle peers; existing PostgreSQL 18 FTS only. simple weighted vectors, parameterized websearch_to_tsquery and ts_rank_cd normalization 32; no external search service or pg_trgm.
 
 `@repo/nuxt-ai` owns OpenAI SDK 7.25.0 and Zod 4.6.5 with Nuxt peer/module-builder. Chat Completions SSE supports configured compatible endpoints on Node 24/Nitro; retries/logging are explicitly disabled. Default provider openai-compatible, timeout 60 seconds, optional key, lazy required model; see AI_MODULE_EVALUATION.md for the prompt-derived v1 contract.
+
+`@repo/nuxt-medusa` uses bounded native fetch against pinned Medusa2.21.2, Basic Admin auth, Jobs/Webhooks/Drizzle/Zod peers and the existing Webhooks signer/verifier. No SDK/backend dependency graph in starter runtime. The separate pinned backend fixture installs its own graph in a disposable directory; workflow product events differ from internal module events.

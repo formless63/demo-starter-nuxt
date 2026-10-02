@@ -21,6 +21,17 @@ x-observability-environment: &observability-environment
   APP_REVISION: ${APP_REVISION:-unknown}
   DEPLOYMENT_ENVIRONMENT: ${DEPLOYMENT_ENVIRONMENT:-production}
 
+x-stripe-environment: &stripe-environment
+  STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+  STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+  STRIPE_WEBHOOK_SECRET_PREVIOUS: ${STRIPE_WEBHOOK_SECRET_PREVIOUS:-}
+  STRIPE_ACCOUNT_ID: ${STRIPE_ACCOUNT_ID:-}
+  STRIPE_MODE: ${STRIPE_MODE:-test}
+  STRIPE_REFERENCE_PRICE_ID: ${STRIPE_REFERENCE_PRICE_ID:-}
+  STRIPE_REFERENCE_CURRENCY: ${STRIPE_REFERENCE_CURRENCY:-}
+  STRIPE_REFERENCE_SUCCESS_URL: ${STRIPE_REFERENCE_SUCCESS_URL:-}
+  STRIPE_REFERENCE_CANCEL_URL: ${STRIPE_REFERENCE_CANCEL_URL:-}
+
 services:
   postgres:
     image: postgres:18-alpine
@@ -50,10 +61,14 @@ services:
   app:
     <<: *application-image
     environment:
-      <<: [*database-environment, *observability-environment]
+      <<: [*database-environment, *observability-environment, *stripe-environment]
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-nuxt-starter}
       OPS_ADMIN_USER_IDS: ${OPS_ADMIN_USER_IDS:-}
       NODE_ENV: production
+      MEDUSA_BASE_URL: ${MEDUSA_BASE_URL:-}
+      MEDUSA_SECRET_API_KEY: ${MEDUSA_SECRET_API_KEY:-}
+      MEDUSA_BRIDGE_WEBHOOK_SECRET: ${MEDUSA_BRIDGE_WEBHOOK_SECRET:-}
+      MEDUSA_BRIDGE_WEBHOOK_SECRET_PREVIOUS: ${MEDUSA_BRIDGE_WEBHOOK_SECRET_PREVIOUS:-}
       IMPORT_EXPORT_MAX_BYTES: ${IMPORT_EXPORT_MAX_BYTES:-16777216}
       IMPORT_EXPORT_MAX_ROWS: ${IMPORT_EXPORT_MAX_ROWS:-10000}
       IMPORT_EXPORT_TIMEOUT_SECONDS: ${IMPORT_EXPORT_TIMEOUT_SECONDS:-60}
@@ -120,9 +135,13 @@ services:
     <<: *application-image
     command: ["node", ".jobs/worker.mjs"]
     environment:
-      <<: [*database-environment, *observability-environment]
+      <<: [*database-environment, *observability-environment, *stripe-environment]
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-nuxt-starter-worker}
       NODE_ENV: production
+      MEDUSA_BASE_URL: ${MEDUSA_BASE_URL:-}
+      MEDUSA_SECRET_API_KEY: ${MEDUSA_SECRET_API_KEY:-}
+      MEDUSA_BRIDGE_WEBHOOK_SECRET: ${MEDUSA_BRIDGE_WEBHOOK_SECRET:-}
+      MEDUSA_BRIDGE_WEBHOOK_SECRET_PREVIOUS: ${MEDUSA_BRIDGE_WEBHOOK_SECRET_PREVIOUS:-}
       IMPORT_EXPORT_MAX_BYTES: ${IMPORT_EXPORT_MAX_BYTES:-16777216}
       IMPORT_EXPORT_MAX_ROWS: ${IMPORT_EXPORT_MAX_ROWS:-10000}
       IMPORT_EXPORT_TIMEOUT_SECONDS: ${IMPORT_EXPORT_TIMEOUT_SECONDS:-60}
