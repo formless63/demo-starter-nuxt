@@ -101,3 +101,21 @@ test('Internationalization remains independent and in progress until hosted acce
   expect(entry.packageTest.runtimeScript).toBe('package:test:runtime')
   expect(catalog.referenceApplication.enabledCapabilities).toContain('internationalization')
 })
+
+
+test('failed browser diagnostics keep precise synthetic-test artifacts for three days', () => {
+  const workflow = Bun.YAML.parse(readFileSync(resolve(root, '.github/workflows/ci.yml'), 'utf8')) as {
+    jobs: { check: { env: Record<string, string>, steps: Array<{ name?: string, if?: string, uses?: string, env?: Record<string, string>, with?: Record<string, string | number> }> } }
+  }
+  const check = workflow.jobs.check
+  const capture = check.steps.find(step => step.name === 'Preserve failed browser request traces')!
+  expect(capture.if).toBe('failure()')
+  expect(capture.uses).toBe('actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a')
+  expect(capture.with?.path).toBe('test-results/**/trace.zip\ntest-results/**/error-context.md\n')
+  expect(capture.with?.['retention-days']).toBe(3)
+  expect(capture.with?.['if-no-files-found']).toBe('ignore')
+  expect(check.env.DATABASE_URL).toBe('postgres://postgres:postgres@localhost:5432/nuxt_starter')
+  expect(check.env.NUXT_AUTH_SECRET).toBe('ci-secret-that-is-at-least-thirty-two-characters')
+  expect(check.env.NUXT_PUBLIC_APP_BASE_URL).toBe('http://127.0.0.1:3001')
+  expect(check.steps.find(step => step.name === 'Verify authenticated production HTTP and browser contracts')?.env?.PLAYWRIGHT_BASE_URL).toBe('http://127.0.0.1:3001')
+})
