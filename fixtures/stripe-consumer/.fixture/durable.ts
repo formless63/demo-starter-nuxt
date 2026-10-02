@@ -2,8 +2,9 @@ import assert from 'node:assert/strict'
 import { randomUUID, createHmac } from 'node:crypto'
 import { createServer } from 'node:http'
 import { once } from 'node:events'
-import { readFile, writeFile } from 'node:fs/promises'
+import { writeFile } from 'node:fs/promises'
 import postgres from 'postgres'
+import { migrate } from 'drizzle-orm/postgres-js/migrator'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { eq } from 'drizzle-orm'
 import { createJobsBoss, defineQueues } from '@repo/nuxt-jobs/server'
@@ -20,7 +21,7 @@ const config = { databaseUrl: url.toString(), schema: 'pgboss', concurrency: 1, 
 const migration = createJobsBoss(config, 'migration'); migration.on('error', () => {})
 await migration.start(); await migration.stop()
 const boss = createJobsBoss(config, 'producer'); boss.on('error', () => {}); await boss.start()
-let authorized = true, transport = 'ok', posts = 0, gets = 0, providerStatus = 'unpaid'
+let authorized = true, transport = 'ok', posts = 0, gets = 0, providerStatus = 'unpaid', providerPaymentStatus = 'processing'
 const seenKeys: string[] = [], seenBodies: string[] = []
 const remote = createServer(async (request, response) => {
   let body = ''; for await (const chunk of request) body += chunk
@@ -30,7 +31,7 @@ const remote = createServer(async (request, response) => {
   if (transport === 'disconnect' && request.method === 'POST') { request.socket.destroy(); return }
   if (transport === 'cached500' && request.method === 'POST') { response.writeHead(500); response.end('{"error":{"message":"private customer body","type":"api_error"}}'); return }
   response.setHeader('content-type', 'application/json')
-  response.end(JSON.stringify(request.url?.startsWith('/v1/payment_intents/') ? { id: 'pi_owned', object: 'payment_intent', livemode: false, status: providerStatus === 'paid' ? 'succeeded' : 'processing', amount: 100, amount_received: providerStatus === 'paid' ? 100 : 0, currency: 'usd', metadata: { ownerId: 'forged' } } : { id: 'cs_owned', object: 'checkout.session', livemode: false, status: 'complete', payment_status: providerStatus, currency: 'usd', amount_total: 100, payment_intent: 'pi_owned', url: null, customer: 'cus_owned', metadata: { ownerId: 'forged' } }))
+  response.end(JSON.stringify(request.url?.startsWith('/v1/payment_intents/') ? { id: 'pi_owned', object: 'payment_intent', livemode: false, status: providerPaymentStatus, amount: 100, amount_received: providerStatus === 'paid' ? 100 : 0, currency: 'usd', metadata: { ownerId: 'forged' } } : { id: 'cs_owned', object: 'checkout.session', livemode: false, status: 'complete', payment_status: providerStatus, currency: 'usd', amount_total: 100, payment_intent: 'pi_owned', url: null, customer: 'cus_owned', metadata: { ownerId: 'forged' } }))
 })
 remote.listen(0, '127.0.0.1'); await once(remote, 'listening')
 const configured: StripeConnection = { id: 'default', secretKey: 'sk_test_fixture', accountId: 'acct_expected', mode: 'test', webhookSecrets: ['whsec_fixture'], apiBase: `http://127.0.0.1:${(remote.address() as { port: number }).port}` }
@@ -39,8 +40,9 @@ const service = createStripeService({ database: () => db, boss: async () => boss
 await defineQueues(boss, { [service.runJob.name]: service.runJob, [service.inboxJob.name]: service.inboxJob })
 const job = () => ({ id: randomUUID(), signal: new AbortController().signal, retryCount: 0, retryLimit: 5 })
 try {
-  const migrationSql = await readFile('.fixture/migrations/0011_stripe_v1.sql', 'utf8')
-  for (const statement of migrationSql.split('--> statement-breakpoint')) if (statement.trim()) await sql.unsafe(statement)
+  await migrate(db, { migrationsFolder: '.fixture/migrations' })
+  await migrate(db, { migrationsFolder: '.fixture/migrations' })
+  assert.equal((await sql`select count(*)::int n from drizzle.__drizzle_migrations`)[0]!.n, 1)
   const binding = await db.transaction(tx => service.bindInTransaction(tx, context, { localResourceId: 'local-customer', connectionId: 'default', resourceKind: 'customer', remoteId: 'cus_owned' }))
   await db.transaction(tx => service.bindInTransaction(tx, foreign, { localResourceId: 'other-customer', connectionId: 'default', resourceKind: 'customer', remoteId: 'cus_other' }))
   const input = { customerBindingId: binding.id, idempotencyKey: 'one', items: [{ offerId: 'approved', quantity: 1 }] }
@@ -62,7 +64,7 @@ try {
   assert.equal((await service.listPayments(context)).items[0]!.status, 'processing')
   assert.equal((await service.listPayments(foreign)).items.length, 0)
   const sign = (id: string, remoteId = 'cs_owned', type = 'checkout.session.completed') => {
-    const timestamp = Math.floor(Date.now() / 1000), bytes = Buffer.from(JSON.stringify({ id, object: 'event', api_version: API_VERSION, type, livemode: false, data: { object: { id: remoteId, object: 'checkout.session', metadata: { ownerId: 'owner-two' } } } }))
+    const timestamp = Math.floor(Date.now() / 1000), bytes = Buffer.from(JSON.stringify({ id, object: 'event', api_version: API_VERSION, type, livemode: false, data: { object: { id: remoteId, object: type.startsWith('checkout.') ? 'checkout.session' : 'payment_intent', metadata: { ownerId: 'owner-two' } } } }))
     return { bytes, signature: `t=${timestamp},v1=${createHmac('sha256', 'whsec_fixture').update(`${timestamp}.`).update(bytes).digest('hex')}` }
   }
   const first = sign('evt_first')
@@ -71,13 +73,34 @@ try {
   await service.receive('default', first.bytes, first.signature); await service.receive('default', first.bytes, first.signature)
   const rows = await db.select().from(stripeInbox); assert.equal(rows.length, 1)
   assert.equal((await sql`select count(*)::int n from pgboss.job where name='stripe.receipt'`)[0]!.n, 1)
-  providerStatus = 'paid'; await service.inboxJob.handler({ inboxId: rows[0]!.id }, job())
+  providerStatus = 'paid'; providerPaymentStatus = 'succeeded'; await service.inboxJob.handler({ inboxId: rows[0]!.id }, job())
   assert.equal((await service.listPayments(context)).items[0]!.status, 'succeeded')
   const old = sign('evt_out_of_order'); await service.receive('default', old.bytes, old.signature)
   const [oldRow] = await db.select().from(stripeInbox).where(eq(stripeInbox.eventId, 'evt_out_of_order')); await service.inboxJob.handler({ inboxId: oldRow!.id }, job())
   assert.equal((await service.listPayments(context)).items[0]!.status, 'succeeded', 'older event hint retrieves current authoritative state')
   const unbound = sign('evt_unbound', 'cs_unbound'); await service.receive('default', unbound.bytes, unbound.signature)
   assert.equal((await db.select().from(stripeInbox).where(eq(stripeInbox.eventId, 'evt_unbound')))[0]!.status, 'ignored')
+  for (const [type, state, remoteId] of [
+    ['checkout.session.async_payment_failed', 'requires_payment_method', 'cs_owned'],
+    ['checkout.session.async_payment_succeeded', 'succeeded', 'cs_owned'],
+    ['payment_intent.payment_failed', 'requires_payment_method', 'pi_owned'],
+    ['payment_intent.canceled', 'canceled', 'pi_owned'],
+    ['payment_intent.succeeded', 'succeeded', 'pi_owned'],
+  ]) {
+    providerPaymentStatus = state!; providerStatus = state === 'succeeded' ? 'paid' : 'unpaid'
+    const event = sign(`evt_${type!.replaceAll('.', '_')}`, remoteId!, type!)
+    await service.receive('default', event.bytes, event.signature)
+    const [receipt] = await db.select().from(stripeInbox).where(eq(stripeInbox.eventId, `evt_${type!.replaceAll('.', '_')}`))
+    assert.deepEqual(await service.inboxJob.handler({ inboxId: receipt!.id }, job()), { status: 'processed' })
+    assert.equal((await service.listPayments(context)).items[0]!.status, state)
+  }
+  const deniedEvent = sign('evt_denied_callback')
+  await service.receive('default', deniedEvent.bytes, deniedEvent.signature)
+  const [deniedReceipt] = await db.select().from(stripeInbox).where(eq(stripeInbox.eventId, 'evt_denied_callback'))
+  authorized = false; const callbackGets = gets
+  await service.inboxJob.handler({ inboxId: deniedReceipt!.id }, job())
+  assert.equal(gets, callbackGets, 'Callback has no invented human actor and rechecks current policy')
+  authorized = true
   const blocked = await service.requestPaymentReconciliation(context, { kind: 'checkout', bindingId: operation.bindingId })
   const blockedId = 'operationId' in blocked ? blocked.operationId : blocked.id
   authorized = false; const priorGets = gets; await service.runJob.handler({ operationId: blockedId }, job()); assert.equal(gets, priorGets); authorized = true
@@ -94,7 +117,7 @@ try {
   const publicView = JSON.stringify({ operation: await service.getOperation(context, { operationId: ambiguousId }), payments: await service.listPayments(context) })
   assert.ok(!/private customer|sk_test|price_registered|metadata|success_url/.test(publicView))
   await boss.stop()
-  const snapshot = await sql`select (select jsonb_agg(to_jsonb(t) order by id) from stripe_binding t) bindings,(select jsonb_agg(to_jsonb(t) order by id) from stripe_operation t) operations,(select jsonb_agg(to_jsonb(t) order by binding_id) from stripe_projection t) projections,(select jsonb_agg(to_jsonb(t) order by id) from stripe_inbox t) inbox`
+  const snapshot = await sql`select (select jsonb_agg(to_jsonb(t) order by id) from stripe_binding t) bindings,(select jsonb_agg(to_jsonb(t) order by id) from stripe_operation t) operations,(select jsonb_agg(to_jsonb(t) order by binding_id) from stripe_projection t) projections,(select jsonb_agg(to_jsonb(t) order by id) from stripe_inbox t) inbox,(select jsonb_agg(to_jsonb(t) order by id) from drizzle.__drizzle_migrations t) history`
   await writeFile('.fixture/retained.json', JSON.stringify({ name, url: url.toString(), snapshot }), { mode: 0o600 })
   console.info('Stripe disposable PostgreSQL transactions, scoped state, authoritative hints, uncertainty, replay cutoff and privacy passed.')
 }

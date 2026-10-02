@@ -5,7 +5,7 @@
   "scripts": {
     "build": "nuxt build",
     "typecheck": "nuxt typecheck",
-    "package:test:runtime": "bun .fixture/protocol.ts && node --experimental-strip-types .fixture/protocol.ts && node --experimental-strip-types .fixture/boot.ts && bun .fixture/durable.ts",
+    "package:test:runtime": "bun .fixture/protocol.ts && node --experimental-strip-types .fixture/protocol.ts && node --experimental-strip-types .fixture/boot.ts && bun .fixture/upgrade.ts && bun .fixture/durable.ts",
     "package:test:survival": "bun .fixture/retention.ts verify",
     "package:test:cleanup": "bun .fixture/retention.ts cleanup"
   },

@@ -11,7 +11,7 @@ if (state) {
     await access('node_modules/@repo/nuxt-jobs'); await access('node_modules/@repo/nuxt-webhooks'); await access('.output/server/index.mjs')
     const sql = postgres(state.url, { max: 1 })
     try {
-      const snapshot = await sql`select (select jsonb_agg(to_jsonb(t) order by id) from stripe_binding t) bindings,(select jsonb_agg(to_jsonb(t) order by id) from stripe_operation t) operations,(select jsonb_agg(to_jsonb(t) order by binding_id) from stripe_projection t) projections,(select jsonb_agg(to_jsonb(t) order by id) from stripe_inbox t) inbox`
+      const snapshot = await sql`select (select jsonb_agg(to_jsonb(t) order by id) from stripe_binding t) bindings,(select jsonb_agg(to_jsonb(t) order by id) from stripe_operation t) operations,(select jsonb_agg(to_jsonb(t) order by binding_id) from stripe_projection t) projections,(select jsonb_agg(to_jsonb(t) order by id) from stripe_inbox t) inbox,(select jsonb_agg(to_jsonb(t) order by id) from drizzle.__drizzle_migrations t) history`
       assert.deepEqual(JSON.parse(JSON.stringify(snapshot)), state.snapshot)
       assert.equal((await sql`select count(*)::int n from pg_namespace where nspname='pgboss'`)[0]!.n, 1)
       console.info('Stripe rows and Jobs retained after removal and rebuild.')
