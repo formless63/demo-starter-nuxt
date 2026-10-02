@@ -1,3 +1,4 @@
+import { reportTypeConfig } from './type-config-diagnostics'
 import { waitForHydration } from './hydration'
 import { browserDiagnostics } from './browser-diagnostics'
 import { expect, test } from '@playwright/test'
@@ -46,6 +47,7 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     const env = { ...process.env, DATABASE_URL: databaseUrl.href, PGBOSS_DATABASE_URL: databaseUrl.href, NUXT_AUTH_SECRET: secret, NUXT_PUBLIC_APP_BASE_URL: base, STORAGE_BUCKET: backend.config.bucket, STORAGE_REGION: backend.config.region, STORAGE_ENDPOINT: backend.config.endpoint, STORAGE_ACCESS_KEY_ID: backend.config.accessKeyId, STORAGE_SECRET_ACCESS_KEY: backend.config.secretAccessKey, PORT: String(port), HOST: '127.0.0.1', REALTIME_TRANSPORTS: 'sse,websocket' }
     let cwd = root
     if (!production) {
+      await reportTypeConfig('before-isolated-copy', root)
       isolated = await mkdtemp(join(tmpdir(), 'nuxt-transfer-browser-'))
       await cp(root, isolated, { recursive: true, filter: source => !/(?:^|\/)(?:node_modules|\.git|\.nuxt|\.output|test-results|playwright-report)(?:\/|$)/.test(source) && !source.endsWith('/.env') })
       // A second Nuxt dev server needs its own dependency realpaths, not links
@@ -58,6 +60,7 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     // No raw application logs become test assertions or artifacts.
     app.stderr?.resume()
     await expect.poll(async () => { try { return (await fetch(`${base}/api/health`)).status } catch { return 0 } }, { timeout: 90000 }).toBe(200)
+    if (!production) { await reportTypeConfig('root-after-isolated-ready', root); await reportTypeConfig('isolated-ready', cwd) }
     worker = spawn('bun', ['scripts/jobs-worker.ts'], { cwd: root, env, detached: true, stdio: 'ignore' })
     await db.insert(tables.user).values([{ id: owner, name: 'Transfer owner', email: `${owner}@example.test` }, { id: other, name: 'Other owner', email: `${other}@example.test` }])
     await db.insert(tables.session).values({ id: randomUUID(), token, userId: owner, expiresAt: new Date(Date.now() + 240000) })
@@ -124,6 +127,10 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     if (createdDatabase) await admin.unsafe(`DROP DATABASE "${databaseName}" WITH (FORCE)`)
     await admin.end()
     backend?.storage.close(); await compose(fixtureProject, ['down', '--volumes', '--remove-orphans'])
-    if (isolated) await rm(isolated, { recursive: true, force: true })
+    if (isolated) {
+      await reportTypeConfig('root-before-isolated-cleanup', root)
+      await rm(isolated, { recursive: true, force: true })
+      await reportTypeConfig('root-after-isolated-cleanup', root)
+    }
   }
 })

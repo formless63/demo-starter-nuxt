@@ -41,30 +41,34 @@ try {
   await stripeOperation(connection, client => client.checkout.sessions.create(params, { idempotencyKey: 'gs-stripe:11111111-1111-4111-8111-111111111111' }), options)
   assert.equal(requests, 1)
   behavior = '500'; const before = requests
-  await assert.rejects(stripeOperation(connection, client => client.checkout.sessions.retrieve('cs_bound'), options))
+  await assert.rejects(stripeOperation(connection, client => client.checkout.sessions.retrieve('cs_bound'), options), `Transport ${behavior} response must reject`)
   assert.equal(requests - before, 1, 'SDK performs no retry')
   behavior = 'oversize'
-  await assert.rejects(stripeOperation(connection, client => client.checkout.sessions.retrieve('cs_bound'), options))
+  await assert.rejects(stripeOperation(connection, client => client.checkout.sessions.retrieve('cs_bound'), options), `Transport ${behavior} response must reject`)
   for (const stage of ['headers', 'body']) {
     behavior = stage; closed = false
-    await assert.rejects(stripeOperation(connection, client => client.checkout.sessions.retrieve('cs_bound'), { ...options, timeoutMs: 50 }), (error: unknown) => error instanceof StripeCapabilityError && error.code === 'deadline_exceeded')
+    await assert.rejects(stripeOperation(connection, client => client.checkout.sessions.retrieve('cs_bound'), { ...options, timeoutMs: 50 }), (error: unknown) => error instanceof StripeCapabilityError && error.code === 'deadline_exceeded', `${stage} deadline must reject`)
     assert.equal(closed, true)
   }
   behavior = 'body'
   const controller = new AbortController(); setTimeout(() => controller.abort(), 50)
-  await assert.rejects(stripeOperation(connection, client => client.checkout.sessions.retrieve('cs_bound'), { ...options, signal: controller.signal }), (error: unknown) => error instanceof StripeCapabilityError && error.code === 'cancelled')
+  await assert.rejects(stripeOperation(connection, client => client.checkout.sessions.retrieve('cs_bound'), { ...options, signal: controller.signal }), (error: unknown) => error instanceof StripeCapabilityError && error.code === 'cancelled', 'Caller cancellation must reject')
   for (const base of ['http://localhost:1234', 'http://2130706433:1234', 'http://127.1:1234', 'https://u:p@example.com', 'https://example.com/#fragment']) assert.throws(() => validateConnection({ ...connection, apiBase: base }, 'test'))
-  const timestamp = Math.floor(Date.now() / 1000)
+  // Every verifier call uses one synthetic instant, including native SDK checks.
+  // A real one-second rollover would make a +301s signature valid at +300s.
+  const now = Date.UTC(2026, 9, 2, 0, 0, 0)
+  const timestamp = Math.floor(now / 1000)
   const event = { id: 'evt_local', object: 'event', api_version: API_VERSION, type: 'checkout.session.completed', livemode: false, data: { object: { id: 'cs_bound', object: 'checkout.session', metadata: { ownerId: 'forged' } } } }
   const raw = Buffer.from(JSON.stringify(event))
   const signature = (bytes: Uint8Array, time = timestamp, signingSecret = secret) => `t=${time},v1=${createHmac('sha256', signingSecret).update(`${time}.`).update(bytes).digest('hex')}`
-  assert.equal((await verifyStripeWebhook(raw, signature(raw), connection)).remoteId, 'cs_bound')
-  await verifyStripeWebhook(raw, signature(raw, timestamp, previous), connection)
-  await verifyStripeWebhook(raw, `${signature(raw)},v1=${'0'.repeat(64)}`, connection)
-  for (const time of [timestamp - 301, timestamp + 301]) await assert.rejects(verifyStripeWebhook(raw, signature(raw, time), connection))
-  await assert.rejects(verifyStripeWebhook(Buffer.from('{}'), signature(raw), connection))
-  for (const patch of [{ livemode: true }, { account: 'acct_other' }, { context: 'unexpected' }]) { const bytes = Buffer.from(JSON.stringify({ ...event, ...patch })); await assert.rejects(verifyStripeWebhook(bytes, signature(bytes), connection)) }
-  const unknown = Buffer.from(JSON.stringify({ ...event, api_version: 'unknown' })); assert.equal((await verifyStripeWebhook(unknown, signature(unknown), connection)).kind, null)
+  assert.equal((await verifyStripeWebhook(raw, signature(raw), connection, now)).remoteId, 'cs_bound')
+  await verifyStripeWebhook(raw, signature(raw, timestamp, previous), connection, now)
+  await verifyStripeWebhook(raw, `${signature(raw)},v1=${'0'.repeat(64)}`, connection, now)
+  for (const offset of [-300, 300]) assert.equal((await verifyStripeWebhook(raw, signature(raw, timestamp + offset), connection, now)).remoteId, 'cs_bound', `Signature at ${offset}s boundary is accepted`)
+  for (const offset of [-301, 301]) await assert.rejects(verifyStripeWebhook(raw, signature(raw, timestamp + offset), connection, now), (error: unknown) => error instanceof StripeCapabilityError && error.code === 'invalid_input', `Signature outside ${offset}s boundary is rejected`)
+  await assert.rejects(verifyStripeWebhook(Buffer.from('{}'), signature(raw), connection, now), 'Tampered webhook bytes must reject')
+  for (const patch of [{ livemode: true }, { account: 'acct_other' }, { context: 'unexpected' }]) { const bytes = Buffer.from(JSON.stringify({ ...event, ...patch })); await assert.rejects(verifyStripeWebhook(bytes, signature(bytes), connection, now), `Webhook ${Object.keys(patch).join(',')} mismatch must reject`) }
+  const unknown = Buffer.from(JSON.stringify({ ...event, api_version: 'unknown' })); assert.equal((await verifyStripeWebhook(unknown, signature(unknown), connection, now)).kind, null)
   const id = '11111111-1111-4111-8111-111111111111', date = new Date('2026-10-02T00:00:00.000Z'), cursor = encodeCursor(date, id)
   assert.deepEqual(decodeCursor(cursor), { id, createdAt: date }); assert.throws(() => decodeCursor(`${cursor}=`))
   assert.throws(() => validate(checkoutInput, { customerBindingId: id, idempotencyKey: 'key', items: [{ offerId: 'registered', quantity: 1 }], customer: 'forged' }))

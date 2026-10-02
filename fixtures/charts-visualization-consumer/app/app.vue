@@ -1,0 +1,1 @@
+<template><main><ChartsVisualization title="First chart" description="First data" :labels="['Jan','Feb']" :series="[{ name: 'Revenue', data: [10, null] }]" /><ChartsVisualization title="Second chart" :labels="['Jan','Feb']" :series="[{ name: 'Users', data: [1, 2] }]" /></main></template>
