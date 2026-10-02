@@ -130,6 +130,7 @@
       "devDependencies": {
         "@types/node": "24.10.1",
         "drizzle-kit": "0.31.11",
+        "pg-boss": "12.35.0",
         "typescript": "5.9.3",
         "vue-tsc": "3.1.7",
       },
@@ -227,6 +228,25 @@
         "nuxt": "4.5.2",
       },
       "devDependencies": {
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7",
+      },
+    },
+    "fixtures/stripe-consumer": {
+      "name": "stripe-consumer-fixture",
+      "dependencies": {
+        "@repo/nuxt-jobs": "workspace:*",
+        "@repo/nuxt-stripe": "workspace:*",
+        "@repo/nuxt-webhooks": "workspace:*",
+        "drizzle-orm": "0.45.3",
+        "nuxt": "4.5.2",
+        "postgres": "3.4.9",
+        "zod": "4.6.5",
+      },
+      "devDependencies": {
+        "@types/node": "24.10.1",
+        "drizzle-kit": "0.31.11",
+        "pg-boss": "12.35.0",
         "typescript": "5.9.3",
         "vue-tsc": "3.1.7",
       },
@@ -491,6 +511,29 @@
       },
       "peerDependencies": {
         "nuxt": ">=4.0.0 <5",
+      },
+    },
+    "packages/nuxt-stripe": {
+      "name": "@repo/nuxt-stripe",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+        "stripe": "23.0.0",
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "@repo/nuxt-jobs": "workspace:*",
+        "@repo/nuxt-webhooks": "workspace:*",
+        "drizzle-orm": "0.45.3",
+        "nuxt": "4.5.2",
+        "zod": "4.6.5",
+      },
+      "peerDependencies": {
+        "@repo/nuxt-jobs": ">=0.1.0 <0.2",
+        "@repo/nuxt-webhooks": ">=0.1.0 <0.2",
+        "drizzle-orm": ">=0.45.0 <1",
+        "nuxt": ">=4.0.0 <5",
+        "zod": ">=4.0.0 <5",
       },
     },
     "packages/nuxt-webhooks": {
@@ -1006,6 +1049,8 @@
     "@repo/nuxt-search": ["@repo/nuxt-search@workspace:packages/nuxt-search"],
 
     "@repo/nuxt-storage": ["@repo/nuxt-storage@workspace:packages/nuxt-storage"],
+
+    "@repo/nuxt-stripe": ["@repo/nuxt-stripe@workspace:packages/nuxt-stripe"],
 
     "@repo/nuxt-webhooks": ["@repo/nuxt-webhooks@workspace:packages/nuxt-webhooks"],
 
@@ -2672,6 +2717,10 @@
     "strip-json-comments": ["strip-json-comments@3.1.1", "", {}, "sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig=="],
 
     "strip-literal": ["strip-literal@4.0.0", "", { "dependencies": { "js-tokens": "^10.0.0" } }, "sha512-PaqAvfUZKBwc/SLmNZtHmzK+v19Z4O4eS3cKPeGvbIv/U3pnyEq4Tuw3/4v/FwfM8VQaEawsyCcOQ0P+kpwWWw=="],
+
+    "stripe": ["stripe@23.0.0", "", { "peerDependencies": { "@types/node": ">=20" }, "optionalPeers": ["@types/node"] }, "sha512-MDE2A5ZVVluYURORaZEVghSmnLJc3w6aHAlZSxDQMsOjOb3V0O6ro/CiaeFlJS4N7uIVmsg98ocRsPmUK6YfyA=="],
+
+    "stripe-consumer-fixture": ["stripe-consumer-fixture@workspace:fixtures/stripe-consumer"],
 
     "structured-clone-es": ["structured-clone-es@2.0.1", "", {}, "sha512-10ZL5r77LhknxlP1FBiCW+VdnuWOEFLdSS2SKtjyEV+L4qP1hUEIMIZW94LC3jKxRmT/Dj7KkD1mqh/IY6lhKQ=="],
 
