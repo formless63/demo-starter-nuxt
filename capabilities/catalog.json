@@ -23,7 +23,9 @@
       "stripe",
       "data-table",
       "command-system",
-      "markdown-code"
+      "markdown-code",
+      "rich-text",
+      "file-ui"
     ]
   },
   "baseline": [
@@ -1473,7 +1475,7 @@
       "id": "file-ui",
       "displayName": "File UI",
       "kind": "operations-ui",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [
         "object-storage"
@@ -1483,13 +1485,54 @@
         "search"
       ],
       "externalRequirements": [],
-      "summary": "Upload, browse, manage, and select files stored by Object Storage."
+      "summary": "Upload, browse, manage, and select files stored by Object Storage.",
+      "packageName": "@repo/nuxt-file-ui",
+      "packagePath": "packages/nuxt-file-ui",
+      "fixturePath": "fixtures/file-ui-consumer",
+      "documentationPath": "capabilities/file-ui/CAPABILITY.md",
+      "evaluationDocument": "FILE_UI_MODULE_EVALUATION.md",
+      "scripts": [
+        "packages:build",
+        "packages:test",
+        "test:file-ui-reference"
+      ],
+      "environmentVariables": [],
+      "migrations": [],
+      "runtimeProcesses": [
+        "Nuxt application"
+      ],
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "postRemovalScript": "package:test:post-removal",
+        "cleanupScript": "package:test:cleanup",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "app/pages/files.vue",
+            "app/pages/browser.vue",
+            "app/fixtures",
+            "server/api/files",
+            "server/api/fixture-download",
+            "server/utils/file-fixture.ts",
+            ".fixture/package-test.ts",
+            ".fixture/protocol.ts",
+            ".fixture/native.ts",
+            ".fixture/provider-runtime.ts",
+            ".fixture/workflow.test.ts",
+            ".fixture/browser.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "rich-text",
       "displayName": "Rich Text / Tiptap",
       "kind": "operations-ui",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1499,7 +1542,30 @@
         "organizations"
       ],
       "externalRequirements": [],
-      "summary": "Rich-text editing built around Tiptap and Vue-native UI."
+      "summary": "Rich-text editing built around Tiptap and Vue-native UI.",
+      "documentationPath": "capabilities/rich-text/CAPABILITY.md",
+      "evaluationDocument": "RICH_TEXT_MODULE_EVALUATION.md",
+      "packageName": "@repo/nuxt-rich-text",
+      "packagePath": "packages/nuxt-rich-text",
+      "fixturePath": "fixtures/rich-text-consumer",
+      "packageTest": {
+        "ownedDependencies": [
+          "@tiptap/vue-3",
+          "@tiptap/core",
+          "@tiptap/pm",
+          "@tiptap/starter-kit"
+        ],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "app.vue"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "flow-canvas",
