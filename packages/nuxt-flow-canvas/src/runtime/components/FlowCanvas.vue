@@ -28,6 +28,7 @@ const editX = ref(0)
 const editY = ref(0)
 let alive = true
 let expectedProposal: string | undefined
+let proposalSequence = 0
 function announce(message: string) { notice.value = message }
 function nextId(prefix: string) {
   const ids = new Set([...graph.value.nodes, ...graph.value.edges].map(item => item.id))
@@ -39,9 +40,13 @@ function propose(value: GraphDocument, key = props.documentKey) {
   if (!alive || props.readOnly || key !== props.documentKey) return false
   try {
     const next = validateGraph(value)
+    const request = ++proposalSequence
     expectedProposal = serializeGraph(next)
     emit('update:modelValue', next)
     emit('proposal', next, key)
+    // Only the immediate parent update counts as accepting this interaction. A
+    // later equal-byte load is still external and must interrupt old gestures.
+    void nextTick(() => { if (request === proposalSequence) expectedProposal = undefined })
     announce('Change proposed. The application decides whether to accept it.')
     return true
   }

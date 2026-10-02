@@ -13,17 +13,30 @@ const storeId = `flow-${flowVendorId(useId())}`
 const store = useVueFlow({ id: storeId, applyDefault: false })
 const ready = ref(false)
 let alive = true
-let interacting = false
-function stopInteraction() { interacting = false }
-function escapeInteraction(event: KeyboardEvent) {
-  if (event.key !== 'Escape' || !interacting) return
-  event.stopPropagation(); interacting = false; emit('cancel')
+let pointerActive = false
+let viewportActive = false
+function stopPointer() { pointerActive = false }
+function cancelInteraction() {
+  if (!alive || (!pointerActive && !viewportActive)) return
+  pointerActive = false; viewportActive = false; emit('cancel')
 }
-onMounted(() => { document.addEventListener('keydown', escapeInteraction, true); document.addEventListener('pointerup', stopInteraction) })
+function escapeInteraction(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || (!pointerActive && !viewportActive)) return
+  event.stopPropagation(); cancelInteraction()
+}
+onMounted(() => {
+  document.addEventListener('keydown', escapeInteraction, true)
+  document.addEventListener('pointerup', stopPointer)
+  document.addEventListener('pointercancel', cancelInteraction)
+  window.addEventListener('blur', cancelInteraction)
+})
 let restoringViewport = false
 const nodes = computed(() => props.graph.nodes.map(node => ({ id: flowVendorId(node.id), type: 'safe', position: { ...node.position }, data: { label: node.label }, focusable: false })))
-const edges = computed(() => props.graph.edges.map(edge => ({ ...edge, id: flowVendorId(edge.id), source: flowVendorId(edge.source), target: flowVendorId(edge.target), type: 'default', focusable: false, updatable: false })))
-const graphIds = computed(() => new Map([...props.graph.nodes, ...props.graph.edges].map(item => [flowVendorId(item.id), item.id])))
+const edges = computed(() => props.graph.edges.map(edge => ({ ...edge, id: `${storeId}-${flowVendorId(edge.id)}`, source: flowVendorId(edge.source), target: flowVendorId(edge.target), type: 'default', focusable: false, updatable: false })))
+const graphIds = computed(() => new Map([
+  ...props.graph.nodes.map(item => [flowVendorId(item.id), item.id] as const),
+  ...props.graph.edges.map(item => [`${storeId}-${flowVendorId(item.id)}`, item.id] as const),
+]))
 const viewport = computed(() => props.graph.viewport ?? { x: 0, y: 0, zoom: 1 })
 function sameViewport(value: ViewportTransform) {
   const current = viewport.value
@@ -84,7 +97,11 @@ function onConnect(connection: Connection) {
   }
   catch { emit('notice', 'Connection rejected. Choose two different unconnected nodes allowed by the application.') }
 }
+function onViewportChangeStart() {
+  if (alive && ready.value && !restoringViewport) viewportActive = true
+}
 function onViewportChangeEnd(value: ViewportTransform) {
+  viewportActive = false
   if (!alive || restoringViewport || sameViewport(value)) return
   if (!props.readOnly) propose({ ...props.graph, viewport: { x: value.x, y: value.y, zoom: value.zoom } })
   else void reconcile()
@@ -94,19 +111,21 @@ watch(() => props.graph, () => void reconcile(), { deep: true })
 onBeforeUnmount(() => {
   alive = false
   document.removeEventListener('keydown', escapeInteraction, true)
-  document.removeEventListener('pointerup', stopInteraction)
+  document.removeEventListener('pointerup', stopPointer)
+  document.removeEventListener('pointercancel', cancelInteraction)
+  window.removeEventListener('blur', cancelInteraction)
 })
 </script>
 
 <template>
-  <div class="flow-surface" data-flow-surface :data-ready="ready" aria-label="Visual graph canvas" @pointerdown="interacting = true">
+  <div class="flow-surface" data-flow-surface :data-ready="ready" aria-label="Visual graph canvas" @pointerdown="pointerActive = true">
     <VueFlow
 :id="storeId" :nodes="nodes" :edges="edges" :apply-default="false"
       :default-viewport="viewport" :min-zoom="0.1" :max-zoom="4" :nodes-draggable="!readOnly" :nodes-connectable="!readOnly"
       :edges-updatable="false" :elements-selectable="!readOnly" :nodes-focusable="false" :edges-focusable="false"
       :delete-key-code="null" :selection-key-code="null" :multi-selection-key-code="null" :pan-activation-key-code="null" :zoom-activation-key-code="null"
       :pan-on-drag="!readOnly" :zoom-on-scroll="!readOnly" :zoom-on-pinch="!readOnly" :zoom-on-double-click="false" :auto-pan-on-node-drag="false"
-      @nodes-change="onNodesChange" @edges-change="onEdgesChange" @connect="onConnect" @viewport-change-end="onViewportChangeEnd" @pane-ready="onReady">
+      @nodes-change="onNodesChange" @edges-change="onEdgesChange" @connect="onConnect" @viewport-change-start="onViewportChangeStart" @viewport-change-end="onViewportChangeEnd" @pane-ready="onReady">
       <template #node-safe="{ data }">
         <Handle id="in" type="target" :position="Position.Left" :connectable="!readOnly" />
         <span>{{ data.label }}</span>
