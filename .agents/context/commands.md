@@ -108,3 +108,5 @@ File UI: `bun run packages:test file-ui` owns packed browser/provider/native tra
 File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040678932), including packed native/provider/browser/removal and root application/production gates. This Rich Text / File UI composition records 23 completed opt-in, reference-enabled capabilities; its own exact-head full CI and independent composition review are required before acceptance.
 
 Internationalization: `bun run packages:test internationalization` runs packed install/types/build/native browser and removal. Root browser regression is `tests/e2e/internationalization.e2e.ts`; verify CLI discovery with `bun run test:e2e --list`.
+
+The root CI job retains only failed Playwright `test-results/**/trace.zip` and `error-context.md` for three days. These browser runs target disposable local services and synthetic accounts; do not use this capture against live accounts or broaden it to environment dumps/log directories.
