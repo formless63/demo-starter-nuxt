@@ -74,7 +74,8 @@ export function createInvoiceNinjaService(options: InvoiceNinjaOptions) {
   async function retireBindingInTransaction(tx: InvoiceNinjaTransaction, context: TrustedContext, input: unknown) {
     const b = await bound(context, parse(bindingRef, input).bindingId, undefined, tx)
     if (b.leaseUntil && b.leaseUntil > new Date()) throw new InvoiceNinjaError('conflict')
-    await tx.update(bindings).set({ retiredAt: new Date(), revision: sql`${bindings.revision} + 1` }).where(and(eq(bindings.id, b.id), eq(bindings.revision, b.revision)))
+    const [retired] = await tx.update(bindings).set({ retiredAt: new Date(), revision: sql`${bindings.revision} + 1` }).where(and(eq(bindings.id, b.id), eq(bindings.revision, b.revision))).returning({ id: bindings.id })
+    if (!retired) throw new InvoiceNinjaError('conflict')
   }
   async function get(context: TrustedContext, input: unknown, kind: Binding['resourceKind']) {
     const b = await bound(context, parse(bindingRef, input).bindingId, kind)
@@ -189,7 +190,10 @@ export function createInvoiceNinjaService(options: InvoiceNinjaOptions) {
     await tx.update(bindings).set({ leaseToken: null, leaseUntil: null }).where(and(eq(bindings.id, b.id), eq(bindings.leaseToken, token), eq(bindings.revision, b.revision)))
   }
   async function currentBinding(tx: InvoiceNinjaTransaction, b: Binding, token: string) {
-    const [row] = await tx.select().from(bindings).where(and(eq(bindings.id, b.id), eq(bindings.leaseToken, token), eq(bindings.revision, b.revision), isNull(bindings.retiredAt), sql`${bindings.leaseUntil} > CURRENT_TIMESTAMP`)).limit(1)
+    // Hold the fencing row until the projection and terminal state commit together.
+    // An unlocked check lets an expired-lease recovery invalidate the token between
+    // this read and the subsequent projection write.
+    const [row] = await tx.select().from(bindings).where(and(eq(bindings.id, b.id), eq(bindings.leaseToken, token), eq(bindings.revision, b.revision), isNull(bindings.retiredAt), sql`${bindings.leaseUntil} > CURRENT_TIMESTAMP`)).limit(1).for('update')
     if (!row) throw new InvoiceNinjaError('conflict')
     return row
   }
@@ -249,7 +253,7 @@ export function createInvoiceNinjaService(options: InvoiceNinjaOptions) {
       await db().transaction(async tx => {
         const current = await currentBinding(tx, b!, token)
         await bound(context, current.id, undefined, tx); checkSignal(signal)
-        const [active] = await tx.select().from(operations).where(and(eq(operations.id, row!.id), eq(operations.attemptToken, token), eq(operations.status, 'dispatching'), eq(operations.revision, row!.revision))).limit(1)
+        const [active] = await tx.select().from(operations).where(and(eq(operations.id, row!.id), eq(operations.attemptToken, token), eq(operations.status, 'dispatching'), eq(operations.revision, row!.revision))).limit(1).for('update')
         if (!active) throw new InvoiceNinjaError('conflict')
         if (target.id !== current.id) await tx.insert(bindings).values(target)
         await commitProjection(tx, target, projection)
@@ -295,7 +299,7 @@ export function createInvoiceNinjaService(options: InvoiceNinjaOptions) {
         const current = await currentBinding(tx, b!, token)
         if (!await awaitWithSignal(signal, () => options.authorizeReconciliation!(current, signal))) throw new InvoiceNinjaError('forbidden')
         checkSignal(signal)
-        const [active] = await tx.select().from(inbox).where(and(eq(inbox.id, id), eq(inbox.attemptToken, token), eq(inbox.revision, revision!))).limit(1)
+        const [active] = await tx.select().from(inbox).where(and(eq(inbox.id, id), eq(inbox.attemptToken, token), eq(inbox.revision, revision!))).limit(1).for('update')
         if (!active) throw new InvoiceNinjaError('conflict')
         await commitProjection(tx, current, projection)
         await tx.update(inbox).set({ status: 'processed', attemptToken: null, leaseUntil: null, errorCode: null, revision: sql`${inbox.revision} + 1`, updatedAt: new Date() }).where(and(eq(inbox.id, id), eq(inbox.attemptToken, token), eq(inbox.revision, revision!)))
