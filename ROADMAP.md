@@ -195,7 +195,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 ## Business integrations
 
-### Invoice Ninja (`planned`)
+### Invoice Ninja (`in-progress`)
 
 - Requires: Jobs, Webhooks
 - Integrates with: Organizations, Audit Log, Notifications

@@ -1045,7 +1045,7 @@
       "id": "invoice-ninja",
       "displayName": "Invoice Ninja",
       "kind": "business-integration",
-      "status": "planned",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [
         "jobs",
