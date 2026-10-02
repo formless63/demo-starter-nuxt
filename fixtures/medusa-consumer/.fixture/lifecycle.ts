@@ -8,6 +8,6 @@ export async function snapshot(client: ReturnType<typeof postgres>) {
     inbox: [...await client`SELECT * FROM medusa_inbox ORDER BY id`],
     indexes: [...await client`SELECT indexname,indexdef FROM pg_indexes WHERE tablename LIKE 'medusa_%' ORDER BY indexname`],
     history: [...await client`SELECT * FROM drizzle.__drizzle_migrations ORDER BY id`],
-    jobs: [...await client`SELECT nspname FROM pg_namespace WHERE nspname='medusa_fixture_jobs'`],
+    jobs: [...await client`SELECT nspname FROM pg_namespace WHERE nspname IN ('medusa_fixture_jobs','medusa_native_jobs') ORDER BY nspname`],
   }
 }

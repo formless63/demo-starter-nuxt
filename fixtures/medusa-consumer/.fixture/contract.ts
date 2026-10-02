@@ -16,7 +16,8 @@ import type { TrustedContext } from '@repo/nuxt-medusa/server'
 import { medusaBinding, medusaProjection, medusaOperation, medusaInbox } from '@repo/nuxt-medusa/schema'
 
 export async function runContract(databaseUrl: string) {
-  assert.equal(Number(process.versions.node.split('.')[0]), 24, 'actual Node24 semantics required (Bun exposes compatibility version)')
+  if (!process.versions.bun) assert.equal(Number(process.versions.node.split('.')[0]), 24, 'Actual Node24 required')
+  else assert.equal(process.versions.bun, '1.4.2', 'Pinned Bun required')
   const sql = postgres(databaseUrl, { max: 4 }), db = drizzle(sql)
   await migrate(db, { migrationsFolder: 'server/database/migrations' })
   const config = { databaseUrl, schema: 'medusa_fixture_jobs', concurrency: 1, useListenNotify: false }
@@ -41,6 +42,7 @@ export async function runContract(databaseUrl: string) {
     const resource = { id: 'prod_a', title, handle: 'safe-product', status: 'published', updated_at: '2026-10-01T01:00:00.123Z', metadata: { password: 'PRIVATE-METADATA' }, images: [{ url: 'https://private.example.test/image' }] }
     const order = { id: 'order_a', status: 'pending', payment_status: 'captured', fulfillment_status: 'not_fulfilled', currency_code: 'usd', total: '9007199254740993.123400', updated_at: '2026-10-01T01:00:00.123Z', email: 'PRIVATE-EMAIL', shipping_address: { address: 'PRIVATE-ADDRESS' } }
     if (revoked) owners.delete(actor)
+    if (mode === 'redirect') { response.writeHead(302, { location: '/admin/products/prod_b' }); response.end('{}'); return }
     if (mode === 'forbidden') { response.writeHead(403); response.end('{"private":"PRIVATE-ERROR"}'); return }
     if (url.pathname.endsWith('/missing') || mode === 'deleted') { response.writeHead(404); response.end('{}'); return }
     if (mode === 'huge') { response.writeHead(200, { 'content-type': 'application/json' }); response.end('x'.repeat(2 * 1024 * 1024 + 1)); return }
@@ -142,6 +144,12 @@ export async function runContract(databaseUrl: string) {
     title = 'Latest authoritative product'; await service.inboxJob.handler({ inboxId: inbox.id }, job)
     const sameResource = createBridgeEvent('product.created', 'prod_a'); await service.receive(request(sameResource), 'default')
     const [late] = await db.select().from(medusaInbox).where(eq(medusaInbox.eventId, sameResource.id)); await service.inboxJob.handler({ inboxId: late!.id }, job)
+    // A same-ID/different-digest collision never remaps ownership or replaces the first hint.
+    const collision = createBridgeEvent('product.deleted', 'prod_b', supported.id)
+    await service.receive(request(collision), 'default'); await service.receive(request(collision), 'default')
+    const [originalReceipt] = await db.select().from(medusaInbox).where(eq(medusaInbox.id, inbox.id))
+    assert.equal(originalReceipt!.remoteHint, 'prod_a'); assert.equal(originalReceipt!.bodySha256, inbox.bodySha256)
+    await service.inboxJob.handler({ inboxId: inbox.id }, job)
     assert.equal('title' in await service.getProduct(ctx, { bindingId: a.id }) && (await service.getProduct(ctx, { bindingId: a.id }) as { title: string }).title, title)
     await service.receive(request(createBridgeEvent('product.created', 'foreign')), 'default')
     const unsupported = { version: 1, id: randomUUID(), type: 'product.restored', resourceKind: 'product', resourceId: 'prod_a' }
@@ -168,9 +176,10 @@ export async function runContract(databaseUrl: string) {
       mode = slow; await assert.rejects(adminGet(connection, 'product', { remoteId: 'prod_a' }, { env, timeoutMs: 30 }), /Operation deadline exceeded/)
     }
     mode = 'slow-body'; const controller = new AbortController(); const cancelled = adminGet(connection, 'product', { remoteId: 'prod_a' }, { env, signal: controller.signal }); setTimeout(() => controller.abort(), 30); await assert.rejects(cancelled, /Operation cancelled/)
+    mode = 'redirect'; const beforeRedirect = calls; await assert.rejects(adminGet(connection, 'product', { remoteId: 'prod_a' }, { env }), /Operation unsupported/); assert.equal(calls, beforeRedirect + 1)
     mode = 'huge'; await assert.rejects(adminGet(connection, 'product', { remoteId: 'prod_a' }, { env }), /Limit exceeded/)
     mode = 'normal'; assert(closed > 0)
-    const oversized = request(event); const over = new Request(oversized, { body: Buffer.alloc(1024 * 1024 + 1) }); await assert.rejects(check(over), /Limit exceeded/)
+    const oversized = request(event); const over = new Request('http://127.0.0.1', { method: 'POST', headers: oversized.headers, body: Buffer.alloc(1024 * 1024 + 1) }); await assert.rejects(check(over), /Limit exceeded/)
     // A genuinely registered Jobs worker consumes ID-only input and emits only safe output.
     await boss.deleteAllJobs(service.operationJob.name); await boss.deleteAllJobs(service.inboxJob.name)
     const live = await operation('order', order.id)
@@ -188,7 +197,7 @@ export async function runContract(databaseUrl: string) {
       if (row.output) assert.deepEqual(row.output, { status: 'processed' })
     }
     assert(paths.some(path => path.startsWith('/admin/products/prod_a?'))); assert(paths.some(path => path.startsWith('/admin/orders/order_a?')))
-    assert(!paths.some(path => /cart|payment|checkout|auth|customer/.test(path)))
+    assert(!paths.some(path => /cart|payment|checkout|auth|customer/.test(new URL(path, 'http://127.0.0.1').pathname)))
     await db.transaction(tx => service.retireBindingInTransaction(tx, ctx, { bindingId: a.id }))
     await assert.rejects(service.getProduct(ctx, { bindingId: a.id }), /Resource not found/)
     await assert.rejects(service.requestResourceReconciliation(ctx, { kind: 'product', bindingId: a.id }), /Resource not found/)

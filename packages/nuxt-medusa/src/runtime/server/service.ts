@@ -9,7 +9,7 @@ import { medusaBinding, medusaProjection, medusaOperation, medusaInbox } from '.
 import type { Binding, Operation, Inbox, ResourceKind } from './schema'
 import { context, parse, uuid, connectionId, opaqueId, kind, scopeSchema, bindingRef, operationRef, listInput, reconcileInput, syncInput, localCursor, pageCursor, encodeCursor } from './validation'
 import type { TrustedContext } from './validation'
-import { deadline } from './io'
+import { deadline, cancellable } from './io'
 import type { Deadline } from './io'
 import { environmentConnection, validateConnection, adminGet } from './transport'
 import type { Connection } from './transport'
@@ -51,7 +51,7 @@ export function createMedusaService(options: MedusaOptions) {
   function available() { if (!enabled) throw new MedusaError('unavailable') }
   async function authorize(ctx: TrustedContext) {
     context(ctx)
-    if (!await options.authorizeScope?.(ctx.actorUserId, ctx.scope)) throw new MedusaError('forbidden')
+    if (!await (ctx.signal ? cancellable(Promise.resolve(options.authorizeScope?.(ctx.actorUserId, ctx.scope)), ctx.signal) : options.authorizeScope?.(ctx.actorUserId, ctx.scope))) throw new MedusaError('forbidden')
   }
   async function boundAuthorization(ctx: TrustedContext | undefined, binding: Binding, signal: AbortSignal) {
     if (binding.retiredAt) throw new MedusaError('not_found')
@@ -60,7 +60,7 @@ export function createMedusaService(options: MedusaOptions) {
       if (binding.scopeKind !== ctx.scope.kind || binding.scopeId !== ctx.scope.id) throw new MedusaError('not_found')
       if (!await options.authorizeBoundResource?.(ctx, binding) || !await options.authorizeMedusaResource?.(ctx, binding)) throw new MedusaError('forbidden')
     }
-    else if (!await options.authorizeReconciliation?.(binding, signal)) throw new MedusaError('forbidden')
+    else if (!await cancellable(Promise.resolve(options.authorizeReconciliation?.(binding, signal)), signal)) throw new MedusaError('forbidden')
   }
   async function connection(id: string, signal?: AbortSignal) {
     parse(connectionId, id)
@@ -206,6 +206,15 @@ export function createMedusaService(options: MedusaOptions) {
     const [binding] = receipt.supported ? await tx.select().from(medusaBinding).where(and(eq(medusaBinding.connectionId, conn), eq(medusaBinding.resourceKind, event.resourceKind), eq(medusaBinding.remoteId, event.resourceId), isNull(medusaBinding.retiredAt))).limit(1) : []
     const [row] = await tx.insert(medusaInbox).values({ id: randomUUID(), connectionId: conn, eventId: event.id, bodySha256: receipt.hash, eventType: receipt.supported ? event.type : 'unknown', remoteHint: receipt.supported ? event.resourceId : null, bindingId: binding?.id ?? null, status: binding ? 'received' : 'ignored' }).onConflictDoNothing().returning()
     if (row && binding) await enqueue(tx, { inboxId: row.id })
+    else if (!row) {
+      // A conflicting authenticated delivery retains the first identity/hint/body digest.
+      // Reconcile that original bound resource once; repeated collisions while queued do not storm.
+      const [existing] = await tx.select().from(medusaInbox).where(and(eq(medusaInbox.connectionId, conn), eq(medusaInbox.eventId, event.id))).for('update')
+      if (existing && existing.bodySha256 !== receipt.hash && existing.bindingId && ['processed', 'failed'].includes(existing.status)) {
+        await tx.update(medusaInbox).set({ status: 'received', revision: existing.revision + 1, updatedAt: new Date(), errorCode: null, attemptToken: null, leaseExpiresAt: null }).where(eq(medusaInbox.id, existing.id))
+        await enqueue(tx, { inboxId: existing.id })
+      }
+    }
     budget.check()
     return { accepted: true as const }
   }
@@ -215,7 +224,9 @@ export function createMedusaService(options: MedusaOptions) {
     if (!(options.registeredConnection?.(conn) ?? conn === 'default')) throw new MedusaError('invalid_input')
     const budget = deadline(5000, [request.signal])
     try {
-      const secrets = options.resolveBridgeSecrets ? await options.resolveBridgeSecrets(conn) : bridgeSecrets(env())
+      const secrets = options.resolveBridgeSecrets ? await cancellable(options.resolveBridgeSecrets(conn), budget.signal) : bridgeSecrets(env())
+      if (secrets.length < 1 || secrets.length > 2) throw new MedusaError('unconfigured')
+      bridgeSecrets({ MEDUSA_BRIDGE_WEBHOOK_SECRET: secrets[0], MEDUSA_BRIDGE_WEBHOOK_SECRET_PREVIOUS: secrets[1] })
       const receipt = await readBridge(request, secrets, budget)
       return await transaction(budget, tx => receiveInTransaction(tx, conn, receipt, budget))
     }
@@ -235,7 +246,7 @@ export function createMedusaService(options: MedusaOptions) {
   async function synchronize(bindingId: string, ctx: TrustedContext | undefined, budget: Deadline, finish?: (tx: MedusaTransaction) => Promise<void>, supplied?: unknown) {
     const claimed = await claimBinding(bindingId, ctx, budget)
     try {
-      const conn = await connection(claimed.connectionId, budget.signal)
+      const conn = await cancellable(connection(claimed.connectionId, budget.signal), budget.signal)
       budget.check()
       const response = supplied === undefined ? await adminGet(conn, claimed.resourceKind, { remoteId: claimed.remoteId }, { signal: budget.signal, env: env(), fetch: options.fetch }) : supplied
       budget.check()

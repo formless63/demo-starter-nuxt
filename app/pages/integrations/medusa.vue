@@ -34,7 +34,7 @@ onBeforeUnmount(() => active.value?.abort())
   <main class="mx-auto max-w-5xl space-y-6 p-6">
     <h1 class="text-2xl font-semibold">Medusa reconciliation</h1>
     <p>Read local product and order projections. An operator must create authorized bindings. Sync refreshes one page of up to 25 provider resources; it does not import the store or create bindings.</p>
-    <p>Actual Medusa 2.21.2 backend and bridge compatibility is awaiting verification.</p>
+    <p>Orders and products remain authoritative in Medusa. This view contains only the approved local fields.</p>
     <div class="flex flex-wrap gap-3">
       <button :disabled="pending" class="rounded border px-3 py-2" @click="act('sync', { kind: 'product' })">Sync product page</button>
       <button :disabled="pending" class="rounded border px-3 py-2" @click="act('sync', { kind: 'order' })">Sync order page</button>

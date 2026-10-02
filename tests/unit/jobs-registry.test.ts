@@ -4,7 +4,7 @@ import { jobRegistry } from '../../server/jobs/registry'
 
 describe('jobs registry', () => {
   it('keeps explicit, discoverable queue names', () => {
-    expect(Object.keys(jobRegistry)).toEqual(['starter.echo', 'webhooks.deliver', 'notifications.deliver', 'import-export.run'])
+    expect(Object.keys(jobRegistry)).toEqual(['starter.echo', 'webhooks.deliver', 'notifications.deliver', 'import-export.run', 'medusa.operation', 'medusa.inbox'])
   })
 
   it('validates payloads before enqueueing', async () => {
