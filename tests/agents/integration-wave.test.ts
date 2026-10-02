@@ -5,13 +5,13 @@ import { resolve } from 'node:path'
 
 const root = resolve(import.meta.dir, '../..')
 const catalog = JSON.parse(readFileSync(resolve(root, 'capabilities/catalog.json'), 'utf8'))
-const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export', 'ops-admin', 'invoice-ninja', 'stripe', 'medusa']
+const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export', 'ops-admin', 'invoice-ninja', 'stripe', 'medusa', 'command-system']
 
-test('all seventeen completed packages are explicitly enabled and discovered by the generic matrix', () => {
+test('all eighteen completed packages are explicitly enabled and discovered by the generic matrix', () => {
   const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
   const nuxt = readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')
   expect(catalog.capabilities.filter((entry: { status: string }) => entry.status === 'done').map((entry: { id: string }) => entry.id).sort()).toEqual([...completed].sort())
-  expect(completed).toHaveLength(17)
+  expect(completed).toHaveLength(18)
   expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed].sort())
   for (const id of completed) {
     const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === id)
@@ -23,7 +23,7 @@ test('all seventeen completed packages are explicitly enabled and discovered by 
   expect(result.status).toBe(0)
   const authored = catalog.capabilities.filter((entry: { status: string, packageTest?: unknown, packagePath?: string }) => ['done', 'in-progress'].includes(entry.status) && entry.packagePath && entry.packageTest).map((entry: { id: string }) => entry.id)
   expect(JSON.parse(result.stdout).capability.sort()).toEqual(authored.sort())
-  expect(authored.sort()).toEqual([...completed, 'command-system'].sort())
+  expect(authored.sort()).toEqual([...completed].sort())
 })
 
 test('Webhooks and Notifications require Jobs; Audit, Cache and Realtime fixtures remain independent', () => {
@@ -72,11 +72,11 @@ test('production Compose passes every optional provider variable to app and work
 })
 
 
-test('Command reference is staged while its packed browser lifecycle is required by the matrix', () => {
+test('Command is completed and reference-enabled while preserving its packed browser lifecycle', () => {
   const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === 'command-system')
-  expect(entry.status).toBe('in-progress')
+  expect(entry.status).toBe('done')
   expect(entry.defaultInstalled).toBe(false)
-  expect(catalog.referenceApplication.enabledCapabilities).not.toContain('command-system')
+  expect(catalog.referenceApplication.enabledCapabilities).toContain('command-system')
   expect(entry.packageTest.runtimeScript).toBe('package:test:runtime')
   const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
   expect(manifest.dependencies[entry.packageName]).toBe('workspace:*')

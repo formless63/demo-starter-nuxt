@@ -48,14 +48,14 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Stripe | Available (`done`) | Optional | Jobs, Webhooks; configured provider on use | Bound one-time Checkout, local payment projections and native signed-event reconciliation |
 | Medusa | Available (`done`) | Optional | Jobs, Webhooks; configured provider on use | Scoped Admin product/order reads and an operator-installed application bridge |
 
-| Command System | In progress | Optional | None | Application-owned commands, accessible keyboard palette |
+| Command System | Available (`done`) | Optional | None | Application-owned commands, accessible keyboard palette |
 | Ops / Admin | Available (`done`) | Optional | Baseline human session; privileged server allowlist | Read-only sanitized application-owned diagnostic adapters |
 | Search | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; no extra service | Owner-scoped weighted FTS and deterministic keyset pages |
 | Import / Export | Available (`done`) | Optional | Jobs, Object Storage; PostgreSQL/Drizzle/Node | Durable bounded CSV transfer; personal Project round-trip |
 
-`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache, AI, Invoice Ninja, Stripe and Medusa remain lazy with no provider required to boot/build. All seventeen capabilities are `done`.
+`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache, AI, Invoice Ninja, Stripe and Medusa remain lazy with no provider required to boot/build. All eighteen capabilities are `done`.
 
-Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/36978353705) passed all 19 jobs at `4478e41f2835bfe1495dab762756b2fec08bd98e`, including all 17 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
+Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37007738880) passed all 20 jobs at `70c35ae6e2ad9cf79b3dd00852ee5366b337f166`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
 
 See [Using capabilities](docs/CAPABILITIES.md) for installation and removal guidance and [ROADMAP.md](ROADMAP.md) for the future design plan.
 
@@ -72,7 +72,7 @@ bun run jobs:migrate
 bun run dev
 ```
 
-Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all seventeen completed capability packages; `db:migrate` applies the application/API/Audit/Notification/transfer/provider tables and Projects search vector/index and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
+Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all eighteen completed capability packages; `db:migrate` applies the application/API/Audit/Notification/transfer/provider tables and Projects search vector/index and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
 
 ## Authentication notes
 
@@ -199,4 +199,4 @@ The reference app explicitly enables private `@repo/nuxt-medusa`; clean consumer
 
 Medusa 2.21.2 backend/subscriber compatibility is verified against the pinned disposable fixture. None of these provider checks certify financial activity or a remote production deployment.
 
-Command System is in progress: opt-in native Nuxt command palette and application-owned registry. Keyboard, focus, async execution and interruption contracts live in the [capability contract](capabilities/command-system/CAPABILITY.md). Reference: `/commands`.
+Command System is available (`done`): opt-in native Nuxt command palette and application-owned registry. Keyboard, focus, async execution and interruption contracts live in the [capability contract](capabilities/command-system/CAPABILITY.md). Reference: `/commands`.

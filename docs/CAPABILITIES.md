@@ -6,7 +6,7 @@ The baseline starter always includes Nuxt/Nitro, strict TypeScript, Bun tooling,
 
 A capability is an optional, independently maintained feature package layered onto that baseline. Package source existing under `packages/` does not activate anything. A consumer must keep the workspace dependency, register the Nuxt module, and perform the capability's documented application integration. Unused packages do not become modules, routes, workers, or runtime services merely because their source exists.
 
-The root application deliberately enables all seventeen completed capabilities for continuous integration, recorded in `referenceApplication.enabledCapabilities`. That is separate from `defaultInstalled`: this field means “will a clean consumer/base application receive this capability without explicitly selecting or enabling it?” All current capabilities answer no.
+The root application deliberately enables all eighteen completed capabilities for continuous integration, recorded in `referenceApplication.enabledCapabilities`. That is separate from `defaultInstalled`: this field means “will a clean consumer/base application receive this capability without explicitly selecting or enabling it?” All current capabilities answer no.
 
 `@repo/*` is the private internal workspace scope. The packages are not published, so commands such as `bun add @repo/nuxt-jobs` will not work in an unrelated external repository. A real npm scope will be chosen deliberately if publication happens later.
 
@@ -31,10 +31,10 @@ The root application deliberately enables all seventeen completed capabilities f
 | `stripe` | `@repo/nuxt-stripe` | Enabled | No | Jobs, Webhooks | Stripe on use | [Stripe](../capabilities/stripe/CAPABILITY.md) |
 | `medusa` | `@repo/nuxt-medusa` | Enabled | No | Jobs, Webhooks | Medusa on use; optional operator bridge | [Medusa](../capabilities/medusa/CAPABILITY.md) |
 
-| `command-system` | `@repo/nuxt-command-system` | Staged reference | No | None | None | [Command System](../capabilities/command-system/CAPABILITY.md) |
+| `command-system` | `@repo/nuxt-command-system` | Enabled | No | None | None | [Command System](../capabilities/command-system/CAPABILITY.md) |
 | `ops-admin` | `@repo/nuxt-ops-admin` | Enabled | No | None | None; optional provider adapters | [Ops / Admin](../capabilities/ops-admin/CAPABILITY.md) |
 
-Seventeen provider/baseline capability entries above are `done`; Command System remains staged and `in-progress`. Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/36978353705) passed all 19 jobs at `4478e41f2835bfe1495dab762756b2fec08bd98e`, including all 17 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
+All eighteen capability entries above are `done`. Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37007738880) passed all 20 jobs at `70c35ae6e2ad9cf79b3dd00852ee5366b337f166`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
 
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
 
@@ -164,4 +164,4 @@ The reference app explicitly enables private `@repo/nuxt-medusa`; clean consumer
 
 The pinned disposable Medusa 2.21.2 backend/subscriber and packed lifecycle passed. The fixture uses real event infrastructure and source-verified `order.placed` payloads without invoking checkout/payment workflows; remote production event delivery remains an operator responsibility.
 
-Command System (`in-progress`) uses `@repo/nuxt-command-system`; enabled explicitly in the reference, never installed by default. No service, migrations or hard capability dependencies. [Contract](../capabilities/command-system/CAPABILITY.md).
+Command System (`done`) uses `@repo/nuxt-command-system`; enabled explicitly in the reference, never installed by default. No service, migrations or hard capability dependencies. [Contract](../capabilities/command-system/CAPABILITY.md).
