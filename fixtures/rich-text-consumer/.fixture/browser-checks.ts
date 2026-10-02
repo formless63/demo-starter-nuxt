@@ -1,0 +1,57 @@
+import { expect, type Page } from '@playwright/test';
+export async function verifyRichText(page:Page){
+ const editor=page.getByRole('textbox',{name:'Document',exact:true});
+ await expect(editor).toHaveText('Hello rich text');
+ await editor.fill('Edited document');
+ await expect(page.getByRole('region',{name:'Preview'})).toHaveText('Edited document');
+ await editor.press('ControlOrMeta+a');
+ await page.getByRole('button',{name:'Bold',exact:true}).click();
+ await expect(editor.locator('strong')).toHaveText('Edited document');
+ await page.getByRole('button',{name:'Undo',exact:true}).click();
+ await expect(editor.locator('strong')).toHaveCount(0);
+ await page.getByRole('button',{name:'Redo',exact:true}).click();
+ await expect(editor.locator('strong')).toHaveText('Edited document');
+ await editor.press('ControlOrMeta+a');
+ await page.getByLabel('Link URL',{exact:true}).fill('javascript:alert(1)');
+ await page.getByRole('button',{name:'Apply link'}).click();
+ await expect(page.getByRole('alert')).toContainText('absolute HTTP');
+ await expect(editor.locator('a')).toHaveCount(0);
+ await page.getByLabel('Link URL',{exact:true}).fill('https://example.test/path');
+ await page.getByRole('button',{name:'Apply link'}).click();
+ await expect(editor.locator('a')).toHaveAttribute('href','https://example.test/path');
+ await page.getByRole('button',{name:'Remove link'}).click();
+ await expect(editor.locator('a')).toHaveCount(0);
+ await page.getByRole('button',{name:'Reject changes'}).click();
+ await editor.fill('Rejected content');
+ await expect(editor).toHaveText('Edited document');
+ await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled();
+ await page.getByRole('button',{name:'Accept changes'}).click();
+ await page.getByRole('button',{name:'Replace document'}).click();
+ await expect(editor).toHaveText('Replacement document');
+ await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled();
+ await editor.fill('Retained on remount');
+ await page.getByRole('button',{name:'Toggle editor'}).click();
+ await expect(editor).toHaveCount(0);
+ await page.getByRole('button',{name:'Toggle editor'}).click();
+ await expect(editor).toHaveText('Retained on remount');
+ await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled();
+ await page.getByRole('button',{name:'Toggle read only'}).click();
+ await expect(editor).toHaveCount(0);
+ await expect(page.getByRole('region',{name:'Document',exact:true})).toHaveText('Retained on remount');
+ await page.getByRole('button',{name:'Toggle read only'}).click();
+ await expect(editor).toHaveText('Retained on remount');
+ for (const [name, tag] of [['Heading','h2'], ['Bullet list','ul'], ['Ordered list','ol'], ['Quote','blockquote'], ['Code block','pre']] as const) {
+  await editor.fill('Format me'); await editor.press('ControlOrMeta+a'); await page.getByRole('button',{name,exact:true}).click(); await expect(editor.locator(tag)).toHaveText('Format me');
+  await editor.press('ControlOrMeta+a'); await page.getByRole('button',{name,exact:true}).click(); await expect(editor.locator(tag)).toHaveCount(0);
+ }
+ await editor.fill('safe paste');
+ await editor.evaluate(element => { const data = new DataTransfer(); data.setData('text/plain','<script>plain</script>'); data.setData('text/html','<img src=x onerror=alert(1)>'); element.dispatchEvent(new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData:data})); });
+ await expect(editor).toContainText('<script>plain</script>'); await expect(editor.locator('script,img')).toHaveCount(0);
+ const before = await editor.textContent();
+ await editor.evaluate(element => { const data = new DataTransfer(); data.setData('text/plain','x'.repeat(100001)); element.dispatchEvent(new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData:data})); element.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:data})); });
+ await expect(editor).toHaveText(before ?? '');
+ await editor.fill('  Unicode café 日本語  '); expect(await page.getByRole('region',{name:'Preview'}).textContent()).toBe('  Unicode café 日本語  '); await expect(editor).toHaveCSS('white-space','pre-wrap');
+ await editor.fill('<img src=x onerror=alert(1)>');
+ await expect(page.getByRole('region',{name:'Preview'})).toHaveText('<img src=x onerror=alert(1)>');
+ await expect(page.locator('img')).toHaveCount(0);
+}

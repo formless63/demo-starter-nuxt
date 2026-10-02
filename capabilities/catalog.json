@@ -22,7 +22,8 @@
       "medusa",
       "stripe",
       "data-table",
-      "command-system"
+      "command-system",
+      "rich-text"
     ]
   },
   "baseline": [
@@ -1448,7 +1449,7 @@
       "id": "rich-text",
       "displayName": "Rich Text / Tiptap",
       "kind": "operations-ui",
-      "status": "planned",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1458,7 +1459,30 @@
         "organizations"
       ],
       "externalRequirements": [],
-      "summary": "Rich-text editing built around Tiptap and Vue-native UI."
+      "summary": "Rich-text editing built around Tiptap and Vue-native UI.",
+      "documentationPath": "capabilities/rich-text/CAPABILITY.md",
+      "evaluationDocument": "RICH_TEXT_MODULE_EVALUATION.md",
+      "packageName": "@repo/nuxt-rich-text",
+      "packagePath": "packages/nuxt-rich-text",
+      "fixturePath": "fixtures/rich-text-consumer",
+      "packageTest": {
+        "ownedDependencies": [
+          "@tiptap/vue-3",
+          "@tiptap/core",
+          "@tiptap/pm",
+          "@tiptap/starter-kit"
+        ],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "app.vue"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "flow-canvas",
