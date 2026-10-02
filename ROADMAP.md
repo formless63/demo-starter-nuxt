@@ -43,10 +43,10 @@ The generic `packages:*` commands build and exercise the catalog entries. Hard c
 
 | Status | Capability |
 | --- | --- |
-| Done (17) | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI; Import / Export; Ops / Admin; Invoice Ninja; Stripe; Medusa |
+| Done (18) | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI; Import / Export; Ops / Admin; Invoice Ninja; Stripe; Medusa; Command System |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
-Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/36978353705) passed all 19 jobs at `4478e41f2835bfe1495dab762756b2fec08bd98e`, including all 17 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All seventeen remain opt-in for clean consumers and explicitly enabled in the reference app.
+Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37007738880) passed all 20 jobs at `70c35ae6e2ad9cf79b3dd00852ee5366b337f166`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All eighteen remain opt-in for clean consumers and explicitly enabled in the reference app.
 
 The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused and Identity remains separately paused.
 
@@ -229,7 +229,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Observability, Jobs, Audit Log, Object Storage, Cache / Coordination, Webhooks
 - External: none
 
-### Command System (`in-progress`)
+### Command System (`done`)
 
 - Requires: none
 - Integrates with: Search, Authorization

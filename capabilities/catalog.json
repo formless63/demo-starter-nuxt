@@ -19,7 +19,8 @@
       "ops-admin",
       "invoice-ninja",
       "medusa",
-      "stripe"
+      "stripe",
+      "command-system"
     ]
   },
   "baseline": [
@@ -1302,7 +1303,7 @@
       "id": "command-system",
       "displayName": "Command System",
       "kind": "operations-ui",
-      "status": "in-progress",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
