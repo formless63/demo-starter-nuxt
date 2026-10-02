@@ -1128,7 +1128,7 @@
             "package:test:runtime"
           ],
           "paths": [
-            "server"
+            "server/api/stripe-status.get.ts"
           ],
           "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
         },

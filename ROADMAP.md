@@ -201,11 +201,12 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Organizations, Audit Log, Notifications
 - External: Invoice Ninja
 
-### Stripe (`planned`)
+### Stripe (`in-progress`)
 
 - Requires: Jobs, Webhooks
 - Integrates with: Organizations, Authorization, Audit Log, Notifications
-- External: Stripe
+- External: Stripe; optional configuration is lazy and no startup provider calls occur.
+- Implementation: private `@repo/nuxt-stripe`, independent consumer, native Checkout/payment-status routes, trusted scoped bindings, durable ledger/inbox and existing Jobs; [contract](capabilities/stripe/CAPABILITY.md). Full acceptance gates pending.
 
 ### Medusa (`planned`)
 

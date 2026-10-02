@@ -21,8 +21,15 @@ export const stripeService = createStripeService({
     const [active] = await database().select({ id: stripeBinding.id }).from(stripeBinding).where(and(eq(stripeBinding.id, binding.id), eq(stripeBinding.scopeKind, 'user'), eq(stripeBinding.scopeId, binding.scopeId), eq(stripeBinding.connectionId, binding.connectionId), isNull(stripeBinding.retiredAt))).limit(1)
     return Boolean(active) && !signal.aborted
   },
-  // Application operators must wire vetted existing one-time offers and redirects.
-  // The reference intentionally has no default offer/customer binding and no provider startup I/O.
+  async resolveOffer(_context, offerId) {
+    if (offerId !== 'starter.one-time' || !process.env.STRIPE_REFERENCE_PRICE_ID || !process.env.STRIPE_REFERENCE_CURRENCY) throw new StripeCapabilityError('unconfigured')
+    return { priceId: process.env.STRIPE_REFERENCE_PRICE_ID, currency: process.env.STRIPE_REFERENCE_CURRENCY }
+  },
+  async approvedRedirects() {
+    if (!process.env.STRIPE_REFERENCE_SUCCESS_URL || !process.env.STRIPE_REFERENCE_CANCEL_URL) throw new StripeCapabilityError('unconfigured')
+    return { successUrl: process.env.STRIPE_REFERENCE_SUCCESS_URL, cancelUrl: process.env.STRIPE_REFERENCE_CANCEL_URL }
+  },
+  // Operators create customer bindings explicitly through trusted server wiring; no browser enrollment.
 })
 const producer = createJobsClient({ 'stripe.operation': stripeService.runJob, 'stripe.receipt': stripeService.inboxJob }, resolveJobsConfig, () => {})
 export async function closeStripeResources() { await producer.stop(); const active = client; client = undefined; await active?.end() }

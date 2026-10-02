@@ -181,13 +181,18 @@ export function createStripeService(options: StripeServiceOptions) {
     await tx.update(bindings).set({ leaseToken: null, leaseUntil: null }).where(and(eq(bindings.id, binding.id), eq(bindings.leaseToken, token)))
   }
   async function retrieve(configured: StripeConnection, binding: StripeBinding, signal: AbortSignal) {
-    return binding.resourceKind === 'checkout' ? { session: await stripeOperation(configured, client => client.checkout.sessions.retrieve(binding.remoteId), { signal, environment: options.env?.NODE_ENV }) } : { payment: await stripeOperation(configured, client => client.paymentIntents.retrieve(binding.remoteId), { signal, environment: options.env?.NODE_ENV }) }
+    const result = binding.resourceKind === 'checkout' ? { session: await stripeOperation(configured, client => client.checkout.sessions.retrieve(binding.remoteId), { signal, environment: options.env?.NODE_ENV }) } : { payment: await stripeOperation(configured, client => client.paymentIntents.retrieve(binding.remoteId), { signal, environment: options.env?.NODE_ENV }) }
+    const resource = result.session ?? result.payment!
+    if (resource.id !== binding.remoteId || resource.livemode !== (configured.mode === 'live')) throw new StripeCapabilityError('unsupported')
+    return result
   }
   async function checkoutPayment(configured: StripeConnection, session: Stripe.Checkout.Session, signal: AbortSignal) {
     if (!session.payment_intent) return undefined
     const id = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent.id
     validate(opaque, id)
-    return stripeOperation(configured, client => client.paymentIntents.retrieve(id), { signal, environment: options.env?.NODE_ENV })
+    const payment = await stripeOperation(configured, client => client.paymentIntents.retrieve(id), { signal, environment: options.env?.NODE_ENV })
+    if (payment.id !== id || payment.livemode !== (configured.mode === 'live')) throw new StripeCapabilityError('unsupported')
+    return payment
   }
   async function persistChildPayment(tx: StripeTransaction, parent: StripeBinding, payment: Stripe.PaymentIntent) {
     const [existing] = await tx.select().from(bindings).where(and(eq(bindings.connectionId, parent.connectionId), eq(bindings.resourceKind, 'payment'), eq(bindings.remoteId, payment.id))).limit(1)
@@ -223,6 +228,7 @@ export function createStripeService(options: StripeServiceOptions) {
         session = await stripeOperation(configured, client => client.checkout.sessions.create(attempt!.intent!.parameters, { idempotencyKey: `gs-stripe:${attempt!.id}` }), { signal: budget.signal, environment: options.env?.NODE_ENV })
       }
       else ({ session, payment } = await retrieve(configured, binding, budget.signal))
+      if (session && (session.livemode !== (configured.mode === 'live') || (attempt.kind === 'create_checkout' && session.customer !== binding.remoteId))) throw new StripeCapabilityError('unsupported')
       if (session) payment = await checkoutPayment(configured, session, budget.signal)
       budget.check()
       await database().transaction(async tx => {

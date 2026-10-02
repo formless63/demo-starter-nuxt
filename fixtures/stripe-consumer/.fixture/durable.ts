@@ -8,7 +8,7 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import { eq } from 'drizzle-orm'
 import { createJobsBoss, defineQueues } from '@repo/nuxt-jobs/server'
 import { createStripeService, API_VERSION } from '@repo/nuxt-stripe/server'
-import { stripeBinding, stripeOperationLedger, stripeInbox } from '@repo/nuxt-stripe/schema'
+import { stripeOperationLedger, stripeInbox } from '@repo/nuxt-stripe/schema'
 import type { StripeConnection, TrustedContext } from '@repo/nuxt-stripe/server'
 const adminUrl = process.env.DATABASE_URL
 assert.ok(adminUrl, 'Disposable local PostgreSQL is required')
@@ -30,7 +30,7 @@ const remote = createServer(async (request, response) => {
   if (transport === 'disconnect' && request.method === 'POST') { request.socket.destroy(); return }
   if (transport === 'cached500' && request.method === 'POST') { response.writeHead(500); response.end('{"error":{"message":"private customer body","type":"api_error"}}'); return }
   response.setHeader('content-type', 'application/json')
-  response.end(JSON.stringify(request.url?.startsWith('/v1/payment_intents/') ? { id: 'pi_owned', object: 'payment_intent', status: providerStatus === 'paid' ? 'succeeded' : 'processing', amount: 100, amount_received: providerStatus === 'paid' ? 100 : 0, currency: 'usd', metadata: { ownerId: 'forged' } } : { id: 'cs_owned', object: 'checkout.session', status: 'complete', payment_status: providerStatus, currency: 'usd', amount_total: 100, payment_intent: 'pi_owned', url: null, customer: 'cus_owned', metadata: { ownerId: 'forged' } }))
+  response.end(JSON.stringify(request.url?.startsWith('/v1/payment_intents/') ? { id: 'pi_owned', object: 'payment_intent', livemode: false, status: providerStatus === 'paid' ? 'succeeded' : 'processing', amount: 100, amount_received: providerStatus === 'paid' ? 100 : 0, currency: 'usd', metadata: { ownerId: 'forged' } } : { id: 'cs_owned', object: 'checkout.session', livemode: false, status: 'complete', payment_status: providerStatus, currency: 'usd', amount_total: 100, payment_intent: 'pi_owned', url: null, customer: 'cus_owned', metadata: { ownerId: 'forged' } }))
 })
 remote.listen(0, '127.0.0.1'); await once(remote, 'listening')
 const configured: StripeConnection = { id: 'default', secretKey: 'sk_test_fixture', accountId: 'acct_expected', mode: 'test', webhookSecrets: ['whsec_fixture'], apiBase: `http://127.0.0.1:${(remote.address() as { port: number }).port}` }

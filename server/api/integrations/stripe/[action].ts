@@ -6,7 +6,12 @@ export default defineEventHandler(event => stripeHttp(event, async (signal) => {
   try { user = await requireUser(event) } catch { throw new StripeCapabilityError('unauthenticated') }
   const context = { actorUserId: user.id, scope: { kind: 'user' as const, id: user.id }, signal }
   const action = getRouterParam(event, 'action'), method = event.method
-  const input = method === 'GET' ? getQuery(event) : JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await rawBody(event, signal, 256 * 1024))) as unknown
+  let input: unknown
+  if (method === 'GET') input = getQuery(event)
+  else {
+    const raw = await rawBody(event, signal, 256 * 1024)
+    try { input = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw)) } catch { throw new StripeCapabilityError('invalid_input') }
+  }
   if (action === 'checkout' && method === 'POST') return stripeService.requestCheckout(context, validate(checkoutInput, input))
   if (action === 'checkout' && method === 'GET') return stripeService.getCheckout(context, validate(bindingInput, input))
   if (action === 'operation' && method === 'GET') return stripeService.getOperation(context, validate(operationInput, input))

@@ -142,3 +142,5 @@ Private `@repo/nuxt-import-export` requires Jobs and Object Storage; PostgreSQL/
 Ops / Admin (`done`) is an optional private `@repo/nuxt-ops-admin` package. Enable with `opsAdmin.application` pointing to an application-owned baseline session resolver/static adapter registry. No service/migration or hard capability dependencies. [Contract](../capabilities/ops-admin/CAPABILITY.md).
 
 Ops reference verification uses `bun run test:ops-reference` after building the root. Its disposable protocol services and temporary source copies prove read-only inspection and independent adapter/full Ops removal; they are test-only, not an application installer.
+
+Stripe v1 is currently in progress: `@repo/nuxt-stripe` requires Jobs and Webhooks; clean consumers remain opt-in. Native routes are application-owned under `/api/integrations/stripe`; the reference page is `/stripe`. The generic package CI matrix includes its authored fixture during verification. [Stripe contract](../capabilities/stripe/CAPABILITY.md) and [design evaluation](../STRIPE_MODULE_EVALUATION.md) distinguish local SDK compatibility from financial certification.
