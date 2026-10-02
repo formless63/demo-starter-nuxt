@@ -1186,7 +1186,7 @@
       "id": "data-table",
       "displayName": "Data Table",
       "kind": "operations-ui",
-      "status": "done",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
