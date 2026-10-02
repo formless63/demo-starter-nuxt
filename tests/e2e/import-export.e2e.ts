@@ -1,4 +1,4 @@
-import { reportFixtureNetworkEvents } from './network-diagnostics'
+import { reportFixtureNetworkEvents, startFixtureNetworkProbe } from './network-diagnostics'
 import { waitForHydration } from './hydration'
 import { browserDiagnostics } from './browser-diagnostics'
 import { expect, test } from '@playwright/test'
@@ -38,12 +38,15 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
   let createdDatabase = false
   const owner = randomUUID(), other = randomUUID(), token = randomUUID(), secret = 'disposable-transfer-browser-secret-at-least32'
   let context: Awaited<ReturnType<typeof browser.newContext>> | undefined
+  let finishNetworkProbe: (() => Promise<void>) | undefined
   try {
     await admin.unsafe(`CREATE DATABASE "${databaseName}"`); createdDatabase = true
     await migrate(db, { migrationsFolder: join(root, 'server/database/migrations') })
     const migrationBoss = createJobsBoss({ databaseUrl: databaseUrl.href, schema: 'pgboss', concurrency: 1, useListenNotify: false }, 'migration')
     try { await migrationBoss.start() } finally { await migrationBoss.stop() }
+    finishNetworkProbe = await startFixtureNetworkProbe(browser)
     backend = await startProvider('rustfs', fixtureProject, true)
+    await finishNetworkProbe(); finishNetworkProbe = undefined
     const port = await freePort(), base = `http://127.0.0.1:${port}`
     const env = { ...process.env, DATABASE_URL: databaseUrl.href, PGBOSS_DATABASE_URL: databaseUrl.href, NUXT_AUTH_SECRET: secret, NUXT_PUBLIC_APP_BASE_URL: base, STORAGE_BUCKET: backend.config.bucket, STORAGE_REGION: backend.config.region, STORAGE_ENDPOINT: backend.config.endpoint, STORAGE_ACCESS_KEY_ID: backend.config.accessKeyId, STORAGE_SECRET_ACCESS_KEY: backend.config.secretAccessKey, PORT: String(port), HOST: '127.0.0.1', REALTIME_TRANSPORTS: 'sse,websocket' }
     let cwd = root
@@ -120,6 +123,7 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     await expect(page.getByText('import — cancelled', { exact: false })).toBeVisible()
   }
   finally {
+    await finishNetworkProbe?.()
     await context?.close().catch(() => {})
     for (const process of [worker, app]) if (process && process.exitCode === null) { try { globalThis.process.kill(-process.pid!, 'SIGTERM') } catch { /* Already stopped. */ } await Promise.race([new Promise(resolve => process.once('exit', resolve)), new Promise(resolve => setTimeout(resolve, 5000))]); if (process.exitCode === null) { try { globalThis.process.kill(-process.pid!, 'SIGKILL') } catch { /* Already stopped. */ } } }
     await connection.end()
