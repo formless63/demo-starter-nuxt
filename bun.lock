@@ -19,6 +19,7 @@
         "@repo/nuxt-realtime": "workspace:*",
         "@repo/nuxt-search": "workspace:*",
         "@repo/nuxt-storage": "workspace:*",
+        "@repo/nuxt-stripe": "workspace:*",
         "@repo/nuxt-webhooks": "workspace:*",
         "@tabler/icons-vue": "3.48.0",
         "@tailwindcss/vite": "4.3.3",

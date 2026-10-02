@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { StripeCapabilityError } from './errors'
 export const uuid = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
+// eslint-disable-next-line no-control-regex -- Reject contract-forbidden control code points.
 export const opaque = z.string().min(1).max(128).refine(value => value.isWellFormed() && !/[\u0000-\u001f\u007f-\u009f]/.test(value))
 export const connectionId = z.string().min(1).max(64).regex(/^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/)
 export const checkoutInput = z.object({ customerBindingId: uuid, idempotencyKey: z.string().min(1).max(128).regex(/^[A-Za-z0-9._:-]+$/), items: z.array(z.object({ offerId: connectionId, quantity: z.number().int().min(1).max(100) }).strict()).min(1).max(20) }).strict().refine(input => new Set(input.items.map(item => item.offerId)).size === input.items.length)
