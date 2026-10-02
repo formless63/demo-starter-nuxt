@@ -12,6 +12,7 @@
         "@repo/nuxt-cache": "workspace:*",
         "@repo/nuxt-email": "workspace:*",
         "@repo/nuxt-import-export": "workspace:*",
+        "@repo/nuxt-invoice-ninja": "workspace:*",
         "@repo/nuxt-jobs": "workspace:*",
         "@repo/nuxt-notifications": "workspace:*",
         "@repo/nuxt-observability": "workspace:*",
@@ -130,6 +131,23 @@
       "devDependencies": {
         "@types/node": "24.10.1",
         "drizzle-kit": "0.31.11",
+        "pg-boss": "12.35.0",
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7",
+      },
+    },
+    "fixtures/invoice-ninja-consumer": {
+      "name": "invoice-ninja-consumer-fixture",
+      "dependencies": {
+        "@repo/nuxt-invoice-ninja": "workspace:*",
+        "@repo/nuxt-jobs": "workspace:*",
+        "@repo/nuxt-webhooks": "workspace:*",
+        "drizzle-orm": "0.45.3",
+        "nuxt": "4.5.2",
+        "postgres": "3.4.9",
+        "zod": "4.6.5",
+      },
+      "devDependencies": {
         "typescript": "5.9.3",
         "vue-tsc": "3.1.7",
       },
@@ -353,6 +371,28 @@
       "peerDependencies": {
         "@repo/nuxt-jobs": ">=0.1.0 <0.2",
         "@repo/nuxt-storage": ">=0.1.0 <0.2",
+        "drizzle-orm": ">=0.45.0 <1",
+        "nuxt": ">=4.0.0 <5",
+        "zod": ">=4.0.0 <5",
+      },
+    },
+    "packages/nuxt-invoice-ninja": {
+      "name": "@repo/nuxt-invoice-ninja",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "@repo/nuxt-jobs": "workspace:*",
+        "@repo/nuxt-webhooks": "workspace:*",
+        "drizzle-orm": "0.45.3",
+        "nuxt": "4.5.2",
+        "zod": "4.6.5",
+      },
+      "peerDependencies": {
+        "@repo/nuxt-jobs": ">=0.1.0 <0.2",
+        "@repo/nuxt-webhooks": ">=0.1.0 <0.2",
         "drizzle-orm": ">=0.45.0 <1",
         "nuxt": ">=4.0.0 <5",
         "zod": ">=4.0.0 <5",
@@ -992,6 +1032,8 @@
     "@repo/nuxt-email": ["@repo/nuxt-email@workspace:packages/nuxt-email"],
 
     "@repo/nuxt-import-export": ["@repo/nuxt-import-export@workspace:packages/nuxt-import-export"],
+
+    "@repo/nuxt-invoice-ninja": ["@repo/nuxt-invoice-ninja@workspace:packages/nuxt-invoice-ninja"],
 
     "@repo/nuxt-jobs": ["@repo/nuxt-jobs@workspace:packages/nuxt-jobs"],
 
@@ -1944,6 +1986,8 @@
     "inherits": ["inherits@2.0.4", "", {}, "sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ=="],
 
     "ini": ["ini@4.1.1", "", {}, "sha512-QQnnxNyfvmHFIsj7gkPcYymR8Jdw/o7mp5ZFihxn6h8Ci6fh3Dx4E1gPjpQEpIuPo9XVNY/ZUwh4BPMjGyL01g=="],
+
+    "invoice-ninja-consumer-fixture": ["invoice-ninja-consumer-fixture@workspace:fixtures/invoice-ninja-consumer"],
 
     "ioredis": ["ioredis@5.11.1", "", { "dependencies": { "@ioredis/commands": "1.10.0", "cluster-key-slot": "1.1.1", "debug": "4.4.3", "denque": "2.1.0", "redis-errors": "1.2.0", "redis-parser": "3.0.0", "standard-as-callback": "2.1.0" } }, "sha512-ehuGcf94bQXhfagULNXrJdfnWO38v070jxSx/qE87Kjzmu2fU7ro5EFAb+OPituLqgfyuQaym5DlrNydW2sJ9A=="],
 

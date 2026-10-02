@@ -1062,7 +1062,41 @@
           "required": true
         }
       ],
-      "summary": "Invoice Ninja synchronization and webhook integration."
+      "summary": "Invoice Ninja synchronization and webhook integration.",
+      "packageName": "@repo/nuxt-invoice-ninja",
+      "packagePath": "packages/nuxt-invoice-ninja",
+      "fixturePath": "fixtures/invoice-ninja-consumer",
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            ".fixture/package-test.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      },
+      "documentationPath": "capabilities/invoice-ninja/CAPABILITY.md",
+      "evaluationDocument": "INVOICE_NINJA_MODULE_EVALUATION.md",
+      "baselineRequirements": [
+        "postgresql"
+      ],
+      "environmentVariables": [
+        "INVOICE_NINJA_BASE_URL",
+        "INVOICE_NINJA_API_TOKEN",
+        "INVOICE_NINJA_WEBHOOK_SECRET",
+        "INVOICE_NINJA_WEBHOOK_SECRET_PREVIOUS"
+      ],
+      "migrations": [
+        "0009_invoice_ninja additive application schema"
+      ],
+      "runtimeProcesses": [
+        "worker",
+        "migrate (one-shot)"
+      ]
     },
     {
       "id": "stripe",
