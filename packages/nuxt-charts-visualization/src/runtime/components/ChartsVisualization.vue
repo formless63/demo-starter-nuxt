@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useAttrs, useId, watch } from 'vue'
 import type { ECharts, EChartsOption } from 'echarts'
+import { createChartsLifecycle } from '../lifecycle'
 
 export type ChartKind = 'line' | 'bar' | 'area'
 export interface ChartSeries { name: string; data: Array<number | null>; color?: string }
@@ -30,6 +31,21 @@ let resizeObserver: ResizeObserver | undefined
 let mediaQuery: MediaQueryList | undefined
 let motionListener: ((event: MediaQueryListEvent) => void) | undefined
 let lifecycle = 0
+const lifecycleController = createChartsLifecycle<ECharts, HTMLElement, EChartsOption>({
+  load: async () => {
+    const [{ use: register, init }, { CanvasRenderer }, { GridComponent, LegendComponent, TooltipComponent, AriaComponent }, { BarChart, LineChart }] = await Promise.all([
+      import('echarts/core'), import('echarts/renderers'), import('echarts/components'), import('echarts/charts'),
+    ])
+    register([CanvasRenderer, GridComponent, LegendComponent, TooltipComponent, AriaComponent, BarChart, LineChart])
+    return { init: (element: HTMLElement) => init(element, undefined, { renderer: 'canvas' }) }
+  },
+  host: () => host.value,
+  option,
+  nextTick,
+  setOption: (instance, value) => instance.setOption(value, { notMerge: true, lazyUpdate: false }),
+  observe: (element, onResize) => { const observer = new ResizeObserver(onResize); observer.observe(element); return observer },
+  dispose: instance => instance.dispose(),
+})
 
 function option(): EChartsOption {
   const area = props.kind === 'area'
@@ -57,29 +73,14 @@ async function render() {
   current.setOption(option(), { notMerge: true, lazyUpdate: false })
 }
 
-onMounted(async () => {
+onMounted(() => {
   mounted.value = true
-  const currentLifecycle = ++lifecycle
+  lifecycle++
   mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   reducedMotion.value = mediaQuery.matches
   motionListener = event => { reducedMotion.value = event.matches; void render() }
   mediaQuery.addEventListener('change', motionListener)
-  if (!host.value) return
-  const [{ use: register, init }, { CanvasRenderer }, { GridComponent, LegendComponent, TooltipComponent, AriaComponent }, { BarChart, LineChart }] = await Promise.all([
-    import('echarts/core'), import('echarts/renderers'), import('echarts/components'), import('echarts/charts'),
-  ])
-  if (!mounted.value || lifecycle !== currentLifecycle || !host.value) return
-  register([CanvasRenderer, GridComponent, LegendComponent, TooltipComponent, AriaComponent, BarChart, LineChart])
-  const currentHost = host.value
-  chart.value = init(currentHost, undefined, { renderer: 'canvas' })
-  await render()
-  if (!mounted.value || lifecycle !== currentLifecycle || !chart.value || !host.value) {
-    chart.value?.dispose()
-    chart.value = null
-    return
-  }
-  resizeObserver = new ResizeObserver(() => chart.value?.resize())
-  resizeObserver.observe(currentHost)
+  void lifecycleController.mount()
 })
 
 watch(() => [props.kind, props.labels, props.series, props.animated], () => void render(), { deep: true })
@@ -90,6 +91,7 @@ onBeforeUnmount(() => {
   if (mediaQuery && motionListener) mediaQuery.removeEventListener('change', motionListener)
   chart.value?.dispose()
   chart.value = null
+  lifecycleController.unmount()
 })
 </script>
 
