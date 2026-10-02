@@ -39,7 +39,25 @@ try {
   assert.match(html, /Select rows/)
   assert.match(html, /Select row a/)
   assert.match(html, /aria-label="Data table"/)
-  console.log('data-table packaged SSR assertions passed')
+  function rowIds(markup: string) {
+    return [...markup.matchAll(/aria-label="Select row ([^"]+)"/g)].map(match => match[1])
+  }
+  assert.deepEqual(rowIds(html), ['b', 'a'], 'actual component must paginate its default rows')
+  for (const [query, expected] of [
+    ['?page=2', ['c']],
+    ['?sort=asc', ['a', 'b']],
+    ['?sort=desc', ['c', 'b']],
+    ['?filter=Alpha', ['a']],
+    ['?column=Gamma', ['c']],
+    ['?sort=desc&filter=a&page=2', ['a']],
+    ['?manual=true&sort=desc&filter=Alpha&page=2', ['b', 'a', 'c']],
+  ] as const) {
+    const scenario = await fetch(`http://127.0.0.1:${port}/${query}`)
+    const markup = await scenario.text()
+    assert.equal(scenario.status, 200, `Packaged SSR ${query} returned HTTP ${scenario.status}: ${markup.slice(-2000)}`)
+    assert.deepEqual(rowIds(markup), [...expected], `actual packaged component row processing: ${query}`)
+  }
+  console.log('data-table packaged SSR pagination/sorting/filtering/manual-mode assertions passed')
 } finally {
   server.kill()
   await server.exited
