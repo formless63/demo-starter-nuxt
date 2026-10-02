@@ -10,7 +10,7 @@ import type { StripeBinding, StripeOperation, FrozenCheckout, ResourceKind, Oper
 import { StripeCapabilityError, safeError } from './errors'
 import { connectionFromEnvironment, validateConnection } from './config'
 import type { StripeConnection } from './config'
-import { trustedContext, validate, uuid, opaque, connectionId, checkoutInput, reconcileInput, listInput, decodeCursor, encodeCursor } from './validation'
+import { trustedContext, validate, uuid, opaque, connectionId, checkoutInput, reconcileInput, bindingInput, operationInput, listInput, decodeCursor, encodeCursor } from './validation'
 import type { TrustedContext } from './validation'
 import { deadline, stripeOperation } from './transport'
 import { verifyStripeWebhook } from './webhook'
@@ -118,12 +118,14 @@ export function createStripeService(options: StripeServiceOptions) {
   }
   async function requestPaymentReconciliation(context: TrustedContext, input: unknown) { return database().transaction(async tx => { await timeouts(tx); return requestPaymentReconciliationInTransaction(tx, context, input) }) }
   async function getOperation(context: TrustedContext, input: { operationId: string }) {
+    input = validate(operationInput, input)
     await authorize(context)
     const [row] = await database().select().from(operations).where(and(eq(operations.id, validate(uuid, input.operationId)), eq(operations.scopeKind, context.scope.kind), eq(operations.scopeId, context.scope.id))).limit(1)
     if (!row) throw new StripeCapabilityError('not_found')
     return view(row)
   }
   async function getCheckout(context: TrustedContext, input: { bindingId: string }) {
+    input = validate(bindingInput, input)
     const binding = await owned(context, input.bindingId, 'checkout')
     const [projection] = await database().select().from(projections).where(eq(projections.bindingId, binding.id)).limit(1)
     if (!projection?.checkout) throw new StripeCapabilityError('not_found')

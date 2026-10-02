@@ -2,6 +2,8 @@
 definePageMeta({ middleware: 'auth' })
 const customerBindingId = ref(''), offerId = ref('starter.one-time'), quantity = ref(1), key = ref('')
 const operationId = ref(''), checkoutBindingId = ref(''), busy = ref(false), message = ref('')
+const ready = ref(false)
+onMounted(() => { ready.value = true })
 let cancellation: AbortController | undefined
 const checkout = ref<{ checkoutUrl?: string | null } | null>(null)
 async function loadCheckout() { checkout.value = await $fetch<{ checkoutUrl?: string | null }>('/api/integrations/stripe/checkout', { query: { bindingId: checkoutBindingId.value } }) }
@@ -28,18 +30,18 @@ onBeforeUnmount(() => cancellation?.abort())
     <h1 class="text-2xl font-semibold">One-time Checkout</h1>
     <p>Existing customer bindings and registered offers require server operator configuration. Checkout completion and payment success are separate; redirects do not establish payment.</p>
     <form class="grid gap-3" @submit.prevent="action('checkout')">
-      <label>Customer binding <input v-model="customerBindingId" class="rounded border p-2" required></label>
-      <label>Registered offer <input v-model="offerId" class="rounded border p-2" required></label>
-      <label>Quantity <input v-model.number="quantity" type="number" min="1" max="100" class="rounded border p-2"></label>
-      <label>Intent key <input v-model="key" class="rounded border p-2" placeholder="Generated for first request"></label>
+      <label>Customer binding <input v-model="customerBindingId" :disabled="!ready" class="rounded border p-2" required></label>
+      <label>Registered offer <input v-model="offerId" :disabled="!ready" class="rounded border p-2" required></label>
+      <label>Quantity <input v-model.number="quantity" :disabled="!ready" type="number" min="1" max="100" class="rounded border p-2"></label>
+      <label>Intent key <input v-model="key" :disabled="!ready" class="rounded border p-2" placeholder="Generated for first request"></label>
       <button class="rounded border p-2" :disabled="busy">Queue Checkout</button>
     </form>
     <p>Repeating the same intent key reads the original operation. Changed intent requires a new deliberate key.</p>
-    <label>Operation <input v-model="operationId" class="rounded border p-2"></label>
+    <label>Operation <input v-model="operationId" :disabled="!ready" class="rounded border p-2"></label>
     <button class="rounded border p-2" :disabled="busy || !operationId" @click="action('operation')">Refresh operation</button>
     <button class="rounded border p-2" :disabled="busy || !operationId" @click="action('cancel')">Cancel queued operation</button>
     <button class="rounded border p-2" :disabled="!busy" @click="cancellation?.abort()">Stop request</button>
-    <label>Checkout binding <input v-model="checkoutBindingId" class="rounded border p-2"></label>
+    <label>Checkout binding <input v-model="checkoutBindingId" :disabled="!ready" class="rounded border p-2"></label>
     <button class="rounded border p-2" :disabled="busy || !checkoutBindingId" @click="action('reconcile')">Reconcile Checkout</button>
     <button class="rounded border p-2" :disabled="busy || !checkoutBindingId" @click="loadCheckout">Read Checkout</button>
     <a v-if="checkout?.checkoutUrl" :href="checkout.checkoutUrl" rel="noopener noreferrer" class="underline">Open hosted Checkout</a>
