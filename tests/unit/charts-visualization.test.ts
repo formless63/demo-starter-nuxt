@@ -30,4 +30,17 @@ describe('charts lifecycle interruption', () => {
     expect(dispose).toHaveBeenCalledTimes(1)
     expect(observe.mock.results[0]?.value.disconnect).toHaveBeenCalledTimes(1)
   })
+
+  it('applies a reduced-motion option change to the mounted instance', async () => {
+    let animation = true
+    const setOption = vi.fn()
+    const controller = createChartsLifecycle({
+      load: async () => ({ init: () => ({}) }), host: () => ({}), option: () => ({ animation }),
+      nextTick: async () => undefined, setOption, observe: () => ({ disconnect: vi.fn() }), dispose: vi.fn(),
+    })
+    await controller.mount()
+    animation = false
+    await controller.render()
+    expect(setOption).toHaveBeenLastCalledWith({}, { animation: false })
+  })
 })
