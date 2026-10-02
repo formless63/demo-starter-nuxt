@@ -30,6 +30,7 @@ export async function runContract(databaseUrl: string) {
   const owners = new Set([actor, other])
   const targetMap = new Map<string, string>([['prod_a', actor], ['prod_b', other], ['order_a', actor], ['missing', actor]])
   let calls = 0, title = 'Safe product', revoked = false, mode = 'normal', closed = 0
+  let listTitle: string | undefined
   const paths: string[] = []
   const fixture = createServer((request, response) => {
     calls++; paths.push(request.url!)
@@ -46,7 +47,7 @@ export async function runContract(databaseUrl: string) {
     if (mode === 'forbidden') { response.writeHead(403); response.end('{"private":"PRIVATE-ERROR"}'); return }
     if (url.pathname.endsWith('/missing') || mode === 'deleted') { response.writeHead(404); response.end('{}'); return }
     if (mode === 'huge') { response.writeHead(200, { 'content-type': 'application/json' }); response.end('x'.repeat(2 * 1024 * 1024 + 1)); return }
-    const body = JSON.stringify(url.pathname === '/admin/products' ? { products: [resource, { ...resource, id: 'prod_b' }], count: 2, offset: 0, limit: 2 } : url.pathname === '/admin/orders' ? { orders: [order], count: 1 } : url.pathname.includes('/orders/') ? { order } : { product: { ...resource, id: decodeURIComponent(url.pathname.split('/').at(-1)!) } })
+    const body = JSON.stringify(url.pathname === '/admin/products' ? { products: [{ ...resource, title: listTitle ?? title }, { ...resource, id: 'prod_b' }], count: 2, offset: 0, limit: 2 } : url.pathname === '/admin/orders' ? { orders: [order], count: 1 } : url.pathname.includes('/orders/') ? { order } : { product: { ...resource, id: decodeURIComponent(url.pathname.split('/').at(-1)!) } })
     if (mode === 'slow-header') { const timer = setTimeout(() => response.end(body), 250); response.on('close', () => clearTimeout(timer)); return }
     response.writeHead(200, { 'content-type': 'application/json' })
     if (mode === 'slow-body') { response.write(body.slice(0, 5)); const timer = setTimeout(() => response.end(body.slice(5)), 300); response.on('close', () => clearTimeout(timer)); return }
@@ -156,7 +157,12 @@ export async function runContract(databaseUrl: string) {
     const raw = Buffer.from(JSON.stringify(unsupported)); await service.receive(new Request('http://127.0.0.1', { method: 'POST', headers: signWebhook(unsupported.id, raw, secret), body: raw }), 'default')
     // Callback cannot grant new ownership; public serializers and queue payloads remain closed.
     assert.equal((await db.select().from(medusaBinding)).length, 4)
+    listTitle = 'Older discovery-page snapshot'; title = 'Current leased resource'
+    const beforePage = calls
     const page = await service.requestSyncPage(ctx, { kind: 'product', limit: 2 }); assert('operationId' in page); await run(page.operationId)
+    assert.equal(calls - beforePage, 2, 'Page discovery is followed by one leased GET for the owned binding only')
+    assert.equal((await service.getProduct(ctx, { bindingId: a.id }) as { title: string }).title, title, 'A stale discovery page cannot replace the current resource projection')
+    listTitle = undefined
     assert.deepEqual(await service.getSyncResult(ctx, { operationId: page.operationId }), { processed: 1, nextCursor: null })
     assert.equal((await service.listProducts(outside)).items.length, 0)
     // Revocation between GET and commit prevents projection change.
