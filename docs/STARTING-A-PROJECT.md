@@ -12,7 +12,7 @@ The root application explicitly registers Jobs, API Platform, Observability, Obj
 - one production image for the app, migration tools and worker;
 - lazy optional S3, SMTP, Cache, AI, Invoice Ninja, Stripe and Medusa adapters with no provider required at startup;
 - transactionally appended audit history and notifications, plus ID-only post-commit hints over authenticated SSE/WebSocket transports;
-- all twenty catalog-driven package install/runtime/removal/rebuild checks in generic CI.
+- all twenty-one catalog-driven package install/runtime/removal/rebuild checks in generic CI.
 
 The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused and Identity remains separately paused.
 
@@ -208,3 +208,7 @@ Remove `@repo/nuxt-command-system` from root dependencies/modules and `app/pages
 ## Remove Charts / Visualization
 
 Remove `@repo/nuxt-charts-visualization` from root dependencies and Nuxt modules, remove `charts-visualization` from reference enablement, and remove or replace `app/pages/charts.vue` and application-owned `<ChartsVisualization>` usage. Remove its tests only when pruning the capability. Reinstall to update the lockfile and run catalog, typecheck and build checks. The module-owned ECharts prebundles disappear with the module; no root Vite edit is needed. No database, migration, worker, credentials or external resources belong to Charts. The generic packed lifecycle verifies clean removal and rebuild.
+
+## Remove Markdown / Code Content
+
+Remove `@repo/nuxt-markdown-code` from dependencies and Nuxt modules, `app/pages/markdown.vue`, `server/api/markdown-reference.get.ts`, and the reference enabled-capabilities entry. Reinstall, typecheck and build. No migrations/data deletion; the generic packed fixture proves independent removal.

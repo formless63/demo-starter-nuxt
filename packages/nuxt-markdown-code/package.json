@@ -1,0 +1,69 @@
+{
+  "name": "@repo/nuxt-markdown-code",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Private bounded Markdown and code content primitives for Nuxt",
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs",
+      "default": "./dist/module.mjs"
+    },
+    "./server": {
+      "types": "./dist/runtime/server/index.d.ts",
+      "import": "./dist/runtime/server/index.js",
+      "default": "./dist/runtime/server/index.js"
+    },
+    "./types": {
+      "types": "./dist/runtime/types.d.ts",
+      "import": "./dist/runtime/types.js",
+      "default": "./dist/runtime/types.js"
+    },
+    "./components": {
+      "types": "./dist/runtime/components/MarkdownContent.d.ts",
+      "import": "./dist/runtime/components/MarkdownContent.js",
+      "default": "./dist/runtime/components/MarkdownContent.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/types.d.mts"
+      ],
+      "server": [
+        "./dist/runtime/server/index.d.ts"
+      ],
+      "types": [
+        "./dist/runtime/types.d.ts"
+      ],
+      "components": [
+        "./dist/runtime/components/MarkdownContent.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev:prepare": "nuxt-module-build prepare && nuxt-module-build build",
+    "prepack": "nuxt-module-build prepare && nuxt-module-build build"
+  },
+  "dependencies": {
+    "@nuxt/kit": "4.5.2",
+    "markdown-it": "15.0.2",
+    "shiki": "4.5.0"
+  },
+  "peerDependencies": {
+    "nuxt": ">=4.0.0 <5",
+    "vue": ">=3.5.0 <4"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "1.0.3",
+    "nuxt": "4.5.2"
+  }
+}
