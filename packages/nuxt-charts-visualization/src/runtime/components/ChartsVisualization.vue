@@ -18,8 +18,6 @@ const props = withDefaults(defineProps<{
 
 const attrs = useAttrs()
 const host = ref<HTMLElement | null>(null)
-const chart = ref<ECharts | null>(null)
-const mounted = ref(false)
 const instanceId = useId()
 const chartId = computed(() => String(attrs.id ?? instanceId))
 const titleId = computed(() => `${chartId.value}-title`)
@@ -27,10 +25,8 @@ const descriptionId = computed(() => `${chartId.value}-description`)
 const reducedMotion = ref(false)
 const fallbackRows = computed(() => props.labels.map((label, index) => ({ label, values: props.series.map(item => item.data[index] ?? '—') })))
 const hasData = computed(() => props.labels.length > 0 && props.series.some(item => item.data.some(value => value !== null)))
-let resizeObserver: ResizeObserver | undefined
 let mediaQuery: MediaQueryList | undefined
 let motionListener: ((event: MediaQueryListEvent) => void) | undefined
-let lifecycle = 0
 const lifecycleController = createChartsLifecycle<ECharts, HTMLElement, EChartsOption>({
   load: async () => {
     const [{ use: register, init }, { CanvasRenderer }, { GridComponent, LegendComponent, TooltipComponent, AriaComponent }, { BarChart, LineChart }] = await Promise.all([
@@ -65,33 +61,17 @@ function option(): EChartsOption {
   }
 }
 
-async function render() {
-  const current = chart.value
-  const currentLifecycle = lifecycle
-  if (!mounted.value || !current) return
-  await nextTick()
-  if (!mounted.value || lifecycle !== currentLifecycle || chart.value !== current) return
-  current.setOption(option(), { notMerge: true, lazyUpdate: false })
-}
-
 onMounted(() => {
-  mounted.value = true
-  lifecycle++
   mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   reducedMotion.value = mediaQuery.matches
-  motionListener = event => { reducedMotion.value = event.matches; void render() }
+  motionListener = event => { reducedMotion.value = event.matches; void lifecycleController.render() }
   mediaQuery.addEventListener('change', motionListener)
   void lifecycleController.mount()
 })
 
 watch(() => [props.kind, props.labels, props.series, props.animated], () => void lifecycleController.render(), { deep: true })
 onBeforeUnmount(() => {
-  mounted.value = false
-  lifecycle += 1
-  resizeObserver?.disconnect()
   if (mediaQuery && motionListener) mediaQuery.removeEventListener('change', motionListener)
-  chart.value?.dispose()
-  chart.value = null
   lifecycleController.unmount()
 })
 </script>
