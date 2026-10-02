@@ -11,6 +11,8 @@ import charts from '../../packages/nuxt-charts-visualization/src/module'
 import command from '../../packages/nuxt-command-system/src/module'
 import markdown from '../../packages/nuxt-markdown-code/src/module'
 import richText from '../../packages/nuxt-rich-text/src/module'
+import storage from '../../packages/nuxt-storage/src/module'
+import fileUi from '../../packages/nuxt-file-ui/src/module'
 
 test('accepted UI modules compose optimizer entries, Markdown server boundary and caller settings', async () => {
   const root = await mkdtemp(join(tmpdir(), 'nuxt-rich-text-composition-'))
@@ -20,7 +22,7 @@ test('accepted UI modules compose optimizer entries, Markdown server boundary an
   } })
   const nuxt = createNuxt(options)
   try {
-    for (const module of [dataTable, charts, command, markdown, richText]) await nuxt.runWithContext(() => module({}, nuxt))
+    for (const module of [dataTable, charts, command, markdown, richText, storage, fileUi]) await nuxt.runWithContext(() => module({}, nuxt))
     const config = mergeConfig({ root, configFile: false, logLevel: 'silent', environments: { client: { optimizeDeps: { include: [], exclude: ['vue'] } }, ssr: { optimizeDeps: { noDiscovery: true } } } }, nuxt.options.vite)
     for (const environment of ['client', 'ssr'] as const) await nuxt.callHook('vite:extendConfig', { ...config, environments: { [environment]: config.environments![environment] } }, { isClient: environment === 'client', isServer: environment === 'ssr' })
     const resolved = await resolveConfig(config, 'serve')

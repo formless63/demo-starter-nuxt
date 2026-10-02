@@ -213,4 +213,8 @@ Remove `@repo/nuxt-charts-visualization` from root dependencies and Nuxt modules
 
 Remove `@repo/nuxt-markdown-code` from dependencies and Nuxt modules, `app/pages/markdown.vue`, `server/api/markdown-reference.get.ts`, and the reference enabled-capabilities entry. Reinstall, typecheck and build. No migrations/data deletion; the generic packed fixture proves independent removal.
 
-Rich Text removal: remove `@repo/nuxt-rich-text` from root dependencies and Nuxt modules, remove `app/pages/rich-text-test.vue` and `tests/e2e/rich-text.spec.ts`, remove consumer imports/usages and reference catalog enablement. No persistence or data deletion is involved.
+Rich Text removal: remove `@repo/nuxt-rich-text` from root dependencies and Nuxt modules, remove `app/pages/rich-text-test.vue` and `tests/e2e/rich-text.e2e.ts`, remove consumer imports/usages and reference catalog enablement. No persistence or data deletion is involved.
+
+## Removing File UI
+
+Remove `@repo/nuxt-file-ui` from module/dependency lists, `app/pages/files.vue`, `server/api/files`, `server/utils/file-ui.ts`, `server/utils/file-ui-metadata.ts`, root reference capability enablement and File UI-specific test scripts, then regenerate the lockfile. Retain application file schema/export, all SQL/snapshots/journal history, metadata receipts and objects. No provider data or credentials are removed. Keep Object Storage for its other consumers.
