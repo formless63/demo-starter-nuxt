@@ -3,7 +3,9 @@ import { expect, test } from '@playwright/test'
 test.describe('charts visualization', () => {
   test('enhances SSR fallback and supports kinds, replacement, accessibility, motion, and cleanup', async ({ page }) => {
     const browserErrors: string[] = []
+    const consoleErrors: string[] = []
     page.on('pageerror', error => browserErrors.push(error.message))
+    page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()) })
     await page.goto('/charts')
     await expect(page.getByRole('heading', { name: 'Revenue' })).toBeVisible()
     await expect(page.locator('#primary-chart table')).toBeVisible()
@@ -39,5 +41,6 @@ test.describe('charts visualization', () => {
     await page.setViewportSize({ width: 700, height: 800 })
     await expect.poll(async () => JSON.parse(await page.locator('[data-echarts-state]').textContent() ?? '{}').width).not.toBe(initialWidth)
     expect(browserErrors).toEqual([])
+    expect(consoleErrors).toEqual([])
   })
 })

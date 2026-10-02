@@ -66,7 +66,9 @@ onMounted(() => {
   reducedMotion.value = mediaQuery.matches
   motionListener = event => { reducedMotion.value = event.matches; void lifecycleController.render() }
   mediaQuery.addEventListener('change', motionListener)
-  void lifecycleController.mount()
+  void lifecycleController.mount().catch(error => {
+    console.error('[charts-visualization] client enhancement failed', error instanceof Error ? error.message : 'unknown error')
+  })
 })
 
 watch(() => [props.kind, props.labels, props.series, props.animated], () => void lifecycleController.render(), { deep: true })
@@ -82,7 +84,7 @@ onBeforeUnmount(() => {
       <h2 :id="titleId">{{ title }}</h2>
       <p v-if="description" :id="descriptionId">{{ description }}</p>
     </figcaption>
-    <div ref="host" class="charts-visualization__canvas" :data-chart-kind="kind" :data-chart-animation="props.animated && !reducedMotion" :data-chart-series="JSON.stringify(series.map(item => item.data))" :style="{ height }" aria-hidden="true" />
+    <div ref="host" class="charts-visualization__canvas" :data-chart-kind="kind" :data-chart-animation="props.animated && !reducedMotion" :data-chart-series="JSON.stringify(series.map(item => item.data))" :style="{ height, width: '100%' }" aria-hidden="true" />
     <p v-if="!hasData" role="status">No chart data available.</p>
     <table class="charts-visualization__data">
       <caption class="sr-only">{{ title }} data</caption>
