@@ -20,7 +20,9 @@ test('all fourteen completed packages are explicitly enabled and discovered by t
   }
   const result = spawnSync('bun', ['scripts/packages.ts', 'matrix'], { cwd: root, encoding: 'utf8' })
   expect(result.status).toBe(0)
-  expect(JSON.parse(result.stdout).capability.sort()).toEqual([...completed].sort())
+  const authored = catalog.capabilities.filter((entry: { status: string, packageTest?: unknown, packagePath?: string }) => ['done', 'in-progress'].includes(entry.status) && entry.packagePath && entry.packageTest).map((entry: { id: string }) => entry.id)
+  expect(JSON.parse(result.stdout).capability.sort()).toEqual(authored.sort())
+  expect(authored.sort()).toEqual([...completed, 'command-system'].sort())
 })
 
 test('Webhooks and Notifications require Jobs; Audit, Cache and Realtime fixtures remain independent', () => {
@@ -44,4 +46,16 @@ test('Realtime and Notifications keep optional integrations out of core package 
     expect(Object.keys(manifest.dependencies).filter(name => name.startsWith('@repo/'))).toEqual([])
     expect(readFileSync(resolve(root, entry.evaluationDocument), 'utf8')).toContain('## Cross-framework v1 contract')
   }
+})
+
+
+test('Command reference is staged while its packed browser lifecycle is required by the matrix', () => {
+  const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === 'command-system')
+  expect(entry.status).toBe('in-progress')
+  expect(entry.defaultInstalled).toBe(false)
+  expect(catalog.referenceApplication.enabledCapabilities).not.toContain('command-system')
+  expect(entry.packageTest.runtimeScript).toBe('package:test:runtime')
+  const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
+  expect(manifest.dependencies[entry.packageName]).toBe('workspace:*')
+  expect(readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')).toContain(`'${entry.packageName}'`)
 })
