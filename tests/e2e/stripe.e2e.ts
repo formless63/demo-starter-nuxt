@@ -13,6 +13,9 @@ test('Stripe native auth, scoped projections, repeated operation reads and queue
   try {
     expect((await request.get('/api/integrations/stripe/payments')).status()).toBe(401)
     expect((await request.post('/api/integrations/stripe/checkout', { data: {} })).status()).toBe(401)
+    const overflow = await request.post('/api/integrations/stripe/webhooks/default', { headers: { 'stripe-signature': 't=1,v1=' + '0'.repeat(64) }, data: 'x'.repeat(1024 * 1024 + 1) })
+    expect(overflow.status()).toBe(413)
+    expect(await overflow.json()).toEqual({ error: { code: 'limit_exceeded', message: 'Limit exceeded.', retryable: false } })
     await db.insert(tables.user).values({ id: owner, name: 'Stripe browser fixture', email: `${owner}@example.test` })
     await db.insert(tables.session).values({ id: randomUUID(), token, userId: owner, expiresAt: new Date(Date.now() + 3600000) })
     await db.insert(tables.stripeBinding).values({ id: bindingId, scopeKind: 'user', scopeId: owner, localResourceId: 'browser-fixture', connectionId: 'default', resourceKind: 'payment', remoteId: `pi_${owner.replaceAll('-', '')}` })
