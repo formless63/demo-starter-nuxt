@@ -18,7 +18,7 @@ test('File UI native session routes enforce owner scope and CSRF in dev and prod
   expect((await request.post(`/api/files/remove?id=${foreignId}`, { headers })).status()).toBe(404);
   expect((await request.get(`/api/files/download?id=${foreignId}`, { headers })).status()).toBe(404);
   expect((await request.post(`/api/files/remove?id=${id}`, { headers })).status()).toBe(200);
-  await page.goto('/files'); await waitForHydration(page); await expect(page.getByRole('heading', { name: 'Files', exact: true })).toBeVisible(); await expect(page.getByText('Visible receipt.txt', { exact: true })).toBeVisible(); await expect(page.getByText('Private foreign receipt.txt', { exact: true })).toHaveCount(0);
+  await page.goto('/files'); await waitForHydration(page); await expect(page.getByRole('heading', { name: 'Files', level: 1, exact: true })).toBeVisible(); await expect(page.getByRole('rowheader', { name: 'Visible receipt.txt', exact: true })).toBeVisible(); await expect(page.getByText('Private foreign receipt.txt', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('link', { name: /Download/ })).toHaveCount(0);
  } finally { await pool.query('delete from file_ui_files where owner=any($1)', [[owner, foreign]]); await pool.query('delete from session where user_id=any($1)', [[owner, foreign]]); await pool.query('delete from "user" where id=any($1)', [[owner, foreign]]); await pool.end(); }
 });
