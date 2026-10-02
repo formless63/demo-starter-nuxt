@@ -1,0 +1,11 @@
+# Operator-installed Medusa subscriber bridge
+
+Copy [`subscriber.ts`](../../../packages/nuxt-medusa/provider-bridge/subscriber.ts) (also shipped in the packed package) into the separate Medusa 2.21.2 project's `src/subscribers/`. Configure `MEDUSA_BRIDGE_TARGET_URL` to the exact starter `/api/integrations/medusa/webhooks/<connection>` URL, `MEDUSA_BRIDGE_CONNECTION_ID` to that registered machine connection, and `MEDUSA_BRIDGE_WEBHOOK_SECRET` to its dedicated `whsec_` base64-byte secret. This is a manual external operator action; the starter never installs/configures a provider instance or registers remote callbacks.
+
+The closed event set is product.created/product.updated/product.deleted/order.placed. Pinned product workflows emit the selected `product.*` names with `{id}` data; internal ProductEvents use `product.product.*` names and are not this bridge subscription. The pinned complete-cart workflow emits order.placed with `{id}`. Direct module changes can miss the workflow hint and require explicit reconciliation. The bridge forwards only a generated delivery UUID, event type and product/order ID. It does not forward metadata, customer information, images or financial data. Admin credentials are unrelated to this receiver secret.
+
+`application-bridge.standard-webhooks-v1` signs exact bytes using existing starter Standard Webhooks framing. It is an application protocol, not native Medusa commerce signing and not Medusa Cloud's deployment webhook signature. HTTPS, no redirects, one bounded15-second attempt; literal loopback HTTP is test/development-only. The receiver checks a300-second absolute replay window, rotation secrets and durable receipt identity.
+
+`sendHint` accepts a retained delivery UUID for explicit in-process retries. Native subscriber retries can construct a fresh UUID. Provider event infrastructure owns durability/retries; this artifact has no durable outbox or universal exactly-once guarantee. Different delivery IDs for one resource independently reconcile latest authoritative state. Manual one-page reconciliation repairs missed hints; pages are advisory offsets, not a snapshot/export.
+
+Local proof must distinguish native source shape, actual backend/subscriber runtime and mocked protocol tests. No checkout/payment/fulfillment actions are needed to seed local order records or inspect native Admin reads.

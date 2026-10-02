@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test'
 import { waitForHydration } from './hydration'
+import { expect, test } from '@playwright/test'
 
 test('renders the landing page and protects the application area', async ({ page }) => {
   test.setTimeout(60_000)
