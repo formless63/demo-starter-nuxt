@@ -1171,7 +1171,7 @@
       "id": "command-system",
       "displayName": "Command System",
       "kind": "operations-ui",
-      "status": "planned",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1179,7 +1179,37 @@
         "authorization"
       ],
       "externalRequirements": [],
-      "summary": "Composable commands and keyboard-driven action discovery."
+      "summary": "Composable commands and keyboard-driven action discovery.",
+      "packageName": "@repo/nuxt-command-system",
+      "packagePath": "packages/nuxt-command-system",
+      "fixturePath": "fixtures/command-system-consumer",
+      "documentationPath": "capabilities/command-system/CAPABILITY.md",
+      "evaluationDocument": "COMMAND_SYSTEM_MODULE_EVALUATION.md",
+      "scripts": [
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [],
+      "migrations": [],
+      "runtimeProcesses": [
+        "Nuxt application"
+      ],
+      "packageTest": {
+        "ownedDependencies": [
+          "reka-ui"
+        ],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "app/pages/commands.vue",
+            ".fixture/package-test.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "data-table",

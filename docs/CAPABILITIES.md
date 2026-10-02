@@ -27,6 +27,7 @@ The root application deliberately enables every completed capability for continu
 | `notifications` | `@repo/nuxt-notifications` | Enabled | No | Jobs | ntfy optional; Email integration optional | [Notifications](../capabilities/notifications/CAPABILITY.md) |
 | `search` | `@repo/nuxt-search` | Enabled | No | None | Existing PostgreSQL | [Search](../capabilities/search/CAPABILITY.md) |
 | `import-export` | `@repo/nuxt-import-export` | Enabled | No | Jobs, Object Storage | Existing PostgreSQL and S3 on use | [Import / Export](../capabilities/import-export/CAPABILITY.md) |
+| `command-system` | `@repo/nuxt-command-system` | Staged reference | No | None | None | [Command System](../capabilities/command-system/CAPABILITY.md) |
 | `ops-admin` | `@repo/nuxt-ops-admin` | Enabled | No | None | None; optional provider adapters | [Ops / Admin](../capabilities/ops-admin/CAPABILITY.md) |
 
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
@@ -142,3 +143,5 @@ Private `@repo/nuxt-import-export` requires Jobs and Object Storage; PostgreSQL/
 Ops / Admin (`done`) is an optional private `@repo/nuxt-ops-admin` package. Enable with `opsAdmin.application` pointing to an application-owned baseline session resolver/static adapter registry. No service/migration or hard capability dependencies. [Contract](../capabilities/ops-admin/CAPABILITY.md).
 
 Ops reference verification uses `bun run test:ops-reference` after building the root. Its disposable protocol services and temporary source copies prove read-only inspection and independent adapter/full Ops removal; they are test-only, not an application installer.
+
+Command System (`in-progress`) uses `@repo/nuxt-command-system`; enabled explicitly in the reference, never installed by default. No service, migrations or hard capability dependencies. [Contract](../capabilities/command-system/CAPABILITY.md).
