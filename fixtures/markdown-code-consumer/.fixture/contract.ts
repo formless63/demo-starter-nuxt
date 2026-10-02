@@ -112,7 +112,7 @@ const malformedHtml = await renderToString(createSSRApp({ render: () => h(Markdo
 assert(!malformedHtml.includes('drop '), 'Invalid subtrees are dropped deterministically')
 assert(malformedHtml.includes('<p>before<strong></strong>after</p>'))
 assert(malformedHtml.includes('<thead><tr><th>Head</th></tr></thead><tbody><tr><td>Cell</td></tr></tbody>'))
-assert.equal(grammar.nodes.length, 8)
+assert.equal(grammar.nodes.length, 9)
 const validSource = '# Heading\n\nText **strong [link](https://example.com)** and *emphasis*, ~~deleted~~, `inline`.\n\n> quote\n>\n> - item\n>   - nested\n\n3. Third\n4. Fourth\n\n| A | B |\n|---|---|\n| cell | other |\n\n---\n\n```ts\nconst x = 1\n```'
 const parsedNormal = await parseMarkdown(validSource)
 assert.deepEqual(normalizeMarkdownDocument(parsedNormal), parsedNormal, 'All normal parser-generated constructs are preserved')

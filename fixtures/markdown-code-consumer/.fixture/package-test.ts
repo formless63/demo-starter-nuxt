@@ -10,6 +10,8 @@ for (const runtime of ['bun', 'node']) {
 }
 const dom = Bun.spawn(['bun', '.fixture/dom.ts'], { stdout: 'inherit', stderr: 'inherit' })
 assert.equal(await dom.exited, 0, 'Shipped Vue interrupted clipboard states')
+const transport = Bun.spawn(['bun', '.fixture/transport.ts'], { stdout: 'inherit', stderr: 'inherit' })
+assert.equal(await transport.exited, 0, 'Canonical payload survives real Nuxt serializer UTF-8 round trip')
 async function inspect(directory: string): Promise<void> {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const path = join(directory, entry.name)
@@ -47,6 +49,11 @@ try {
     const install = Bun.spawn(['bunx', 'playwright', 'install', '--with-deps', 'chromium'], { stdout: 'inherit', stderr: 'inherit' })
     assert.equal(await install.exited, 0, 'Install mandatory browser gate')
   }
+  const canonicalResponse = await (await fetch(`${url}/api/malformed`)).json()
+  assert(!JSON.stringify(canonicalResponse).includes('drop '), 'Normalize loaded JSON before the HTTP/Nuxt transport boundary')
+  assert(JSON.stringify(canonicalResponse).includes('replacement character � is legitimate'))
+  const malformedSsr = await (await fetch(`${url}/malformed`)).text()
+  assert(!malformedSsr.includes('drop '), 'SSR markup and embedded Nuxt payload receive the same canonical model')
   const browser = await chromium.launch()
   try {
     const context = await browser.newContext({ permissions: ['clipboard-read', 'clipboard-write'] })
@@ -75,6 +82,7 @@ try {
     await expect(page.locator('html')).toHaveAttribute('data-fixture-ready', 'true', { timeout: 30000 })
     await expect(page.getByRole('button', { name: 'Copy text code' })).toBeEnabled()
     await expect(page.locator('.markdown-content')).not.toContainText('drop ')
+    await expect(page.locator('.markdown-content')).toContainText('replacement character � is legitimate')
     await expect(page.locator('table > thead > tr > th')).toHaveText('Head')
     await expect(page.locator('table > tbody > tr > td')).toHaveText('Cell')
     await expect(page.locator('.markdown-content > p').first()).toHaveText('beforeafter')

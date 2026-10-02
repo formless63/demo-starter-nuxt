@@ -10,6 +10,12 @@ Application-owned Nitro handlers parse source and deliver `MarkdownDocument` thr
 
 Pinned stable markdown-it 15.0.2 and Shiki 4.5.0 are owned by the package and stay server-only. The module rejects client imports of its server entry. The packed fixture scans the production public bundle to prevent parser, grammar or WASM leakage. Fixed JavaScript/TypeScript/JSON grammars and GitHub light/dark themes use the fine-grained Shiki core; unknown languages and exhausted highlighting budgets render plaintext.
 
+## Nuxt transport boundary
+
+`parseMarkdown` returns an already normalized model. When loading a previously stored or otherwise untrusted document, call `normalizeMarkdownDocument(value)` from `@repo/nuxt-markdown-code/server` inside the Nitro handler **before** returning it to `useFetch`/Nuxt payload serialization. The component revalidates the canonical payload independently, but cannot reconstruct code units lost before it receives them. Never send an unnormalized stored model through the SSR payload and rely only on the component.
+
+Nuxt4.5.2's devalue5.9.4 serializer leaves lone surrogate code units raw; HTTP UTF-8 then replaces them with U+FFFD. A server-only rejection after data has already entered the payload would diverge from client rendering. Pre-transport normalization preserves one canonical model for both. Legitimate U+FFFD and valid paired Unicode remain supported. The fixture reproduces exact serializer/UTF-8 loss and checks canonical equality, raw API/SSR payloads, and actual Chromium hydration without weakening the forged direct-component regressions.
+
 ## Content and safety contract
 
 Supports paragraphs, headings, emphasis, strong/deletion, inline/fenced/indented code, blockquotes, bullet/ordered lists (preserving start), breaks, rules, tables and links. No HTML execution, remote ingestion, image requests, custom grammars, embeds, plugins or arbitrary renderer extensions.
