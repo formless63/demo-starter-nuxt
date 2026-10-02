@@ -1,11 +1,30 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('charts visualization', () => {
-  test('enhances SSR fallback and supports kinds, replacement, accessibility, motion, and cleanup', async ({ page }) => {
+  test('enhances SSR fallback and supports kinds, replacement, accessibility, motion, and cleanup', async ({ page }, testInfo) => {
     const browserErrors: string[] = []
     const consoleErrors: string[] = []
-    page.on('pageerror', error => browserErrors.push(error.message))
-    page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()) })
+    const failedRequests: string[] = []
+    const sanitize = (value: string) => { try { return new URL(value).pathname } catch { return value.replace(/[?].*$/u, '') } }
+    const record = (kind: string, value: string) => {
+      const body = Buffer.from(JSON.stringify({ kind, value, url: sanitize(page.url()) }, null, 2))
+      void testInfo.attach(`charts-${kind}-${testInfo.attachments.length}`, { contentType: 'application/json', body })
+    }
+    page.on('pageerror', error => { const value = error.stack || error.message; browserErrors.push(value); record('pageerror', value) })
+    page.on('console', message => { if (message.type() === 'error') { consoleErrors.push(message.text()); record('console-error', message.text()) } })
+    page.on('requestfailed', request => { const value = `${request.method()} ${sanitize(request.url())} :: ${request.failure()?.errorText || 'unknown'}`; failedRequests.push(value); record('requestfailed', value) })
+    const attachDiagnostics = async () => {
+      await testInfo.attach('browser-diagnostics', {
+        contentType: 'application/json',
+        body: JSON.stringify({
+          url: sanitize(page.url()),
+          pageErrors: browserErrors,
+          consoleErrors,
+          requestFailures: failedRequests,
+          html: (await page.content()).slice(0, 100_000),
+        }, null, 2),
+      })
+    }
     await page.goto('/charts')
     await expect(page.getByRole('heading', { name: 'Revenue' })).toBeVisible()
     await expect(page.locator('#primary-chart table')).toBeVisible()
@@ -42,5 +61,6 @@ test.describe('charts visualization', () => {
     await expect.poll(async () => JSON.parse(await page.locator('[data-echarts-state]').textContent() ?? '{}').width).not.toBe(initialWidth)
     expect(browserErrors).toEqual([])
     expect(consoleErrors).toEqual([])
+    await attachDiagnostics()
   })
 })

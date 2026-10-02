@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useAttrs, useId, watch } from 'vue'
 import type { ECharts, EChartsOption } from 'echarts'
+import { use as register, init } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { AriaComponent, GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
+import { BarChart, LineChart } from 'echarts/charts'
 import { createChartsLifecycle } from '../lifecycle'
 
 export type ChartKind = 'line' | 'bar' | 'area'
@@ -30,9 +34,6 @@ let mediaQuery: MediaQueryList | undefined
 let motionListener: ((event: MediaQueryListEvent) => void) | undefined
 const lifecycleController = createChartsLifecycle<ECharts, HTMLElement, EChartsOption>({
   load: async () => {
-    const [{ use: register, init }, { CanvasRenderer }, { GridComponent, LegendComponent, TooltipComponent, AriaComponent }, { BarChart, LineChart }] = await Promise.all([
-      import('echarts/core'), import('echarts/renderers'), import('echarts/components'), import('echarts/charts'),
-    ])
     register([CanvasRenderer, GridComponent, LegendComponent, TooltipComponent, AriaComponent, BarChart, LineChart])
     return { init: (element: HTMLElement) => init(element, undefined, { renderer: 'canvas' }) }
   },
