@@ -5,3 +5,6 @@ for (const runtime of ['node', 'bun']) {
   const result = spawnSync(runtime, ['.fixture/protocol.ts'], { stdio: 'inherit', env: { ...process.env, NODE_ENV: 'test' } })
   assert.equal(result.status, 0, `${runtime} protocol fixture failed`)
 }
+
+const database = spawnSync('bun', ['.fixture/database.ts'], { stdio: 'inherit', env: { ...process.env, NODE_ENV: 'test' } })
+assert.equal(database.status, 0, 'Database fixture failed')

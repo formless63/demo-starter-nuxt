@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { check, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core'
+import { check, index, integer, jsonb, pgTable, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core'
 import type { Scope, DraftInput } from './validation'
 import type { ErrorCode } from './errors'
 export type OperationKind = 'create_draft' | 'reconcile_invoice' | 'reconcile_client'

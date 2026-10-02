@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { InvoiceNinjaError } from './errors'
-export const opaqueId = z.string().min(1).max(128).refine(s => s.isWellFormed() && !/[\u0000-\u001f\u007f-\u009f]/u.test(s))
+export function hasControls(s: string, plainText = false) { return Array.from(s).some(c => { const n = c.charCodeAt(0); return (n < 32 && !(plainText && [9, 10].includes(n))) || (n >= 127 && n <= 159) }) }
+export const opaqueId = z.string().min(1).max(128).refine(s => s.isWellFormed() && !hasControls(s))
 export const connectionId = z.string().max(64).regex(/^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/)
 export const uuid = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
 export const scopeSchema = z.object({ kind: z.enum(['user', 'tenant']), id: opaqueId }).strict()
@@ -18,7 +19,7 @@ export const draftInput = z.object({
   invoiceDate: date, dueDate: date.optional(),
   numbering: z.discriminatedUnion('mode', [z.object({ mode: z.literal('provider') }).strict(), z.object({ mode: z.literal('explicit'), number: z.string().min(1).max(64).regex(/^[A-Za-z0-9._/-]+$/) }).strict()]),
   lines: z.array(z.object({
-    description: z.string().min(1).max(2000).refine(s => s.isWellFormed() && !/[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/u.test(s)),
+    description: z.string().min(1).max(2000).refine(s => s.isWellFormed() && !hasControls(s, true)),
     quantity: decimal.refine(s => s !== '0'), unitCost: decimal,
   }).strict()).min(1).max(100),
 }).strict().refine(s => !s.dueDate || s.dueDate >= s.invoiceDate)
