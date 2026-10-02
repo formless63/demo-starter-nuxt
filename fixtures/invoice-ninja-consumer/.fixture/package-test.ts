@@ -8,3 +8,6 @@ for (const runtime of ['node', 'bun']) {
 
 const database = spawnSync('bun', ['.fixture/database.ts'], { stdio: 'inherit', env: { ...process.env, NODE_ENV: 'test' } })
 assert.equal(database.status, 0, 'Database fixture failed')
+
+const provider = spawnSync('bun', ['.fixture/provider.ts'], { stdio: 'inherit', env: { ...process.env, NODE_ENV: 'test' } })
+assert.equal(provider.status, 0, 'Actual pinned Invoice Ninja provider fixture failed')
