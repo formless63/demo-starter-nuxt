@@ -13,20 +13,30 @@ test.describe('charts visualization', () => {
     page.on('pageerror', error => { const value = error.stack || error.message; browserErrors.push(value); record('pageerror', value) })
     page.on('console', message => { if (message.type() === 'error') { consoleErrors.push(message.text()); record('console-error', message.text()) } })
     page.on('requestfailed', request => { const value = `${request.method()} ${sanitize(request.url())} :: ${request.failure()?.errorText || 'unknown'}`; failedRequests.push(value); record('requestfailed', value) })
-    const attachDiagnostics = async () => {
-      await testInfo.attach('browser-diagnostics', {
-        contentType: 'application/json',
-        body: JSON.stringify({
-          url: sanitize(page.url()),
-          pageErrors: browserErrors,
-          consoleErrors,
-          requestFailures: failedRequests,
-          state: await page.locator('[data-echarts-state]').textContent(),
-          html: (await page.content()).slice(0, 100_000),
-        }, null, 2),
-      })
+    const snapshot = async () => {
+      try {
+        return await Promise.race([
+          page.evaluate(() => {
+            const state = document.querySelector('[data-echarts-state]')?.textContent ?? null
+            const host = document.querySelector('#primary-chart .charts-visualization__canvas')
+            const rect = host?.getBoundingClientRect()
+            return { hydrated: document.readyState === 'complete', state, host: host ? { present: true, width: rect?.width ?? 0, height: rect?.height ?? 0, canvas: host.querySelector('canvas') !== null } : { present: false } }
+          }),
+          new Promise<null>(resolve => setTimeout(() => resolve(null), 1000)),
+        ])
+      }
+      catch { return null }
     }
-    await page.goto('/charts')
+    const attachDiagnostics = async () => {
+      try {
+        const report = { url: sanitize(page.url()), pageErrors: browserErrors, consoleErrors, requestFailures: failedRequests, snapshot: await snapshot() }
+        console.log(`[charts-diagnostics] ${JSON.stringify(report)}`)
+        await testInfo.attach('browser-diagnostics', { contentType: 'application/json', body: JSON.stringify(report, null, 2) })
+      }
+      catch (error) { console.log(`[charts-diagnostics-error] ${error instanceof Error ? error.message : 'snapshot failed'}`) }
+    }
+    try {
+      await page.goto('/charts')
     await expect(page.getByRole('heading', { name: 'Revenue' })).toBeVisible()
     await expect(page.locator('#primary-chart table')).toBeVisible()
     await expect(page.locator('#primary-chart canvas')).toBeVisible()
@@ -61,7 +71,8 @@ test.describe('charts visualization', () => {
     await page.setViewportSize({ width: 700, height: 800 })
     await expect.poll(async () => JSON.parse(await page.locator('[data-echarts-state]').textContent() ?? '{}').width).not.toBe(initialWidth)
     expect(browserErrors).toEqual([])
-    expect(consoleErrors).toEqual([])
-    await attachDiagnostics()
+      expect(consoleErrors).toEqual([])
+    }
+    finally { await attachDiagnostics() }
   })
 })
