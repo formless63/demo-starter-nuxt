@@ -1,3 +1,20 @@
 import { strict as assert } from 'node:assert'
-assert.equal(typeof (await import('@repo/nuxt-data-table/runtime')).default, 'undefined')
-console.log('data-table package runtime exports verified')
+import { ref } from 'vue'
+import { createSortedRowModel, rowSelectionFeature, rowSortingFeature, tableFeatures, useTable } from '@tanstack/vue-table'
+
+const data = ref([{ id: 'b', name: 'Beta' }, { id: 'a', name: 'Alpha' }, { id: 'c', name: 'Gamma' }])
+const table = useTable({
+  features: tableFeatures({ rowSortingFeature, rowSelectionFeature, sortedRowModel: createSortedRowModel() }),
+  data,
+  columns: [{ accessorKey: 'name', header: 'Name', enableSorting: true }],
+  getRowId: row => row.id,
+})
+assert.deepEqual(table.getRowModel().rows.map(row => row.id), ['b', 'a', 'c'])
+assert.equal(table.getRowModel().rows[0]?.getValue('name'), 'Beta')
+table.getColumn('name')?.toggleSorting(false)
+assert.deepEqual(table.getRowModel().rows.map(row => row.id), ['a', 'b', 'c'])
+table.setRowSelection({ a: true })
+assert.deepEqual(table.getSelectedRowModel().rows.map(row => row.id), ['a'])
+data.value = [data.value[2]!, data.value[0]!, data.value[1]!]
+assert.deepEqual(table.getRowModel().rows.map(row => row.id), ['a', 'b', 'c'])
+console.log('data-table behavioral API assertions passed')
