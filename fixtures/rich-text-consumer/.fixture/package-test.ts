@@ -2,6 +2,9 @@ import { strict as assert } from 'node:assert'
 import { chromium, expect } from '@playwright/test'
 import { parseRichTextDocument } from '@repo/nuxt-rich-text/runtime'
 import { verifyRichText } from './browser-checks'
+for (const runtime of ['bun', 'node']) {
+ const child = Bun.spawn([runtime, '.fixture/transport.ts'], { stdout: 'inherit', stderr: 'inherit' }); assert.equal(await child.exited, 0, 'Canonical rich text survives pinned Nuxt payload serialization')
+}
 assert.throws(() => parseRichTextDocument({ type: 'doc', content: [{ type: 'image', attrs: { src: 'javascript:alert(1)' } }] }))
 const port = 4328
 const server = Bun.spawn(['bun', 'run', 'start'], { env: { ...Bun.env, PORT: String(port) }, stdout: 'ignore', stderr: 'inherit' })

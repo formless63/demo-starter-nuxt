@@ -43,12 +43,12 @@ The generic `packages:*` commands build and exercise the catalog entries. Hard c
 
 | Status | Capability |
 | --- | --- |
-| Done (20) | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI; Import / Export; Ops / Admin; Invoice Ninja; Stripe; Medusa; Data Table; Charts / Visualization; Command System |
+| Done (22) | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI; Import / Export; Ops / Admin; Invoice Ninja; Stripe; Medusa; Data Table; Charts / Visualization; Command System; Markdown / Code Content; Rich Text / Tiptap |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
-Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All twenty remain opt-in for clean consumers and explicitly enabled in the reference app.
+Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All twenty-two remain opt-in for clean consumers and explicitly enabled in the reference app.
 
-Charts source `7e8daa68c9862ef982c6dd0aa7e4269903eda9fd` passed [all 20 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37018899032). Command retains its separately verified implementation ([all 20 jobs at e0a01fa](https://github.com/formless63/demo-starter-nuxt/actions/runs/37012702417)). The composed twenty-capability tree requires a new full exact-head CI run; these source results are not evidence for this combination.
+Charts source `7e8daa68c9862ef982c6dd0aa7e4269903eda9fd` passed [all 20 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37018899032). Command retains its separately verified implementation ([all 20 jobs at e0a01fa](https://github.com/formless63/demo-starter-nuxt/actions/runs/37012702417)). Markdown / Code Content implementation `e99539d90020a70028545ac4f252c55c16e3f432` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37029379598): all 21 generic packed package lifecycles, corrected real-browser payload/hydration/copy checks, full root checks, production browser/container/health, migrations and worker verification. This is source evidence; metadata promotion and later revisions require their own exact-head CI.
 
 The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused and Identity remains separately paused.
 
@@ -245,11 +245,14 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Current implementation: `@repo/nuxt-data-table` with TanStack Vue Table 9.2.4, semantic accessible rendering, typed columns, stable IDs, controlled state, and manual server modes. No virtualization or provider integration.
 - Contract: [`capabilities/data-table/CAPABILITY.md`](capabilities/data-table/CAPABILITY.md)
 
-### Markdown / Code Content (`planned`)
+### Markdown / Code Content (`done`)
 
 - Requires: none
 - Integrates with: Object Storage, AI
 - External: none
+- Current implementation: optional `@repo/nuxt-markdown-code`, bounded server-only markdown-it/Shiki, whitelisted native Vue SSR, accessible clipboard states, and packed independent consumer lifecycle.
+- Contract: [`capabilities/markdown-code/CAPABILITY.md`](capabilities/markdown-code/CAPABILITY.md)
+- Verified source: all 23 jobs in [full hosted CI](https://github.com/formless63/demo-starter-nuxt/actions/runs/37029379598), including corrected packed browser, removal/rebuild and root production checks; rerun exact-head CI after metadata promotion.
 
 ### Charts / Visualization (`done`)
 
@@ -264,7 +267,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Jobs, Search
 - External: none directly; Object Storage owns its S3 requirement
 
-### Rich Text / Tiptap (`in-progress`)
+### Rich Text / Tiptap (`done`)
 
 - Requires: none
 - Integrates with: Object Storage, Markdown / Code, Realtime, Organizations
@@ -316,4 +319,6 @@ Evaluation status means “investigate when a real capability needs it,” not �
 
 Every implemented capability gets `capabilities/<id>/CAPABILITY.md`. Changes to capability installation, removal, dependencies, optional integrations, external requirements, scripts, migrations, runtime services, or status update this roadmap, the JSON catalog, and the capability contract together. Run `bun run capabilities:check` before the ordinary repository verification.
 
-Rich Text is under implementation as independent `@repo/nuxt-rich-text`; see [contract](capabilities/rich-text/CAPABILITY.md). Exact hosted full CI and packed lifecycle gates precede completion.
+Rich Text is implemented as independent `@repo/nuxt-rich-text`; see [contract](capabilities/rich-text/CAPABILITY.md). The source passed all hosted gates; the combined promotion remains pending exact-head CI.
+
+Rich Text source `1666bb6e252fbedbbe20b545de8117e8a246820f` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37031826840), including its real packed browser/removal lifecycle and full root production gates. The combined Markdown/Rich Text promotion records 22 completed opt-in capabilities; its own exact-head full CI remains pending before acceptance.
