@@ -981,7 +981,7 @@
       "id": "organizations",
       "displayName": "Organizations / Tenancy",
       "kind": "identity-policy",
-      "status": "done",
+      "status": "planned",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1198,11 +1198,10 @@
       "summary": "Accessible controlled tables for sorting, filtering, pagination, visibility, selection, and manual server modes.",
       "documentationPath": "capabilities/data-table/CAPABILITY.md",
       "evaluationDocument": "DATA_TABLE_MODULE_EVALUATION.md",
-      "modulePath": "packages/nuxt-data-table/src/module.ts",
       "packageName": "@repo/nuxt-data-table",
       "packagePath": "packages/nuxt-data-table",
       "fixturePath": "fixtures/data-table-consumer",
-      "packageTest": {"ownedDependencies": ["@tanstack/vue-table"], "runtimeScript": "package:test:runtime", "removal": {"scripts": ["package:test:runtime"], "paths": ["app.vue"], "replacementNuxtConfig": "nuxt.config.ts"}}
+      "packageTest": {"ownedDependencies": ["@tanstack/vue-table"], "runtimeScript": "package:test:runtime", "removal": {"scripts": ["package:test:runtime"], "paths": ["app.vue"], "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"}}
     },
     {
       "id": "markdown-code",
