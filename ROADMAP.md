@@ -239,7 +239,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Object Storage, AI
 - External: none
 
-### Charts / Visualization (`in-progress`)
+### Charts / Visualization (`done`)
 
 - Requires: none
 - Integrates with: Data Table, Realtime

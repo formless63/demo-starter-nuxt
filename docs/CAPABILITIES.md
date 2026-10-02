@@ -28,7 +28,7 @@ The root application deliberately enables every completed capability for continu
 | `search` | `@repo/nuxt-search` | Enabled | No | None | Existing PostgreSQL | [Search](../capabilities/search/CAPABILITY.md) |
 | `import-export` | `@repo/nuxt-import-export` | Enabled | No | Jobs, Object Storage | Existing PostgreSQL and S3 on use | [Import / Export](../capabilities/import-export/CAPABILITY.md) |
 | `ops-admin` | `@repo/nuxt-ops-admin` | Enabled | No | None | None; optional provider adapters | [Ops / Admin](../capabilities/ops-admin/CAPABILITY.md) |
-| `charts-visualization` | `@repo/nuxt-charts-visualization` | Source integration | No | None | None | [Charts / Visualization](../capabilities/charts-visualization/CAPABILITY.md) |
+| `charts-visualization` | `@repo/nuxt-charts-visualization` | Enabled | No | None | None | [Charts / Visualization](../capabilities/charts-visualization/CAPABILITY.md) |
 
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
 
