@@ -18,7 +18,9 @@ export default defineConfig({
     url: 'http://127.0.0.1:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    stdout: 'pipe',
     env: {
+      NUXT_E2E_DIAGNOSTICS: 'true',
       DATABASE_URL: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter',
       NUXT_AUTH_SECRET: process.env.NUXT_AUTH_SECRET || 'e2e-secret-that-is-at-least-thirty-two-chars',
       NUXT_PUBLIC_APP_BASE_URL: 'http://127.0.0.1:3000',
