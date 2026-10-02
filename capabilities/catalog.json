@@ -17,6 +17,7 @@
       "ai",
       "import-export",
       "ops-admin"
+      ,"charts-visualization"
     ]
   },
   "baseline": [
@@ -1214,7 +1215,7 @@
       "id": "charts-visualization",
       "displayName": "Charts / Visualization",
       "kind": "operations-ui",
-      "status": "planned",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1222,7 +1223,13 @@
         "realtime"
       ],
       "externalRequirements": [],
-      "summary": "Vue-native charting and application visualization primitives."
+      "summary": "Accessible line, bar, and area chart primitives with semantic SSR fallbacks and client-only enhancement.",
+      "documentationPath": "capabilities/charts-visualization/CAPABILITY.md",
+      "evaluationDocument": "CHARTS_VISUALIZATION_MODULE_EVALUATION.md",
+      "packageName": "@repo/nuxt-charts-visualization",
+      "packagePath": "packages/nuxt-charts-visualization",
+      "fixturePath": "fixtures/charts-visualization-consumer",
+      "packageTest": {"ownedDependencies": ["echarts"], "runtimeScript": "package:test:runtime", "removal": {"scripts": ["package:test:runtime"], "paths": ["app/app.vue"], "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"}}
     },
     {
       "id": "file-ui",

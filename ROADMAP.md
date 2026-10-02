@@ -239,11 +239,12 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Object Storage, AI
 - External: none
 
-### Charts / Visualization (`planned`)
+### Charts / Visualization (`in-progress`)
 
 - Requires: none
 - Integrates with: Data Table, Realtime
 - External: none
+- v1 Nuxt package: `@repo/nuxt-charts-visualization`; line/bar/area wrapper with ECharts 6.1.0 selective imports, semantic SSR table fallback, responsive disposal, and reduced-motion handling.
 
 ### File UI (`planned`)
 

@@ -1,0 +1,15 @@
+{
+  "name": "@repo/nuxt-charts-visualization",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Accessible Nuxt chart primitives with semantic SSR fallbacks",
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "exports": { ".": { "types": "./dist/types.d.mts", "import": "./dist/module.mjs", "default": "./dist/module.mjs" } },
+  "files": ["dist"],
+  "engines": { "node": ">=24.0.0" },
+  "scripts": { "dev:prepare": "nuxt-module-build prepare && nuxt-module-build build", "prepack": "nuxt-module-build prepare && nuxt-module-build build" },
+  "dependencies": { "@nuxt/kit": "4.5.2", "echarts": "6.1.0" },
+  "peerDependencies": { "nuxt": ">=4.0.0 <5" },
+  "devDependencies": { "@nuxt/module-builder": "1.0.3", "nuxt": "4.5.2", "vue": "3.5.43" }
+}
