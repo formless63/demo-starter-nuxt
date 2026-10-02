@@ -91,6 +91,10 @@ export function createStripeService(options: StripeServiceOptions) {
     // Duplicate intent resolves before consulting mutable offer registry/configuration.
     const [existing] = await tx.select().from(operations).where(and(eq(operations.scopeKind, context.scope.kind), eq(operations.scopeId, context.scope.id), eq(operations.connectionId, binding.connectionId), eq(operations.kind, 'create_checkout'), eq(operations.callerKey, input.idempotencyKey))).limit(1)
     if (existing) { if (existing.inputDigest !== digest) throw new StripeCapabilityError('conflict'); return view(existing) }
+    // A new caller key cannot escape an unresolved provider write for this customer.
+    await tx.select({ id: bindings.id }).from(bindings).where(eq(bindings.id, binding.id)).for('update')
+    const [unresolved] = await tx.select({ id: operations.id }).from(operations).where(and(eq(operations.bindingId, binding.id), eq(operations.kind, 'create_checkout'), or(eq(operations.status, 'dispatching'), eq(operations.status, 'reconciliation_required')))).limit(1)
+    if (unresolved) throw new StripeCapabilityError('conflict')
     const configured = await connection(binding.connectionId, context.signal)
     if (!options.resolveOffer || !options.approvedRedirects) throw new StripeCapabilityError('unconfigured')
     const lines: Stripe.Checkout.SessionCreateParams.LineItem[] = []
@@ -217,6 +221,10 @@ export function createStripeService(options: StripeServiceOptions) {
         const context = { ...contextFor(row), signal: budget.signal }
         binding = await owned(context, row.bindingId, row.kind === 'create_checkout' ? 'customer' : row.kind === 'reconcile_checkout' ? 'checkout' : 'payment', tx)
         if (row.kind === 'create_checkout' && row.firstDispatchAt && Date.now() >= row.firstDispatchAt.getTime() + replayMs) { await tx.update(operations).set({ status: 'reconciliation_required', errorCode: 'conflict', updatedAt: new Date() }).where(eq(operations.id, id)); return }
+        if (row.kind === 'create_checkout') {
+          const [unresolved] = await tx.select({ id: operations.id }).from(operations).where(and(eq(operations.bindingId, binding.id), eq(operations.kind, 'create_checkout'), eq(operations.status, 'reconciliation_required'))).limit(1)
+          if (unresolved) throw new StripeCapabilityError('conflict')
+        }
         await leaseBinding(tx, binding, token)
         ;[attempt] = await tx.update(operations).set({ status: 'dispatching', leaseToken: token, leaseUntil: new Date(Date.now() + leaseMs), firstDispatchAt: row.firstDispatchAt ?? new Date(), updatedAt: new Date(), revision: sql`${operations.revision} + 1` }).where(eq(operations.id, id)).returning()
       })

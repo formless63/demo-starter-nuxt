@@ -12,7 +12,7 @@ export async function stripeHttp<T>(event: H3Event, action: (signal: AbortSignal
     if (Buffer.byteLength(JSON.stringify(result)) > 256 * 1024) throw new StripeCapabilityError('limit_exceeded')
     return result
   }
-  catch (error) { const safe = safeError(error); setResponseStatus(event, safe.statusCode); return { error: safe.public() } }
+  catch (error) { const safe = safeError(error); setResponseStatus(event, safe.statusCode); return { error: safe.public(event.method === 'GET' && !callback) } }
   finally { budget.close(); event.node.res.removeListener('close', close) }
 }
 export async function rawBody(event: H3Event, signal: AbortSignal, maximum: number) {
