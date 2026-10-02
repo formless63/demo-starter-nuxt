@@ -1,8 +1,8 @@
 import { browserDiagnostics } from './browser-diagnostics'
 import { expect, test } from '@playwright/test'
 import { createHmac, randomUUID } from 'node:crypto'
-import { spawn } from 'node:child_process'
-import { cp, mkdir, mkdtemp, readdir, rm, symlink } from 'node:fs/promises'
+import { spawn, spawnSync } from 'node:child_process'
+import { cp, mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createServer } from 'node:net'
@@ -47,8 +47,10 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     if (!production) {
       isolated = await mkdtemp(join(tmpdir(), 'nuxt-transfer-browser-'))
       await cp(root, isolated, { recursive: true, filter: source => !/(?:^|\/)(?:node_modules|\.git|\.nuxt|\.output|test-results|playwright-report)(?:\/|$)/.test(source) && !source.endsWith('/.env') })
-      await mkdir(join(isolated, 'node_modules'))
-      for (const entry of await readdir(join(root, 'node_modules'))) if (!['.cache', '.vite'].includes(entry)) await symlink(join(root, 'node_modules', entry), join(isolated, 'node_modules', entry))
+      // A second Nuxt dev server needs its own dependency realpaths, not links
+      // back into the active server's modules and optimizer cache identity.
+      const installed = spawnSync('bun', ['install', '--frozen-lockfile', '--ignore-scripts'], { cwd: isolated, env, stdio: 'pipe', timeout: 60000 })
+      expect(installed.status, 'Isolated browser fixture dependencies install from the unchanged lockfile').toBe(0)
       cwd = isolated
     }
     app = spawn(production ? 'node' : 'bun', production ? ['.output/server/index.mjs'] : ['run', 'dev', '--host', '127.0.0.1', '--port', String(port)], { cwd, env, detached: true, stdio: ['ignore', 'ignore', 'pipe'] })

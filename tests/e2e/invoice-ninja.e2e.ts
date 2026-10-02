@@ -46,7 +46,7 @@ test('Invoice Ninja native scoped local projections, queued cancellation and aut
     await expect(page.getByText('LOCAL-1', { exact: true })).toBeVisible()
   }
   finally {
-    await context.close()
+    await context.close().catch(() => {})
     await db.delete(operations).where(eq(operations.id, operation)); await db.delete(projections).where(eq(projections.bindingId, binding))
     await db.delete(bindings).where(eq(bindings.id, binding)); await db.delete(bindings).where(eq(bindings.id, foreign))
     await db.delete(user).where(eq(user.id, owner)); await db.delete(user).where(eq(user.id, other)); await client.end()
