@@ -22,9 +22,20 @@ test('Medusa user isolation, local projections, repeated actions and queued canc
     expect((await request.post('/api/integrations/medusa/reconcile', { headers: { cookie: userCookie }, data: { kind: 'product', bindingId: binding, remoteId: 'foreign' } })).status()).toBe(400)
     await context.addCookies([{ name: cookieName, value: value(token), domain: new URL(baseURL!).hostname, path: '/', secure: Boolean(process.env.PLAYWRIGHT_BASE_URL), httpOnly: true, sameSite: 'Lax' }])
     await page.goto('/integrations/medusa'); await expect(page.getByRole('heading', { name: 'Medusa reconciliation' })).toBeVisible(); await expect(page.getByText('Scoped product fixture', { exact: false })).toBeVisible()
-    let count = 0
-    await page.route('**/api/integrations/medusa/reconcile', async route => { count++; await new Promise(resolve => setTimeout(resolve, 250)); await route.fulfill({ json: { operationId: operation, status: 'queued' } }) })
-    await page.getByRole('button', { name: 'Reconcile product' }).click(); await expect(page.getByRole('button', { name: 'Reconcile product' })).toBeDisabled(); await expect(page.getByRole('button', { name: 'Cancel queued work' })).toBeEnabled(); expect(count).toBe(1)
+    let count = 0, releaseResponse!: () => void
+    const responseGate = new Promise<void>(resolve => { releaseResponse = resolve })
+    await page.route('**/api/integrations/medusa/reconcile', async route => { count++; await responseGate; await route.fulfill({ json: { operationId: operation, status: 'queued' } }) })
+    const reconcile = page.getByRole('button', { name: 'Reconcile product' })
+    try {
+      await reconcile.click()
+      await expect(reconcile).toBeDisabled()
+      // A native repeated click cannot enqueue another request while disabled.
+      await reconcile.evaluate(button => (button as HTMLButtonElement).click())
+      expect(count).toBe(1)
+    }
+    finally { releaseResponse() }
+    await expect(page.getByRole('button', { name: 'Cancel queued work' })).toBeEnabled()
+    expect(count).toBe(1)
     await page.getByRole('button', { name: 'Cancel queued work' }).click(); await expect(page.getByRole('status')).toContainText('cancelled')
     expect((await request.get('/api/integrations/medusa/operation', { headers: { cookie: foreignCookie }, params: { operationId: operation } })).status()).toBe(404)
     await page.unrouteAll({ behavior: 'wait' })
