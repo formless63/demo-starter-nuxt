@@ -17,12 +17,24 @@ export async function stripeHttp<T>(event: H3Event, action: (signal: AbortSignal
 }
 export async function rawBody(event: H3Event, signal: AbortSignal, maximum: number) {
   const request = event.node.req
+  let detach = () => {}
   const body = new ReadableStream<Uint8Array>({
-    async start(controller) {
-      try { for await (const chunk of request) { if (signal.aborted) throw signal.reason; controller.enqueue(typeof chunk === 'string' ? Buffer.from(chunk) : chunk) } controller.close() }
-      catch (error) { controller.error(error) }
+    start(controller) {
+      const data = (chunk: Buffer | string) => { request.pause(); controller.enqueue(typeof chunk === 'string' ? Buffer.from(chunk) : chunk) }
+      const end = () => { detach(); controller.close() }
+      const error = (cause: Error) => { detach(); controller.error(cause) }
+      detach = () => { request.off('data', data); request.off('end', end); request.off('error', error) }
+      request.on('data', data); request.once('end', end); request.once('error', error)
+      request.pause()
     },
-    cancel() { request.destroy() },
+    pull() { request.resume() },
+    cancel() {
+      // Stop reading now, then close after the static error response reaches the client.
+      // Destroying the request here would also destroy the socket before a413/504 response.
+      request.pause(); detach()
+      if (!event.node.res.headersSent) event.node.res.setHeader('connection', 'close')
+      event.node.res.once('finish', () => request.destroy())
+    },
   })
   return boundedBody(body, signal, maximum)
 }
