@@ -10,6 +10,7 @@
         "@repo/nuxt-api": "workspace:*",
         "@repo/nuxt-audit-log": "workspace:*",
         "@repo/nuxt-cache": "workspace:*",
+        "@repo/nuxt-charts-visualization": "workspace:*",
         "@repo/nuxt-email": "workspace:*",
         "@repo/nuxt-import-export": "workspace:*",
         "@repo/nuxt-jobs": "workspace:*",
@@ -57,6 +58,17 @@
       "name": "ai-consumer-fixture",
       "dependencies": {
         "@repo/nuxt-ai": "workspace:*",
+        "nuxt": "4.5.2",
+      },
+      "devDependencies": {
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7",
+      },
+    },
+    "fixtures/charts-visualization-consumer": {
+      "name": "charts-visualization-consumer",
+      "dependencies": {
+        "@repo/nuxt-charts-visualization": "workspace:*",
         "nuxt": "4.5.2",
       },
       "devDependencies": {
@@ -262,6 +274,20 @@
       "peerDependencies": {
         "nuxt": ">=4.0.0 <5",
       },
+    },
+    "packages/nuxt-charts-visualization": {
+      "name": "@repo/nuxt-charts-visualization",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+        "echarts": "6.1.0",
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "nuxt": "4.5.2",
+        "vue": "3.5.43",
+      },
+      "peerDependencies": { "nuxt": ">=4.0.0 <5" },
     },
     "packages/nuxt-api": {
       "name": "@repo/nuxt-api",
@@ -513,6 +539,12 @@
     },
   },
   "packages": {
+    "echarts": ["echarts@6.1.0", "", { "dependencies": { "tslib": "2.3.0", "zrender": "6.1.0" } }, "sha512-q0yaFPggC9FUdsWH4blavRWFmxdrIodbkoKNAjJudAI6CA9gNPxHtV2RcZNEepZVlk4yvBYkOkbk6HIVpIyHZA=="],
+
+    "tslib": ["tslib@2.3.0", "", {}, "sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg=="],
+
+    "zrender": ["zrender@6.1.0", "", { "dependencies": { "tslib": "2.3.0" } }, "sha512-oEGMDB6pOP2S6OwRR4PdVv610zrjnA3Bh+JnSG12fYJlBKjtNAoEb5fSUoCOOINlH96I2fU38/A2UpRKs67xYQ=="],
+
     "@ai-sdk/gateway": ["@ai-sdk/gateway@3.0.13", "", { "dependencies": { "@ai-sdk/provider": "3.0.2", "@ai-sdk/provider-utils": "4.0.5", "@vercel/oidc": "3.1.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-g7nE4PFtngOZNZSy1lOPpkC+FAiHxqBJXqyRMEG7NUrEVZlz5goBdtHg1YgWRJIX776JTXAmbOI5JreAKVAsVA=="],
 
     "@ai-sdk/provider": ["@ai-sdk/provider@3.0.2", "", { "dependencies": { "json-schema": "^0.4.0" } }, "sha512-HrEmNt/BH/hkQ7zpi2o6N3k1ZR1QTb7z85WYhYygiTxOQuaml4CMtHCWRbric5WPU+RNsYI7r1EpyVQMKO1pYw=="],
@@ -982,6 +1014,8 @@
     "@replit/codemirror-css-color-picker": ["@replit/codemirror-css-color-picker@6.3.0", "", { "peerDependencies": { "@codemirror/language": "^6.0.0", "@codemirror/state": "^6.0.0", "@codemirror/view": "^6.0.0" } }, "sha512-19biDANghUm7Fz7L1SNMIhK48tagaWuCOHj4oPPxc7hxPGkTVY2lU/jVZ8tsbTKQPVG7BO2CBDzs7CBwb20t4A=="],
 
     "@repo/nuxt-ai": ["@repo/nuxt-ai@workspace:packages/nuxt-ai"],
+
+    "@repo/nuxt-charts-visualization": ["@repo/nuxt-charts-visualization@workspace:packages/nuxt-charts-visualization"],
 
     "@repo/nuxt-api": ["@repo/nuxt-api@workspace:packages/nuxt-api"],
 
