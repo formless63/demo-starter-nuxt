@@ -51,14 +51,16 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Ops / Admin | Available (`done`) | Optional | Baseline human session; privileged server allowlist | Read-only sanitized application-owned diagnostic adapters |
 | Search | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; no extra service | Owner-scoped weighted FTS and deterministic keyset pages |
 | Data Table | Available (`done`) | Optional | None | Accessible controlled TanStack Vue tables with manual server modes |
+| Markdown / Code Content | Available (`done`) | Optional | None | Bounded server Markdown/Shiki with safe native Vue SSR and copy UI |
+| Rich Text / Tiptap | Available (`done`) | Optional | None | Bounded canonical JSON, safe Vue SSR and controlled lazy editing with explicit record identity |
 | Import / Export | Available (`done`) | Optional | Jobs, Object Storage; PostgreSQL/Drizzle/Node | Durable bounded CSV transfer; personal Project round-trip |
 | Charts / Visualization | Available (`done`) | Optional | None | Accessible line, bar, and area charts with SSR table fallback |
 
-`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache, AI, Invoice Ninja, Stripe and Medusa remain lazy with no provider required to boot/build. All twenty capabilities are `done`.
+`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache, AI, Invoice Ninja, Stripe and Medusa remain lazy with no provider required to boot/build. All twenty-two capabilities are `done`.
 
 Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
 
-Charts source `7e8daa68c9862ef982c6dd0aa7e4269903eda9fd` passed [all 20 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37018899032). Command retains its separately verified implementation ([all 20 jobs at e0a01fa](https://github.com/formless63/demo-starter-nuxt/actions/runs/37012702417)). The composed twenty-capability tree requires a new full exact-head CI run; these source results are not evidence for this combination.
+Charts source `7e8daa68c9862ef982c6dd0aa7e4269903eda9fd` passed [all 20 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37018899032). Command retains its separately verified implementation ([all 20 jobs at e0a01fa](https://github.com/formless63/demo-starter-nuxt/actions/runs/37012702417)). Markdown / Code Content implementation `e99539d90020a70028545ac4f252c55c16e3f432` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37029379598): all 21 generic packed package lifecycles, corrected real-browser payload/hydration/copy checks, full root checks, production browser/container/health, migrations and worker verification. This is source evidence; metadata promotion and later revisions require their own exact-head CI.
 
 See [Using capabilities](docs/CAPABILITIES.md) for installation and removal guidance and [ROADMAP.md](ROADMAP.md) for the future design plan.
 
@@ -75,7 +77,7 @@ bun run jobs:migrate
 bun run dev
 ```
 
-Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all twenty completed capability packages; `db:migrate` applies the application/API/Audit/Notification/transfer/provider tables and Projects search vector/index and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
+Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all twenty-two completed capability packages; `db:migrate` applies the application/API/Audit/Notification/transfer/provider tables and Projects search vector/index and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
 
 ## Authentication notes
 
@@ -204,4 +206,8 @@ Medusa 2.21.2 backend/subscriber compatibility is verified against the pinned di
 
 Command System is available (`done`): opt-in native Nuxt command palette and application-owned registry. Keyboard, focus, async execution and interruption contracts live in the [capability contract](capabilities/command-system/CAPABILITY.md). Reference: `/commands`.
 
-Rich Text / Tiptap is an opt-in in-progress native Vue package. The reference page `/rich-text-test` demonstrates bounded safe JSON with lazy editing and caller-owned state. See [contract](capabilities/rich-text/CAPABILITY.md).
+Markdown / Code Content is available (`done`): optional `@repo/nuxt-markdown-code`, native Vue renderer and bounded server parsing at `/markdown`. See [contract](capabilities/markdown-code/CAPABILITY.md).
+
+Rich Text / Tiptap is an opt-in completed native Vue package. The reference page `/rich-text-test` demonstrates bounded safe JSON with lazy editing and caller-owned state. See [contract](capabilities/rich-text/CAPABILITY.md).
+
+Rich Text source `1666bb6e252fbedbbe20b545de8117e8a246820f` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37031826840), including its real packed browser/removal lifecycle and full root production gates. The combined Markdown/Rich Text promotion records 22 completed opt-in capabilities; its own exact-head full CI remains pending before acceptance.

@@ -1,6 +1,9 @@
 import { expect, type Page } from '@playwright/test';
 export async function verifyRichText(page:Page){
- expect(await page.getByRole('region',{name:'Unicode fidelity'}).textContent()).toBe('line1\nline2\nline3 😀 café');
+ const canonicalText = 'line1\nline2\nline3 😀 � café';
+ expect(await page.getByRole('region',{name:'Unicode fidelity'}).textContent()).toBe(canonicalText);
+ const payload = JSON.parse(await page.locator('script[data-nuxt-data]').textContent() ?? 'null');
+ expect(payload).toContain(canonicalText);
  const editor=page.getByRole('textbox',{name:'Document',exact:true});
  await expect(editor).toHaveText('Hello rich text');
  await editor.fill('Edited document');

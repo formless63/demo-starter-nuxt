@@ -1,12 +1,14 @@
 # Rich Text / Tiptap
 
-Status: `in-progress`. Independent opt-in private package `@repo/nuxt-rich-text`; `defaultInstalled: false`, no hard capability dependencies, external services, migrations or credentials. Exact hosted browser and full CI remain completion gates.
+Status: `done`. Independent opt-in private package `@repo/nuxt-rich-text`; `defaultInstalled: false`, no hard capability dependencies, external services, migrations or credentials. Source `1666bb6e252fbedbbe20b545de8117e8a246820f` passed [all 23 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37031826840), including the packed browser/runtime and root production gates. The combined Markdown/Rich Text metadata promotion must pass its own exact-head CI before acceptance.
 
 ## Installation and contract
 
 Install the package and explicitly add `@repo/nuxt-rich-text` to Nuxt `modules`. The module registers `RichTextContent` and `RichTextEditor`. Import types, `parseRichTextDocument`, `emptyRichTextDocument`, `isSafeRichTextLink`, `normalizeRichTextText`, and `richTextLimits` from `@repo/nuxt-rich-text/runtime`.
 
 Both components accept `value` and `label`. The editor requires a caller-owned nonempty `documentKey: string` and additionally accepts `readOnly` and `onChange(next)`. A controlled caller must synchronously update its reactive value inside the callback to accept a proposed edit; retaining the value rejects it. A stable documentKey preserves accepted echoes/clones and normal undo. Change documentKey whenever switching records or intentionally replacing/resetting a document, even if JSON is identical; this destroys the old editor/history. Changed-content external updates also reset history. Persistence, authentication, authorization, concurrency and server-side revalidation are caller-owned. Never treat browser validation as authorization.
+
+At the server loading/persistence boundary, call `parseRichTextDocument(raw)` BEFORE passing data to Nuxt serialization (for example, before returning from a server handler or useAsyncData loader). Pass that SAME canonical document to SSR and client hydration. Component revalidation is defense in depth; it cannot recover original NUL/surrogates already changed by UTF-8 or HTML transport. Arbitrary uncanonical input serialized first is outside this contract.
 
 The closed JSON v1 schema accepts doc, paragraphs, headings 1–3, bullet/ordered lists, paragraph-first list items, blockquotes, code blocks, text and hard breaks. Marks are bold, italic, strike, inline code, and safe absolute HTTP(S)/mailto links without credentials or whitespace. Inline code excludes other marks. Ordered starts are integers 1–1,000,000. Limits: 2,000 nodes, depth 24, 100,000 UTF-16 characters and 262,144 serialized UTF-8 bytes. Validation copies canonical data, merges adjacent identically marked text, sorts marks, rejects cycles, accessors, unexpected attributes and executable HTML nodes. CRLF/CR text is canonicalized to LF before SSR/editing. NUL and unpaired UTF-16 surrogates are rejected in text and links; valid Unicode including U+FFFD is retained. Errors omit the input.
 
@@ -16,6 +18,6 @@ Native buttons expose pressed/disabled state, a labeled formatting fieldset, tex
 
 ## Verification and removal
 
-`bun x vitest run --config vitest.rich-text.config.ts` runs neutral validation and real mounted Vue/Tiptap behavior. `bun run packages:test rich-text` owns packed installation, independent strict types/build, real SSR/UTF-8 response hydration/browser behavior, removal and rebuild. The generic matrix includes this in-progress fixture. Root `/rich-text-test` is a public static example with no persistence or private data, with an explicit hydration readiness marker.
+`bun x vitest run --config vitest.rich-text.config.ts` runs neutral validation and real mounted Vue/Tiptap behavior. `bun run packages:test rich-text` owns packed installation, independent strict types/build, real SSR/UTF-8 response hydration/browser behavior, removal and rebuild. The generic matrix includes this completed fixture. Root `/rich-text-test` is a public static example with no persistence or private data, with an explicit hydration readiness marker.
 
 To remove from a consumer, remove the module registration, component usages and imports, then uninstall the package. No data or migrations are deleted. From the reference app additionally remove `app/pages/rich-text-test.vue` and `tests/e2e/rich-text.spec.ts`, root package dependency and catalog reference enablement. Source package and fixture may remain without activating anything.
