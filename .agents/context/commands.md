@@ -75,3 +75,12 @@ Stripe verification: `bun run packages:test stripe` uses the official pinned SDK
 Medusa: `bun run packages:test medusa` exercises native Admin protocol and raw application-bridge verification on Bun1.4.2/actual Node24 plus a separately installed disposable Medusa2.21.2 backend/subscriber, PostgreSQL18 receipt+Jobs/retained-data/remove/rebuild. No external provider services or payment workflows. Apply app migration0013 and existing Jobs migration/doctor explicitly. Authenticated reference page: `/integrations/medusa`.
 
 Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/36978353705) passed all 19 jobs at `4478e41f2835bfe1495dab762756b2fec08bd98e`, including all 17 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. Re-run full CI for subsequent revisions; static local checks alone do not replace database, Docker, browser or package runtime coverage.
+
+
+### Browser infrastructure ownership
+
+Playwright runs the `application` project before the dependent `import-export` project. The latter creates/removes a disposable Docker bridge, so it must not overlap ordinary browser navigations. Both projects inherit the same development or explicit `PLAYWRIGHT_BASE_URL` production target, retain every assertion and timeout, and add no retries. A dependency failure blocks the downstream project and keeps CI failed; it is not a pass or skipped acceptance gate.
+
+`bun run test:e2e --project=application` selects the application set. `bun run test:e2e --project=import-export` includes its application dependency; `--no-deps` is an explicit standalone fixture diagnostic and must not be used alongside another browser run. File/grep filters follow [Playwright dependency semantics](https://playwright.dev/docs/test-projects#test-filtering).
+
+Evidence: [bounded CI probe](https://github.com/formless63/demo-starter-nuxt/actions/runs/37018590706/job/110875526426) on Chromium153.0.8010.12 held eight loopback module requests with six accepted connections. In both development and production passes, the two pending requests failed `ERR_NETWORK_CHANGED`19–38ms before the fixture's Docker network-create event. The real feature assertions remained intact. Ordinary acceptance does not intentionally abort requests; the investigative probe remains in the linked run and diagnostic history. Its bounded event/error evidence omits payloads, credentials, addresses and unrelated resource identities.

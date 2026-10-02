@@ -6,6 +6,12 @@ const externalBaseURL = process.env.PLAYWRIGHT_BASE_URL
 export default defineConfig({
   testDir: 'tests/e2e',
   testMatch: '**/*.e2e.ts',
+  // Compose bridge changes can abort unrelated Chromium socket requests. Finish
+  // ordinary navigations before this fixture starts or removes infrastructure.
+  projects: [
+    { name: 'application', testIgnore: '**/import-export.e2e.ts' },
+    { name: 'import-export', testMatch: '**/import-export.e2e.ts', dependencies: ['application'] },
+  ],
   use: {
     baseURL: externalBaseURL || 'http://127.0.0.1:3000',
     trace: 'retain-on-failure',
