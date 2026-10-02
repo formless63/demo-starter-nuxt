@@ -15,6 +15,6 @@ export function browserDiagnostics(page: Page) {
     if (response.request().resourceType() !== 'script' || response.status() < 400) return
     const path = new URL(response.url()).pathname
     const category = path.includes('/.vite/') ? 'vite_dependency' : path.includes('/_nuxt/') ? 'nuxt_script' : 'other_script'
-    console.info(`[browser-diagnostic] script_failure category=${category} status=${response.status()}`)
+    console.info(`[browser-diagnostic] script_failure category=${category} status=${response.status()} file=${path.split('/').at(-1)!.replace(/[^a-zA-Z0-9_.-]/g, '_')}`)
   })
 }
