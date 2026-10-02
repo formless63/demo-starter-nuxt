@@ -227,11 +227,13 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Search, Authorization
 - External: none
 
-### Data Table (`planned`)
+### Data Table (`done`)
 
 - Requires: none
 - Integrates with: Search, Organizations, Authorization
 - External: none
+- Current implementation: `@repo/nuxt-data-table` with TanStack Vue Table 9.2.4, semantic accessible rendering, typed columns, stable IDs, controlled state, and manual server modes. No virtualization or provider integration.
+- Contract: [`capabilities/data-table/CAPABILITY.md`](capabilities/data-table/CAPABILITY.md)
 
 ### Markdown / Code Content (`planned`)
 

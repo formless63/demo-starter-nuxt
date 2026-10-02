@@ -88,7 +88,8 @@
     "@repo/nuxt-search": "workspace:*",
     "@repo/nuxt-ai": "workspace:*",
     "@repo/nuxt-import-export": "workspace:*",
-    "@repo/nuxt-ops-admin": "workspace:*"
+    "@repo/nuxt-ops-admin": "workspace:*",
+    "@repo/nuxt-data-table": "workspace:*"
   },
   "devDependencies": {
     "@nuxt/eslint": "1.17.0",
