@@ -6,7 +6,7 @@ The baseline starter always includes Nuxt/Nitro, strict TypeScript, Bun tooling,
 
 A capability is an optional, independently maintained feature package layered onto that baseline. Package source existing under `packages/` does not activate anything. A consumer must keep the workspace dependency, register the Nuxt module, and perform the capability's documented application integration. Unused packages do not become modules, routes, workers, or runtime services merely because their source exists.
 
-The root application deliberately enables all twenty-one completed capabilities for continuous integration, recorded in `referenceApplication.enabledCapabilities`. That is separate from `defaultInstalled`: this field means “will a clean consumer/base application receive this capability without explicitly selecting or enabling it?” All current capabilities answer no.
+The root application deliberately enables all twenty-three completed capabilities for continuous integration, recorded in `referenceApplication.enabledCapabilities`. That is separate from `defaultInstalled`: this field means “will a clean consumer/base application receive this capability without explicitly selecting or enabling it?” All current capabilities answer no.
 
 `@repo/*` is the private internal workspace scope. The packages are not published, so commands such as `bun add @repo/nuxt-jobs` will not work in an unrelated external repository. A real npm scope will be chosen deliberately if publication happens later.
 
@@ -31,12 +31,13 @@ The root application deliberately enables all twenty-one completed capabilities 
 | `stripe` | `@repo/nuxt-stripe` | Enabled | No | Jobs, Webhooks | Stripe on use | [Stripe](../capabilities/stripe/CAPABILITY.md) |
 | `medusa` | `@repo/nuxt-medusa` | Enabled | No | Jobs, Webhooks | Medusa on use; optional operator bridge | [Medusa](../capabilities/medusa/CAPABILITY.md) |
 | `data-table` | `@repo/nuxt-data-table` | Enabled | No | None | None | [Data Table](../capabilities/data-table/CAPABILITY.md) |
+| `rich-text` | `@repo/nuxt-rich-text` | Enabled | No | None | None | [Rich Text / Tiptap](../capabilities/rich-text/CAPABILITY.md) |
 | `markdown-code` | `@repo/nuxt-markdown-code` | Enabled | No | None | None | [Markdown / Code](../capabilities/markdown-code/CAPABILITY.md) |
 | `command-system` | `@repo/nuxt-command-system` | Enabled | No | None | None | [Command System](../capabilities/command-system/CAPABILITY.md) |
 | `ops-admin` | `@repo/nuxt-ops-admin` | Enabled | No | None | None; optional provider adapters | [Ops / Admin](../capabilities/ops-admin/CAPABILITY.md) |
 | `charts-visualization` | `@repo/nuxt-charts-visualization` | Enabled | No | None | None | [Charts / Visualization](../capabilities/charts-visualization/CAPABILITY.md) |
 
-All twenty-one entries above are `done`. Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
+All twenty-three entries above are `done`. Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
 
 Charts source `7e8daa68c9862ef982c6dd0aa7e4269903eda9fd` passed [all 20 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37018899032). Command retains its separately verified implementation ([all 20 jobs at e0a01fa](https://github.com/formless63/demo-starter-nuxt/actions/runs/37012702417)). Markdown / Code Content implementation `e99539d90020a70028545ac4f252c55c16e3f432` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37029379598): all 21 generic packed package lifecycles, corrected real-browser payload/hydration/copy checks, full root checks, production browser/container/health, migrations and worker verification. This is source evidence; metadata promotion and later revisions require their own exact-head CI.
 
@@ -182,3 +183,13 @@ Keep `"@repo/nuxt-charts-visualization": "workspace:*"` and explicitly register 
 ## Markdown / Code Content (done)
 
 Optional private `@repo/nuxt-markdown-code`; no hard dependencies, backend or migrations. Root `/markdown` explicitly demonstrates server-only bounded markdown-it/Shiki and safe native Vue. See [contract](../capabilities/markdown-code/CAPABILITY.md).
+
+Rich Text (`done`): explicitly register `@repo/nuxt-rich-text`; no hard dependencies or external services. Safe SSR content and lazy editor share a closed validated JSON schema. See [contract](../capabilities/rich-text/CAPABILITY.md).
+
+Rich Text source `1666bb6e252fbedbbe20b545de8117e8a246820f` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37031826840), including its real packed browser/removal lifecycle and full root production gates. The reviewed Markdown/Rich Text promotion `f1bbea44407704973dd2168cda3c23115028c487` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37037650525), recording 22 completed opt-in capabilities. This File UI composition requires its own exact-head full CI before acceptance.
+
+## File UI (`done`)
+
+Explicitly enable `@repo/nuxt-file-ui` plus Object Storage. Trusted identity/policy and atomic metadata are application adapters; the independent fixture uses bounded non-durable memory only. Root `/files` uses existing auth/PostgreSQL. See [contract](../capabilities/file-ui/CAPABILITY.md).
+
+File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040678932), including packed native/provider/browser/removal and root application/production gates. This Rich Text / File UI composition records 23 completed opt-in, reference-enabled capabilities; its own exact-head full CI and independent composition review are required before acceptance.
