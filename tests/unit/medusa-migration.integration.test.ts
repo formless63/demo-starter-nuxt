@@ -19,6 +19,10 @@ suite('Medusa additive migration retention', () => {
       const journalPath = join(folder, 'meta/_journal.json'), journal = JSON.parse(await readFile(journalPath, 'utf8'))
       const expectedHashes = JSON.parse(await readFile('fixtures/medusa-consumer/.fixture/frozen-migrations.json', 'utf8'))
       for (const entry of journal.entries.slice(0, 8)) expect(createHash('sha256').update(await readFile(join(full, `${entry.tag}.sql`))).digest('hex')).toBe(expectedHashes[entry.tag])
+      const fullEntries = [...journal.entries] as { idx: number, when: number, tag: string }[]
+      expect(fullEntries.map(entry => entry.idx)).toEqual(fullEntries.map((_, index) => index))
+      expect(fullEntries.slice(8).map(entry => entry.tag)).toEqual(['0009_invoice_ninja', '0011_stripe_v1', '0012_stripe_receipt_conflicts', '0013_medusa'])
+      const fullHashes = await Promise.all(fullEntries.map(async entry => createHash('sha256').update(await readFile(join(full, `${entry.tag}.sql`))).digest('hex')))
       journal.entries = journal.entries.slice(0, prefix); await writeFile(journalPath, JSON.stringify(journal))
       await migrate(db, { migrationsFolder: folder })
       await client`INSERT INTO "user" (id,name,email) VALUES ('medusa-upgrade-owner','Owner','medusa-upgrade@example.test')`
@@ -28,7 +32,9 @@ suite('Medusa additive migration retention', () => {
       await migrate(db, { migrationsFolder: full }); await migrate(db, { migrationsFolder: full })
       expect([...await client`SELECT id,name,description,owner_id,created_at::text,updated_at::text FROM project`]).toEqual(seeded)
       const upgraded = [...await client`SELECT * FROM drizzle.__drizzle_migrations ORDER BY id`]
-      expect(upgraded.slice(0, history.length)).toEqual(history); expect(upgraded).toHaveLength(9)
+      expect(upgraded.slice(0, history.length)).toEqual(history); expect(upgraded).toHaveLength(fullEntries.length)
+      expect(upgraded.map(row => row.hash)).toEqual(fullHashes)
+      expect(upgraded.map(row => Number(row.created_at))).toEqual(fullEntries.map(entry => entry.when))
       expect([...await client`SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename LIKE 'medusa_%'`]).toHaveLength(4)
       expect([...await client`SELECT conname FROM pg_constraint WHERE conname LIKE 'medusa_%_check'`]).toHaveLength(8)
     }
