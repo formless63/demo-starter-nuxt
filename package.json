@@ -92,7 +92,9 @@
     "@repo/nuxt-invoice-ninja": "workspace:*",
     "@repo/nuxt-stripe": "workspace:*",
     "@repo/nuxt-medusa": "workspace:*",
+    "@repo/nuxt-charts-visualization": "workspace:*",
     "@repo/nuxt-data-table": "workspace:*",
+    "@repo/nuxt-command-system": "workspace:*",
     "@repo/nuxt-markdown-code": "workspace:*"
   },
   "devDependencies": {

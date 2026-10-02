@@ -22,5 +22,6 @@ export const malformedDocument: MarkdownDocument = {
     text('drop lone\uD800surrogate'),
     { kind: 'code', language: 'text', text: 'drop code\rvalue' },
     text('paired Unicode 😀 is preserved'),
+    text('replacement character � is legitimate'),
   ],
 }

@@ -3,7 +3,7 @@ import MarkdownIt from "markdown-it";
 import { createHighlighterCore } from "shiki/core";
 import { createOnigurumaEngine } from "shiki/engine/oniguruma";
 import type { MarkdownDocument, MarkdownNode, MarkdownTag } from "../types";
-import { markdownTags, safeMarkdownHref } from "../types";
+import { markdownTags, normalizeMarkdownDocument, safeMarkdownHref } from "../types";
 
 export const markdownLimits = Object.freeze({
 	inputBytes: 65536,
@@ -237,5 +237,8 @@ export async function parseMarkdown(source: string): Promise<MarkdownDocument> {
 		}
 		return root;
 	};
-	return { version: 1, nodes: await convert(tokens, 0) };
+	return normalizeMarkdownDocument({ version: 1, nodes: await convert(tokens, 0) });
 }
+
+// Normalize stored/untrusted models before they enter Nuxt payload serialization.
+export { normalizeMarkdownDocument } from "../types";

@@ -17,10 +17,12 @@
       "ai",
       "import-export",
       "ops-admin",
+      "charts-visualization",
       "invoice-ninja",
       "medusa",
       "stripe",
       "data-table",
+      "command-system",
       "markdown-code"
     ]
   },
@@ -1304,7 +1306,7 @@
       "id": "command-system",
       "displayName": "Command System",
       "kind": "operations-ui",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1312,7 +1314,37 @@
         "authorization"
       ],
       "externalRequirements": [],
-      "summary": "Composable commands and keyboard-driven action discovery."
+      "summary": "Composable commands and keyboard-driven action discovery.",
+      "packageName": "@repo/nuxt-command-system",
+      "packagePath": "packages/nuxt-command-system",
+      "fixturePath": "fixtures/command-system-consumer",
+      "documentationPath": "capabilities/command-system/CAPABILITY.md",
+      "evaluationDocument": "COMMAND_SYSTEM_MODULE_EVALUATION.md",
+      "scripts": [
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [],
+      "migrations": [],
+      "runtimeProcesses": [
+        "Nuxt application"
+      ],
+      "packageTest": {
+        "ownedDependencies": [
+          "reka-ui"
+        ],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "app/pages/commands.vue",
+            ".fixture/package-test.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "data-table",
@@ -1396,7 +1428,8 @@
             ".fixture/contract.ts",
             ".fixture/dom.ts",
             ".fixture/grammar.ts",
-            "app/pages/malformed.vue"
+            "app/pages/malformed.vue",
+            ".fixture/transport.ts"
           ],
           "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
         }
@@ -1406,7 +1439,7 @@
       "id": "charts-visualization",
       "displayName": "Charts / Visualization",
       "kind": "operations-ui",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1414,7 +1447,27 @@
         "realtime"
       ],
       "externalRequirements": [],
-      "summary": "Vue-native charting and application visualization primitives."
+      "summary": "Accessible line, bar, and area chart primitives with semantic SSR fallbacks and client-only enhancement.",
+      "documentationPath": "capabilities/charts-visualization/CAPABILITY.md",
+      "evaluationDocument": "CHARTS_VISUALIZATION_MODULE_EVALUATION.md",
+      "packageName": "@repo/nuxt-charts-visualization",
+      "packagePath": "packages/nuxt-charts-visualization",
+      "fixturePath": "fixtures/charts-visualization-consumer",
+      "packageTest": {
+        "ownedDependencies": [
+          "echarts"
+        ],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "app/app.vue"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "file-ui",
