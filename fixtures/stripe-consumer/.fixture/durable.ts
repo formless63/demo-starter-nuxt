@@ -23,6 +23,7 @@ const config = { databaseUrl: url.toString(), schema: 'pgboss', concurrency: 1, 
 const migration = createJobsBoss(config, 'migration'); migration.on('error', () => {})
 await migration.start(); await migration.stop()
 const boss = createJobsBoss(config, 'producer'); boss.on('error', () => {}); await boss.start()
+let checkoutId = 'cs_owned', paymentId = 'pi_owned', customerId = 'cus_owned'
 let authorized = true, transport = 'ok', posts = 0, gets = 0, providerStatus = 'unpaid', providerPaymentStatus = 'processing'
 let holdNext = false, holdPost = false, holdPayment = false, held: (() => void) | undefined
 const seenKeys: string[] = [], seenBodies: string[] = []
@@ -31,10 +32,11 @@ const remote = createServer(async (request, response) => {
   assert.equal(request.headers.authorization, 'Bearer sk_test_fixture')
   if (request.method === 'POST') { posts++; seenKeys.push(String(request.headers['idempotency-key'])); seenBodies.push(body) }
   else gets++
+  if (transport === 'reject400' && request.method === 'POST') { response.writeHead(400); response.end('{"error":{"message":"private rejection","type":"invalid_request_error"}}'); return }
   if (transport === 'disconnect' && request.method === 'POST') { request.socket.destroy(); return }
   if (transport === 'cached500' && request.method === 'POST') { response.writeHead(500); response.end('{"error":{"message":"private customer body","type":"api_error"}}'); return }
   response.setHeader('content-type', 'application/json')
-  const snapshot = JSON.stringify(request.url?.startsWith('/v1/payment_intents/') ? { id: 'pi_owned', object: 'payment_intent', livemode: false, status: providerPaymentStatus, amount: 100, amount_received: providerStatus === 'paid' ? 100 : 0, currency: 'usd', metadata: { ownerId: 'forged' } } : { id: 'cs_owned', object: 'checkout.session', livemode: false, status: 'complete', payment_status: providerStatus, currency: 'usd', amount_total: 100, payment_intent: 'pi_owned', url: null, customer: 'cus_owned', metadata: { ownerId: 'forged' } })
+  const snapshot = JSON.stringify(request.url?.startsWith('/v1/payment_intents/') ? { id: paymentId, object: 'payment_intent', livemode: false, status: providerPaymentStatus, amount: transport === 'badPayment' ? -1 : 100, amount_received: providerStatus === 'paid' ? 100 : 0, currency: 'usd', metadata: { ownerId: 'forged' } } : { id: checkoutId, object: 'checkout.session', livemode: false, status: 'complete', payment_status: providerStatus, currency: 'usd', amount_total: 100, payment_intent: paymentId, url: null, customer: customerId, metadata: { ownerId: 'forged' } })
   if ((holdNext && request.method === 'GET') || (holdPost && request.method === 'POST') || (holdPayment && request.url?.startsWith('/v1/payment_intents/'))) { holdNext = false; holdPost = false; holdPayment = false; await new Promise<void>(resolve => { held = resolve }) }
   response.end(snapshot)
 })
@@ -47,7 +49,7 @@ const job = () => ({ id: randomUUID(), signal: new AbortController().signal, ret
 try {
   await migrate(db, { migrationsFolder: '.fixture/migrations' })
   await migrate(db, { migrationsFolder: '.fixture/migrations' })
-  assert.equal((await sql`select count(*)::int n from drizzle.__drizzle_migrations`)[0]!.n, 1)
+  assert.equal((await sql`select count(*)::int n from drizzle.__drizzle_migrations`)[0]!.n, 2)
   const binding = await db.transaction(tx => service.bindInTransaction(tx, context, { localResourceId: 'local-customer', connectionId: 'default', resourceKind: 'customer', remoteId: 'cus_owned' }))
   const otherBinding = await db.transaction(tx => service.bindInTransaction(tx, foreign, { localResourceId: 'other-customer', connectionId: 'default', resourceKind: 'customer', remoteId: 'cus_other' }))
   const input = { customerBindingId: binding.id, idempotencyKey: 'one', items: [{ offerId: 'approved', quantity: 1 }] }
@@ -102,6 +104,27 @@ try {
   assert.equal((await sql`select count(*)::int n from pgboss.job where name='stripe.receipt'`)[0]!.n, 1)
   providerStatus = 'paid'; providerPaymentStatus = 'succeeded'; await service.inboxJob.handler({ inboxId: rows[0]!.id }, job())
   assert.equal((await service.listPayments(context)).items[0]!.status, 'succeeded')
+  const originalReceipt = (await db.select().from(stripeInbox).where(eq(stripeInbox.id, rows[0]!.id)))[0]!
+  const collision = sign('evt_first', 'cs_unbound')
+  await service.receive('default', collision.bytes, collision.signature); await service.receive('default', collision.bytes, collision.signature)
+  const collided = (await db.select().from(stripeInbox).where(eq(stripeInbox.id, rows[0]!.id)))[0]!
+  assert.equal(collided.bodySha256, originalReceipt.bodySha256)
+  assert.equal(collided.bindingId, originalReceipt.bindingId)
+  assert.equal(collided.remoteHint, 'cs_owned', 'A signed collision cannot replace original ownership with its new hint')
+  assert.equal(collided.status, 'received')
+  assert.equal((await sql`select count(*)::int n from pgboss.job where name='stripe.receipt'`)[0]!.n, 2, 'Repeated conflicting bytes coalesce into one new reconciliation')
+  holdNext = true; held = undefined
+  const collisionWork = service.inboxJob.handler({ inboxId: collided.id }, job())
+  for (let count = 0; !held && count < 500; count++) await wait(10)
+  assert.ok(held)
+  const during = sign('evt_first', 'cs_another_unbound')
+  await service.receive('default', during.bytes, during.signature); await service.receive('default', during.bytes, during.signature)
+  assert.equal((await sql`select count(*)::int n from pgboss.job where name='stripe.receipt'`)[0]!.n, 2, 'An active receipt records one follow-up rather than dispatching parallel jobs')
+  held!(); await collisionWork
+  assert.equal((await db.select().from(stripeInbox).where(eq(stripeInbox.id, collided.id)))[0]!.status, 'received')
+  assert.equal((await sql`select count(*)::int n from pgboss.job where name='stripe.receipt'`)[0]!.n, 3)
+  assert.deepEqual(await service.inboxJob.handler({ inboxId: collided.id }, job()), { status: 'processed' })
+  assert.equal((await db.select().from(stripeInbox).where(eq(stripeInbox.id, collided.id)))[0]!.reconcileAgain, false)
   const old = sign('evt_out_of_order'); await service.receive('default', old.bytes, old.signature)
   const [oldRow] = await db.select().from(stripeInbox).where(eq(stripeInbox.eventId, 'evt_out_of_order')); await service.inboxJob.handler({ inboxId: oldRow!.id }, job())
   assert.equal((await service.listPayments(context)).items[0]!.status, 'succeeded', 'older event hint retrieves current authoritative state')
@@ -150,7 +173,7 @@ try {
   await service.runJob.handler({ operationId: ambiguousId }, job()); assert.equal((await service.getOperation(context, { operationId: ambiguousId })).status, 'reconciliation_required')
   await assert.rejects(service.requestCheckout(context, { ...input, idempotencyKey: 'fresh-key-cannot-escape' }))
   const priorPosts = posts; await service.runJob.handler({ operationId: ambiguousId }, job()); assert.equal(posts, priorPosts)
-  transport = 'cached500'; await service.replayCheckout(context, { operationId: ambiguousId }); await service.runJob.handler({ operationId: ambiguousId }, job())
+  transport = 'cached500'; await service.replayCheckout(context, { operationId: ambiguousId }); await assert.rejects(service.cancelOperation(context, { operationId: ambiguousId }), { code: 'conflict' }); await service.runJob.handler({ operationId: ambiguousId }, job())
   assert.equal(seenKeys.at(-1), seenKeys.at(-2)); assert.equal(seenBodies.at(-1), seenBodies.at(-2))
   await db.update(stripeOperationLedger).set({ firstDispatchAt: new Date(Date.now() - 23 * 60 * 60 * 1000) }).where(eq(stripeOperationLedger.id, ambiguousId))
   await assert.rejects(service.replayCheckout(context, { operationId: ambiguousId }))
@@ -171,6 +194,29 @@ try {
     const afterCrash = posts; await service.runJob.handler({ operationId: crashedId }, job()); assert.equal(posts, afterCrash)
   }
   finally { if (driver.exitCode === null && driver.signalCode === null) { driver.kill('SIGKILL'); await once(driver, 'exit') } held?.() }
+  // Accepted Checkout identity survives later local projection rejection. Its
+  // explicit recovery must GET even after the POST idempotency horizon expires.
+  const knownContext: TrustedContext = { actorUserId: 'owner-known', scope: { kind: 'user', id: 'owner-known' } }
+  const knownCustomer = await db.transaction(tx => service.bindInTransaction(tx, knownContext, { localResourceId: 'known-customer', connectionId: 'default', resourceKind: 'customer', remoteId: 'cus_known' }))
+  const knownInput = { customerBindingId: knownCustomer.id, idempotencyKey: 'known', items: [{ offerId: 'approved', quantity: 1 }] }
+  checkoutId = 'cs_known'; paymentId = 'pi_known'; customerId = 'cus_known'
+  transport = 'reject400'
+  const rejection = await service.requestCheckout(knownContext, { ...knownInput, idempotencyKey: 'rejected' }), rejectionId = 'operationId' in rejection ? rejection.operationId : rejection.id
+  await service.runJob.handler({ operationId: rejectionId }, job())
+  assert.equal((await service.getOperation(knownContext, { operationId: rejectionId })).status, 'failed')
+  transport = 'badPayment'
+  const known = await service.requestCheckout(knownContext, knownInput), knownId = 'operationId' in known ? known.operationId : known.id
+  await service.runJob.handler({ operationId: knownId }, job())
+  const accepted = await service.getOperation(knownContext, { operationId: knownId })
+  assert.equal(accepted.status, 'reconciliation_required', 'A local 422 after provider acceptance is not a definitive provider rejection')
+  assert.notEqual(accepted.bindingId, knownCustomer.id)
+  assert.equal((await db.select().from(stripeBinding).where(eq(stripeBinding.id, accepted.bindingId!)))[0]!.remoteId, 'cs_known')
+  await db.update(stripeOperationLedger).set({ firstDispatchAt: new Date(Date.now() - 24 * 60 * 60 * 1000) }).where(eq(stripeOperationLedger.id, knownId))
+  transport = 'ok'; const beforeKnownRecovery = posts
+  await service.replayCheckout(knownContext, { operationId: knownId })
+  assert.deepEqual(await service.runJob.handler({ operationId: knownId }, job()), { status: 'processed' })
+  assert.equal(posts, beforeKnownRecovery, 'Known remote identity always uses authoritative GET, never POST replay')
+  assert.equal((await service.getOperation(knownContext, { operationId: knownId })).status, 'succeeded')
   const queue = JSON.stringify(await sql`select data,output from pgboss.job where name like 'stripe.%'`)
   assert.ok(!/checkout\.stripe|cus_owned|price_registered|sk_test|owner-one|metadata|success_url/.test(queue))
   const publicView = JSON.stringify({ operation: await service.getOperation(context, { operationId: ambiguousId }), payments: await service.listPayments(context) })

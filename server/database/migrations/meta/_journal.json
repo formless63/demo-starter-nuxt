@@ -64,6 +64,13 @@
       "when": 1790901138467,
       "tag": "0011_stripe_v1",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790910005788,
+      "tag": "0012_stripe_receipt_conflicts",
+      "breakpoints": true
     }
   ]
 }
