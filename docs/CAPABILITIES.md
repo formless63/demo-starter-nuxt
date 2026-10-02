@@ -27,6 +27,7 @@ The root application deliberately enables every completed capability for continu
 | `notifications` | `@repo/nuxt-notifications` | Enabled | No | Jobs | ntfy optional; Email integration optional | [Notifications](../capabilities/notifications/CAPABILITY.md) |
 | `search` | `@repo/nuxt-search` | Enabled | No | None | Existing PostgreSQL | [Search](../capabilities/search/CAPABILITY.md) |
 | `import-export` | `@repo/nuxt-import-export` | Enabled | No | Jobs, Object Storage | Existing PostgreSQL and S3 on use | [Import / Export](../capabilities/import-export/CAPABILITY.md) |
+| `invoice-ninja` | `@repo/nuxt-invoice-ninja` | Enabled for verification (in progress) | No | Jobs, Webhooks | Invoice Ninja on use; pinned runtime compatibility unverified | [Invoice Ninja](../capabilities/invoice-ninja/CAPABILITY.md) |
 | `ops-admin` | `@repo/nuxt-ops-admin` | Enabled | No | None | None; optional provider adapters | [Ops / Admin](../capabilities/ops-admin/CAPABILITY.md) |
 
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
@@ -142,3 +143,13 @@ Private `@repo/nuxt-import-export` requires Jobs and Object Storage; PostgreSQL/
 Ops / Admin (`done`) is an optional private `@repo/nuxt-ops-admin` package. Enable with `opsAdmin.application` pointing to an application-owned baseline session resolver/static adapter registry. No service/migration or hard capability dependencies. [Contract](../capabilities/ops-admin/CAPABILITY.md).
 
 Ops reference verification uses `bun run test:ops-reference` after building the root. Its disposable protocol services and temporary source copies prove read-only inspection and independent adapter/full Ops removal; they are test-only, not an application installer.
+
+## Invoice Ninja
+
+[Contract](../capabilities/invoice-ninja/CAPABILITY.md): independent opt-in private package, application-owned Drizzle schemas and native routes. Getter calls read local projections only; reconcile client/invoice explicitly through existing Jobs. Draft policy denies absent actual deployment evidence. Callback possession secret is distinct from a cryptographic body signature. In-progress fixture-backed capabilities participate in the generic CI matrix and may be explicitly enabled for verification; this does not promote completion or pinned-provider compatibility.
+
+Stripe v1 is currently in progress: `@repo/nuxt-stripe` requires Jobs and Webhooks; clean consumers remain opt-in. Native routes are application-owned under `/api/integrations/stripe`; the reference page is `/stripe`. The generic package CI matrix includes its authored fixture during verification. [Stripe contract](../capabilities/stripe/CAPABILITY.md) and [design evaluation](../STRIPE_MODULE_EVALUATION.md) distinguish local SDK compatibility from financial certification.
+
+## Medusa (verification in progress)
+
+The reference app explicitly enables private `@repo/nuxt-medusa`; clean consumers default to uninstalled. Requires Jobs and Webhooks. [Provider contract](../capabilities/medusa/CAPABILITY.md) covers bounded scoped Admin reconciliation, the operator-installed application bridge, verification and independent removal. `/integrations/medusa` reads approved local product/order projections; no provider configuration is required for startup.

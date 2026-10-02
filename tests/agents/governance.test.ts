@@ -37,7 +37,7 @@ test('harness validates canonical trees and adapters without client executables'
   expect(errors).toContain('portable adapter')
 })
 
-test('done governance requires evaluation, complete lifecycle metadata and completed reference integrations; skills stay optional', () => {
+test('done governance requires evaluation, complete lifecycle metadata and fixture-backed reference integrations; skills stay optional', () => {
   const root = fixture()
   cpSync(join(projectRoot, 'capabilities/catalog.schema.json'), join(root, 'schema.json'))
   mkdirSync(join(root, 'capabilities'))
@@ -75,5 +75,7 @@ test('done governance requires evaluation, complete lifecycle metadata and compl
   expect(check({ packageTest: hooks }).status).toBe(0)
   expect(check({ packageTest: { ...hooks, removal: { ...hooks.removal, scripts: ['survival', 'cleanup'] } } }).stderr).toContain('must remain after removal')
   expect(check({ fixturePath: undefined }).stderr).toContain('fixturePath is required')
-  expect(check({ status: 'in-progress' }).stderr).toContain('completed, installed')
+  expect(check({ status: 'in-progress' }).status).toBe(0)
+  expect(check({ status: 'in-progress', fixturePath: undefined }).stderr).toContain('fixture-backed in-progress')
+  expect(check({ status: 'planned' }).stderr).toContain('fixture-backed in-progress')
 })
