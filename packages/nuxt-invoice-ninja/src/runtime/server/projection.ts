@@ -28,7 +28,7 @@ export function projectEntity(binding: Binding, value: unknown, currency: string
     const ms = BigInt(data.updated_at) * BigInt(1000)
     if (ms <= BigInt('8640000000000000')) sourceUpdatedAt = new Date(Number(ms)).toISOString()
   }
-  return { bindingId: binding.id, remoteId: binding.remoteId, number, status: statuses[String(data.status_id)] ?? 'unknown', currency,
+  return { bindingId: binding.id, remoteId: binding.remoteId, number, status: data.is_deleted === true ? 'deleted' : statuses[String(data.status_id)] ?? 'unknown', currency,
     amount: outputDecimal(data.amount), balance: outputDecimal(data.balance), sourceUpdatedAt, syncedAt, deleted: data.is_deleted === true }
 }
 export function serializeProjection(value: ClientProjection | InvoiceProjection) {
