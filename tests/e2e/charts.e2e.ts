@@ -22,7 +22,7 @@ test.describe('charts visualization', () => {
     await page.getByRole('button', { name: 'area', exact: true }).click()
     await expect.poll(async () => JSON.parse(await page.locator('[data-echarts-state]').textContent() ?? '{}').area).toBe(true)
     await page.getByRole('button', { name: 'Start update' }).click()
-    await expect(page.locator('p[role="status"]')).toHaveText('Loading chart data…')
+    await expect(page.locator('p[role="status"]').filter({ hasText: 'Loading chart data…' })).toHaveText('Loading chart data…')
     await page.getByRole('button', { name: 'Apply update' }).click()
     await expect.poll(async () => JSON.parse(await page.locator('[data-echarts-state]').textContent() ?? '{}').data).toEqual([12, 18, 9])
 
@@ -35,7 +35,7 @@ test.describe('charts visualization', () => {
 
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.getByRole('button', { name: 'Start update' }).click()
-    await expect(page.locator('p[role="status"]')).toHaveText('Loading chart data…')
+    await expect(page.locator('p[role="status"]').filter({ hasText: 'Loading chart data…' })).toHaveText('Loading chart data…')
     await expect.poll(async () => JSON.parse(await page.locator('[data-echarts-state]').textContent() ?? '{}').animation).toBe(false)
     const initialWidth = await page.locator('[data-echarts-state]').evaluate(node => JSON.parse(node.textContent ?? '{}').width)
     await page.setViewportSize({ width: 700, height: 800 })
