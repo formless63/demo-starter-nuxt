@@ -64,6 +64,12 @@ try {
   assert.equal(await search.evaluate(element => element === document.activeElement), true)
   assert.equal(await page.getByRole('option', { name: 'Disabled command' }).count(), 0)
   assert.equal(await page.getByRole('option', { name: 'Replacement registration' }).count(), 1)
+  // Reka must keep Tab/Shift+Tab inside the modal and restore the trigger on close.
+  await search.press('Shift+Tab')
+  assert.equal(await dialog.evaluate(element => element.contains(document.activeElement)), true)
+  await page.keyboard.press('Tab')
+  assert.equal(await dialog.evaluate(element => element.contains(document.activeElement)), true)
+  await search.focus()
   await search.fill('no matching action')
   await page.getByText('No commands found.').waitFor()
   await search.press('ArrowDown')
