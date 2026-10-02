@@ -52,6 +52,7 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Search | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; no extra service | Owner-scoped weighted FTS and deterministic keyset pages |
 | Data Table | Available (`done`) | Optional | None | Accessible controlled TanStack Vue tables with manual server modes |
 | Markdown / Code Content | Available (`done`) | Optional | None | Bounded server Markdown/Shiki with safe native Vue SSR and copy UI |
+| Internationalization | In progress | Optional | None | Explicit locale, bounded translations, CLDR plurals and canonical SSR formatting |
 | File UI | Available (`done`) | Optional | Object Storage | Bounded raw uploads, owner-authorized attachment downloads and atomic retained receipts |
 | Rich Text / Tiptap | Available (`done`) | Optional | None | Bounded canonical JSON, safe Vue SSR and controlled lazy editing with explicit record identity |
 | Import / Export | Available (`done`) | Optional | Jobs, Object Storage; PostgreSQL/Drizzle/Node | Durable bounded CSV transfer; personal Project round-trip |
@@ -216,3 +217,7 @@ Rich Text source `1666bb6e252fbedbbe20b545de8117e8a246820f` passed [all 23 CI jo
 File UI (`done`) is an opt-in native Nuxt package with bounded raw uploads, owner-authorized attachment downloads, atomic lifecycle adapters and an accessible Vue manager. Root reference: `/files`; [contract](capabilities/file-ui/CAPABILITY.md). Only Object Storage is a hard dependency. Source review and full hosted gates passed; this combined successor still requires its own hosted verification.
 
 File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040678932), including packed native/provider/browser/removal and root application/production gates. This Rich Text / File UI composition records 23 completed opt-in, reference-enabled capabilities; its own exact-head full CI and independent composition review are required before acceptance.
+
+## Internationalization (in progress)
+
+Opt-in `@repo/nuxt-internationalization` supplies request-local plain-text translation, CLDR plurals and canonical SSR formatting. The reference app explicitly enables `/i18n-test`; no automatic locale routing or persistence. See [contract](capabilities/internationalization/CAPABILITY.md) for install, validation, browser gates and exact removal recipe.

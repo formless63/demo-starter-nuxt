@@ -106,3 +106,5 @@ Rich Text source `1666bb6e252fbedbbe20b545de8117e8a246820f` passed [all 23 CI jo
 File UI: `bun run packages:test file-ui` owns packed browser/provider/native transport and retained-data removal; `bun run test:file-ui-reference` verifies root PostgreSQL history and real session raw HTTP in dev/production after a root build. Native transport/mounted tests run in normal unit suite. No hosted gate may be skipped to promote status.
 
 File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040678932), including packed native/provider/browser/removal and root application/production gates. This Rich Text / File UI composition records 23 completed opt-in, reference-enabled capabilities; its own exact-head full CI and independent composition review are required before acceptance.
+
+Internationalization: `bun run packages:test internationalization` runs packed install/types/build/native browser and removal. Root browser regression is `tests/e2e/internationalization.e2e.ts`; verify CLI discovery with `bun run test:e2e --list`.

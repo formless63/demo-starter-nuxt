@@ -218,3 +218,9 @@ Rich Text removal: remove `@repo/nuxt-rich-text` from root dependencies and Nuxt
 ## Removing File UI
 
 Remove `@repo/nuxt-file-ui` from module/dependency lists, `app/pages/files.vue`, `server/api/files`, `server/utils/file-ui.ts`, `server/utils/file-ui-metadata.ts`, root reference capability enablement and File UI-specific test scripts, then regenerate the lockfile. Retain application file schema/export, all SQL/snapshots/journal history, metadata receipts and objects. No provider data or credentials are removed. Keep Object Storage for its other consumers.
+
+## Internationalization (in progress)
+
+Opt-in `@repo/nuxt-internationalization` supplies request-local plain-text translation, CLDR plurals and canonical SSR formatting. The reference app explicitly enables `/i18n-test`; no automatic locale routing or persistence. See [contract](../capabilities/internationalization/CAPABILITY.md) for install, validation, browser gates and exact removal recipe.
+
+Remove the internationalization reference page/component/API endpoint, root package dependency and module registration, and catalog reference enablement. Regenerate the lockfile, typecheck and build. There are no owned data, migrations or remote resources to delete.

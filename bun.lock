@@ -14,7 +14,9 @@
         "@repo/nuxt-command-system": "workspace:*",
         "@repo/nuxt-data-table": "workspace:*",
         "@repo/nuxt-email": "workspace:*",
+        "@repo/nuxt-file-ui": "workspace:*",
         "@repo/nuxt-import-export": "workspace:*",
+        "@repo/nuxt-internationalization": "workspace:*",
         "@repo/nuxt-invoice-ninja": "workspace:*",
         "@repo/nuxt-jobs": "workspace:*",
         "@repo/nuxt-markdown-code": "workspace:*",
@@ -44,8 +46,7 @@
         "tw-animate-css": "1.4.0",
         "vue": "3.5.43",
         "vue-sonner": "2.0.9",
-        "zod": "4.6.5",
-        "@repo/nuxt-file-ui": "workspace:*"
+        "zod": "4.6.5"
       },
       "devDependencies": {
         "@nuxt/eslint": "1.17.0",
@@ -163,6 +164,21 @@
         "vue-tsc": "3.1.7"
       }
     },
+    "fixtures/file-ui-consumer": {
+      "name": "file-ui-consumer-fixture",
+      "dependencies": {
+        "@repo/nuxt-file-ui": "workspace:*",
+        "@repo/nuxt-storage": "workspace:*",
+        "nuxt": "4.5.2",
+        "vue": "3.5.43"
+      },
+      "devDependencies": {
+        "@playwright/test": "1.63.0",
+        "@types/node": "24.10.1",
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7"
+      }
+    },
     "fixtures/import-export-consumer": {
       "name": "import-export-consumer-fixture",
       "dependencies": {
@@ -178,6 +194,21 @@
         "@types/node": "24.10.1",
         "drizzle-kit": "0.31.11",
         "pg-boss": "12.35.0",
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7"
+      }
+    },
+    "fixtures/internationalization-consumer": {
+      "name": "internationalization-consumer-fixture",
+      "dependencies": {
+        "@repo/nuxt-internationalization": "workspace:*",
+        "nuxt": "4.5.2",
+        "vue": "3.5.43"
+      },
+      "devDependencies": {
+        "@playwright/test": "1.63.0",
+        "devalue": "5.9.4",
+        "happy-dom": "20.0.11",
         "typescript": "5.9.3",
         "vue-tsc": "3.1.7"
       }
@@ -511,6 +542,23 @@
         "nuxt": ">=4.0.0 <5"
       }
     },
+    "packages/nuxt-file-ui": {
+      "name": "@repo/nuxt-file-ui",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+        "@repo/nuxt-storage": "workspace:*",
+        "h3": "1.15.11"
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "nuxt": "4.5.2"
+      },
+      "peerDependencies": {
+        "nuxt": ">=4.0.0 <5",
+        "vue": "^3.5.0"
+      }
+    },
     "packages/nuxt-import-export": {
       "name": "@repo/nuxt-import-export",
       "version": "0.1.0",
@@ -533,6 +581,22 @@
         "drizzle-orm": ">=0.45.0 <1",
         "nuxt": ">=4.0.0 <5",
         "zod": ">=4.0.0 <5"
+      }
+    },
+    "packages/nuxt-internationalization": {
+      "name": "@repo/nuxt-internationalization",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+        "vue-i18n": "11.4.13"
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "nuxt": "4.5.2"
+      },
+      "peerDependencies": {
+        "nuxt": ">=4.0.0 <5",
+        "vue": ">=3.5.0 <4"
       }
     },
     "packages/nuxt-invoice-ninja": {
@@ -792,38 +856,6 @@
         "@repo/nuxt-jobs": ">=0.1.0 <0.2",
         "nuxt": ">=4.0.0 <5",
         "zod": ">=4.0.0 <5"
-      }
-    },
-    "fixtures/file-ui-consumer": {
-      "name": "file-ui-consumer-fixture",
-      "dependencies": {
-        "@repo/nuxt-file-ui": "workspace:*",
-        "@repo/nuxt-storage": "workspace:*",
-        "nuxt": "4.5.2",
-        "vue": "3.5.43"
-      },
-      "devDependencies": {
-        "@playwright/test": "1.63.0",
-        "@types/node": "24.10.1",
-        "typescript": "5.9.3",
-        "vue-tsc": "3.1.7"
-      }
-    },
-    "packages/nuxt-file-ui": {
-      "name": "@repo/nuxt-file-ui",
-      "version": "0.1.0",
-      "dependencies": {
-        "@nuxt/kit": "4.5.2",
-        "@repo/nuxt-storage": "workspace:*",
-        "h3": "1.15.11"
-      },
-      "devDependencies": {
-        "@nuxt/module-builder": "1.0.3",
-        "nuxt": "4.5.2"
-      },
-      "peerDependencies": {
-        "nuxt": ">=4.0.0 <5",
-        "vue": "^3.5.0"
       }
     }
   },
@@ -2479,6 +2511,46 @@
       },
       "sha512-8UmMFia46DUt+k97zKd9fKWXcWHR+k8ae3eYzILETuT2KbIvLyOfac7zesw+sJdRAAZ7Q9pM1Mk22aXp2LD0Ig=="
     ],
+    "@intlify/core-base": [
+      "@intlify/core-base@11.4.13",
+      "",
+      {
+        "dependencies": {
+          "@intlify/devtools-types": "11.4.13",
+          "@intlify/message-compiler": "11.4.13",
+          "@intlify/shared": "11.4.13"
+        }
+      },
+      "sha512-3qGv1/j0fl6ZSeehGaznE78A4i3hCaOeOyDh7jq7SV6ch/XGoy96xIrYuALTV3xhIqj2rktsIKcwlLZ3CbOhkA=="
+    ],
+    "@intlify/devtools-types": [
+      "@intlify/devtools-types@11.4.13",
+      "",
+      {
+        "dependencies": {
+          "@intlify/core-base": "11.4.13",
+          "@intlify/shared": "11.4.13"
+        }
+      },
+      "sha512-f38d2yvjNc1/c+BnTLsxTB0729clTtyy7kTxHu4FFlvI6FpmBOp7b9sLYtsKJpXSZ70kIEexvNwDSzLkIlYnlQ=="
+    ],
+    "@intlify/message-compiler": [
+      "@intlify/message-compiler@11.4.13",
+      "",
+      {
+        "dependencies": {
+          "@intlify/shared": "11.4.13",
+          "source-map-js": "^1.0.2"
+        }
+      },
+      "sha512-cjKsDeWUD/i3mj0QtC8hydLCFP5mgZtTU1xZZaN9/O3FG94EXc0rTbecYpifglp26rpoJoIjSlW137VejLKsZw=="
+    ],
+    "@intlify/shared": [
+      "@intlify/shared@11.4.13",
+      "",
+      {},
+      "sha512-ZjcNgEED1FtTCFb+ohWBdR21k5kvleKtM9peobQtLB83mNIfEhJK86dEbhfk+OcUrybrEbc4eDeE9UbFUVHsjQ=="
+    ],
     "@ioredis/commands": [
       "@ioredis/commands@1.10.0",
       "",
@@ -3806,8 +3878,14 @@
     "@repo/nuxt-email": [
       "@repo/nuxt-email@workspace:packages/nuxt-email"
     ],
+    "@repo/nuxt-file-ui": [
+      "@repo/nuxt-file-ui@workspace:packages/nuxt-file-ui"
+    ],
     "@repo/nuxt-import-export": [
       "@repo/nuxt-import-export@workspace:packages/nuxt-import-export"
+    ],
+    "@repo/nuxt-internationalization": [
+      "@repo/nuxt-internationalization@workspace:packages/nuxt-internationalization"
     ],
     "@repo/nuxt-invoice-ninja": [
       "@repo/nuxt-invoice-ninja@workspace:packages/nuxt-invoice-ninja"
@@ -6379,14 +6457,10 @@
       "sha512-GF62orf7KiJX9RqrHNGrYBudsQGD0OhJ5nDs90O8UiDuS40+YMYomiXu6w6EuvtXuRDc3MSNis3EaaSKAVSWpg=="
     ],
     "@vue/devtools-api": [
-      "@vue/devtools-api@8.2.1",
+      "@vue/devtools-api@6.6.4",
       "",
-      {
-        "dependencies": {
-          "@vue/devtools-kit": "^8.2.1"
-        }
-      },
-      "sha512-6u4vXBlIBAC1wMplIZgpyPn7uh/s4Bf6F5bMzvLv+EdJ0aHs/+4B7Ygv864EStQSjRbsRzTko/kUG1A1IejQ3A=="
+      {},
+      "sha512-sGhTPMuXqZ1rVOk32RylztWkfXTRhuS7vgAKv0zjqk8gbsHkJ7xfFf+jbySxt7tWObEJwyKaHMikV/WGDiQm8g=="
     ],
     "@vue/devtools-core": [
       "@vue/devtools-core@8.2.1",
@@ -8632,6 +8706,9 @@
       },
       "sha512-XXTUwCvisa5oacNGRP9SfNtYBNAMi+RPwBFmblZEF7N7swHYQS6/Zfk7SRwx4D5j3CH211YNRco1DEMNVfZCnQ=="
     ],
+    "file-ui-consumer-fixture": [
+      "file-ui-consumer-fixture@workspace:fixtures/file-ui-consumer"
+    ],
     "file-uri-to-path": [
       "file-uri-to-path@1.0.0",
       "",
@@ -9356,6 +9433,9 @@
       "",
       {},
       "sha512-QQnnxNyfvmHFIsj7gkPcYymR8Jdw/o7mp5ZFihxn6h8Ci6fh3Dx4E1gPjpQEpIuPo9XVNY/ZUwh4BPMjGyL01g=="
+    ],
+    "internationalization-consumer-fixture": [
+      "internationalization-consumer-fixture@workspace:fixtures/internationalization-consumer"
     ],
     "invoice-ninja-consumer-fixture": [
       "invoice-ninja-consumer-fixture@workspace:fixtures/invoice-ninja-consumer"
@@ -14659,6 +14739,22 @@
       },
       "sha512-Gk6gRDj0n/fkRa3C3l0bBheoBckUq/Rs0F/TvMWIS6nzzx67amAViMe9CkNgsP2tXyQONvGiHQESHwFtZ3aYDA=="
     ],
+    "vue-i18n": [
+      "vue-i18n@11.4.13",
+      "",
+      {
+        "dependencies": {
+          "@intlify/core-base": "11.4.13",
+          "@intlify/devtools-types": "11.4.13",
+          "@intlify/shared": "11.4.13",
+          "@vue/devtools-api": "^6.5.0"
+        },
+        "peerDependencies": {
+          "vue": "^3.0.0"
+        }
+      },
+      "sha512-2G7LC9XcdZ0IljFib7lKGHNiBBOTv6HO+2bnBaOiQgDYZ+uUnqSpuED5DbBo1t7su50o/WRGn+ZfDQTGd26xEw=="
+    ],
     "vue-router": [
       "vue-router@5.3.1",
       "",
@@ -16723,6 +16819,16 @@
       },
       "sha512-7p3DrVEIopW1B1avAGLuCSh1jubc01H2JHc8B4qqGblmg5gI9yumBgACjWo4JlIc04ufug4xJ3SQI8HkS/Rgzw=="
     ],
+    "vue-router/@vue/devtools-api": [
+      "@vue/devtools-api@8.2.1",
+      "",
+      {
+        "dependencies": {
+          "@vue/devtools-kit": "^8.2.1"
+        }
+      },
+      "sha512-6u4vXBlIBAC1wMplIZgpyPn7uh/s4Bf6F5bMzvLv+EdJ0aHs/+4B7Ygv864EStQSjRbsRzTko/kUG1A1IejQ3A=="
+    ],
     "vue-router/magic-string": [
       "magic-string@0.30.21",
       "",
@@ -18549,12 +18655,6 @@
       "",
       {},
       "sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q=="
-    ],
-    "@repo/nuxt-file-ui": [
-      "@repo/nuxt-file-ui@workspace:packages/nuxt-file-ui"
-    ],
-    "file-ui-consumer-fixture": [
-      "file-ui-consumer-fixture@workspace:fixtures/file-ui-consumer"
     ]
   }
 }
