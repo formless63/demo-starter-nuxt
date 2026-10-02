@@ -11,14 +11,15 @@ const flush = async () => { await nextTick(); await nextTick(); await nextTick()
 describe('real Vue Tiptap editor lifecycle', () => {
  it('synchronously accepts or rejects controlled changes and resets replacement/rejection history', async () => {
   const host = document.createElement('div'); document.body.append(host)
-  const value = ref(doc('Initial')), accept = ref(true), visible = ref(true)
-  const app = createApp({ setup: () => () => visible.value ? h(RichTextClient, { value: value.value, label: 'Document', onChange: (next: RichTextDocument) => { if (accept.value) value.value = next } }) : null })
+  const value = ref(doc('Initial')), accept = ref(true), visible = ref(true), documentKey = ref(0)
+  const app = createApp({ setup: () => () => visible.value ? h(RichTextClient, { key: documentKey.value, value: value.value, label: 'Document', onChange: (next: RichTextDocument) => { if (accept.value) value.value = structuredClone(next) } }) : null })
   app.mount(host); await flush()
   const input = () => host.querySelector<HTMLElement>('[contenteditable]')!
   // Tiptap attaches its real editor to the contenteditable DOM node.
   const editor = () => (input() as HTMLElement & { editor: Editor }).editor
   try {
    expect(input().style.whiteSpace).toBe('pre-wrap')
+   value.value = doc('PRIVATE old record'); await flush(); editor().commands.setContent(doc('Public')); await flush(); expect(editor().can().undo()).toBe(true); value.value = doc('Public'); documentKey.value++; await flush(); editor().commands.undo(); editor().commands.redo(); await flush(); expect(input().textContent).toBe('Public'); expect(editor().can().undo()).toBe(false); expect(editor().can().redo()).toBe(false)
    editor().commands.insertContent('Accepted '); await flush(); expect(JSON.stringify(value.value)).toContain('Accepted')
    accept.value = false; editor().commands.insertContent('PRIVATE'); await flush(); expect(input().textContent).not.toContain('PRIVATE'); expect(editor().can().undo()).toBe(false); expect(editor().can().redo()).toBe(false); editor().commands.undo(); editor().commands.redo(); await flush(); expect(input().textContent).not.toContain('PRIVATE')
    accept.value = true; value.value = doc('Replacement'); await flush(); expect(input().textContent).toBe('Replacement'); expect(editor().can().undo()).toBe(false); expect(editor().can().redo()).toBe(false); editor().commands.undo(); editor().commands.redo(); await flush(); expect(input().textContent).toBe('Replacement')

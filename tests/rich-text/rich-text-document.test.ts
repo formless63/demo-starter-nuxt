@@ -432,3 +432,11 @@ describe("safe absolute link allowlist", () => {
 		).toThrow();
 	});
 });
+
+ test('canonicalizes HTML newline handling and rejects non-roundtripping UTF-16', () => {
+   expect(parseRichTextDocument(doc(paragraph('a\r\nb\rc'))).content[0]!.content![0]!.text).toBe('a\nb\nc')
+   for (const text of ['a\u0000b', '\uD800', '\uDC00', 'x\uD800y', '\uD800\uD800']) expect(() => parseRichTextDocument(doc(paragraph(text)))).toThrow('Invalid rich-text document')
+   expect(parseRichTextDocument(doc(paragraph('😀 �'))).content[0]!.content![0]!.text).toBe('😀 �')
+ })
+
+test('links reject unpaired UTF-16 before HTML transport', () => { expect(isSafeRichTextLink('https://example.test/\uD800')).toBe(false); expect(isSafeRichTextLink('https://example.test/😀�')).toBe(true) })
