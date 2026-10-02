@@ -24,7 +24,7 @@ const migration = createJobsBoss(config, 'migration'); migration.on('error', () 
 await migration.start(); await migration.stop()
 const boss = createJobsBoss(config, 'producer'); boss.on('error', () => {}); await boss.start()
 let authorized = true, transport = 'ok', posts = 0, gets = 0, providerStatus = 'unpaid', providerPaymentStatus = 'processing'
-let holdNext = false, holdPost = false, held: (() => void) | undefined
+let holdNext = false, holdPost = false, holdPayment = false, held: (() => void) | undefined
 const seenKeys: string[] = [], seenBodies: string[] = []
 const remote = createServer(async (request, response) => {
   let body = ''; for await (const chunk of request) body += chunk
@@ -35,7 +35,7 @@ const remote = createServer(async (request, response) => {
   if (transport === 'cached500' && request.method === 'POST') { response.writeHead(500); response.end('{"error":{"message":"private customer body","type":"api_error"}}'); return }
   response.setHeader('content-type', 'application/json')
   const snapshot = JSON.stringify(request.url?.startsWith('/v1/payment_intents/') ? { id: 'pi_owned', object: 'payment_intent', livemode: false, status: providerPaymentStatus, amount: 100, amount_received: providerStatus === 'paid' ? 100 : 0, currency: 'usd', metadata: { ownerId: 'forged' } } : { id: 'cs_owned', object: 'checkout.session', livemode: false, status: 'complete', payment_status: providerStatus, currency: 'usd', amount_total: 100, payment_intent: 'pi_owned', url: null, customer: 'cus_owned', metadata: { ownerId: 'forged' } })
-  if ((holdNext && request.method === 'GET') || (holdPost && request.method === 'POST')) { holdNext = false; holdPost = false; await new Promise<void>(resolve => { held = resolve }) }
+  if ((holdNext && request.method === 'GET') || (holdPost && request.method === 'POST') || (holdPayment && request.url?.startsWith('/v1/payment_intents/'))) { holdNext = false; holdPost = false; holdPayment = false; await new Promise<void>(resolve => { held = resolve }) }
   response.end(snapshot)
 })
 remote.listen(0, '127.0.0.1'); await once(remote, 'listening')
@@ -68,6 +68,28 @@ try {
   await assert.rejects(service.getCheckout(foreign, { bindingId: operation.bindingId! }))
   assert.equal((await service.listPayments(context)).items[0]!.status, 'processing')
   assert.equal((await service.listPayments(foreign)).items.length, 0)
+  // Checkout-derived payment retrieval and independent payment reconciliation
+  // must share a lease before HTTP, not merely lock during the final write.
+  const paymentBindingId = (await service.listPayments(context)).items[0]!.bindingId
+  const checkoutRefresh = await service.requestPaymentReconciliation(context, { kind: 'checkout', bindingId: operation.bindingId })
+  const checkoutRefreshId = 'operationId' in checkoutRefresh ? checkoutRefresh.operationId : checkoutRefresh.id
+  holdPayment = true; held = undefined
+  const checkoutInFlight = service.runJob.handler({ operationId: checkoutRefreshId }, job())
+  for (let count = 0; !held && count < 500; count++) await wait(10)
+  assert.ok(held, 'Checkout payment GET is paused after acquiring its child lease')
+  const paymentRefresh = await service.requestPaymentReconciliation(context, { kind: 'payment', bindingId: paymentBindingId })
+  const paymentRefreshId = 'operationId' in paymentRefresh ? paymentRefresh.operationId : paymentRefresh.id
+  providerPaymentStatus = 'succeeded'; providerStatus = 'paid'
+  const beforeContendedGet = gets
+  try {
+    await assert.rejects(service.runJob.handler({ operationId: paymentRefreshId }, job()), { code: 'unavailable' })
+    assert.equal(gets, beforeContendedGet, 'Competing payment worker cannot retrieve or commit around the child lease')
+  }
+  finally { held!(); await checkoutInFlight }
+  assert.equal((await service.getOperation(context, { operationId: checkoutRefreshId })).status, 'succeeded')
+  assert.deepEqual(await service.runJob.handler({ operationId: paymentRefreshId }, job()), { status: 'processed' })
+  assert.equal((await service.listPayments(context)).items[0]!.status, 'succeeded')
+  providerPaymentStatus = 'processing'; providerStatus = 'unpaid'
   const sign = (id: string, remoteId = 'cs_owned', type = 'checkout.session.completed') => {
     const timestamp = Math.floor(Date.now() / 1000), bytes = Buffer.from(JSON.stringify({ id, object: 'event', api_version: API_VERSION, type, livemode: false, data: { object: { id: remoteId, object: type.startsWith('checkout.') ? 'checkout.session' : 'payment_intent', metadata: { ownerId: 'owner-two' } } } }))
     return { bytes, signature: `t=${timestamp},v1=${createHmac('sha256', 'whsec_fixture').update(`${timestamp}.`).update(bytes).digest('hex')}` }

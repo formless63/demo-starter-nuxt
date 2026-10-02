@@ -32,12 +32,16 @@ test('Stripe native auth, scoped projections, repeated operation reads and queue
     await expect(page.locator('output')).toContainText(operationId)
     await page.getByRole('button', { name: 'Cancel queued operation' }).click()
     await expect(page.locator('output')).toContainText('cancelled')
-    const response = await page.request.get('/api/integrations/stripe/payments')
+    // APIRequestContext does not apply Chromium's localhost Secure-cookie exception.
+    // Supply the same signed fixture session explicitly, as other API E2E tests do.
+    const headers = { cookie: `${cookieName}=${encodeURIComponent(cookie)}` }
+    const response = await request.get('/api/integrations/stripe/payments', { headers })
+    expect(response.status()).toBe(200)
     expect(response.headers()['cache-control']).toBe('no-store')
     expect(JSON.stringify(await response.json())).not.toMatch(/checkoutUrl|intent|actorUserId|metadata|secretKey/)
-    expect((await page.request.get('/api/integrations/stripe/operation', { params: { operationId: randomUUID() } })).status()).toBe(404)
-    expect((await page.request.post('/api/integrations/stripe/checkout', { data: { arbitrary: 'private' } })).status()).toBe(400)
-    expect((await page.request.post('/api/integrations/stripe/reconcile', { data: { kind: 'payment', bindingId } })).status()).toBe(503)
+    expect((await request.get('/api/integrations/stripe/operation', { headers, params: { operationId: randomUUID() } })).status()).toBe(404)
+    expect((await request.post('/api/integrations/stripe/checkout', { headers, data: { arbitrary: 'private' } })).status()).toBe(400)
+    expect((await request.post('/api/integrations/stripe/reconcile', { headers, data: { kind: 'payment', bindingId } })).status()).toBe(503)
   }
   finally {
     await db.delete(tables.stripeOperationLedger).where(eq(tables.stripeOperationLedger.id, operationId))
