@@ -52,9 +52,9 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Data Table | Available (`done`) | Optional | None | Accessible controlled TanStack Vue tables with manual server modes |
 | Import / Export | Available (`done`) | Optional | Jobs, Object Storage; PostgreSQL/Drizzle/Node | Durable bounded CSV transfer; personal Project round-trip |
 
-`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache, AI, Invoice Ninja, Stripe and Medusa remain lazy with no provider required to boot/build. All seventeen capabilities are `done`.
+`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache, AI, Invoice Ninja, Stripe and Medusa remain lazy with no provider required to boot/build. All eighteen capabilities are `done`.
 
-Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/36978353705) passed all 19 jobs at `4478e41f2835bfe1495dab762756b2fec08bd98e`, including all 17 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
+Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
 
 See [Using capabilities](docs/CAPABILITIES.md) for installation and removal guidance and [ROADMAP.md](ROADMAP.md) for the future design plan.
 
@@ -71,7 +71,7 @@ bun run jobs:migrate
 bun run dev
 ```
 
-Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all seventeen completed capability packages; `db:migrate` applies the application/API/Audit/Notification/transfer/provider tables and Projects search vector/index and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
+Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all eighteen completed capability packages; `db:migrate` applies the application/API/Audit/Notification/transfer/provider tables and Projects search vector/index and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
 
 ## Authentication notes
 
