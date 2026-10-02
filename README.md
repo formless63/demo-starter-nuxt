@@ -50,6 +50,7 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Ops / Admin | Available (`done`) | Optional | Baseline human session; privileged server allowlist | Read-only sanitized application-owned diagnostic adapters |
 | Search | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; no extra service | Owner-scoped weighted FTS and deterministic keyset pages |
 | Data Table | Available (`done`) | Optional | None | Accessible controlled TanStack Vue tables with manual server modes |
+| Markdown / Code Content | In progress | Optional | None | Bounded server Markdown/Shiki with safe native Vue SSR and copy UI |
 | Import / Export | Available (`done`) | Optional | Jobs, Object Storage; PostgreSQL/Drizzle/Node | Durable bounded CSV transfer; personal Project round-trip |
 
 `defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache, AI, Invoice Ninja, Stripe and Medusa remain lazy with no provider required to boot/build. All eighteen capabilities are `done`.
@@ -197,3 +198,5 @@ Stripe v1 is available (`done`), independently packaged as `@repo/nuxt-stripe` w
 The reference app explicitly enables private `@repo/nuxt-medusa`; clean consumers default to uninstalled. Requires Jobs and Webhooks. [Provider contract](capabilities/medusa/CAPABILITY.md) covers bounded scoped Admin reconciliation, the operator-installed application bridge, verification and independent removal. `/integrations/medusa` reads approved local product/order projections; no provider configuration is required for startup.
 
 Medusa 2.21.2 backend/subscriber compatibility is verified against the pinned disposable fixture. None of these provider checks certify financial activity or a remote production deployment.
+
+Markdown / Code Content is in-progress: optional `@repo/nuxt-markdown-code`, native Vue renderer and bounded server parsing at `/markdown`. See [contract](capabilities/markdown-code/CAPABILITY.md).
