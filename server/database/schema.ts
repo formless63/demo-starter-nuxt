@@ -75,3 +75,5 @@ export const project = pgTable('project', {
 }, table => [index('project_owner_updated_idx').on(table.ownerId, table.updatedAt), index('project_search_vector_gin_idx').using('gin', table.searchVector)])
 
 export const schema = { user, session, account, verification, apikey, project, auditEvent, notification, transfer, invoiceNinjaBinding, invoiceNinjaProjection, invoiceNinjaOperation, invoiceNinjaInbox, stripeBinding, stripeOperationLedger, stripeProjection, stripeInbox, medusaBinding, medusaProjection, medusaOperation, medusaInbox }
+
+export { fileUiFiles } from './file-ui-schema'

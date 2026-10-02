@@ -5,14 +5,14 @@ import { resolve } from 'node:path'
 
 const root = resolve(import.meta.dir, '../..')
 const catalog = JSON.parse(readFileSync(resolve(root, 'capabilities/catalog.json'), 'utf8'))
-const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export', 'ops-admin', 'invoice-ninja', 'stripe', 'medusa', 'data-table', 'charts-visualization', 'command-system', 'markdown-code']
+const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export', 'ops-admin', 'invoice-ninja', 'stripe', 'medusa', 'data-table', 'charts-visualization', 'command-system', 'markdown-code', 'rich-text', 'file-ui', 'flow-canvas']
 
-test('all twenty-one completed packages are explicitly enabled and discovered by the generic matrix', () => {
+test('all twenty-four completed packages are explicitly enabled and discovered by the generic matrix', () => {
   const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
   const nuxt = readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')
   expect(catalog.capabilities.filter((entry: { status: string }) => entry.status === 'done').map((entry: { id: string }) => entry.id).sort()).toEqual([...completed].sort())
-  expect(completed).toHaveLength(21)
-  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed, 'flow-canvas'].sort())
+  expect(completed).toHaveLength(24)
+  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed].sort())
   for (const id of [...completed]) {
     const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === id)
     expect(entry.defaultInstalled).toBe(false)
@@ -23,7 +23,7 @@ test('all twenty-one completed packages are explicitly enabled and discovered by
   expect(result.status).toBe(0)
   const authored = catalog.capabilities.filter((entry: { status: string, packageTest?: unknown, packagePath?: string }) => ['done', 'in-progress'].includes(entry.status) && entry.packagePath && entry.packageTest).map((entry: { id: string }) => entry.id)
   expect(JSON.parse(result.stdout).capability.sort()).toEqual(authored.sort())
-  expect(authored.sort()).toEqual([...completed, 'flow-canvas'].sort())
+  expect(authored.sort()).toEqual([...completed].sort())
 })
 
 test('Webhooks and Notifications require Jobs; Audit, Cache and Realtime fixtures remain independent', () => {
@@ -81,4 +81,12 @@ test('Command is completed and reference-enabled while preserving its packed bro
   const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
   expect(manifest.dependencies[entry.packageName]).toBe('workspace:*')
   expect(readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')).toContain(`'${entry.packageName}'`)
+})
+
+
+test('root application browser discovery includes Rich Text and File UI', () => {
+  const result = spawnSync('bun', ['x', 'playwright', 'test', '--list'], { cwd: root, encoding: 'utf8' })
+  expect(result.status).toBe(0)
+  expect(result.stdout).toContain('[application] › rich-text.e2e.ts')
+  expect(result.stdout).toContain('[application] › file-ui.e2e.ts')
 })

@@ -1,0 +1,113 @@
+{
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790294400000,
+      "tag": "0000_initial",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790699926702,
+      "tag": "0001_api-platform",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790804988558,
+      "tag": "0002_audit-log",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790823084004,
+      "tag": "0003_audit-action-index",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790871038244,
+      "tag": "0004_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790871038245,
+      "tag": "0005_project-search",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790883757765,
+      "tag": "0006_confused_molecule_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790884624991,
+      "tag": "0007_great_shard",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790912235566,
+      "tag": "0009_invoice_ninja",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790912235567,
+      "tag": "0011_stripe_v1",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790912235568,
+      "tag": "0012_stripe_receipt_conflicts",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790912235569,
+      "tag": "0013_medusa",
+      "breakpoints": true
+    }
+  ],
+  "hashes": {
+    "server/database/migrations/0000_initial.sql": "e0e17a584f010d46760fc1e3c08dbb58e88c07ad99004e244a43849ee636a60b",
+    "server/database/migrations/0001_api-platform.sql": "30297d4b302768bd0b717a211efc7261c07ef4cb70c6cc392eb0e9372d834107",
+    "server/database/migrations/0002_audit-log.sql": "fee6d07548c44e6bcb5928f5bb1f22856049b44228fd260a6d248e71d5a6c637",
+    "server/database/migrations/0003_audit-action-index.sql": "e1dbd7310bf82b4265e322a2bd473e128eedb194c82d9be05b23e20a22717015",
+    "server/database/migrations/0004_notifications.sql": "05599826ee4217bbd9f5032d8a4541a21f960aa2d8a1dcd4200c662e9989e3e0",
+    "server/database/migrations/0005_project-search.sql": "b283812e1aee89e073b59947770fb59b7d7a3e9cde4e863a8cf83033d234d18f",
+    "server/database/migrations/0006_confused_molecule_man.sql": "766093a48babe3de827640ff1df8849ea1f7b98563316236a300c970f1734efc",
+    "server/database/migrations/0007_great_shard.sql": "42ffa2c13e1b2f9cff83ab6bfc51d65351fabd2987a44a0b89528b864015552b",
+    "server/database/migrations/0009_invoice_ninja.sql": "96e00ed88f7f57f698290cf2e6666c50ce7f93fcaa71d97e208a7713296af4e5",
+    "server/database/migrations/0011_stripe_v1.sql": "455a35ddea3684af27a84f7f79432e0480b3879d350b2dc12c960ba3c352f35c",
+    "server/database/migrations/0012_stripe_receipt_conflicts.sql": "40a225c48335de687cd36d8fb94061db0a71b952362f130ac33c0257da09f488",
+    "server/database/migrations/0013_medusa.sql": "b4177b3395a548c81fd5f54fa14f13e8fbe8c7d53b43047e1ad87700bd68fc1d",
+    "server/database/migrations/meta/0001_snapshot.json": "5ce05d11872845cdecbbed201e9b410366122c9c2b61231305493b729de6efaa",
+    "server/database/migrations/meta/0002_snapshot.json": "5aac843aca110632d929692bc45c37b50377103fb360fa4bb75d6e6c33ee72f9",
+    "server/database/migrations/meta/0003_snapshot.json": "669363b6ec526c05ce455901fd44cf24998ea9560ed152bf446c325de342b02f",
+    "server/database/migrations/meta/0004_snapshot.json": "81e41eb449a922d0b459183caf4dbd21fdb2127d1bd9b4d75a90ff4488e36b2d",
+    "server/database/migrations/meta/0005_snapshot.json": "40bd27d913890fe5c52733b01842f9df27c71c611c098003da29b10171813405",
+    "server/database/migrations/meta/0006_snapshot.json": "f077be3a684bbf0897d83d3af89e7f1b98913cee8c684fc9b6f1fd7e61d00444",
+    "server/database/migrations/meta/0007_snapshot.json": "8a59ce1f3f71faaa10017f064d49d52833a9afd1f4ff4bcd79b591db47f6c927",
+    "server/database/migrations/meta/0008_snapshot.json": "10e188029c8207876bceef6caece60e06e667df3fe81d9a9664396af4ae9e4b7",
+    "server/database/migrations/meta/0009_snapshot.json": "29f34000d48352f8e6ea3687d94f55a96490b113361f6ec6289ebd82a00da2ec",
+    "server/database/migrations/meta/0010_snapshot.json": "7adff815265c5e0aa1abb4c995a8f6ee989bfdcef93dd5d743873f2838714302",
+    "server/database/migrations/meta/0011_snapshot.json": "fb6f3d34a506fa5a8be9b8bf51e7b87477bff873159b5573fbf680de4fdebd14"
+  }
+}

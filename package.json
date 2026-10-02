@@ -19,7 +19,7 @@
     "typecheck": "nuxt typecheck",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "check": "bun run agents:check && bun run capabilities:check && bun run agents:test && bun run lint && bun run typecheck && bun run test && bun run test:notification-email && bun run build",
+    "check": "bun run agents:check && bun run capabilities:check && bun run agents:test && bun run lint && bun run typecheck && bun run test && bun run test:notification-email && bun run build && bun run test:file-ui-reference",
     "agents:check": "bun scripts/agents-check.ts",
     "agents:test": "bun test tests/agents",
     "capabilities:check": "bun scripts/capabilities-check.ts",
@@ -54,7 +54,8 @@
     "test:notification-email": "bun fixtures/notifications-consumer/.fixture/email-reference.ts",
     "transfers:reconcile": "bun scripts/transfers.ts reconcile",
     "transfers:purge": "bun scripts/transfers.ts purge",
-    "test:ops-reference": "bun fixtures/ops-admin-consumer/.fixture/storage-retry.ts && bun fixtures/ops-admin-consumer/.fixture/reference-protocol.ts && bun fixtures/ops-admin-consumer/.fixture/reference-removal.ts"
+    "test:ops-reference": "bun fixtures/ops-admin-consumer/.fixture/storage-retry.ts && bun fixtures/ops-admin-consumer/.fixture/reference-protocol.ts && bun fixtures/ops-admin-consumer/.fixture/reference-removal.ts",
+    "test:file-ui-reference": "bun scripts/file-ui-database.ts && bun scripts/file-ui-http.ts"
   },
   "dependencies": {
     "@repo/nuxt-api": "workspace:*",
@@ -96,6 +97,8 @@
     "@repo/nuxt-data-table": "workspace:*",
     "@repo/nuxt-command-system": "workspace:*",
     "@repo/nuxt-markdown-code": "workspace:*",
+    "@repo/nuxt-rich-text": "workspace:*",
+    "@repo/nuxt-file-ui": "workspace:*",
     "@repo/nuxt-flow-canvas": "workspace:*"
   },
   "devDependencies": {

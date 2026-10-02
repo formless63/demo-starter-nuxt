@@ -15,10 +15,10 @@ test('Flow owns setup-time dependency discovery without replacing caller setting
   expect(source).not.toContain('vite:extendConfig')
 })
 
-test('Flow reference stays authored in-progress with no dependency or migration inflation', () => {
+test('Flow reference is source-verified done with no dependency or migration inflation', () => {
   const catalog = JSON.parse(readFileSync(new URL('../../capabilities/catalog.json', import.meta.url), 'utf8'))
   const entry = catalog.capabilities.find((item: { id: string }) => item.id === 'flow-canvas')
-  expect(entry.status).toBe('in-progress')
+  expect(entry.status).toBe('done')
   expect(entry.requires).toEqual([])
   expect(entry.defaultInstalled).toBe(false)
   expect(entry.migrations).toEqual([])
