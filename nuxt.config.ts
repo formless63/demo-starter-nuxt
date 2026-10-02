@@ -3,7 +3,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-01',
   devtools: { enabled: true },
-  // Explicitly opt in to synthetic browser-test diagnostics; never ship by default.
+  // Explicit synthetic test diagnostics are disabled in ordinary builds.
   plugins: process.env.NUXT_E2E_DIAGNOSTICS === 'true'
     ? [`${import.meta.dirname}/tests/e2e/fixtures/hydration-diagnostics.client.ts`]
     : [],
