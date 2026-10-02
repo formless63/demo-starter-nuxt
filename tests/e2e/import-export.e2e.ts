@@ -1,3 +1,4 @@
+import { browserDiagnostics } from './browser-diagnostics'
 import { expect, test } from '@playwright/test'
 import { createHmac, randomUUID } from 'node:crypto'
 import { spawn } from 'node:child_process'
@@ -63,6 +64,7 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     context = await browser.newContext({ baseURL: base })
     await context.addCookies([{ name, value: encodeURIComponent(`${token}.${signature}`), domain: '127.0.0.1', path: '/', httpOnly: true, secure: production }])
     const page = await context.newPage()
+    browserDiagnostics(page)
     await page.goto(`${base}/app/projects`)
     await expect(page.getByRole('heading', { name: 'Project CSV transfers' })).toBeVisible()
     await expect(page.getByLabel('CSV file')).toBeEnabled({ timeout: 15000 })

@@ -19,7 +19,9 @@ try {
   stage = 'draft_status'; assert.equal(raw.data.status_id, '1')
   stage = 'auto_bill_disabled'; assert.equal(raw.data.auto_bill_enabled, false)
   stage = 'exact_amount'; assert.equal(raw.data.amount, '25')
-  stage = 'exact_balance'; assert.equal(raw.data.balance, '25')
+  // Native drafts have zero outstanding balance until explicitly marked sent.
+  // v5.13.43 InvoiceFactory::create / Invoice\\MarkSent own that transition.
+  stage = 'exact_balance'; assert.equal(raw.data.balance, '0')
   stage = 'invoice_get'; await providerRequest(connection, 'invoice', raw.data.id)
   console.info('Native provider wire assertions passed on Node24')
 }
