@@ -227,7 +227,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Search, Authorization
 - External: none
 
-### Data Table (`in-progress`)
+### Data Table (`done`)
 
 - Requires: none
 - Integrates with: Search, Organizations, Authorization
