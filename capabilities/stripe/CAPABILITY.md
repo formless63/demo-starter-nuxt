@@ -11,3 +11,21 @@ Migration allocation: 0011/0012 only, additive against frozen main 7d2490cd964d0
 Acceptance requires generic packed install/runtime/remove/rebuild, official SDK local wire/signature fixtures on both runtimes, PostgreSQL receipt/ledger/Jobs rollback and retention, reference UI/browser tests, production image/health/worker and exact-SHA hosted CI. Until those pass this capability is not complete or certified.
 
 No external Stripe API calls, CLI login, sandbox account creation, callback registration, credentials creation, payments, publication, deployment or main merge are authorized. Local protocol fixtures are not financial certification.
+
+## Server composition
+
+`createStripeService` accepts lazy database/Jobs factories and explicit trusted `authorizeScope`, `authorizeBoundResource`, `authorizeReconciliation`, `resolveConnection`, `resolveOffer` and `approvedRedirects` functions. Missing authorization denies. Browser context is restored from the native session and never selects a scope, connection, customer ID, Price ID or provider headers. Tenant use requires application membership wiring; root supports user scopes only and callback checks a current active server binding plus existing local owner.
+
+Caller-owned `requestCheckoutInTransaction`, `requestPaymentReconciliationInTransaction` and `receiveInTransaction` neither settle nor retry the caller transaction. `receiveInTransaction` requires a previously verified native hint from `verifyStripeWebhook`; do not expose it publicly or call it with parsed unverified input. Convenience methods explicitly own transactions. Only local operation/inbox UUIDs enter existing Jobs. Writes freeze approved immutable parameters privately; key reuse conflicts on changed normalized intent. `replayCheckout` is an explicitly invoked trusted server operation, uses the original `gs-stripe:<UUID>` key/intent and denies at/after23h or changed account/mode. It has no browser route and no automatic cached-500 escape.
+
+Resources are local projections; getters/list never contact Stripe. Workers fetch current provider state outside SQL transactions, require matching response IDs/mode, recheck current authorization and commit using token-fenced leases. `recoverExpiredAttempts` is an explicit bounded operator scan; `repairReceiptInTransaction` conditionally requeues a failed receipt once. Neither runs automatically at startup. Stop all workers and expire/settle attempts before unregistering handlers.
+
+## Reference and operator configuration
+
+`/stripe` restores native authentication and exposes queue/read/reconcile/cancel actions with repeated intent-key semantics and request cancellation. Stopping a browser request does not undo provider activity. The reference registers only `starter.one-time` using application-owned `STRIPE_REFERENCE_PRICE_ID`/`STRIPE_REFERENCE_CURRENCY` and HTTPS redirect settings. Operators must explicitly bind an existing customer through trusted server code. There is no browser customer onboarding. Compose supplies the same optional settings to app and worker; base startup needs none.
+
+Native callback route: `POST /api/integrations/stripe/webhooks/default`. Operator endpoint API version must independently be configured to2026-09-30.endive. Registration, secret provisioning, sandbox access and live payments remain separate unauthorized external actions.
+
+## Removal
+
+Drain/stop Stripe processing, recover expired attempts deliberately, then remove application routes/page/plugin/registry wiring and the Nuxt module/package dependency. Preserve the four tables, bindings, projections, ledgers, inbox and applied SQL/journal/history. Move schema declarations to application-owned code when package imports are removed. Do not delete remote resources, deregister callbacks or revoke credentials implicitly. The packed consumer retains Jobs/Webhooks and proves exact rows plus Drizzle migration history survive removal/rebuild.
