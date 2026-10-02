@@ -17,7 +17,6 @@
       "ai",
       "import-export",
       "ops-admin"
-      ,"charts-visualization"
     ]
   },
   "baseline": [
@@ -1215,7 +1214,7 @@
       "id": "charts-visualization",
       "displayName": "Charts / Visualization",
       "kind": "operations-ui",
-      "status": "done",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
