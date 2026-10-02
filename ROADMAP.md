@@ -221,7 +221,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Observability, Jobs, Audit Log, Object Storage, Cache / Coordination, Webhooks
 - External: none
 
-### Command System (`planned`)
+### Command System (`in-progress`)
 
 - Requires: none
 - Integrates with: Search, Authorization

@@ -174,3 +174,7 @@ Stop transfer producers and drain or preserve pending work before unregistering 
 For Ops/Admin removal, remove `@repo/nuxt-ops-admin` from dependencies/modules, the `opsAdmin` option, `server/ops`, `server/plugins/ops-admin-jobs.ts` and `server/plugins/ops-admin-storage.ts`, any navigation entry, and `OPS_ADMIN_USER_IDS`. Remove each optional adapter/import when pruning its provider capability. No data/provider cleanup exists. [Contract](../capabilities/ops-admin/CAPABILITY.md).
 
 When retaining Ops during Storage removal, also remove `server/ops/storage.ts` and `server/plugins/ops-admin-storage.ts` alongside its application card/import. During Jobs removal, remove its hard dependents and Ops Jobs/Webhooks cards/imports, `server/ops/jobs.ts` and `server/plugins/ops-admin-jobs.ts`. Cache/Observability direct Ops imports and cards must be removed with their providers; the static Audit card is removed with Audit.
+
+## Remove Command System
+
+Remove `@repo/nuxt-command-system` from root dependencies/modules and `app/pages/commands.vue`. Remove its reference enabled-capability ID and regenerate the lockfile. Keep `reka-ui` while other root UI still uses it. No data, migrations, server routes or external resources need removal.

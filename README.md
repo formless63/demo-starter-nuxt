@@ -44,6 +44,7 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Audit Log | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; optional authentication | Transactional append-oriented history and bounded keyset queries |
 | Realtime | Available (`done`) | Optional | Node runtime; application session policy; no capability dependency | Bounded server-to-browser SSE and WebSocket event adapters |
 | Notifications | Available (`done`) | Optional | Jobs; PostgreSQL/Drizzle; optional Email/Realtime/ntfy | Recipient-scoped persistent notifications and transactional delivery |
+| Command System | In progress | Optional | None | Application-owned commands, accessible keyboard palette |
 | Ops / Admin | Available (`done`) | Optional | Baseline human session; privileged server allowlist | Read-only sanitized application-owned diagnostic adapters |
 | Search | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; no extra service | Owner-scoped weighted FTS and deterministic keyset pages |
 | Import / Export | Available (`done`) | Optional | Jobs, Object Storage; PostgreSQL/Drizzle/Node | Durable bounded CSV transfer; personal Project round-trip |
@@ -177,3 +178,5 @@ Opt-in PostgreSQL-native `@repo/nuxt-search` server helpers; the reference Proje
 Explicitly enabled, server-only and operation-lazy. `@repo/nuxt-ai/server` provides text, incremental streaming and Zod structured generation; default provider openai-compatible, timeout 60 seconds, no retries, 1 MiB output cap. Set AI_MODEL and optional server AI_API_KEY/AI_BASE_URL only when used. `bun run ai:smoke` performs one intentional configured operation without logging generated content. See the [contract](capabilities/ai/CAPABILITY.md) and [evaluation](AI_MODULE_EVALUATION.md).
 
 Ops / Admin is available (`done`): opt-in read-only `/admin/ops`, privileged server-only baseline-user allowlist and application-owned safe adapters. [Contract](capabilities/ops-admin/CAPABILITY.md).
+
+Command System is in progress: opt-in native Nuxt command palette and application-owned registry. Keyboard, focus, async execution and interruption contracts live in the [capability contract](capabilities/command-system/CAPABILITY.md). Reference: `/commands`.

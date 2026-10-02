@@ -1,0 +1,121 @@
+import assert from 'node:assert/strict'
+import { createServer } from 'node:net'
+import { chromium } from '@playwright/test'
+import { createCommandRegistry } from '@repo/nuxt-command-system/runtime'
+
+const registry = createCommandRegistry()
+const first = registry.register({ id: 'same', label: 'Old', execute() {} })
+const second = registry.register({ id: 'same', label: 'New', execute() {} })
+first()
+assert.equal(registry.list()[0]?.label, 'New')
+assert.equal(registry.commands.value.length, 1)
+second()
+second()
+assert.equal(registry.list().length, 0)
+assert.equal(createCommandRegistry().list().length, 0)
+const port = await new Promise<number>((resolve, reject) => {
+  const server = createServer()
+  server.once('error', reject)
+  server.listen(0, '127.0.0.1', () => {
+    const address = server.address()
+    if (!address || typeof address === 'string') return reject(new Error('No port'))
+    server.close(() => resolve(address.port))
+  })
+})
+const base = `http://127.0.0.1:${port}`
+const server = Bun.spawn(['node', '.output/server/index.mjs'], { env: { ...Bun.env, PORT: String(port), HOST: '127.0.0.1' }, stdout: 'inherit', stderr: 'inherit' })
+let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined
+try {
+  let ready = false
+  for (let attempt = 0; attempt < 120; attempt++) {
+    try { if ((await fetch(`${base}/commands`)).ok) { ready = true; break } }
+    catch { /* server is starting */ }
+    await Bun.sleep(250)
+  }
+  assert.ok(ready, 'Production server started')
+  const html = await (await fetch(`${base}/commands`)).text()
+  assert.match(html, /Command System consumer/)
+  assert.match(html, /Open command menu/)
+  assert.doesNotMatch(html, /role="dialog"/)
+  if (Bun.env.CI && !Bun.env.PLAYWRIGHT_CHROMIUM_PATH) {
+    const install = Bun.spawn(['bun', 'x', 'playwright', 'install', '--with-deps', 'chromium'], { stdout: 'inherit', stderr: 'inherit' })
+    assert.equal(await install.exited, 0, 'CI Chromium installation')
+  }
+  browser = await chromium.launch({ headless: true, executablePath: Bun.env.PLAYWRIGHT_CHROMIUM_PATH || undefined })
+  const page = await browser.newPage()
+  const errors: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
+  page.on('console', message => { if (/hydration/i.test(message.text())) errors.push(message.text()) })
+  await page.goto(`${base}/commands`)
+  const trigger = page.getByRole('button', { name: 'Open command menu', exact: true })
+  const dialog = page.getByRole('dialog')
+  const search = page.getByRole('combobox')
+  const choose = async (query: string) => { await search.fill(query); await search.press('Enter') }
+  await page.getByLabel('Ordinary text input').focus()
+  await page.keyboard.press('Control+k')
+  assert.equal(await dialog.count(), 0)
+  await page.getByLabel('Editable region').focus()
+  await page.keyboard.press('Control+k')
+  assert.equal(await dialog.count(), 0)
+  await trigger.focus()
+  await page.keyboard.press('Control+k')
+  await dialog.waitFor()
+  await search.waitFor()
+  assert.equal(await search.evaluate(element => element === document.activeElement), true)
+  assert.equal(await page.getByRole('option', { name: 'Disabled command' }).count(), 0)
+  assert.equal(await page.getByRole('option', { name: 'Replacement registration' }).count(), 1)
+  await search.fill('no matching action')
+  await page.getByText('No commands found.').waitFor()
+  await search.press('ArrowDown')
+  assert.equal(await search.getAttribute('aria-activedescendant'), null)
+  await search.fill('add')
+  await search.press('Enter')
+  await dialog.waitFor({ state: 'hidden' })
+  assert.equal(await page.getByTestId('counter').textContent(), '1')
+  assert.equal(await trigger.evaluate(element => element === document.activeElement), true)
+  await page.getByRole('button', { name: 'Unregister replacement' }).click()
+  await trigger.click()
+  assert.equal(await page.getByRole('option', { name: 'Replacement registration' }).count(), 0)
+  await search.press('ArrowDown')
+  const activeId = await search.getAttribute('aria-activedescendant')
+  assert.ok(activeId)
+  assert.equal(await page.locator(`[id="${activeId}"]`).getAttribute('aria-selected'), 'true')
+  await choose('Fail command')
+  await page.getByRole('alert').waitFor()
+  assert.equal(await page.getByRole('alert').textContent(), 'Expected command failure')
+  await page.keyboard.press('Escape')
+  await dialog.waitFor({ state: 'hidden' })
+  await trigger.click()
+  assert.equal(await page.getByRole('alert').count(), 0)
+  await choose('Slow counter')
+  await search.press('Enter')
+  await page.keyboard.press('Escape')
+  await dialog.waitFor({ state: 'hidden' })
+  await trigger.click()
+  await search.fill('Increment')
+  await search.press('Enter')
+  await page.waitForTimeout(1100)
+  assert.equal(await page.getByTestId('counter').textContent(), '2', 'Close/reopen must not unlock running execution')
+  assert.equal(await dialog.count(), 1, 'Stale completion must not dismiss reopened palette')
+  await choose('Controlled interrupt')
+  await page.waitForTimeout(150)
+  await dialog.waitFor()
+  await choose('Increment')
+  await page.waitForTimeout(1100)
+  assert.equal(await page.getByTestId('counter').textContent(), '3', 'Controlled prop transitions retain execution mutex')
+  assert.equal(await dialog.count(), 1)
+  await choose('Late failure')
+  await page.waitForTimeout(900)
+  assert.equal(await dialog.count(), 1)
+  assert.equal(await page.getByRole('alert').count(), 0, 'Stale failures must not contaminate a new presentation')
+  await choose('Unmount palette')
+  await dialog.waitFor({ state: 'hidden' })
+  await page.waitForTimeout(100)
+  assert.deepEqual(errors, [], 'No SSR hydration, runtime, or unhandled command failures')
+  console.info('Command packed production browser contract passed: keyboard, focus, filtering, ownership, errors, interruption mutex, controlled transitions, unmount and SSR/hydration')
+}
+finally {
+  await browser?.close()
+  server.kill()
+  await server.exited
+}

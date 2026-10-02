@@ -1,0 +1,13 @@
+# Command System
+
+Opt-in Nuxt module `@repo/nuxt-command-system`. `defaultInstalled:false`; no capability requirements, database, migrations, worker, environment variables or external services. Optional Search and Authorization composition stays application-owned.
+
+Install the package and list it in `nuxt.config.ts` modules. The module registers `CommandPalette`; it does not mount a palette or create routes. Import `createCommandRegistry` and `AppCommand` from `@repo/nuxt-command-system/runtime`. Create registries in component/application setup, never as server module-level singletons. Registry `commands` is a readonly computed snapshot. `register` returns an ownership-safe disposer: stale cleanup cannot remove a newer registration with the same ID. Consumers dispose registrations when their application scope ends.
+
+Pass `commands` and optionally `v-model:open`, `label`, `triggerLabel`, or `:shortcut="false"`. The trigger slot customizes its contents. Mod+K opens from non-editable targets. Search matches labels/keywords; disabled commands are excluded. Arrows change selection, Enter executes, Escape or Close dismisses. Reka owns focus trapping/restoration. SSR renders a closed trigger without browser globals or portal hydration mismatch.
+
+Commands have `id`, `label`, optional `keywords`/`disabled`, and `execute`. Errors remain visible until a new run/open presentation; application callback messages should be safe for end users. Async commands cannot overlap within a mounted palette, including across dismissal/reopen. Closing does not cancel work. Controlled open transitions invalidate old success/error presentation. An unmounted palette ignores late settlement. The mutex is per palette, so applications needing cross-instance exclusion must provide it.
+
+Root reference is `/commands`. `bun run packages:test command-system` packs an independent consumer and verifies typecheck/build, production browser behavior, unregister ownership, SSR/hydration, keyboard/focus/filter/errors, repeated and interrupted runs, controlled transitions and unmount; then removes the package and Reka and typechecks/builds the baseline again. No database required. Completion remains in-progress until aggregate CI passes.
+
+Removal: delete the root module/dependency and `app/pages/commands.vue`, remove the capability ID from root reference enablement, and regenerate the Bun lockfile. Consumer data/resources do not exist. Keep Reka if other application UI still depends on it; the minimal fixture proves ownership removal in isolation.

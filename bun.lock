@@ -10,6 +10,7 @@
         "@repo/nuxt-api": "workspace:*",
         "@repo/nuxt-audit-log": "workspace:*",
         "@repo/nuxt-cache": "workspace:*",
+        "@repo/nuxt-command-system": "workspace:*",
         "@repo/nuxt-email": "workspace:*",
         "@repo/nuxt-import-export": "workspace:*",
         "@repo/nuxt-jobs": "workspace:*",
@@ -105,6 +106,19 @@
         "vue-tsc": "3.1.7",
       },
     },
+    "fixtures/command-system-consumer": {
+      "name": "command-system-consumer-fixture",
+      "dependencies": {
+        "@repo/nuxt-command-system": "workspace:*",
+        "nuxt": "4.5.2",
+        "vue": "3.5.43",
+      },
+      "devDependencies": {
+        "@playwright/test": "1.63.0",
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7",
+      },
+    },
     "fixtures/email-consumer": {
       "name": "email-consumer",
       "dependencies": {
@@ -130,6 +144,7 @@
       "devDependencies": {
         "@types/node": "24.10.1",
         "drizzle-kit": "0.31.11",
+        "pg-boss": "12.35.0",
         "typescript": "5.9.3",
         "vue-tsc": "3.1.7",
       },
@@ -316,6 +331,22 @@
       },
       "peerDependencies": {
         "nuxt": ">=4.0.0 <5",
+      },
+    },
+    "packages/nuxt-command-system": {
+      "name": "@repo/nuxt-command-system",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+        "reka-ui": "2.10.5",
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "nuxt": "4.5.2",
+      },
+      "peerDependencies": {
+        "nuxt": ">=4.0.0 <5",
+        "vue": "^3.5.0",
       },
     },
     "packages/nuxt-email": {
@@ -989,6 +1020,8 @@
 
     "@repo/nuxt-cache": ["@repo/nuxt-cache@workspace:packages/nuxt-cache"],
 
+    "@repo/nuxt-command-system": ["@repo/nuxt-command-system@workspace:packages/nuxt-command-system"],
+
     "@repo/nuxt-email": ["@repo/nuxt-email@workspace:packages/nuxt-email"],
 
     "@repo/nuxt-import-export": ["@repo/nuxt-import-export@workspace:packages/nuxt-import-export"],
@@ -1546,6 +1579,8 @@
     "color-name": ["color-name@1.1.4", "", {}, "sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA=="],
 
     "comma-separated-tokens": ["comma-separated-tokens@2.0.3", "", {}, "sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg=="],
+
+    "command-system-consumer-fixture": ["command-system-consumer-fixture@workspace:fixtures/command-system-consumer"],
 
     "commander": ["commander@2.20.3", "", {}, "sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ=="],
 
