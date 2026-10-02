@@ -4,7 +4,7 @@ The repository is both a baseline starter and a reference application. Choose wh
 
 ## Full/reference setup
 
-The root application explicitly registers Jobs, API Platform, Observability, Object Storage, Email, Webhooks, Audit Log, Cache / Coordination, Realtime, Notifications, Search, AI, Import / Export and Ops / Admin. It includes:
+The root application explicitly registers Jobs, API Platform, Observability, Object Storage, Email, Webhooks, Audit Log, Cache / Coordination, Realtime, Notifications, Search, AI, Import / Export, Ops / Admin and Data Table. It includes:
 
 - one Jobs registry and standalone worker with transactional enqueue;
 - Better Auth and owner-scoped browser and machine API routes;
@@ -156,6 +156,10 @@ When removing **Observability while retaining Realtime/Notifications**, remove o
 1. Remove the Projects search route and searchProjects service imports/function, Search module entry and dependency, and `search` reference enablement. Remove Search tests if pruning its reference integration.
 2. Preserve application rows, generated vector/index declarations and committed migration history. The schema declaration does not depend on the package. Package removal applies no SQL; physical removal requires a new explicit reviewed migration.
 3. Reinstall, clear generated Nuxt output, and run catalog/typecheck/build checks. Permanent pruning updates metadata/docs before deleting package/fixture/evaluation/skill; preserve the roadmap ID for optional relationships.
+
+## Remove Data Table
+
+Remove `@repo/nuxt-data-table` from dependencies/modules and `data-table` from reference enablement, then remove consumer Data Table components/imports and rebuild. No migrations, providers, or persistent data require cleanup.
 
 ## Remove AI
 
