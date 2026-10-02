@@ -258,9 +258,9 @@ const capabilitiesById = new Map(catalog.capabilities.map(capability => [capabil
 const nuxtConfig = await Bun.file(resolve(root, 'nuxt.config.ts')).text()
 for (const id of catalog.referenceApplication?.enabledCapabilities ?? []) {
   const capability = capabilitiesById.get(id)
-  if (capability?.status !== 'done' || !capability.packageName || !packageManifest.dependencies?.[capability.packageName]
+  if (!(capability?.status === 'done' || (capability?.status === 'in-progress' && capability.fixturePath && capability.packageTest)) || !capability.packageName || !packageManifest.dependencies?.[capability.packageName]
     || ![`'${capability.packageName}'`, `"${capability.packageName}"`].some(literal => nuxtConfig.includes(literal))) {
-    errors.push(`Reference application ${id} must reference a completed, installed, explicitly registered package capability`)
+    errors.push(`Reference application ${id} must reference a completed or fixture-backed in-progress, installed, explicitly registered package capability`)
   }
 }
 

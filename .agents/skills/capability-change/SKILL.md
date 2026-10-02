@@ -12,7 +12,7 @@ Read `ROADMAP.md`, `capabilities/catalog.json`, and the capability's `capabiliti
 3. Use Nuxt 4 `moduleDependencies` for a true Nuxt-module dependency when the framework can enforce it. Mark optional Nuxt-module integrations `optional: true`. Do not represent npm libraries or starter baseline services such as Drizzle or Better Auth as fake Nuxt modules.
 4. A completed Nuxt package capability must declare its package, fixture, and package-test contract in `capabilities/catalog.json`. Keep capability-specific runtime checks in its fixture hook; keep pack/install/build/removal mechanics in the generic `packages:*` orchestration. Do not add a handwritten capability CI job.
 5. Update `ROADMAP.md`, `capabilities/catalog.json`, and the capability's `CAPABILITY.md` together when their shared contract changes.
-   Keep `referenceApplication.enabledCapabilities` aligned with explicit root dependency/module enablement. Mark new work `in-progress` before implementation; explicit generic package build/test can target that status, but the CI matrix includes only completed packages.
+   Keep `referenceApplication.enabledCapabilities` aligned with explicit root dependency/module enablement. Mark new work `in-progress` before implementation; explicit generic package build/test can target that status, and the CI matrix includes authored fixture-backed in-progress packages alongside completed packages. Matrix inclusion alone is not completion.
 6. Test clean installation and removal with `bun run packages:test <id>` when applicable. Run capability-specific migrations and smoke tests, `bun run capabilities:check`, and normal repository verification.
 
 ## Definition of Done
