@@ -36,6 +36,7 @@ CI pins Bun 1.4.2 independently and uses `actions/setup-node` for Node 24 in bot
 - `bun run test`: Nuxt/Vitest unit and database integration suite; authorization coverage requires `DATABASE_URL` and migrated PostgreSQL.
 - `PLAYWRIGHT_BASE_URL=http://127.0.0.1:<port> bun run test:e2e`: run the same health/API, session/machine Audit and browser contracts against an explicitly started production app; supply its disposable `DATABASE_URL` and auth secret.
 - `bun run test:e2e`: Playwright browser smoke test, which starts Nuxt itself (install Chromium once with `bunx playwright install chromium`).
+- Interactive browser tests await the root application's public `data-app-hydrated="true"` marker, set by `onNuxtReady`, before using controls. The shared helper gives cold startup 30 seconds; feature assertions retain their normal five-second budget. The same readiness contract applies to dev and production output.
 - `bun run build` / `bun run start`: produce and serve portable Nitro output.
 - `bun run check`: agent harness/tests, capability catalog, lint, typecheck, Nuxt/Vitest tests, and production build. Stop/AfterAgent hooks run only staged/unstaged whitespace checks plus the capability checker for governance changes and the agent-harness checker for harness changes (both for overlapping paths); full verification remains task/skill/CI-driven.
 - `bun run auth:provision`: idempotently configure a development Pocket ID client using the documented environment.

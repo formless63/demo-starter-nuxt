@@ -28,8 +28,6 @@ export function createChartsLifecycle<Chart, Host, Option>(deps: ChartsLifecycle
     deps.onStage?.('lifecycle-start')
     active = true
     const currentGeneration = ++generation
-    await deps.nextTick()
-    if (!active || generation !== currentGeneration) return
     const host = deps.host()
     if (!host) { deps.onStage?.('host-missing'); return }
     deps.onStage?.(`host-ready:${String((host as { clientWidth?: number }).clientWidth ?? 0)}x${String((host as { clientHeight?: number }).clientHeight ?? 0)}`)

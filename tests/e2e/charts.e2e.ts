@@ -1,7 +1,11 @@
 import { expect, test, type Request } from '@playwright/test'
+import { waitForHydration } from './hydration'
 
 test.describe('charts visualization', () => {
   test('enhances SSR fallback and supports kinds, replacement, accessibility, motion, and cleanup', async ({ page }, testInfo) => {
+    // Allow bounded cold bootstrap plus the full interaction contract. Individual
+    // canvas, state, and interaction assertions still use the default five seconds.
+    test.setTimeout(60_000)
     const browserErrors: string[] = []
     const consoleErrors: string[] = []
     const failedRequests: string[] = []
@@ -49,6 +53,7 @@ test.describe('charts visualization', () => {
       await page.goto('/charts')
     await expect(page.getByRole('heading', { name: 'Revenue' })).toBeVisible()
     await expect(page.locator('#primary-chart table')).toBeVisible()
+    await waitForHydration(page)
     await expect(page.locator('#primary-chart canvas')).toBeVisible()
     await expect(page.locator('#primary-chart[aria-describedby="primary-chart-description"]')).toHaveCount(1)
     await expect(page.locator('figure[aria-labelledby]')).toHaveCount(2)
@@ -85,10 +90,6 @@ test.describe('charts visualization', () => {
     }
     catch (error) {
       await attachDiagnostics('assertion-failed')
-      // Preserve the original assertion failure. A later snapshot distinguishes
-      // slow cold hydration from a bootstrap that remains stalled.
-      await page.waitForTimeout(10_000)
-      await attachDiagnostics('ten-seconds-after-failure')
       throw error
     }
   })
