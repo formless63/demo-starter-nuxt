@@ -208,3 +208,5 @@ Remove `@repo/nuxt-command-system` from root dependencies/modules and `app/pages
 ## Remove Charts / Visualization
 
 Remove `@repo/nuxt-charts-visualization` from root dependencies and Nuxt modules, remove `charts-visualization` from reference enablement, and remove or replace `app/pages/charts.vue` and application-owned `<ChartsVisualization>` usage. Remove its tests only when pruning the capability. Reinstall to update the lockfile and run catalog, typecheck and build checks. The module-owned ECharts prebundles disappear with the module; no root Vite edit is needed. No database, migration, worker, credentials or external resources belong to Charts. The generic packed lifecycle verifies clean removal and rebuild.
+
+Rich Text removal: remove `@repo/nuxt-rich-text` from root dependencies and Nuxt modules, remove `app/pages/rich-text-test.vue` and `tests/e2e/rich-text.spec.ts`, remove consumer imports/usages and reference catalog enablement. No persistence or data deletion is involved.

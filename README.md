@@ -203,3 +203,5 @@ The reference app explicitly enables private `@repo/nuxt-medusa`; clean consumer
 Medusa 2.21.2 backend/subscriber compatibility is verified against the pinned disposable fixture. None of these provider checks certify financial activity or a remote production deployment.
 
 Command System is available (`done`): opt-in native Nuxt command palette and application-owned registry. Keyboard, focus, async execution and interruption contracts live in the [capability contract](capabilities/command-system/CAPABILITY.md). Reference: `/commands`.
+
+Rich Text / Tiptap is an opt-in in-progress native Vue package. The reference page `/rich-text-test` demonstrates bounded safe JSON with lazy editing and caller-owned state. See [contract](capabilities/rich-text/CAPABILITY.md).

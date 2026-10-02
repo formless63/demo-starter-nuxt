@@ -177,3 +177,5 @@ Command System (`done`) uses `@repo/nuxt-command-system`; enabled explicitly in 
 ### Charts / Visualization
 
 Keep `"@repo/nuxt-charts-visualization": "workspace:*"` and explicitly register its Nuxt module. Applications own data and optional Data Table/Realtime composition; no hard capability dependency exists. The module owns selective ECharts prebundles while preserving consumer optimizer settings. The `/charts` reference covers line/bar/area, SSR semantic data, responsive updates, reduced motion and disposal. Verify with `bun run packages:test charts-visualization` and the root unit/browser contracts. See the [Charts contract](../capabilities/charts-visualization/CAPABILITY.md) and [removal recipe](STARTING-A-PROJECT.md#remove-charts--visualization).
+
+Rich Text (`in-progress`): explicitly register `@repo/nuxt-rich-text`; no hard dependencies or external services. Safe SSR content and lazy editor share a closed validated JSON schema. See [contract](../capabilities/rich-text/CAPABILITY.md).

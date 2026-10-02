@@ -70,3 +70,5 @@ Medusa (`done`) is an optional independent native Nuxt package with application-
 All twenty completed capabilities remain `defaultInstalled:false` and explicitly enabled in the root reference app. The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused and Identity remains separately paused.
 
 Command System is an opt-in native Nuxt module with a Vue registry and Reka Dialog palette; no server or global request state. Applications own commands, navigation, authorization and cancellation. Presentation generations suppress stale async results; an independent mutex prevents execution overlap across close/reopen and controlled transitions.
+
+Rich Text is an independent opt-in package with framework-neutral strict JSON validation, native Vue safe SSR rendering and mount-only Tiptap editing. Caller owns auth/persistence; replacement/rejection resets undo history. No uploads, HTML import or hard dependencies.

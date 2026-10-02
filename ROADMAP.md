@@ -264,7 +264,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Jobs, Search
 - External: none directly; Object Storage owns its S3 requirement
 
-### Rich Text / Tiptap (`planned`)
+### Rich Text / Tiptap (`in-progress`)
 
 - Requires: none
 - Integrates with: Object Storage, Markdown / Code, Realtime, Organizations
@@ -315,3 +315,5 @@ Evaluation status means “investigate when a real capability needs it,” not �
 ## Governance
 
 Every implemented capability gets `capabilities/<id>/CAPABILITY.md`. Changes to capability installation, removal, dependencies, optional integrations, external requirements, scripts, migrations, runtime services, or status update this roadmap, the JSON catalog, and the capability contract together. Run `bun run capabilities:check` before the ordinary repository verification.
+
+Rich Text is under implementation as independent `@repo/nuxt-rich-text`; see [contract](capabilities/rich-text/CAPABILITY.md). Exact hosted full CI and packed lifecycle gates precede completion.
