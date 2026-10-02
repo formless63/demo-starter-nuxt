@@ -48,4 +48,29 @@ button().click(); await nextTick()
 app.unmount(); resolveCopy(); await Promise.resolve(); await nextTick()
 assert.equal(container.textContent, '', 'Unmount cancels pending status updates')
 console.info('Shipped Vue DOM: initial/repeated/pending/replaced/same-code-document/failure/unavailable/unmounted clipboard states passed')
+const { createSSRApp } = await import('vue')
+const { renderToString } = await import('vue/server-renderer')
+const { malformedDocument } = await import('./grammar.ts')
+const rendered = await renderToString(createSSRApp({ render: () => h(MarkdownContent, { document: malformedDocument }) }))
+const hydrateContainer = window.document.createElement('div')
+hydrateContainer.innerHTML = rendered
+window.document.body.append(hydrateContainer)
+const before = hydrateContainer.innerHTML
+const hydrationMessages: string[] = []
+const originalWarn = console.warn
+const originalError = console.error
+console.warn = (...args: unknown[]) => { hydrationMessages.push(args.join(' ')) }
+console.error = (...args: unknown[]) => { hydrationMessages.push(args.join(' ')) }
+const hydrated = createSSRApp({ render: () => h(MarkdownContent, { document: malformedDocument }) })
+try {
+  hydrated.mount(hydrateContainer)
+  await nextTick()
+  // Copy readiness intentionally changes disabled after mount; structure must not change.
+  const withoutReadiness = (value: string) => value.replace(/ disabled(?:="")?/g, '')
+  assert.equal(withoutReadiness(hydrateContainer.innerHTML), withoutReadiness(before))
+  assert.deepEqual(hydrationMessages, [], 'SSR -> parsed DOM -> real Vue hydration has no mismatch')
+  assert(!hydrateContainer.textContent?.includes('drop '))
+}
+finally { hydrated.unmount(); console.warn = originalWarn; console.error = originalError }
+console.info('Malformed HTML model: shipped Vue SSR -> DOM -> hydrate passes without structural repairs or mismatch')
 await window.happyDOM.close()
