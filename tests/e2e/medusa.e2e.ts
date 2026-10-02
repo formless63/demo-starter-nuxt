@@ -27,11 +27,12 @@ test('Medusa user isolation, local projections, repeated actions and queued canc
     await page.route('**/api/integrations/medusa/reconcile', async route => { count++; await responseGate; await route.fulfill({ json: { operationId: operation, status: 'queued' } }) })
     const reconcile = page.getByRole('button', { name: 'Reconcile product' })
     try {
+      await expect(reconcile).toBeEnabled()
       await reconcile.click()
       await expect(reconcile).toBeDisabled()
       // A native repeated click cannot enqueue another request while disabled.
       await reconcile.evaluate(button => (button as HTMLButtonElement).click())
-      expect(count).toBe(1)
+      await expect.poll(() => count).toBe(1)
     }
     finally { releaseResponse() }
     await expect(page.getByRole('button', { name: 'Cancel queued work' })).toBeEnabled()
