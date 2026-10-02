@@ -68,6 +68,11 @@ function run(action: (e: Editor) => unknown) {
   const e = editor.value
   if (!e) return
   if (e.state.selection instanceof AllSelection) e.commands.setTextSelection({ from: Selection.atStart(e.state.doc).from, to: Selection.atEnd(e.state.doc).to })
+  // Tiptap focus() defers view.focus() to rAF for React compatibility. A frame
+  // from an earlier toolbar action can otherwise steal focus from a newer URL
+  // input interaction. Vue can focus its native view synchronously here; chained
+  // focus() now observes hasFocus() and does not enqueue a stale callback.
+  e.view.focus()
   action(e)
 }
 function applyLink() { if (!isSafeRichTextLink(link.value)) { linkError.value = true; return }; run(e => e.chain().focus().extendMarkRange('link').setLink({ href: link.value }).run()); linkError.value = false }
