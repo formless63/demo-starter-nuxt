@@ -17,6 +17,7 @@
       "ai",
       "import-export",
       "ops-admin"
+      ,"data-table"
     ]
   },
   "baseline": [
@@ -1185,7 +1186,7 @@
       "id": "data-table",
       "displayName": "Data Table",
       "kind": "operations-ui",
-      "status": "in-progress",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
