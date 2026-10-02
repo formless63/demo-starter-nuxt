@@ -258,7 +258,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - External: none
 - v1 Nuxt package: `@repo/nuxt-charts-visualization`; line/bar/area wrapper with ECharts 6.1.0 selective imports, semantic SSR table fallback, responsive disposal, and reduced-motion handling.
 
-### File UI (`planned`)
+### File UI (`in-progress`)
 
 - Requires: Object Storage
 - Integrates with: Jobs, Search
@@ -315,3 +315,5 @@ Evaluation status means “investigate when a real capability needs it,” not �
 ## Governance
 
 Every implemented capability gets `capabilities/<id>/CAPABILITY.md`. Changes to capability installation, removal, dependencies, optional integrations, external requirements, scripts, migrations, runtime services, or status update this roadmap, the JSON catalog, and the capability contract together. Run `bun run capabilities:check` before the ordinary repository verification.
+
+File UI is under development as a private native Nuxt package. Only Object Storage is a hard dependency; trusted identity/policy and atomic durable metadata belong to the application. It remains opt-in and in-progress until independent review and all exact-head hosted lifecycle, browser, provider and native HTTP gates pass.

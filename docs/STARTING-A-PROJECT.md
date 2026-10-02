@@ -208,3 +208,7 @@ Remove `@repo/nuxt-command-system` from root dependencies/modules and `app/pages
 ## Remove Charts / Visualization
 
 Remove `@repo/nuxt-charts-visualization` from root dependencies and Nuxt modules, remove `charts-visualization` from reference enablement, and remove or replace `app/pages/charts.vue` and application-owned `<ChartsVisualization>` usage. Remove its tests only when pruning the capability. Reinstall to update the lockfile and run catalog, typecheck and build checks. The module-owned ECharts prebundles disappear with the module; no root Vite edit is needed. No database, migration, worker, credentials or external resources belong to Charts. The generic packed lifecycle verifies clean removal and rebuild.
+
+## Removing File UI
+
+Remove `@repo/nuxt-file-ui` from module/dependency lists, `app/pages/files.vue`, `server/api/files`, `server/utils/file-ui.ts`, `server/utils/file-ui-metadata.ts`, root reference capability enablement and File UI-specific test scripts, then regenerate the lockfile. Retain application file schema/export, all SQL/snapshots/journal history, metadata receipts and objects. No provider data or credentials are removed. Keep Object Storage for its other consumers.

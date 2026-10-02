@@ -22,7 +22,8 @@
       "medusa",
       "stripe",
       "data-table",
-      "command-system"
+      "command-system",
+      "file-ui"
     ]
   },
   "baseline": [
@@ -1432,7 +1433,7 @@
       "id": "file-ui",
       "displayName": "File UI",
       "kind": "operations-ui",
-      "status": "planned",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [
         "object-storage"
@@ -1442,7 +1443,48 @@
         "search"
       ],
       "externalRequirements": [],
-      "summary": "Upload, browse, manage, and select files stored by Object Storage."
+      "summary": "Upload, browse, manage, and select files stored by Object Storage.",
+      "packageName": "@repo/nuxt-file-ui",
+      "packagePath": "packages/nuxt-file-ui",
+      "fixturePath": "fixtures/file-ui-consumer",
+      "documentationPath": "capabilities/file-ui/CAPABILITY.md",
+      "evaluationDocument": "FILE_UI_MODULE_EVALUATION.md",
+      "scripts": [
+        "packages:build",
+        "packages:test",
+        "test:file-ui-reference"
+      ],
+      "environmentVariables": [],
+      "migrations": [],
+      "runtimeProcesses": [
+        "Nuxt application"
+      ],
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "postRemovalScript": "package:test:post-removal",
+        "cleanupScript": "package:test:cleanup",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "app/pages/files.vue",
+            "app/pages/browser.vue",
+            "app/fixtures",
+            "server/api/files",
+            "server/api/fixture-download",
+            "server/utils/file-fixture.ts",
+            ".fixture/package-test.ts",
+            ".fixture/protocol.ts",
+            ".fixture/native.ts",
+            ".fixture/provider-runtime.ts",
+            ".fixture/workflow.test.ts",
+            ".fixture/browser.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "rich-text",
