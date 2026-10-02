@@ -42,7 +42,8 @@
         "@repo/nuxt-medusa": "workspace:*",
         "@repo/nuxt-data-table": "workspace:*",
         "@repo/nuxt-charts-visualization": "workspace:*",
-        "@repo/nuxt-command-system": "workspace:*"
+        "@repo/nuxt-command-system": "workspace:*",
+        "@repo/nuxt-file-ui": "workspace:*"
       },
       "devDependencies": {
         "@nuxt/eslint": "1.17.0",
@@ -716,6 +717,38 @@
       "dependencies": {
         "@nuxt/kit": "4.5.2",
         "reka-ui": "2.10.5"
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "nuxt": "4.5.2"
+      },
+      "peerDependencies": {
+        "nuxt": ">=4.0.0 <5",
+        "vue": "^3.5.0"
+      }
+    },
+    "fixtures/file-ui-consumer": {
+      "name": "file-ui-consumer-fixture",
+      "dependencies": {
+        "@repo/nuxt-file-ui": "workspace:*",
+        "@repo/nuxt-storage": "workspace:*",
+        "nuxt": "4.5.2",
+        "vue": "3.5.43"
+      },
+      "devDependencies": {
+        "@playwright/test": "1.63.0",
+        "@types/node": "24.10.1",
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7"
+      }
+    },
+    "packages/nuxt-file-ui": {
+      "name": "@repo/nuxt-file-ui",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+        "@repo/nuxt-storage": "workspace:*",
+        "h3": "1.15.11"
       },
       "devDependencies": {
         "@nuxt/module-builder": "1.0.3",
@@ -17719,6 +17752,12 @@
     ],
     "command-system-consumer-fixture": [
       "command-system-consumer-fixture@workspace:fixtures/command-system-consumer"
+    ],
+    "@repo/nuxt-file-ui": [
+      "@repo/nuxt-file-ui@workspace:packages/nuxt-file-ui"
+    ],
+    "file-ui-consumer-fixture": [
+      "file-ui-consumer-fixture@workspace:fixtures/file-ui-consumer"
     ]
   }
 }

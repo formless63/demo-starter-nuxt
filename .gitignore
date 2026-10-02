@@ -21,3 +21,5 @@ fixtures/invoice-ninja-consumer/.fixture/database.json
 
 fixtures/medusa-consumer/.fixture/medusa-retained.json
 fixtures/medusa-consumer/.fixture/compiled
+
+fixtures/file-ui-consumer/.fixture/retained-providers.json
