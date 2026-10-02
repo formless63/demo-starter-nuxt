@@ -12,6 +12,7 @@ const labels = computed(() => revision.value ? ['Jan', 'Feb', 'Mar'] : ['Jan', '
 const values = computed(() => empty.value ? [] : revision.value ? [12, 18, 9] : [10, 15])
 const chartState = ref({ type: '', data: [] as unknown[], animation: true, area: false, width: 0 })
 let stateTimer: ReturnType<typeof setInterval> | undefined
+function isRecord(value: unknown): value is Record<string, unknown> { return typeof value === 'object' && value !== null }
 
 function startUpdate() {
   loading.value = true
@@ -26,12 +27,13 @@ onMounted(() => {
   stateTimer = setInterval(() => {
     const host = document.querySelector('#primary-chart .charts-visualization__canvas')
     const instance = host instanceof HTMLElement ? getInstanceByDom(host) : undefined
-    const option = instance?.getOption()
+    const option = instance?.getOption() as { series?: unknown; animation?: unknown } | undefined
+    const firstSeries = Array.isArray(option?.series) && isRecord(option.series[0]) ? option.series[0] : undefined
     chartState.value = {
-      type: String(option?.series?.[0]?.type ?? ''),
-      data: (option?.series?.[0]?.data ?? []) as unknown[],
+      type: String(firstSeries?.type ?? ''),
+      data: Array.isArray(firstSeries?.data) ? firstSeries.data : [],
       animation: option?.animation !== false,
-      area: option?.series?.[0]?.areaStyle !== undefined,
+      area: firstSeries?.areaStyle !== undefined,
       width: instance?.getWidth() ?? 0,
     }
   }, 25)
