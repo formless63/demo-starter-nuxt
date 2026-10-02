@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<{
   height?: string
   animated?: boolean
 }>(), { kind: 'line', description: '', height: '20rem', animated: true })
-const emit = defineEmits<{ enhancementError: [message: string] }>()
+const emit = defineEmits<{ enhancementError: [message: string]; enhancementStage: [stage: string] }>()
 
 const attrs = useAttrs()
 const host = ref<HTMLElement | null>(null)
@@ -44,6 +44,7 @@ const lifecycleController = createChartsLifecycle<ECharts, HTMLElement, EChartsO
   observe: (element, onResize) => { const observer = new ResizeObserver(onResize); observer.observe(element); return observer },
   resize: instance => instance.resize(),
   dispose: instance => instance.dispose(),
+  onStage: stage => emit('enhancementStage', stage),
 })
 
 function option(): EChartsOption {
@@ -64,6 +65,7 @@ function option(): EChartsOption {
 }
 
 onMounted(() => {
+  emit('enhancementStage', 'component-mounted')
   mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   reducedMotion.value = mediaQuery.matches
   motionListener = event => { reducedMotion.value = event.matches; void lifecycleController.render() }

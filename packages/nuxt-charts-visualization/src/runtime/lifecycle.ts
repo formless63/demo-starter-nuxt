@@ -7,6 +7,7 @@ export interface ChartsLifecycleDeps<Chart, Host, Option> {
   observe: (host: Host, onResize: () => void) => { disconnect: () => void }
   resize?: (chart: Chart) => void
   dispose: (chart: Chart) => void
+  onStage?: (stage: string) => void
 }
 
 export function createChartsLifecycle<Chart, Host, Option>(deps: ChartsLifecycleDeps<Chart, Host, Option>) {
@@ -24,15 +25,18 @@ export function createChartsLifecycle<Chart, Host, Option>(deps: ChartsLifecycle
   }
 
   const mount = async () => {
+    deps.onStage?.('lifecycle-start')
     active = true
     const currentGeneration = ++generation
     await deps.nextTick()
     if (!active || generation !== currentGeneration) return
     const host = deps.host()
-    if (!host) return
+    if (!host) { deps.onStage?.('host-missing'); return }
+    deps.onStage?.(`host-ready:${String((host as { clientWidth?: number }).clientWidth ?? 0)}x${String((host as { clientHeight?: number }).clientHeight ?? 0)}`)
     const loaded = await deps.load()
     if (!active || generation !== currentGeneration || !deps.host()) return
     chart = loaded.init(host)
+    deps.onStage?.('echarts-init')
     await render()
     if (!active || generation !== currentGeneration || !chart) {
       if (chart) deps.dispose(chart)
@@ -40,6 +44,7 @@ export function createChartsLifecycle<Chart, Host, Option>(deps: ChartsLifecycle
       return
     }
     observer = deps.observe(host, () => { if (chart && deps.resize) deps.resize(chart) })
+    deps.onStage?.('complete')
   }
 
   const unmount = () => {

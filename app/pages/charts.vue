@@ -12,6 +12,8 @@ const labels = computed(() => revision.value ? ['Jan', 'Feb', 'Mar'] : ['Jan', '
 const values = computed(() => empty.value ? [] : revision.value ? [12, 18, 9] : [10, 15])
 const chartState = ref({ type: '', data: [] as unknown[], animation: true, area: false, width: 0 })
 const chartError = ref('')
+const chartStages = ref<string[]>([])
+const hydrated = ref(false)
 let stateTimer: ReturnType<typeof setInterval> | undefined
 function isRecord(value: unknown): value is Record<string, unknown> { return typeof value === 'object' && value !== null }
 
@@ -23,8 +25,12 @@ function replaceData() {
   revision.value++
   loading.value = false
 }
+function recordChartStage(stage: string) {
+  chartStages.value.push(stage)
+}
 
 onMounted(() => {
+  hydrated.value = true
   stateTimer = setInterval(() => {
     const host = document.querySelector('#primary-chart .charts-visualization__canvas')
     const instance = host instanceof HTMLElement ? getInstanceByDom(host) : undefined
@@ -53,8 +59,8 @@ onBeforeUnmount(() => { if (stateTimer) clearInterval(stateTimer) })
       <button type="button" @click="mounted = !mounted">Toggle mount</button>
     </div>
     <p v-if="loading" role="status">Loading chart data…</p>
-    <output data-echarts-state class="sr-only">{{ JSON.stringify({ ...chartState, error: chartError }) }}</output>
-    <ChartsVisualization v-if="mounted" id="primary-chart" :kind="kind" title="Revenue" description="Monthly revenue" :labels="labels" :series="[{ name: 'Revenue', data: values } ]" @enhancement-error="chartError = $event" />
+    <output data-echarts-state class="sr-only">{{ JSON.stringify({ ...chartState, error: chartError, hydrated, stages: chartStages }) }}</output>
+    <ChartsVisualization v-if="mounted" id="primary-chart" :kind="kind" title="Revenue" description="Monthly revenue" :labels="labels" :series="[{ name: 'Revenue', data: values } ]" @enhancement-error="chartError = $event" @enhancement-stage="recordChartStage" />
     <ChartsVisualization v-if="mounted" kind="bar" title="Users" :labels="labels" :series="[{ name: 'Users', data: values } ]" />
   </main>
 </template>
