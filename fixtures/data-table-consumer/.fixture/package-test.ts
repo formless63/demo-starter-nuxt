@@ -22,24 +22,24 @@ console.log('data-table behavioral API assertions passed')
 const port = 4317
 const server = Bun.spawn(['bun', 'run', 'start'], { cwd: process.cwd(), env: { ...Bun.env, PORT: String(port) }, stdout: 'ignore', stderr: 'inherit' })
 try {
+  let response: Response | undefined
   for (let attempt = 0; attempt < 30; attempt++) {
     try {
-      const response = await fetch(`http://127.0.0.1:${port}/`)
-      if (response.ok) {
-        const html = await response.text()
-        assert.match(html, /<table>/)
-        assert.match(html, /Alpha/)
-        assert.match(html, /Beta/)
-        assert.match(html, /Select rows/)
-        assert.match(html, /Select row a/)
-        assert.match(html, /aria-label="Data table"/)
-        console.log('data-table packaged SSR assertions passed')
-        break
-      }
-    } catch { /* server is still starting */ }
+      response = await fetch(`http://127.0.0.1:${port}/`)
+    } catch { /* Retry only connection failures while the server starts. */ }
+    if (response) break
     await Bun.sleep(200)
-    if (attempt === 29) throw new Error('fixture server did not become ready')
   }
+  assert.ok(response, 'fixture server did not become ready')
+  const html = await response.text()
+  assert.equal(response.status, 200, `Packaged SSR returned HTTP ${response.status}: ${html.slice(-2000)}`)
+  assert.match(html, /<table>/)
+  assert.match(html, /Alpha/)
+  assert.match(html, /Beta/)
+  assert.match(html, /Select rows/)
+  assert.match(html, /Select row a/)
+  assert.match(html, /aria-label="Data table"/)
+  console.log('data-table packaged SSR assertions passed')
 } finally {
   server.kill()
   await server.exited

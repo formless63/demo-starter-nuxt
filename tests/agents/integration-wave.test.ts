@@ -20,7 +20,9 @@ test('all fourteen completed packages are explicitly enabled and discovered by t
   }
   const result = spawnSync('bun', ['scripts/packages.ts', 'matrix'], { cwd: root, encoding: 'utf8' })
   expect(result.status).toBe(0)
-  expect(JSON.parse(result.stdout).capability.sort()).toEqual([...completed].sort())
+  const authored = catalog.capabilities.filter((entry: { status: string, packageTest?: unknown, packagePath?: string }) => ['done', 'in-progress'].includes(entry.status) && entry.packagePath && entry.packageTest).map((entry: { id: string }) => entry.id)
+  expect(JSON.parse(result.stdout).capability.sort()).toEqual(authored.sort())
+  expect(authored.sort()).toEqual([...completed, 'data-table'].sort())
 })
 
 test('Webhooks and Notifications require Jobs; Audit, Cache and Realtime fixtures remain independent', () => {
