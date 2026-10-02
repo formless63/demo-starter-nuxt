@@ -1,1 +1,1 @@
-<template><ChartsVisualization title="Fixture chart" description="Fixture data" :labels="['A','B']" :series="[{ name: 'Total', data: [1, 2] }]" /></template>
+<template><main><ChartsVisualization title="First chart" description="First data" :labels="['Jan','Feb']" :series="[{ name: 'Revenue', data: [10, null] }]" /><ChartsVisualization title="Second chart" :labels="['Jan','Feb']" :series="[{ name: 'Users', data: [1, 2] }]" /></main></template>
