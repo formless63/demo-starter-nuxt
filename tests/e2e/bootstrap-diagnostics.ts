@@ -34,6 +34,6 @@ export function bootstrapDiagnostics(page: Page) {
       page.evaluate(() => ({ ready: document.readyState, hydrated: document.documentElement.dataset.appHydrated ?? null, stages: document.documentElement.dataset.nuxtE2eStages ?? null, at: Math.round(performance.now()) })).catch(() => null),
       new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), 1000) }),
     ]).finally(() => clearTimeout(timer))
-    console.info(`[bootstrap-diagnostics] ${JSON.stringify({ elapsed: Date.now() - started, pending: [...pending.values()].slice(-40), finished, failures, snapshot })}`)
+    console.info(`[bootstrap-diagnostics] ${JSON.stringify({ started, captured: Date.now(), elapsed: Date.now() - started, pending: [...pending.values()].slice(-40), finished, failures, snapshot })}`)
   }
 }

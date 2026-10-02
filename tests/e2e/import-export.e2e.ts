@@ -1,3 +1,4 @@
+import { reportFixtureNetworkEvents } from './network-diagnostics'
 import { waitForHydration } from './hydration'
 import { browserDiagnostics } from './browser-diagnostics'
 import { expect, test } from '@playwright/test'
@@ -25,6 +26,7 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
   test.setTimeout(240000)
   expect((await request.get('/api/transfers')).status()).toBe(401)
   expect((await request.post('/api/transfers/stage', { data: 'name,description\n' })).status()).toBe(401)
+  const networkStartedAt = Date.now()
   const root = process.cwd(), production = Boolean(process.env.PLAYWRIGHT_BASE_URL)
   const fixtureProject = `transfer-browser-${randomUUID().slice(0, 8)}`
   let backend: Awaited<ReturnType<typeof startProvider>> | undefined, isolated: string | undefined
@@ -124,6 +126,7 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     if (createdDatabase) await admin.unsafe(`DROP DATABASE "${databaseName}" WITH (FORCE)`)
     await admin.end()
     backend?.storage.close(); await compose(fixtureProject, ['down', '--volumes', '--remove-orphans'])
+    reportFixtureNetworkEvents(fixtureProject, networkStartedAt)
     if (isolated) await rm(isolated, { recursive: true, force: true })
   }
 })

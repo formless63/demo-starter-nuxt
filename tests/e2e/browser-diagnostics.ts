@@ -11,6 +11,12 @@ export function browserDiagnostics(page: Page) {
     if (match) { try { filename = new URL(match[0]!).pathname.split('/').at(-1)!.replace(/[^a-zA-Z0-9_.-]/g, '_') } catch { /* no raw message */ } }
     console.info(`[browser-diagnostic] ${code} file=${filename}`)
   })
+  page.on('requestfailed', request => {
+    if (request.resourceType() !== 'script') return
+    const file = new URL(request.url()).pathname.split('/').at(-1)!.replace(/[^a-zA-Z0-9_.-]/g, '_')
+    const code = /net::ERR_[A-Z_]+/.exec(request.failure()?.errorText ?? '')?.[0] ?? 'request_failed'
+    console.info(`[browser-diagnostic] script_request_failed file=${file} code=${code} epochMs=${Date.now()}`)
+  })
   page.on('response', response => {
     if (response.request().resourceType() !== 'script' || response.status() < 400) return
     const path = new URL(response.url()).pathname
