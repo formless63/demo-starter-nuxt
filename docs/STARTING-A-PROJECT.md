@@ -174,3 +174,7 @@ Stop transfer producers and drain or preserve pending work before unregistering 
 For Ops/Admin removal, remove `@repo/nuxt-ops-admin` from dependencies/modules, the `opsAdmin` option, `server/ops`, `server/plugins/ops-admin-jobs.ts` and `server/plugins/ops-admin-storage.ts`, any navigation entry, and `OPS_ADMIN_USER_IDS`. Remove each optional adapter/import when pruning its provider capability. No data/provider cleanup exists. [Contract](../capabilities/ops-admin/CAPABILITY.md).
 
 When retaining Ops during Storage removal, also remove `server/ops/storage.ts` and `server/plugins/ops-admin-storage.ts` alongside its application card/import. During Jobs removal, remove its hard dependents and Ops Jobs/Webhooks cards/imports, `server/ops/jobs.ts` and `server/plugins/ops-admin-jobs.ts`. Cache/Observability direct Ops imports and cards must be removed with their providers; the static Audit card is removed with Audit.
+
+## Medusa (verification in progress)
+
+The reference app explicitly enables private `@repo/nuxt-medusa`; clean consumers default to uninstalled. Requires Jobs and Webhooks. [Provider contract](../capabilities/medusa/CAPABILITY.md) covers bounded scoped Admin reconciliation, the operator-installed application bridge, verification and independent removal. `/integrations/medusa` reads approved local product/order projections; no provider configuration is required for startup.

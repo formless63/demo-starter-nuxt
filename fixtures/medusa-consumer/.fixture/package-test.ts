@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { writeFile, unlink } from 'node:fs/promises'
 import { createServer } from 'node:net'
 import postgres from 'postgres'
+import { runPinnedBackend } from './pinned-backend'
 import { snapshot, statePath } from './lifecycle'
 assert(process.env.DATABASE_URL, 'Disposable PostgreSQL required')
 const admin = postgres(process.env.DATABASE_URL, { max: 1 })
@@ -22,6 +23,11 @@ try {
     finally { await client.end() }
     if (runtime === 'bun') { await admin.unsafe(`DROP DATABASE "${name}"`); await unlink(statePath) }
   }
+  const retained = JSON.parse(await Bun.file(statePath).text())
+  await runPinnedBackend(retained.url)
+  const nativeClient = postgres(retained.url, { max: 1 })
+  try { await writeFile(statePath, JSON.stringify({ ...retained, snapshot: JSON.parse(JSON.stringify(await snapshot(nativeClient))) })) }
+  finally { await nativeClient.end() }
   // Production Node consumer starts with provider configuration absent.
   const reservation = createServer(); await new Promise<void>(resolve => reservation.listen(0, '127.0.0.1', resolve))
   const port = (reservation.address() as { port: number }).port; await new Promise<void>(resolve => reservation.close(() => resolve()))

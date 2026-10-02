@@ -1143,7 +1143,8 @@
             ".fixture/package-test.ts",
             ".fixture/contract.ts",
             ".fixture/runner.ts",
-            "server/api/probe.get.ts"
+            "server/api/probe.get.ts",
+            ".fixture/pinned-backend.ts"
           ],
           "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
         }

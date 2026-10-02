@@ -211,7 +211,9 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 - Requires: Jobs, Webhooks
 - Integrates with: Object Storage, Organizations, Search
-- External: Medusa
+- External: Medusa2.21.2 required only when refreshing; optional bridge installed by operator in separate provider project.
+- Private `@repo/nuxt-medusa` and independent packed consumer fixture; application-included scoped schemas, native Admin GETs, existing Jobs reconciliation, application-owned Standard Webhooks bridge and authenticated reference UI. Verification in progress.
+- Contract: [`capabilities/medusa/CAPABILITY.md`](capabilities/medusa/CAPABILITY.md)
 
 ## Operations / UI infrastructure
 

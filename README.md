@@ -177,3 +177,7 @@ Opt-in PostgreSQL-native `@repo/nuxt-search` server helpers; the reference Proje
 Explicitly enabled, server-only and operation-lazy. `@repo/nuxt-ai/server` provides text, incremental streaming and Zod structured generation; default provider openai-compatible, timeout 60 seconds, no retries, 1 MiB output cap. Set AI_MODEL and optional server AI_API_KEY/AI_BASE_URL only when used. `bun run ai:smoke` performs one intentional configured operation without logging generated content. See the [contract](capabilities/ai/CAPABILITY.md) and [evaluation](AI_MODULE_EVALUATION.md).
 
 Ops / Admin is available (`done`): opt-in read-only `/admin/ops`, privileged server-only baseline-user allowlist and application-owned safe adapters. [Contract](capabilities/ops-admin/CAPABILITY.md).
+
+## Medusa (verification in progress)
+
+The reference app explicitly enables private `@repo/nuxt-medusa`; clean consumers default to uninstalled. Requires Jobs and Webhooks. [Provider contract](capabilities/medusa/CAPABILITY.md) covers bounded scoped Admin reconciliation, the operator-installed application bridge, verification and independent removal. `/integrations/medusa` reads approved local product/order projections; no provider configuration is required for startup.

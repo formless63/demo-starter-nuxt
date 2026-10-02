@@ -19,7 +19,8 @@
       "types": "./dist/runtime/server/schema.d.ts",
       "import": "./dist/runtime/server/schema.js",
       "default": "./dist/runtime/server/schema.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "main": "./dist/module.mjs",
   "typesVersions": {
@@ -36,7 +37,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "provider-bridge"
   ],
   "scripts": {
     "dev:prepare": "nuxt-module-build prepare && nuxt-module-build build",
