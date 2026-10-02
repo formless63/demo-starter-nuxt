@@ -1,0 +1,27 @@
+{
+  "name": "medusa-consumer-fixture",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck",
+    "package:test:runtime": "bun .fixture/package-test.ts",
+    "package:test:retained": "bun .fixture/retained.ts",
+    "package:test:cleanup": "bun .fixture/cleanup.ts"
+  },
+  "dependencies": {
+    "@repo/nuxt-jobs": "workspace:*",
+    "drizzle-orm": "0.45.3",
+    "nuxt": "4.5.2",
+    "zod": "4.6.5",
+    "@repo/nuxt-webhooks": "workspace:*",
+    "h3": "1.15.11",
+    "@repo/nuxt-medusa": "workspace:*",
+    "postgres": "3.4.9"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vue-tsc": "3.1.7",
+    "@types/node": "24.10.1"
+  }
+}

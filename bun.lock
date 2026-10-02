@@ -13,6 +13,7 @@
         "@repo/nuxt-email": "workspace:*",
         "@repo/nuxt-import-export": "workspace:*",
         "@repo/nuxt-jobs": "workspace:*",
+        "@repo/nuxt-medusa": "workspace:*",
         "@repo/nuxt-notifications": "workspace:*",
         "@repo/nuxt-observability": "workspace:*",
         "@repo/nuxt-ops-admin": "workspace:*",
@@ -130,6 +131,7 @@
       "devDependencies": {
         "@types/node": "24.10.1",
         "drizzle-kit": "0.31.11",
+        "pg-boss": "12.35.0",
         "typescript": "5.9.3",
         "vue-tsc": "3.1.7",
       },
@@ -144,6 +146,24 @@
       },
       "devDependencies": {
         "postgres": "3.4.9",
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7",
+      },
+    },
+    "fixtures/medusa-consumer": {
+      "name": "medusa-consumer-fixture",
+      "dependencies": {
+        "@repo/nuxt-jobs": "workspace:*",
+        "@repo/nuxt-medusa": "workspace:*",
+        "@repo/nuxt-webhooks": "workspace:*",
+        "drizzle-orm": "0.45.3",
+        "h3": "1.15.11",
+        "nuxt": "4.5.2",
+        "postgres": "3.4.9",
+        "zod": "4.6.5",
+      },
+      "devDependencies": {
+        "@types/node": "24.10.1",
         "typescript": "5.9.3",
         "vue-tsc": "3.1.7",
       },
@@ -377,6 +397,30 @@
       },
       "peerDependencies": {
         "drizzle-orm": ">=0.45.0 <1",
+        "nuxt": ">=4.0.0 <5",
+        "zod": ">=4.0.0 <5",
+      },
+    },
+    "packages/nuxt-medusa": {
+      "name": "@repo/nuxt-medusa",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "@repo/nuxt-jobs": "workspace:*",
+        "@repo/nuxt-webhooks": "workspace:*",
+        "drizzle-orm": "0.45.3",
+        "h3": "1.15.11",
+        "nuxt": "4.5.2",
+        "zod": "4.6.5",
+      },
+      "peerDependencies": {
+        "@repo/nuxt-jobs": ">=0.1.0 <0.2",
+        "@repo/nuxt-webhooks": ">=0.1.0 <0.2",
+        "drizzle-orm": ">=0.45.0 <1",
+        "h3": ">=1.15.11 <2",
         "nuxt": ">=4.0.0 <5",
         "zod": ">=4.0.0 <5",
       },
@@ -994,6 +1038,8 @@
     "@repo/nuxt-import-export": ["@repo/nuxt-import-export@workspace:packages/nuxt-import-export"],
 
     "@repo/nuxt-jobs": ["@repo/nuxt-jobs@workspace:packages/nuxt-jobs"],
+
+    "@repo/nuxt-medusa": ["@repo/nuxt-medusa@workspace:packages/nuxt-medusa"],
 
     "@repo/nuxt-notifications": ["@repo/nuxt-notifications@workspace:packages/nuxt-notifications"],
 
@@ -2124,6 +2170,8 @@
     "mdast-util-to-string": ["mdast-util-to-string@4.0.0", "", { "dependencies": { "@types/mdast": "^4.0.0" } }, "sha512-0H44vDimn51F0YwvxSJSm0eCDOJTRlmN0R1yBh4HLj9wiV1Dn0QoXGbvFAWj2hSItVTlCmBF1hqKlIyUBVFLPg=="],
 
     "mdn-data": ["mdn-data@2.35.0", "", {}, "sha512-k+1+dEIm2z/BEfdvYzT/fIyAGeDBo/1AJNJI4ilFXJRYoxP/3Ds+GP8shAOIq8jYXY9N5nGB3Ag104NsagmLAA=="],
+
+    "medusa-consumer-fixture": ["medusa-consumer-fixture@workspace:fixtures/medusa-consumer"],
 
     "merge-stream": ["merge-stream@2.0.0", "", {}, "sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w=="],
 
