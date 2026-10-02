@@ -10,6 +10,8 @@ test('data table renders accessibly and preserves stable row identity', async ({
   await expect(page.getByRole('cell', { name: 'Beta' })).toHaveCount(0)
   await page.getByRole('checkbox', { name: 'name column' }).uncheck()
   await expect(page.getByRole('columnheader', { name: 'Name' })).toHaveCount(0)
+  await page.getByRole('checkbox', { name: 'Show name column' }).check()
+  await expect(page.getByRole('columnheader', { name: 'Name' })).toBeVisible()
   await page.getByRole('checkbox', { name: 'Select row a' }).check()
   await expect(page.getByRole('checkbox', { name: 'Select row a' })).toBeChecked()
   await page.getByTestId('replace').click()
