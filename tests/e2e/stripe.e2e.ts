@@ -21,7 +21,7 @@ test('Stripe native auth, scoped projections, repeated operation reads and queue
     await db.insert(tables.stripeBinding).values({ id: bindingId, scopeKind: 'user', scopeId: owner, localResourceId: 'browser-fixture', connectionId: 'default', resourceKind: 'payment', remoteId: `pi_${owner.replaceAll('-', '')}` })
     await db.insert(tables.stripeProjection).values({ bindingId, payment: { status: 'processing', currency: 'usd', amount: 100, amountReceived: 0, sourceUpdatedAt: null }, syncedAt: new Date() })
     await db.insert(tables.stripeOperationLedger).values({ id: operationId, actorUserId: owner, scopeKind: 'user', scopeId: owner, connectionId: 'default', bindingId, kind: 'reconcile_payment', callerKey: randomUUID(), inputDigest: '0'.repeat(64), status: 'queued' })
-    await context.addCookies([{ name: cookieName, value: encodeURIComponent(cookie), url: baseURL! }])
+    await context.addCookies([{ name: cookieName, value: encodeURIComponent(cookie), domain: new URL(baseURL!).hostname, path: '/', secure: Boolean(process.env.PLAYWRIGHT_BASE_URL), httpOnly: true, sameSite: 'Lax' }])
     await page.goto('/stripe')
     await expect(page.getByRole('heading', { name: 'One-time Checkout' })).toBeVisible()
     await expect(page.locator('pre')).toContainText('processing')
