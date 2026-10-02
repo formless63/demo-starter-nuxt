@@ -43,10 +43,12 @@ The generic `packages:*` commands build and exercise the catalog entries. Hard c
 
 | Status | Capability |
 | --- | --- |
-| Done (18) | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI; Import / Export; Ops / Admin; Invoice Ninja; Stripe; Medusa; Data Table |
+| Done (20) | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI; Import / Export; Ops / Admin; Invoice Ninja; Stripe; Medusa; Data Table; Charts / Visualization; Command System |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
-Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All eighteen remain opt-in for clean consumers and explicitly enabled in the reference app.
+Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All twenty remain opt-in for clean consumers and explicitly enabled in the reference app.
+
+Charts source `7e8daa68c9862ef982c6dd0aa7e4269903eda9fd` passed [all 20 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37018899032). Command retains its separately verified implementation ([all 20 jobs at e0a01fa](https://github.com/formless63/demo-starter-nuxt/actions/runs/37012702417)). The composed twenty-capability tree requires a new full exact-head CI run; these source results are not evidence for this combination.
 
 The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused and Identity remains separately paused.
 
@@ -229,7 +231,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Observability, Jobs, Audit Log, Object Storage, Cache / Coordination, Webhooks
 - External: none
 
-### Command System (`planned`)
+### Command System (`done`)
 
 - Requires: none
 - Integrates with: Search, Authorization
@@ -249,11 +251,12 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Object Storage, AI
 - External: none
 
-### Charts / Visualization (`planned`)
+### Charts / Visualization (`done`)
 
 - Requires: none
 - Integrates with: Data Table, Realtime
 - External: none
+- v1 Nuxt package: `@repo/nuxt-charts-visualization`; line/bar/area wrapper with ECharts 6.1.0 selective imports, semantic SSR table fallback, responsive disposal, and reduced-motion handling.
 
 ### File UI (`planned`)
 

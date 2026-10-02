@@ -1,0 +1,1 @@
+{"name":"charts-visualization-consumer","private":true,"type":"module","scripts":{"build":"nuxt build","typecheck":"nuxt typecheck","package:test:runtime":"bun .fixture/package-test.ts"},"dependencies":{"@repo/nuxt-charts-visualization":"workspace:*","nuxt":"4.5.2","vue":"3.5.43","@vue/server-renderer":"3.5.43"},"devDependencies":{"typescript":"5.9.3","vue-tsc":"3.1.7"}}

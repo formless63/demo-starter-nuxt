@@ -5,13 +5,13 @@ import { resolve } from 'node:path'
 
 const root = resolve(import.meta.dir, '../..')
 const catalog = JSON.parse(readFileSync(resolve(root, 'capabilities/catalog.json'), 'utf8'))
-const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export', 'ops-admin', 'invoice-ninja', 'stripe', 'medusa', 'data-table']
+const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export', 'ops-admin', 'invoice-ninja', 'stripe', 'medusa', 'data-table', 'charts-visualization', 'command-system']
 
-test('all eighteen completed packages are explicitly enabled and discovered by the generic matrix', () => {
+test('all twenty completed packages are explicitly enabled and discovered by the generic matrix', () => {
   const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
   const nuxt = readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')
   expect(catalog.capabilities.filter((entry: { status: string }) => entry.status === 'done').map((entry: { id: string }) => entry.id).sort()).toEqual([...completed].sort())
-  expect(completed).toHaveLength(18)
+  expect(completed).toHaveLength(20)
   expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed].sort())
   for (const id of completed) {
     const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === id)
@@ -69,4 +69,16 @@ test('production Compose passes every optional provider variable to app and work
       expect(compose.services[service]!.environment[key]).toStartWith('${' + key + ':-')
     }
   }
+})
+
+
+test('Command is completed and reference-enabled while preserving its packed browser lifecycle', () => {
+  const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === 'command-system')
+  expect(entry.status).toBe('done')
+  expect(entry.defaultInstalled).toBe(false)
+  expect(catalog.referenceApplication.enabledCapabilities).toContain('command-system')
+  expect(entry.packageTest.runtimeScript).toBe('package:test:runtime')
+  const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
+  expect(manifest.dependencies[entry.packageName]).toBe('workspace:*')
+  expect(readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')).toContain(`'${entry.packageName}'`)
 })
