@@ -1087,7 +1087,52 @@
         }
       ],
       "summary": "Stripe billing, synchronization, and webhook integration.",
-      "documentationPath": "capabilities/stripe/CAPABILITY.md"
+      "documentationPath": "capabilities/stripe/CAPABILITY.md",
+      "packageName": "@repo/nuxt-stripe",
+      "packagePath": "packages/nuxt-stripe",
+      "fixturePath": "fixtures/stripe-consumer",
+      "evaluationDocument": "STRIPE_MODULE_EVALUATION.md",
+      "baselineRequirements": [
+        "postgresql",
+        "drizzle",
+        "node-runtime"
+      ],
+      "scripts": [
+        "packages:build",
+        "packages:test",
+        "db:migrate",
+        "jobs:migrate",
+        "jobs:doctor"
+      ],
+      "environmentVariables": [
+        "STRIPE_SECRET_KEY",
+        "STRIPE_WEBHOOK_SECRET",
+        "STRIPE_WEBHOOK_SECRET_PREVIOUS",
+        "STRIPE_MODE",
+        "STRIPE_ACCOUNT_ID"
+      ],
+      "migrations": [
+        "Additive application-owned Stripe tables; reserved SQL 0011/0012"
+      ],
+      "runtimeProcesses": [
+        "Nitro application",
+        "existing standalone Jobs worker"
+      ],
+      "packageTest": {
+        "ownedDependencies": [
+          "stripe"
+        ],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "medusa",
