@@ -96,6 +96,7 @@
     "@repo/nuxt-charts-visualization": "workspace:*",
     "@repo/nuxt-data-table": "workspace:*",
     "@repo/nuxt-command-system": "workspace:*",
+    "@repo/nuxt-markdown-code": "workspace:*",
     "@repo/nuxt-file-ui": "workspace:*"
   },
   "devDependencies": {

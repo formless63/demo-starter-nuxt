@@ -5,13 +5,13 @@ import { resolve } from 'node:path'
 
 const root = resolve(import.meta.dir, '../..')
 const catalog = JSON.parse(readFileSync(resolve(root, 'capabilities/catalog.json'), 'utf8'))
-const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export', 'ops-admin', 'invoice-ninja', 'stripe', 'medusa', 'data-table', 'charts-visualization', 'command-system']
+const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export', 'ops-admin', 'invoice-ninja', 'stripe', 'medusa', 'data-table', 'charts-visualization', 'command-system', 'markdown-code']
 
-test('all twenty completed packages and in-progress File UI are explicitly enabled and discovered by the generic matrix', () => {
+test('all twenty-one completed packages and in-progress File UI are explicitly enabled and discovered by the generic matrix', () => {
   const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
   const nuxt = readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')
   expect(catalog.capabilities.filter((entry: { status: string }) => entry.status === 'done').map((entry: { id: string }) => entry.id).sort()).toEqual([...completed].sort())
-  expect(completed).toHaveLength(20)
+  expect(completed).toHaveLength(21)
   expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed, 'file-ui'].sort())
   expect(catalog.capabilities.find((entry: { id: string }) => entry.id === 'file-ui').status).toBe('in-progress')
   for (const id of [...completed, 'file-ui']) {
