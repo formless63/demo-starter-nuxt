@@ -212,3 +212,7 @@ Remove `@repo/nuxt-charts-visualization` from root dependencies and Nuxt modules
 ## Remove Markdown / Code Content
 
 Remove `@repo/nuxt-markdown-code` from dependencies and Nuxt modules, `app/pages/markdown.vue`, `server/api/markdown-reference.get.ts`, and the reference enabled-capabilities entry. Reinstall, typecheck and build. No migrations/data deletion; the generic packed fixture proves independent removal.
+
+## Flow / Canvas (in progress)
+
+Optional private `@repo/nuxt-flow-canvas` provides controlled native Vue editing and bounded server-safe graph JSON. Default installation remains false; this reference explicitly enables `/flow-test`. Applications own state and persistence. No database, migrations, network, or hard capability dependencies. See [contract](../capabilities/flow-canvas/CAPABILITY.md). Remove the explicit module/dependency and `app/pages/flow-test.vue`/`server/api/flow-reference.get.ts`, update reference enablement/tests, then install/typecheck/build; existing graph documents are application-owned. Hosted gates remain pending.

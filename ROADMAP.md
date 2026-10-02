@@ -273,7 +273,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Object Storage, Markdown / Code, Realtime, Organizations
 - External: none
 
-### Flow / Canvas (`planned`)
+### Flow / Canvas (`in-progress`)
 
 - Requires: none
 - Integrates with: Realtime, Object Storage, Audit Log
@@ -318,3 +318,5 @@ Evaluation status means “investigate when a real capability needs it,” not �
 ## Governance
 
 Every implemented capability gets `capabilities/<id>/CAPABILITY.md`. Changes to capability installation, removal, dependencies, optional integrations, external requirements, scripts, migrations, runtime services, or status update this roadmap, the JSON catalog, and the capability contract together. Run `bun run capabilities:check` before the ordinary repository verification.
+
+Flow / Canvas is `in-progress` (`defaultInstalled:false`): private native module, bounded portable graph helpers, controlled Vue Flow, semantic SSR and application-owned persistence. No hard dependencies or migrations. See [contract](capabilities/flow-canvas/CAPABILITY.md). Completion awaits exact-head hosted gates.
