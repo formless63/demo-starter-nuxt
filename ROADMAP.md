@@ -46,7 +46,7 @@ The generic `packages:*` commands build and exercise the catalog entries. Hard c
 | Done (23) | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI; Import / Export; Ops / Admin; Invoice Ninja; Stripe; Medusa; Data Table; Charts / Visualization; Command System; Markdown / Code Content; Rich Text / Tiptap; File UI |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
-Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All twenty-three remain opt-in for clean consumers and explicitly enabled in the reference app.
+Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All twenty-four remain opt-in for clean consumers and explicitly enabled in the reference app.
 
 Charts source `7e8daa68c9862ef982c6dd0aa7e4269903eda9fd` passed [all 20 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37018899032). Command retains its separately verified implementation ([all 20 jobs at e0a01fa](https://github.com/formless63/demo-starter-nuxt/actions/runs/37012702417)). Markdown / Code Content implementation `e99539d90020a70028545ac4f252c55c16e3f432` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37029379598): all 21 generic packed package lifecycles, corrected real-browser payload/hydration/copy checks, full root checks, production browser/container/health, migrations and worker verification. This is source evidence; metadata promotion and later revisions require their own exact-head CI.
 
@@ -273,7 +273,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Object Storage, Markdown / Code, Realtime, Organizations
 - External: none
 
-### Flow / Canvas (`planned`)
+### Flow / Canvas (`done`)
 
 - Requires: none
 - Integrates with: Realtime, Object Storage, Audit Log
@@ -319,10 +319,14 @@ Evaluation status means “investigate when a real capability needs it,” not �
 
 Every implemented capability gets `capabilities/<id>/CAPABILITY.md`. Changes to capability installation, removal, dependencies, optional integrations, external requirements, scripts, migrations, runtime services, or status update this roadmap, the JSON catalog, and the capability contract together. Run `bun run capabilities:check` before the ordinary repository verification.
 
-Rich Text is implemented as independent `@repo/nuxt-rich-text`; see [contract](capabilities/rich-text/CAPABILITY.md). The source and Markdown/Rich Text promotion passed all hosted gates; the File UI composition remains pending exact-head CI.
+Rich Text is implemented as independent `@repo/nuxt-rich-text`; see [contract](capabilities/rich-text/CAPABILITY.md). The source and Markdown/Rich Text promotion passed all hosted gates; the File UI composition was awaiting exact-head CI at that historical checkpoint and is now included in accepted main `bf158308`.
 
 Rich Text source `1666bb6e252fbedbbe20b545de8117e8a246820f` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37031826840), including its real packed browser/removal lifecycle and full root production gates. The reviewed Markdown/Rich Text promotion `f1bbea44407704973dd2168cda3c23115028c487` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37037650525), recording 22 completed opt-in capabilities. This File UI composition requires its own exact-head full CI before acceptance.
 
 File UI is completed as a private native Nuxt package. Only Object Storage is a hard dependency; trusted identity/policy and atomic durable metadata belong to the application. It remains opt-in; its reviewed source passed all exact-head hosted lifecycle, browser, provider and native HTTP gates. Later composition requires its own exact-head acceptance.
 
-File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040678932), including packed native/provider/browser/removal and root application/production gates. This Rich Text / File UI composition records 23 completed opt-in, reference-enabled capabilities; its own exact-head full CI and independent composition review are required before acceptance.
+File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040678932), including packed native/provider/browser/removal and root application/production gates. Historical Rich Text / File UI composition checkpoint: 23 completed opt-in, reference-enabled capabilities, with its own CI/review pending at that time. Accepted main `bf15830889757b76b44a71fac80461deaca22cd1` is now the baseline for the 24-capability Flow composition below.
+
+Flow / Canvas is `done` (`defaultInstalled:false`), based on accepted source gates. Native module, bounded portable graph helpers, semantic SSR and application-owned persistence; no hard dependencies or migrations. See [contract](capabilities/flow-canvas/CAPABILITY.md).
+
+Flow / Canvas source `1999dab23987aa90efa62411275b7075b974d593` passed [all 24 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040851945), including the real native browser and independent packed install/runtime/removal/rebuild gates, and independent review. The combined 24-capability tree adds accepted main `bf15830889757b76b44a71fac80461deaca22cd1`; its full exact-head CI remains pending.

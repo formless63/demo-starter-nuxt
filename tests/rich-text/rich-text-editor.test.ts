@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createApp, h, nextTick, ref } from 'vue'
 import { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
@@ -37,4 +37,45 @@ describe('real Vue Tiptap editor lifecycle', () => {
 it('real Tiptap preserves the complete canonical document schema', () => {
  const editor = new Editor({ extensions: [StarterKit.configure({ heading: { levels: [1, 2, 3] }, horizontalRule: false, underline: false, trailingNode: false })], content: allFeatures, injectCSS: false })
  try { expect(documentFromEditor(editor.getJSON())).toEqual(allFeatures) } finally { editor.destroy() }
+})
+
+it('toolbar focus cannot reclaim a URL input on a later animation frame', async () => {
+ const host = document.createElement('div'); document.body.append(host)
+ const value = ref(doc('Edited document'))
+ const app = createApp({ setup: () => () => h(RichTextClient, { value: value.value, label: 'Document', onChange: (next: RichTextDocument) => { value.value = structuredClone(next) } }) })
+ app.mount(host); await flush()
+ const content = host.querySelector<HTMLElement>('[contenteditable]')!
+ const editor = (content as HTMLElement & { editor: Editor }).editor
+ const callbacks: FrameRequestCallback[] = []
+ const frame = vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation(callback => { callbacks.push(callback); return callbacks.length })
+ const button = (text: string) => [...host.querySelectorAll('button')].find(item => item.textContent === text)!
+ try {
+  editor.commands.setTextSelection({ from: 1, to: editor.state.doc.content.size - 1 })
+  editor.commands.toggleBold(); await flush()
+  // Real pointer activation focuses Undo/Redo before their click handler.
+  button('Undo').focus(); button('Undo').click(); await flush()
+  button('Redo').focus(); button('Redo').click(); await flush()
+  const url = host.querySelector<HTMLInputElement>('input[type="url"]')!
+  url.focus(); url.value = 'javascript:alert(1)'; url.dispatchEvent(new Event('input', { bubbles: true })); await flush()
+  // Deliver every deferred frame only AFTER the user moved to the link field.
+  for (const callback of callbacks.splice(0)) callback(0)
+  await flush()
+  expect(document.activeElement).toBe(url)
+  expect(content.textContent).toBe('Edited document')
+  expect(url.value).toBe('javascript:alert(1)')
+  button('Apply link').focus(); button('Apply link').click(); await flush()
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain('absolute HTTP')
+  expect(content.querySelector('a')).toBeNull()
+  expect(content.textContent).toBe('Edited document')
+  url.focus(); url.value = 'https://example.test/path'; url.dispatchEvent(new Event('input', { bubbles: true })); await flush()
+  button('Apply link').focus(); button('Apply link').click(); await flush()
+  expect(content.querySelector('a')?.getAttribute('href')).toBe('https://example.test/path')
+  expect(content.textContent).toBe('Edited document')
+  // An explicit link action may focus the editor now, never later after the
+  // user has already moved elsewhere.
+  url.focus()
+  for (const callback of callbacks.splice(0)) callback(0)
+  await flush()
+  expect(document.activeElement).toBe(url)
+ } finally { frame.mockRestore(); app.unmount(); host.remove() }
 })
