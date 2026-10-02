@@ -1,10 +1,10 @@
 # Starting a project
 
-The repository is both a baseline starter and a reference application. Choose which of the fourteen completed capabilities belong in the product before building domain features around them.
+The repository is both a baseline starter and a reference application. Choose which of the fifteen completed capabilities belong in the product before building domain features around them.
 
 ## Full/reference setup
 
-The root application explicitly registers Jobs, API Platform, Observability, Object Storage, Email, Webhooks, Audit Log, Cache / Coordination, Realtime, Notifications, Search, AI, Import / Export and Ops / Admin. It includes:
+The root application explicitly registers Jobs, API Platform, Observability, Object Storage, Email, Webhooks, Audit Log, Cache / Coordination, Realtime, Notifications, Search, AI, Import / Export, Ops / Admin and Charts / Visualization. It includes:
 
 - one Jobs registry and standalone worker with transactional enqueue;
 - Better Auth and owner-scoped browser and machine API routes;
@@ -12,7 +12,7 @@ The root application explicitly registers Jobs, API Platform, Observability, Obj
 - one production image for the app, migration tools and worker;
 - lazy optional S3, SMTP, Cache and AI adapters with no provider required at startup;
 - transactionally appended audit history and notifications, plus ID-only post-commit hints over authenticated SSE/WebSocket transports;
-- all fourteen catalog-driven package install/runtime/removal/rebuild checks in generic CI.
+- all fifteen catalog-driven package install/runtime/removal/rebuild checks in generic CI.
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
 
