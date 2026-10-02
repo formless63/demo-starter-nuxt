@@ -94,7 +94,8 @@
     "@repo/nuxt-medusa": "workspace:*",
     "@repo/nuxt-charts-visualization": "workspace:*",
     "@repo/nuxt-data-table": "workspace:*",
-    "@repo/nuxt-command-system": "workspace:*"
+    "@repo/nuxt-command-system": "workspace:*",
+    "@repo/nuxt-markdown-code": "workspace:*"
   },
   "devDependencies": {
     "@nuxt/eslint": "1.17.0",

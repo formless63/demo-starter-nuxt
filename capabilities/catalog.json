@@ -22,7 +22,8 @@
       "medusa",
       "stripe",
       "data-table",
-      "command-system"
+      "command-system",
+      "markdown-code"
     ]
   },
   "baseline": [
@@ -1384,7 +1385,7 @@
       "id": "markdown-code",
       "displayName": "Markdown / Code Content",
       "kind": "operations-ui",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1392,7 +1393,47 @@
         "ai"
       ],
       "externalRequirements": [],
-      "summary": "Safe Markdown rendering, code highlighting, and content primitives."
+      "summary": "Safe Markdown rendering, code highlighting, and content primitives.",
+      "baselineRequirements": [
+        "node-runtime"
+      ],
+      "scripts": [
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [],
+      "migrations": [],
+      "runtimeProcesses": [
+        "Nitro application; no external service"
+      ],
+      "documentationPath": "capabilities/markdown-code/CAPABILITY.md",
+      "evaluationDocument": "MARKDOWN_CODE_MODULE_EVALUATION.md",
+      "packageName": "@repo/nuxt-markdown-code",
+      "packagePath": "packages/nuxt-markdown-code",
+      "fixturePath": "fixtures/markdown-code-consumer",
+      "packageTest": {
+        "ownedDependencies": [
+          "markdown-it",
+          "shiki"
+        ],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server",
+            "app/pages/markdown.vue",
+            ".fixture/package-test.ts",
+            ".fixture/contract.ts",
+            ".fixture/dom.ts",
+            ".fixture/grammar.ts",
+            "app/pages/malformed.vue",
+            ".fixture/transport.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "charts-visualization",
