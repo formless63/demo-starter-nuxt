@@ -207,7 +207,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Organizations, Authorization, Audit Log, Notifications
 - External: Stripe
 
-### Medusa (`planned`)
+### Medusa (`in-progress`)
 
 - Requires: Jobs, Webhooks
 - Integrates with: Object Storage, Organizations, Search

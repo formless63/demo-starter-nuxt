@@ -1092,7 +1092,7 @@
       "id": "medusa",
       "displayName": "Medusa",
       "kind": "business-integration",
-      "status": "planned",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [
         "jobs",
