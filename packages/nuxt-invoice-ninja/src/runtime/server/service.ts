@@ -130,13 +130,23 @@ export function createInvoiceNinjaService(options: InvoiceNinjaOptions) {
     const [prior] = await db().select().from(operations).where(and(eq(operations.scopeKind, context.scope.kind), eq(operations.scopeId, context.scope.id), eq(operations.connectionId, b.connectionId), eq(operations.kind, 'create_draft'), eq(operations.callerKey, input.idempotencyKey))).limit(1)
     if (prior) { if (prior.digest !== inputDigest) throw new InvoiceNinjaError('conflict'); return view(prior) }
     if (!options.resolveDraftPolicy) throw new InvoiceNinjaError('unsupported', false)
-    const policy = await awaitWithSignal(signal, () => options.resolveDraftPolicy!(context, b, input, signal))
-    validatePolicy(policy); checkSignal(signal)
+    const resolved = await awaitWithSignal(signal, () => options.resolveDraftPolicy!(context, b, input, signal))
+    validatePolicy(resolved); checkSignal(signal)
+    const policy: DraftPolicy = { currencyId: resolved.currencyId, currency: resolved.currency, configurationIdentity: resolved.configurationIdentity, numericStringEncodingVerified: true, unsentZeroTaxDiscountVerified: true }
+    draftBody({ input, policy, remoteClientId: b.remoteId })
     return db().transaction(async tx => { const current = await bound(context, b.id, 'client', tx); return insertOperation(tx, context, current, 'create_draft', input.idempotencyKey, inputDigest, { input, policy, remoteClientId: b.remoteId }) })
   }
   function validatePolicy(policy: DraftPolicy) {
     if (!policy || policy.numericStringEncodingVerified !== true || policy.unsentZeroTaxDiscountVerified !== true || !/^[A-Z]{3}$/.test(policy.currency)) throw new InvoiceNinjaError('unsupported', false)
     parse(opaqueId, policy.currencyId); parse(opaqueId, policy.configurationIdentity)
+  }
+  function draftBody(intent: FrozenDraft) {
+    const input = intent.input
+    const body = { client_id: intent.remoteClientId, currency_id: intent.policy.currencyId, date: input.invoiceDate, ...(input.dueDate ? { due_date: input.dueDate } : {}),
+      ...(input.numbering.mode === 'explicit' ? { number: input.numbering.number } : {}),
+      line_items: input.lines.map(line => ({ notes: line.description, quantity: line.quantity, cost: line.unitCost })) }
+    if (Buffer.byteLength(JSON.stringify(body)) > 256 * 1024) throw new InvoiceNinjaError('limit_exceeded')
+    return body
   }
   async function cancelOperation(context: TrustedContext, input: unknown) {
     await authorize(context)
@@ -211,7 +221,7 @@ export function createInvoiceNinjaService(options: InvoiceNinjaOptions) {
       if (initial.kind === 'create_draft') {
         if (!initial.intent || !options.resolveDraftPolicy) throw new InvoiceNinjaError('unsupported', false)
         const current = await awaitWithSignal(signal, async () => options.resolveDraftPolicy!(context, await bound(context, initial.bindingId, 'client'), initial.intent!.input, signal))
-        validatePolicy(current)
+        validatePolicy(current); draftBody(initial.intent)
         if (current.currencyId !== initial.intent.policy.currencyId || current.currency !== initial.intent.policy.currency || current.configurationIdentity !== initial.intent.policy.configurationIdentity) throw new InvoiceNinjaError('unsupported', false)
       }
       await db().transaction(async tx => {
@@ -225,10 +235,7 @@ export function createInvoiceNinjaService(options: InvoiceNinjaOptions) {
       await bound(context, b.id); checkSignal(signal)
       let target = b, projection: ReturnType<typeof projectEntity>
       if (row.kind === 'create_draft') {
-        const intent = row.intent!, input = intent.input
-        const body = { client_id: intent.remoteClientId, currency_id: intent.policy.currencyId, date: input.invoiceDate, ...(input.dueDate ? { due_date: input.dueDate } : {}),
-          ...(input.numbering.mode === 'explicit' ? { number: input.numbering.number } : {}),
-          line_items: input.lines.map(line => ({ notes: line.description, quantity: line.quantity, cost: line.unitCost })) }
+        const intent = row.intent!, body = draftBody(intent)
         dispatched = true
         const response = await providerRequest(c, 'invoice', null, body, signal, options.fetch)
         const remoteId = parse(opaqueId, entity(response).id)

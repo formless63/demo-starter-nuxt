@@ -80,6 +80,8 @@ try {
   const refresh = await service.requestInvoiceReconciliation(a, { invoiceBindingId: ia.id }); assert('operationId' in refresh); await run(refresh.operationId)
   await assert.rejects(service.getInvoice(b, { bindingId: ia.id }), { code: 'not_found' })
   const draft = { clientBindingId: ca.id, idempotencyKey: 'ambiguous', invoiceDate: '2026-10-02', numbering: { mode: 'provider' }, lines: [{ description: 'Private financial intent', quantity: '1.000', unitCost: '25.1234' }] }
+  await assert.rejects(service.requestDraftInvoice(a, { ...draft, idempotencyKey: 'oversized', lines: Array.from({ length: 100 }, () => ({ description: '😀'.repeat(1000), quantity: '1', unitCost: '25.1234' })) }), { code: 'limit_exceeded' })
+  assert.equal(posts, 0, 'Oversized writes reject before ledger dispatch')
   const queued = await service.requestDraftInvoice(a, draft); assert('operationId' in queued)
   const result = await run(queued.operationId); assert.equal(result.status, 'reconciliation_required')
   assert.equal((await service.getOperation(a, { operationId: queued.operationId })).status, 'reconciliation_required')
