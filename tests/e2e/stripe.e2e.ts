@@ -1,3 +1,4 @@
+import { reportTypeConfig } from './type-config-diagnostics'
 import { waitForHydration } from './hydration'
 import { test, expect } from '@playwright/test'
 import { createHmac, randomUUID } from 'node:crypto'
@@ -26,7 +27,8 @@ test('Stripe native auth, scoped projections, repeated operation reads and queue
     await context.addCookies([{ name: cookieName, value: encodeURIComponent(cookie), domain: new URL(baseURL!).hostname, path: '/', secure: Boolean(process.env.PLAYWRIGHT_BASE_URL), httpOnly: true, sameSite: 'Lax' }])
     await page.goto('/stripe')
     await expect(page.getByRole('heading', { name: 'One-time Checkout' })).toBeVisible()
-    await expect(page.locator('pre')).toContainText('processing')
+    try { await expect(page.locator('pre')).toContainText('processing') }
+    catch (error) { if (!process.env.PLAYWRIGHT_BASE_URL) await reportTypeConfig('stripe-assertion-failure'); throw error }
     await waitForHydration(page)
     await page.getByLabel('Operation', { exact: true }).fill(operationId)
     await page.getByRole('button', { name: 'Refresh operation' }).click()
