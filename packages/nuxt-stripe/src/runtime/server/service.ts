@@ -65,8 +65,8 @@ export function createStripeService(options: StripeServiceOptions) {
   const inboxJob = defineJob({ name: 'stripe.receipt', payload: z.object({ inboxId: uuid }).strict(), queue: policy, send: { expireInSeconds: 45 }, handler: (payload, job) => runReceipt(payload.inboxId, job) })
   async function enqueue(tx: StripeTransaction, kind: 'operation' | 'receipt', id: string) {
     const boss = await options.boss()
-    if (kind === 'operation') return sendRegisteredJobInTransaction(boss, { [runJob.name]: runJob }, tx, runJob.name, { operationId: id }, options.env?.DATABASE_URL ?? process.env.DATABASE_URL)
-    return sendRegisteredJobInTransaction(boss, { [inboxJob.name]: inboxJob }, tx, inboxJob.name, { inboxId: id }, options.env?.DATABASE_URL ?? process.env.DATABASE_URL)
+    if (kind === 'operation') return sendRegisteredJobInTransaction(boss, { [runJob.name]: runJob }, tx as unknown as Parameters<typeof sendRegisteredJobInTransaction>[2], runJob.name, { operationId: id }, options.env?.DATABASE_URL ?? process.env.DATABASE_URL)
+    return sendRegisteredJobInTransaction(boss, { [inboxJob.name]: inboxJob }, tx as unknown as Parameters<typeof sendRegisteredJobInTransaction>[2], inboxJob.name, { inboxId: id }, options.env?.DATABASE_URL ?? process.env.DATABASE_URL)
   }
   /** Trusted server-only creation. Never expose binding creation in browser/callback routes. */
   async function bindInTransaction(tx: StripeTransaction, context: TrustedContext, input: { localResourceId: string, connectionId: string, resourceKind: ResourceKind, remoteId: string }) {
@@ -200,12 +200,13 @@ export function createStripeService(options: StripeServiceOptions) {
   }
   async function runOperation(id: string, job: JobContext) {
     const budget = deadline(45000, job.signal), token = randomUUID()
-    let attempt: StripeOperation | undefined, binding: StripeBinding | undefined
+    let attempt: StripeOperation | undefined, pending: StripeOperation | undefined, binding: StripeBinding | undefined
     try {
       await database().transaction(async tx => {
         await timeouts(tx)
         const [row] = await tx.select().from(operations).where(eq(operations.id, id)).for('update')
         if (!row || row.status !== 'queued') return
+        pending = row
         const context = { ...contextFor(row), signal: budget.signal }
         binding = await owned(context, row.bindingId, row.kind === 'create_checkout' ? 'customer' : row.kind === 'reconcile_checkout' ? 'checkout' : 'payment', tx)
         if (row.kind === 'create_checkout' && row.firstDispatchAt && Date.now() >= row.firstDispatchAt.getTime() + replayMs) { await tx.update(operations).set({ status: 'reconciliation_required', errorCode: 'conflict', updatedAt: new Date() }).where(eq(operations.id, id)); return }
@@ -247,6 +248,7 @@ export function createStripeService(options: StripeServiceOptions) {
       // Stripe's cached errors and ambiguous acceptance never trigger an automatic fresh create.
       const definitive = error instanceof Error && 'statusCode' in error && typeof error.statusCode === 'number' && error.statusCode >= 400 && error.statusCode < 500 && error.statusCode !== 429
       const retry = !write && ['unavailable', 'deadline_exceeded'].includes(safe.code) && job.retryCount < (job.retryLimit ?? 5)
+      if (!attempt && pending && !retry) await database().update(operations).set({ status: 'failed', errorCode: safe.code, updatedAt: new Date() }).where(and(eq(operations.id, id), eq(operations.status, 'queued')))
       if (attempt) await database().transaction(async tx => {
         await timeouts(tx)
         await tx.update(operations).set({ status: write ? definitive ? 'failed' : 'reconciliation_required' : retry ? 'queued' : 'failed', errorCode: definitive ? 'invalid_input' : safe.code, leaseToken: null, leaseUntil: null, updatedAt: new Date() }).where(and(eq(operations.id, id), eq(operations.leaseToken, token)))
@@ -300,6 +302,28 @@ export function createStripeService(options: StripeServiceOptions) {
     }
     finally { budget.close() }
   }
+  /** Explicit trusted application replay, never automatic. Frozen intent/key stay unchanged. */
+  async function replayCheckout(context: TrustedContext, input: { operationId: string }) {
+    const existing = await getOperation(context, input)
+    if (existing.kind !== 'create_checkout' || existing.status !== 'reconciliation_required') throw new StripeCapabilityError('conflict')
+    return database().transaction(async tx => {
+      await timeouts(tx)
+      const [row] = await tx.select().from(operations).where(eq(operations.id, input.operationId)).for('update')
+      if (!row || row.status !== 'reconciliation_required' || !row.firstDispatchAt || Date.now() >= row.firstDispatchAt.getTime() + replayMs || !row.intent) throw new StripeCapabilityError('conflict')
+      await owned(context, row.bindingId, 'customer', tx)
+      const configured = await connection(row.connectionId, context.signal)
+      if (configured.accountId !== row.intent.accountId || configured.mode !== row.intent.mode) throw new StripeCapabilityError('conflict')
+      await tx.update(operations).set({ status: 'queued', errorCode: null, updatedAt: new Date() }).where(eq(operations.id, row.id))
+      await enqueue(tx, 'operation', row.id)
+      return { operationId: row.id, status: 'queued' as const }
+    })
+  }
+  /** Explicit trusted repair transaction; repeated repair never produces enqueue storms. */
+  async function repairReceiptInTransaction(tx: StripeTransaction, id: string) {
+    const [row] = await tx.update(inbox).set({ status: 'received', errorCode: null, updatedAt: new Date() }).where(and(eq(inbox.id, validate(uuid, id)), eq(inbox.status, 'failed'))).returning()
+    if (row) await enqueue(tx, 'receipt', row.id)
+    return Boolean(row)
+  }
   /** Explicit bounded operator recovery. No startup scan or provider I/O. */
   async function recoverExpiredAttempts(limit = 100) {
     if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new StripeCapabilityError('invalid_input')
@@ -320,5 +344,5 @@ export function createStripeService(options: StripeServiceOptions) {
       return { operations: expired.length, receipts: receipts.length }
     })
   }
-  return { runJob, inboxJob, bindInTransaction, requestCheckoutInTransaction, requestCheckout, requestPaymentReconciliationInTransaction, requestPaymentReconciliation, getOperation, getCheckout, listPayments, receiveInTransaction, receive, cancelOperation, recoverExpiredAttempts }
+  return { runJob, inboxJob, bindInTransaction, requestCheckoutInTransaction, requestCheckout, requestPaymentReconciliationInTransaction, requestPaymentReconciliation, getOperation, getCheckout, listPayments, receiveInTransaction, receive, cancelOperation, replayCheckout, repairReceiptInTransaction, recoverExpiredAttempts }
 }

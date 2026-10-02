@@ -38,7 +38,9 @@ export async function boundedBody(body: ReadableStream<Uint8Array> | null, signa
 export async function stripeOperation<T>(connection: StripeConnection, operation: (client: Stripe) => Promise<T>, options: { signal?: AbortSignal, timeoutMs?: number, fetch?: typeof fetch, environment?: string } = {}): Promise<T> {
   validateConnection(connection, options.environment)
   const budget = deadline(15000, options.signal, options.timeoutMs)
+  let transportFailure: StripeCapabilityError | undefined
   const transport: typeof fetch = async (input, init) => {
+    try {
     budget.check()
     const signal = init?.signal ? AbortSignal.any([budget.signal, init.signal]) : budget.signal
     if (typeof init?.body !== 'string' || Buffer.byteLength(init.body) > 256 * 1024) {
@@ -48,6 +50,7 @@ export async function stripeOperation<T>(connection: StripeConnection, operation
     const bytes = await boundedBody(response.body, signal)
     budget.check()
     return new Response(bytes, { status: response.status, statusText: response.statusText, headers: response.headers })
+    } catch (error) { if (error instanceof StripeCapabilityError) transportFailure = error; throw error }
   }
   const base = connection.apiBase ? new URL(connection.apiBase) : null
   const client = new Stripe(connection.secretKey, {
@@ -56,6 +59,6 @@ export async function stripeOperation<T>(connection: StripeConnection, operation
     ...(base ? { host: base.hostname.replace(/^\[|\]$/g, ''), port: Number(base.port || (base.protocol === 'https:' ? 443 : 80)), protocol: base.protocol === 'http:' ? 'http' : 'https' } : {}),
   })
   try { return await operation(client) }
-  catch (error) { budget.check(); throw error }
+  catch (error) { budget.check(); throw transportFailure ?? error }
   finally { budget.close() }
 }

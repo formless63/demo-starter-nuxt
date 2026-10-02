@@ -5,7 +5,8 @@ import { once } from 'node:events'
 import { stripeOperation, verifyStripeWebhook, StripeCapabilityError, API_VERSION, validateConnection, checkoutInput, validate, decodeCursor, encodeCursor } from '@repo/nuxt-stripe/server'
 import type { StripeConnection } from '@repo/nuxt-stripe/server'
 const key = 'sk_test_local', secret = 'whsec_current', previous = 'whsec_previous'
-let requests = 0, behavior = 'ok', closed = false
+let requests = 0, behavior = 'ok'
+let closed: boolean
 const server = createServer(async (request, response) => {
   requests++
   assert.equal(request.headers.authorization, `Bearer ${key}`)
