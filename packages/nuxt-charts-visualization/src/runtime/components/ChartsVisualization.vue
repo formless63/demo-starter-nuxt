@@ -25,6 +25,7 @@ const titleId = computed(() => `${chartId.value}-title`)
 const descriptionId = computed(() => `${chartId.value}-description`)
 const reducedMotion = ref(false)
 const fallbackRows = computed(() => props.labels.map((label, index) => ({ label, values: props.series.map(item => item.data[index] ?? '—') })))
+const hasData = computed(() => props.labels.length > 0 && props.series.some(item => item.data.some(value => value !== null)))
 let resizeObserver: ResizeObserver | undefined
 let mediaQuery: MediaQueryList | undefined
 let motionListener: ((event: MediaQueryListEvent) => void) | undefined
@@ -98,7 +99,8 @@ onBeforeUnmount(() => {
       <h2 :id="titleId">{{ title }}</h2>
       <p v-if="description" :id="descriptionId">{{ description }}</p>
     </figcaption>
-    <div ref="host" class="charts-visualization__canvas" :style="{ height }" aria-hidden="true" />
+    <div ref="host" class="charts-visualization__canvas" :data-chart-kind="kind" :data-chart-animation="props.animated && !reducedMotion" :data-chart-series="JSON.stringify(series.map(item => item.data))" :style="{ height }" aria-hidden="true" />
+    <p v-if="!hasData" role="status">No chart data available.</p>
     <table class="charts-visualization__data">
       <caption class="sr-only">{{ title }} data</caption>
       <thead><tr><th scope="col">{{ labels.length ? 'Category' : 'Data' }}</th><th v-for="item in series" :key="item.name" scope="col">{{ item.name }}</th></tr></thead>

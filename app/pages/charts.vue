@@ -12,7 +12,7 @@ const values = computed(() => empty.value ? [] : revision.value ? [12, 18, 9] : 
 
 async function replaceData() {
   loading.value = true
-  await new Promise(resolve => setTimeout(resolve, 20))
+  await new Promise(resolve => setTimeout(resolve, 200))
   revision.value++
   loading.value = false
 }
@@ -29,6 +29,6 @@ async function replaceData() {
     </div>
     <p v-if="loading" role="status">Loading chart data…</p>
     <ChartsVisualization v-if="mounted" id="primary-chart" :kind="kind" title="Revenue" description="Monthly revenue" :labels="labels" :series="[{ name: 'Revenue', data: values } ]" />
-    <ChartsVisualization v-if="mounted" id="secondary-chart" kind="bar" title="Users" :labels="labels" :series="[{ name: 'Users', data: values } ]" />
+    <ChartsVisualization v-if="mounted" kind="bar" title="Users" :labels="labels" :series="[{ name: 'Users', data: values } ]" />
   </main>
 </template>
