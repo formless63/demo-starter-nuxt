@@ -9,7 +9,9 @@ export default defineNuxtConfig({
     plugins: [tailwindcss()],
     // Discover shared client dependencies before serving the first route. Lazy
     // discovery otherwise invalidates already served chunks during navigation.
-    optimizeDeps: { include: ['@tabler/icons-vue', '@vueuse/core', 'better-auth/vue', 'better-auth/client/plugins', 'class-variance-authority', 'clsx', 'reka-ui', 'tailwind-merge', 'vue-sonner', 'zod'] },
+    // Nuxt diagnostics are excluded from its entry scan, so include their
+    // runtime imports explicitly to avoid cold-start optimizer invalidation.
+    optimizeDeps: { include: ['errx', 'nostics', 'nostics/formatters/ansi', 'nostics/reporters/dev', '@tabler/icons-vue', '@vueuse/core', 'better-auth/vue', 'better-auth/client/plugins', 'class-variance-authority', 'clsx', 'reka-ui', 'tailwind-merge', 'vue-sonner', 'zod'] },
   },
   typescript: { strict: true, typeCheck: process.env.NUXT_TYPECHECK !== 'false' },
   colorMode: { classSuffix: '', fallback: 'light' },

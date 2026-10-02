@@ -1,3 +1,4 @@
+import { waitForHydration } from './hydration'
 import { test, expect } from '@playwright/test'
 import { createHmac, randomUUID } from 'node:crypto'
 import postgres from 'postgres'
@@ -5,6 +6,7 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import { eq } from 'drizzle-orm'
 import * as tables from '../../server/database/schema'
 test('Stripe native auth, scoped projections, repeated operation reads and queued cancellation', async ({ page, request, context, baseURL }) => {
+  test.setTimeout(60_000)
   const sql = postgres(process.env.DATABASE_URL!, { max: 1 }), db = drizzle(sql)
   const owner = randomUUID(), token = randomUUID(), bindingId = randomUUID(), operationId = randomUUID()
   const secret = process.env.NUXT_AUTH_SECRET || 'e2e-secret-that-is-at-least-thirty-two-chars'
@@ -25,6 +27,7 @@ test('Stripe native auth, scoped projections, repeated operation reads and queue
     await page.goto('/stripe')
     await expect(page.getByRole('heading', { name: 'One-time Checkout' })).toBeVisible()
     await expect(page.locator('pre')).toContainText('processing')
+    await waitForHydration(page)
     await page.getByLabel('Operation', { exact: true }).fill(operationId)
     await page.getByRole('button', { name: 'Refresh operation' }).click()
     await expect(page.locator('output')).toContainText('queued')
