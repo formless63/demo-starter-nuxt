@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { getInstanceByDom } from 'echarts/core'
 
 definePageMeta({ layout: 'default' })
 const kind = ref<'line' | 'bar' | 'area'>('line')
@@ -9,6 +10,8 @@ const empty = ref(false)
 const revision = ref(0)
 const labels = computed(() => revision.value ? ['Jan', 'Feb', 'Mar'] : ['Jan', 'Feb'])
 const values = computed(() => empty.value ? [] : revision.value ? [12, 18, 9] : [10, 15])
+const chartState = ref({ type: '', data: [] as unknown[], animation: true, width: 0 })
+let stateTimer: ReturnType<typeof setInterval> | undefined
 
 function startUpdate() {
   loading.value = true
@@ -18,6 +21,21 @@ function replaceData() {
   revision.value++
   loading.value = false
 }
+
+onMounted(() => {
+  stateTimer = setInterval(() => {
+    const host = document.querySelector('#primary-chart .charts-visualization__canvas')
+    const instance = host instanceof HTMLElement ? getInstanceByDom(host) : undefined
+    const option = instance?.getOption()
+    chartState.value = {
+      type: String(option?.series?.[0]?.type ?? ''),
+      data: (option?.series?.[0]?.data ?? []) as unknown[],
+      animation: option?.animation !== false,
+      width: instance?.getWidth() ?? 0,
+    }
+  }, 25)
+})
+onBeforeUnmount(() => { if (stateTimer) clearInterval(stateTimer) })
 </script>
 
 <template>
@@ -31,6 +49,7 @@ function replaceData() {
       <button type="button" @click="mounted = !mounted">Toggle mount</button>
     </div>
     <p v-if="loading" role="status">Loading chart data…</p>
+    <output data-echarts-state class="sr-only">{{ JSON.stringify(chartState) }}</output>
     <ChartsVisualization v-if="mounted" id="primary-chart" :kind="kind" title="Revenue" description="Monthly revenue" :labels="labels" :series="[{ name: 'Revenue', data: values } ]" />
     <ChartsVisualization v-if="mounted" kind="bar" title="Users" :labels="labels" :series="[{ name: 'Users', data: values } ]" />
   </main>
