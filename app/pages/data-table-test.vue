@@ -13,8 +13,6 @@ const error = ref<string | null>(null)
 const rejectUpdates = ref(false)
 const manualMode = ref(false)
 const pageCount = ref(2)
-function updateSorting(value: SortingState) { if (!rejectUpdates.value) sorting.value = value }
-function updateFilter(value: string) { if (!rejectUpdates.value) globalFilter.value = value }
 function acceptOrReject<T>(_value: T, _target: T) { /* test fixture intentionally rejects controlled updates */ }
 const columns: ColumnDef<any, Person, any>[] = [{ accessorKey: 'name', header: 'Name', enableSorting: true }, { accessorKey: 'score', header: 'Score', enableSorting: true }]
 </script>
