@@ -11,7 +11,9 @@ export default defineNuxtConfig({
     // discovery otherwise invalidates already served chunks during navigation.
     // Nuxt diagnostics are excluded from its entry scan, so include their
     // runtime imports explicitly to avoid cold-start optimizer invalidation.
-    optimizeDeps: { include: ['errx', 'nostics', 'nostics/formatters/ansi', 'nostics/reporters/dev', '@tabler/icons-vue', '@vueuse/core', 'better-auth/vue', 'better-auth/client/plugins', 'class-variance-authority', 'clsx', 'reka-ui', 'tailwind-merge', 'vue-sonner', 'zod'] },
+    // Enabled Nuxt DevTools imports these two clients lazily; discovering them
+    // after serving entry.js invalidates already loaded diagnostic chunks.
+    optimizeDeps: { include: ['@vue/devtools-core', '@vue/devtools-kit', 'errx', 'nostics', 'nostics/formatters/ansi', 'nostics/reporters/dev', '@tabler/icons-vue', '@vueuse/core', 'better-auth/vue', 'better-auth/client/plugins', 'class-variance-authority', 'clsx', 'reka-ui', 'tailwind-merge', 'vue-sonner', 'zod'] },
   },
   typescript: { strict: true, typeCheck: process.env.NUXT_TYPECHECK !== 'false' },
   colorMode: { classSuffix: '', fallback: 'light' },
