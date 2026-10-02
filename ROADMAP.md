@@ -243,11 +243,14 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Current implementation: `@repo/nuxt-data-table` with TanStack Vue Table 9.2.4, semantic accessible rendering, typed columns, stable IDs, controlled state, and manual server modes. No virtualization or provider integration.
 - Contract: [`capabilities/data-table/CAPABILITY.md`](capabilities/data-table/CAPABILITY.md)
 
-### Markdown / Code Content (`planned`)
+### Markdown / Code Content (`in-progress`)
 
 - Requires: none
 - Integrates with: Object Storage, AI
 - External: none
+- Current implementation: optional `@repo/nuxt-markdown-code`, bounded server-only markdown-it/Shiki, whitelisted native Vue SSR, accessible clipboard states, and packed independent consumer lifecycle.
+- Contract: [`capabilities/markdown-code/CAPABILITY.md`](capabilities/markdown-code/CAPABILITY.md)
+- Completion gate: full hosted generic package/browser/removal and root CI.
 
 ### Charts / Visualization (`planned`)
 

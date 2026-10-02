@@ -199,3 +199,7 @@ The separately installed provider bridge, remote credentials and remote resource
 ## Remove Data Table
 
 Remove `@repo/nuxt-data-table` from the root dependency and Nuxt modules, remove `data-table` from `referenceApplication.enabledCapabilities`, and remove or replace `app/pages/data-table-test.vue` plus any application-owned `<DataTable>` usage. Remove its source/component/browser/config tests only when pruning the capability. Its module-owned Vite prebundle entry disappears with the module; no root Vite edit is needed. Reinstall and run catalog, typecheck and build checks. No migrations, stored data, provider resources, jobs, or credentials belong to this UI package. The generic `bun run packages:test data-table` fixture proves clean uninstall and post-removal typecheck/build.
+
+## Remove Markdown / Code Content
+
+Remove `@repo/nuxt-markdown-code` from dependencies and Nuxt modules, `app/pages/markdown.vue`, `server/api/markdown-reference.get.ts`, and the reference enabled-capabilities entry. Reinstall, typecheck and build. No migrations/data deletion; the generic packed fixture proves independent removal.

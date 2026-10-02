@@ -31,6 +31,7 @@ The root application deliberately enables all eighteen completed capabilities fo
 | `stripe` | `@repo/nuxt-stripe` | Enabled | No | Jobs, Webhooks | Stripe on use | [Stripe](../capabilities/stripe/CAPABILITY.md) |
 | `medusa` | `@repo/nuxt-medusa` | Enabled | No | Jobs, Webhooks | Medusa on use; optional operator bridge | [Medusa](../capabilities/medusa/CAPABILITY.md) |
 | `data-table` | `@repo/nuxt-data-table` | Enabled | No | None | None | [Data Table](../capabilities/data-table/CAPABILITY.md) |
+| `markdown-code` (in-progress) | `@repo/nuxt-markdown-code` | Enabled | No | None | None | [Markdown / Code](../capabilities/markdown-code/CAPABILITY.md) |
 | `ops-admin` | `@repo/nuxt-ops-admin` | Enabled | No | None | None; optional provider adapters | [Ops / Admin](../capabilities/ops-admin/CAPABILITY.md) |
 
 All eighteen entries above are `done`. Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
@@ -166,3 +167,7 @@ The pinned disposable Medusa 2.21.2 backend/subscriber and packed lifecycle pass
 ### Data Table
 
 Keep `"@repo/nuxt-data-table": "workspace:*"` and register `'@repo/nuxt-data-table'` in Nuxt modules. The module registers the component and its owned Vite adapter prebundle; applications own data, stable row IDs, typed columns, controlled state and any server requests. The root `/data-table-test` reference covers interactive client/manual behavior. Verify packed SSR, install and removal with `bun run packages:test data-table`; no database or external provider is needed. See the [Data Table contract](../capabilities/data-table/CAPABILITY.md) and [removal recipe](STARTING-A-PROJECT.md#remove-data-table).
+
+## Markdown / Code Content (in-progress)
+
+Optional private `@repo/nuxt-markdown-code`; no hard dependencies, backend or migrations. Root `/markdown` explicitly demonstrates server-only bounded markdown-it/Shiki and safe native Vue. See [contract](../capabilities/markdown-code/CAPABILITY.md).

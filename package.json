@@ -92,7 +92,8 @@
     "@repo/nuxt-invoice-ninja": "workspace:*",
     "@repo/nuxt-stripe": "workspace:*",
     "@repo/nuxt-medusa": "workspace:*",
-    "@repo/nuxt-data-table": "workspace:*"
+    "@repo/nuxt-data-table": "workspace:*",
+    "@repo/nuxt-markdown-code": "workspace:*"
   },
   "devDependencies": {
     "@nuxt/eslint": "1.17.0",
