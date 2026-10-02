@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 export async function verifyRichText(page:Page){
+ expect(await page.getByRole('region',{name:'Unicode fidelity'}).textContent()).toBe('line1\nline2\nline3 😀 café');
  const editor=page.getByRole('textbox',{name:'Document',exact:true});
  await expect(editor).toHaveText('Hello rich text');
  await editor.fill('Edited document');
@@ -24,22 +25,23 @@ export async function verifyRichText(page:Page){
  await page.getByRole('button',{name:'Reject changes'}).click();
  await editor.fill('Rejected content');
  await expect(editor).toHaveText('Edited document');
- await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled();
+ await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled(); await expect(page.getByRole('button',{name:'Redo',exact:true})).toBeDisabled();
  await page.getByRole('button',{name:'Accept changes'}).click();
  await page.getByRole('button',{name:'Replace document'}).click();
  await expect(editor).toHaveText('Replacement document');
- await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled();
+ await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled(); await expect(page.getByRole('button',{name:'Redo',exact:true})).toBeDisabled();
  await editor.fill('Retained on remount');
  await page.getByRole('button',{name:'Toggle editor'}).click();
  await expect(editor).toHaveCount(0);
  await page.getByRole('button',{name:'Toggle editor'}).click();
  await expect(editor).toHaveText('Retained on remount');
- await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled();
+ await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled(); await expect(page.getByRole('button',{name:'Redo',exact:true})).toBeDisabled();
  await page.getByRole('button',{name:'Toggle read only'}).click();
  await expect(editor).toHaveCount(0);
  await expect(page.getByRole('region',{name:'Document',exact:true})).toHaveText('Retained on remount');
  await page.getByRole('button',{name:'Toggle read only'}).click();
  await expect(editor).toHaveText('Retained on remount');
+ await editor.fill('PRIVATE old record'); await editor.fill('Public'); await page.getByRole('button',{name:'Switch equal record'}).click(); await expect(editor).toHaveText('Public'); await editor.press('ControlOrMeta+z'); await editor.press('ControlOrMeta+Shift+z'); await expect(editor).toHaveText('Public'); await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled(); await expect(page.getByRole('button',{name:'Redo',exact:true})).toBeDisabled();
  for (const [name, tag] of [['Heading','h2'], ['Bullet list','ul'], ['Ordered list','ol'], ['Quote','blockquote'], ['Code block','pre']] as const) {
   await editor.fill('Format me'); await editor.press('ControlOrMeta+a'); await page.getByRole('button',{name,exact:true}).click(); await expect(editor.locator(tag)).toHaveText('Format me');
   await editor.press('ControlOrMeta+a'); await page.getByRole('button',{name,exact:true}).click(); await expect(editor.locator(tag)).toHaveCount(0);

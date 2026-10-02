@@ -23,10 +23,28 @@ export const emptyRichTextDocument: RichTextDocument = {
 	type: "doc",
 	content: [{ type: "paragraph" }],
 };
+// HTML parsing and UTF-8 encoding must preserve every accepted scalar.
+function hasInvalidRichTextScalar(value: string): boolean {
+	for (let index = 0; index < value.length; index++) {
+		const unit = value.charCodeAt(index);
+		if (unit === 0) return true;
+		if (unit >= 0xd800 && unit <= 0xdbff) {
+			const next = value.charCodeAt(index + 1);
+			if (!(next >= 0xdc00 && next <= 0xdfff)) return true;
+			index++;
+		} else if (unit >= 0xdc00 && unit <= 0xdfff) return true;
+	}
+	return false;
+}
+export function normalizeRichTextText(value: string): string {
+	if (hasInvalidRichTextScalar(value)) return invalid();
+	return value.replace(/\r\n?/g, "\n");
+}
 export function isSafeRichTextLink(value: unknown): value is string {
 	if (
 		typeof value !== "string" ||
 		value.length > 2048 ||
+		hasInvalidRichTextScalar(value) ||
 		/\s/u.test(value) ||
 		[...value].some(
 			(character) =>
@@ -136,7 +154,7 @@ export function parseRichTextDocument(input: unknown): RichTextDocument {
 				return invalid();
 			characters += item.text.length;
 			if (characters > richTextLimits.characters) return invalid();
-			result.text = item.text;
+			result.text = normalizeRichTextText(item.text);
 			if (item.marks !== undefined) {
 				if (
 					!Array.isArray(item.marks) ||

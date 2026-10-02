@@ -4,6 +4,8 @@ import { parseRichTextDocument, type RichTextDocument } from './document'
 /** Drop only editor-generated defaults; public input always uses the strict parser. */
 export function documentFromEditor(input: JSONContent): RichTextDocument {
 	function copy(item: JSONContent): unknown {
+    // Internal transactions must already be canonical. Public input and paste normalize first.
+    if (item.text?.includes('\r')) throw new Error('Invalid rich-text document')
 		return {
 			type: item.type,
 			...(item.text === undefined ? {} : { text: item.text }),

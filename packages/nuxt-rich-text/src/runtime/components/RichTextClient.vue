@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch,
 import { Editor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import { AllSelection, EditorState, Selection } from '@tiptap/pm/state'
-import { isSafeRichTextLink, richTextLimits, type RichTextDocument } from '../document'
+import { isSafeRichTextLink, normalizeRichTextText, richTextLimits, type RichTextDocument } from '../document'
 import { bounds, documentFromEditor } from '../editor'
 const props = defineProps<{ value: RichTextDocument; label: string; onChange: (value: RichTextDocument) => void }>()
 const editor = shallowRef<Editor>()
@@ -30,7 +30,15 @@ onMounted(() => {
     content: props.value, injectCSS: false,
     editorProps: {
       attributes: { role: 'textbox', 'aria-label': props.label, 'aria-multiline': 'true', style: 'white-space: pre-wrap; overflow-wrap: anywhere; min-height: 10rem;' },
-      handlePaste(view, event) { event.preventDefault(); const text = event.clipboardData?.getData('text/plain') ?? ''; if (text.length && text.length <= richTextLimits.characters) view.dispatch(view.state.tr.insertText(text)); return true },
+      handlePaste(view, event) {
+        event.preventDefault()
+        const raw = event.clipboardData?.getData('text/plain') ?? ''
+        if (!raw.length || raw.length > richTextLimits.characters) return true
+        let text: string
+        try { text = normalizeRichTextText(raw) } catch { return true }
+        view.dispatch(view.state.tr.insertText(text))
+        return true
+      },
       handleDrop(_view, event) { event.preventDefault(); return true },
     },
     onTransaction() { revision.value++ },
