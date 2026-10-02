@@ -51,6 +51,40 @@ const service = createInvoiceNinjaService({ database: () => db, boss: async () =
 })
 const context = () => ({ id: randomUUID(), signal: new AbortController().signal, retryCount: 0, retryLimit: 5 })
 async function run(id: string) { return service.operationJob.handler({ operationId: id }, context()) }
+// Pause the projection write after its fencing checks. A concurrent recovery or
+// binding change must wait for the complete projection/terminal-state commit.
+async function assertCommitFence(kind: 'operation' | 'receipt', id: string, bindingId: string, start: () => Promise<unknown>) {
+  const control = postgres(url.toString(), { max: 1 })
+  const contender = postgres(url.toString(), { max: 1 })
+  let worker: Promise<unknown> | undefined
+  try {
+    await client.unsafe(`CREATE FUNCTION invoice_fixture_pause_projection() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM pg_advisory_xact_lock(742129); RETURN NEW; END $$`)
+    await client.unsafe(`CREATE TRIGGER invoice_fixture_pause_projection BEFORE INSERT ON invoice_ninja_projection FOR EACH ROW EXECUTE FUNCTION invoice_fixture_pause_projection()`)
+    await control`SELECT pg_advisory_lock(742129)`
+    worker = start()
+    let waiting = false
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const rows = await client`SELECT pid FROM pg_stat_activity WHERE datname = ${databaseName} AND wait_event = 'advisory'`
+      if (rows.length) { waiting = true; break }
+      await new Promise(resolve => setTimeout(resolve, 20))
+    }
+    assert(waiting, 'Worker reached the paused projection write')
+    const table = kind === 'operation' ? 'invoice_ninja_operation' : 'invoice_ninja_inbox'
+    for (const [target, rowId] of [[table, id], ['invoice_ninja_binding', bindingId]]) {
+      await assert.rejects(contender.begin(async tx => {
+        await tx`SET LOCAL lock_timeout = '100ms'`
+        await tx.unsafe(`UPDATE ${target} SET revision = revision + 1 WHERE id = $1`, [rowId!])
+      }), (error: unknown) => error instanceof Error && 'code' in error && error.code === '55P03', `${target} stays locked through projection commit`)
+    }
+  }
+  finally {
+    await control`SELECT pg_advisory_unlock(742129)`
+    await worker
+    await client.unsafe('DROP TRIGGER IF EXISTS invoice_fixture_pause_projection ON invoice_ninja_projection')
+    await client.unsafe('DROP FUNCTION IF EXISTS invoice_fixture_pause_projection()')
+    await control.end(); await contender.end()
+  }
+}
 try {
   const upgrade = await mkdtemp(join(tmpdir(), 'invoice-upgrade-'))
   try {
@@ -116,6 +150,15 @@ try {
   const crash = await service.requestDraftInvoice(a, { ...draft, idempotencyKey: 'crash' }); assert('operationId' in crash)
   await db.update(operations).set({ status: 'dispatching', firstDispatchAt: new Date(), leaseUntil: new Date(Date.now() - 1000), attemptToken: randomUUID() }).where(eq(operations.id, crash.operationId))
   await service.recoverExpiredAttempts(); await run(crash.operationId); assert.equal(posts, 2)
+  absent = false
+  const fenced = await service.requestInvoiceReconciliation(a, { invoiceBindingId: ia.id }); assert('operationId' in fenced)
+  await assertCommitFence('operation', fenced.operationId, ia.id, () => run(fenced.operationId))
+  assert.equal((await service.getOperation(a, { operationId: fenced.operationId })).status, 'succeeded')
+  await service.receiveWebhook('default', 'invoice-updated', secret, new Response('{"id":"invoice-a","fixture":"commit-fence"}').body)
+  const fencedReceipt = (await db.select().from(inbox)).find(row => row.status === 'received' && row.eventKind === 'invoice-updated')!
+  assert(fencedReceipt)
+  await assertCommitFence('receipt', fencedReceipt.id, ia.id, () => service.receiptJob.handler({ inboxId: fencedReceipt.id }, context()))
+  assert.equal((await db.select().from(inbox).where(eq(inbox.id, fencedReceipt.id)))[0]!.status, 'processed')
   const jobs = await client.unsafe('SELECT data FROM invoice_fixture_jobs.job')
   for (const job of jobs) assert.ok(Object.keys(job.data).length === 1 && (job.data.operationId || job.data.inboxId))
   const publicData = JSON.stringify({ invoices: await service.listInvoices(a), op: await service.getOperation(a, { operationId: queued.operationId }), output: result })
