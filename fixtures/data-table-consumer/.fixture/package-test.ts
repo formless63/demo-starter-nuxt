@@ -43,6 +43,8 @@ try {
     return [...markup.matchAll(/aria-label="Select row ([^"]+)"/g)].map(match => match[1])
   }
   assert.deepEqual(rowIds(html), ['b', 'a'], 'actual component must paginate its default rows')
+  assert.doesNotMatch(html, /<button[^>]*disabled[^>]*>Next<\/button>/, 'Next must be enabled on client page 1')
+  assert.match(html, /<button[^>]*disabled[^>]*>Previous<\/button>/, 'Previous must be disabled on client page 1')
   for (const [query, expected] of [
     ['?page=2', ['c']],
     ['?sort=asc', ['a', 'b']],
@@ -56,6 +58,12 @@ try {
     const markup = await scenario.text()
     assert.equal(scenario.status, 200, `Packaged SSR ${query} returned HTTP ${scenario.status}: ${markup.slice(-2000)}`)
     assert.deepEqual(rowIds(markup), [...expected], `actual packaged component row processing: ${query}`)
+    if (query === '?page=2' || query === '?filter=Alpha' || query === '?column=Gamma') {
+      assert.match(markup, /<button[^>]*disabled[^>]*>Next<\/button>/, `Next must be disabled: ${query}`)
+    }
+    if (query.includes('manual=true')) {
+      assert.doesNotMatch(markup, /<button[^>]*disabled[^>]*>Next<\/button>/, 'manual page count must enable Next')
+    }
   }
   console.log('data-table packaged SSR pagination/sorting/filtering/manual-mode assertions passed')
 } finally {
