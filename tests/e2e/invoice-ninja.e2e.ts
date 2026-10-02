@@ -1,3 +1,4 @@
+import { bootstrapDiagnostics } from './bootstrap-diagnostics'
 import { waitForHydration } from './hydration'
 import { browserDiagnostics } from './browser-diagnostics'
 import { expect, test } from '@playwright/test'
@@ -34,10 +35,12 @@ test('Invoice Ninja native scoped local projections, queued cancellation and aut
     await context.addCookies([{ name, value, domain: '127.0.0.1', path: '/', httpOnly: true, secure: Boolean(process.env.PLAYWRIGHT_BASE_URL) }])
     const page = await context.newPage(), base = process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3000'
     browserDiagnostics(page)
+    const reportBootstrap = bootstrapDiagnostics(page)
     await page.goto(`${base}/invoice-ninja`)
     await expect(page.getByRole('heading', { name: 'Invoice Ninja', exact: true })).toBeVisible()
     await expect(page.getByText('LOCAL-1', { exact: true })).toBeVisible()
-    await waitForHydration(page)
+    try { await waitForHydration(page) }
+    catch (error) { await reportBootstrap(); throw error }
     await page.getByLabel('Operation UUID').fill(operation)
     await page.getByRole('button', { name: 'Refresh operation', exact: true }).click()
     await expect(page.getByText('reconcile_invoice: queued', { exact: false })).toBeVisible()
