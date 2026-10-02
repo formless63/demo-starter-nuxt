@@ -1394,7 +1394,9 @@
             "app/pages/markdown.vue",
             ".fixture/package-test.ts",
             ".fixture/contract.ts",
-            ".fixture/dom.ts"
+            ".fixture/dom.ts",
+            ".fixture/grammar.ts",
+            "app/pages/malformed.vue"
           ],
           "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
         }

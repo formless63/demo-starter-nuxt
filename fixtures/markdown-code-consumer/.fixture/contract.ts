@@ -105,3 +105,25 @@ const cycle: Record<string, unknown> = { kind: 'element', tag: 'blockquote' }
 cycle.children = [cycle]
 const boundedCycle = normalizeMarkdownDocument({ version: 1, nodes: [cycle] })
 assert.equal(maxDepth(boundedCycle.nodes), 24)
+
+const { malformedDocument } = await import('./grammar.ts')
+const grammar = normalizeMarkdownDocument(malformedDocument)
+const malformedHtml = await renderToString(createSSRApp({ render: () => h(MarkdownContent, { document: malformedDocument }) }))
+assert(!malformedHtml.includes('drop '), 'Invalid subtrees are dropped deterministically')
+assert(malformedHtml.includes('<p>before<strong></strong>after</p>'))
+assert(malformedHtml.includes('<thead><tr><th>Head</th></tr></thead><tbody><tr><td>Cell</td></tr></tbody>'))
+assert.equal(grammar.nodes.length, 8)
+const validSource = '# Heading\n\nText **strong [link](https://example.com)** and *emphasis*, ~~deleted~~, `inline`.\n\n> quote\n>\n> - item\n>   - nested\n\n3. Third\n4. Fourth\n\n| A | B |\n|---|---|\n| cell | other |\n\n---\n\n```ts\nconst x = 1\n```'
+const parsedNormal = await parseMarkdown(validSource)
+assert.deepEqual(normalizeMarkdownDocument(parsedNormal), parsedNormal, 'All normal parser-generated constructs are preserved')
+console.info('HTML parent/child grammar: phrasing, anchors, list/table hierarchy, voids, code placement and parser preservation passed')
+
+for (const value of ['a\rb', 'a\r\nb', 'a\u0000b', '\uD800', '\uDC00']) {
+  assert.equal(normalizeMarkdownDocument({ version: 1, nodes: [{ kind: 'text', text: value }, { kind: 'code', language: 'text', text: value }] }).nodes.length, 0)
+}
+const paired = normalizeMarkdownDocument({ version: 1, nodes: [{ kind: 'text', text: '😀' }, { kind: 'code', language: 'javascript', text: '😀', lines: [[{ text: '\uD83D' }, { text: '\uDE00' }]] }] })
+assert.deepEqual(paired.nodes, [{ kind: 'text', text: '😀' }, { kind: 'code', language: 'javascript', text: '😀' }], 'Split surrogate highlight spans fall back to exact valid plaintext')
+const canonicalText = await parseMarkdown('a\r\nb\u0000c 😀')
+assert.deepEqual(normalizeMarkdownDocument(canonicalText), canonicalText, 'Parser canonical CR/NUL output and valid paired Unicode survive')
+
+assert.deepEqual(normalizeMarkdownDocument({ version: 1, nodes: [{ kind: 'element', tag: 'a', href: '/bad\uD800', children: [] }] }).nodes, [{ kind: 'element', tag: 'a', children: [], href: undefined }], 'Loaded href attributes also remain HTML round-trippable')

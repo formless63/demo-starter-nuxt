@@ -69,6 +69,16 @@ try {
     await expect(page.locator('output').first()).toContainText('Could not copy')
     await page.evaluate(() => document.documentElement.classList.add('dark'))
     await expect(page.locator('.markdown-code-block pre').first()).toHaveCSS('background-color', 'rgb(36, 41, 46)')
+    const hydrationWarnings: string[] = []
+    page.on('console', message => { if (/hydration|mismatch/i.test(message.text())) hydrationWarnings.push(message.text()) })
+    await page.goto(`${url}/malformed`)
+    await expect(page.locator('html')).toHaveAttribute('data-fixture-ready', 'true', { timeout: 30000 })
+    await expect(page.getByRole('button', { name: 'Copy text code' })).toBeEnabled()
+    await expect(page.locator('.markdown-content')).not.toContainText('drop ')
+    await expect(page.locator('table > thead > tr > th')).toHaveText('Head')
+    await expect(page.locator('table > tbody > tr > td')).toHaveText('Cell')
+    await expect(page.locator('.markdown-content > p').first()).toHaveText('beforeafter')
+    assert.deepEqual(hydrationWarnings, [], 'Real browser SSR parse/hydration preserves validated grammar')
     assert.deepEqual(errors, [])
   }
   finally { await browser.close() }

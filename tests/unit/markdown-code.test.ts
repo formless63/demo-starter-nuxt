@@ -32,4 +32,11 @@ describe('Markdown shipped contract', () => {
     for (const marker of ['<script', 'javascript:', 'onclick', 'tracker.invalid', 'background:red']) expect(html).not.toContain(marker)
     expect(safeMarkdownHref('https://user:secret@example.com')).toBeUndefined()
   })
+  it('drops invalid HTML nesting before SSR', async () => {
+    const document = { version: 1, nodes: [{ kind: 'element', tag: 'p', children: [{ kind: 'element', tag: 'p', children: [{ kind: 'text', text: 'drop nested' }] }, { kind: 'text', text: 'kept' }] }] } as MarkdownDocument
+    const html = await renderToString(createSSRApp({ render: () => h(MarkdownContent, { document }) }))
+    expect(html).toContain('<p>kept</p>')
+    expect(html).not.toContain('drop nested')
+  })
+
 })
