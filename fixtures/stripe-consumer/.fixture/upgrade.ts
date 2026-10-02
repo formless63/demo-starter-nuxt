@@ -30,12 +30,12 @@ try {
   }
   assert.equal(original[6]!.hash, '766093a48babe3de827640ff1df8849ea1f7b98563316236a300c970f1734efc')
   assert.equal(original[7]!.hash, '42ffa2c13e1b2f9cff83ab6bfc51d65351fabd2987a44a0b89528b864015552b')
-  await cp('.fixture/migrations/0011_stripe_v1.sql', join(root, '0011_stripe_v1.sql'))
   const provider = JSON.parse(await readFile('.fixture/migrations/meta/_journal.json', 'utf8')) as typeof baseline
-  await writeFile(join(root, 'meta/_journal.json'), JSON.stringify({ ...baseline, entries: [...baseline.entries, { ...provider.entries[0], idx: 8 }] }))
+  for (const entry of provider.entries) await cp(`.fixture/migrations/${entry.tag}.sql`, join(root, `${entry.tag}.sql`))
+  await writeFile(join(root, 'meta/_journal.json'), JSON.stringify({ ...baseline, entries: [...baseline.entries, ...provider.entries.map((entry, index) => ({ ...entry, idx: baseline.entries.length + index }))] }))
   await migrate(db, { migrationsFolder: root }); await migrate(db, { migrationsFolder: root })
   const after = await sql`select hash,created_at from drizzle.__drizzle_migrations order by id`
-  assert.equal(after.length, 9); assert.deepEqual([...after].slice(0, 8), [...original])
+  assert.equal(after.length, baseline.entries.length + provider.entries.length); assert.deepEqual([...after].slice(0, 8), [...original])
   assert.equal((await sql`select count(*)::int n from project where id='upgrade-project'`)[0]!.n, 1)
   assert.equal((await sql`select count(*)::int n from transfer where requester_id='upgrade-owner'`)[0]!.n, 1)
   assert.equal((await sql`select count(*)::int n from pg_tables where tablename like 'stripe_%'`)[0]!.n, 4)

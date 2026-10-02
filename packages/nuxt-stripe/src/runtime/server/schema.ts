@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { pgTable, uuid, varchar, timestamp, jsonb, integer, uniqueIndex, index, check, text } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, varchar, timestamp, jsonb, integer, uniqueIndex, index, check, text, boolean } from 'drizzle-orm/pg-core'
 import type Stripe from 'stripe'
 import type { ErrorCode } from './errors'
 export type ResourceKind = 'customer' | 'checkout' | 'payment'
@@ -38,6 +38,7 @@ export const stripeProjection = pgTable('stripe_projection', {
 }, table => [index('stripe_projection_created_idx').on(table.createdAt.desc(), table.bindingId.desc())])
 export const stripeInbox = pgTable('stripe_inbox', {
   id: uuid('id').primaryKey(), connectionId: varchar('connection_id', { length: 64 }).notNull(), accountId: varchar('account_id', { length: 128 }).notNull(), mode: varchar('mode', { length: 4 }).$type<'test' | 'live'>().notNull(),
+  lastConflictSha256: varchar('last_conflict_sha256', { length: 64 }), reconcileAgain: boolean('reconcile_again').notNull().default(false),
   eventId: varchar('event_id', { length: 128 }).notNull(), bodySha256: varchar('body_sha256', { length: 64 }).notNull(), eventType: varchar('event_type', { length: 64 }).notNull(),
   bindingId: uuid('binding_id').references(() => stripeBinding.id), remoteHint: text('remote_hint'),
   status: varchar('status', { length: 12 }).$type<'received' | 'processing' | 'processed' | 'ignored' | 'failed'>().notNull(),

@@ -155,6 +155,17 @@ export function createStripeService(options: StripeServiceOptions) {
     if (hint.kind && hint.remoteId) [binding] = await tx.select().from(bindings).where(and(eq(bindings.connectionId, configured.id), eq(bindings.resourceKind, hint.kind), eq(bindings.remoteId, hint.remoteId), isNull(bindings.retiredAt))).limit(1)
     const [row] = await tx.insert(inbox).values({ id: randomUUID(), connectionId: configured.id, accountId: configured.accountId, mode: configured.mode, eventId: hint.eventId, bodySha256: hint.digest, eventType: hint.eventType, bindingId: binding?.id ?? null, remoteHint: binding ? hint.remoteId : null, status: binding ? 'received' : 'ignored' }).onConflictDoNothing().returning()
     if (row && binding) await enqueue(tx, 'receipt', row.id)
+    if (!row) {
+      const [existing] = await tx.select().from(inbox).where(and(eq(inbox.accountId, configured.accountId), eq(inbox.mode, configured.mode), eq(inbox.eventId, hint.eventId))).for('update')
+      if (existing && existing.bodySha256 !== hint.digest && existing.lastConflictSha256 !== hint.digest) {
+        // Keep the first authenticated identity, ownership and digest. A collision
+        // only asks for current state of that original binding, never the new hint.
+        const processing = existing.status === 'processing'
+        const requeue = Boolean(existing.bindingId && !processing && existing.status !== 'received')
+        await tx.update(inbox).set({ lastConflictSha256: hint.digest, reconcileAgain: processing || existing.reconcileAgain, ...(requeue ? { status: 'received' as const, errorCode: null } : {}), revision: sql`${inbox.revision} + 1`, updatedAt: new Date() }).where(eq(inbox.id, existing.id))
+        if (requeue) await enqueue(tx, 'receipt', existing.id)
+      }
+    }
     return { accepted: true as const }
   }
   /** Owns receipt transaction; the route must include raw read/verification in its five-second budget. */
@@ -171,8 +182,16 @@ export function createStripeService(options: StripeServiceOptions) {
   }
   async function cancelOperation(context: TrustedContext, input: { operationId: string }) {
     await getOperation(context, input)
-    await database().update(operations).set({ status: 'cancelled', errorCode: 'cancelled', updatedAt: new Date(), revision: sql`${operations.revision} + 1` }).where(and(eq(operations.id, input.operationId), eq(operations.status, 'queued')))
-    return getOperation(context, input)
+    return database().transaction(async tx => {
+      await timeouts(tx)
+      const [row] = await tx.select().from(operations).where(and(eq(operations.id, input.operationId), eq(operations.scopeKind, context.scope.kind), eq(operations.scopeId, context.scope.id))).for('update')
+      if (!row) throw new StripeCapabilityError('not_found')
+      await owned(context, row.bindingId, undefined, tx)
+      if (row.status === 'cancelled') return view(row)
+      if (row.status !== 'queued' || (row.kind === 'create_checkout' && row.firstDispatchAt)) throw new StripeCapabilityError('conflict')
+      const [cancelled] = await tx.update(operations).set({ status: 'cancelled', errorCode: 'cancelled', updatedAt: new Date(), revision: sql`${operations.revision} + 1` }).where(eq(operations.id, row.id)).returning()
+      return view(cancelled!)
+    })
   }
   async function leaseBinding(tx: StripeTransaction, binding: StripeBinding, token: string) {
     const [claimed] = await tx.update(bindings).set({ leaseToken: token, leaseUntil: new Date(Date.now() + leaseMs), revision: sql`${bindings.revision} + 1` }).where(and(eq(bindings.id, binding.id), isNull(bindings.retiredAt), or(isNull(bindings.leaseUntil), lt(bindings.leaseUntil, new Date())))).returning()
@@ -218,7 +237,8 @@ export function createStripeService(options: StripeServiceOptions) {
   }
   async function runOperation(id: string, job: JobContext) {
     const budget = deadline(45000, job.signal), token = randomUUID()
-    let attempt: StripeOperation | undefined, pending: StripeOperation | undefined, binding: StripeBinding | undefined, childBinding: StripeBinding | undefined
+    let attempt: StripeOperation | undefined, pending: StripeOperation | undefined, binding: StripeBinding | undefined, childBinding: StripeBinding | undefined, checkoutBinding: StripeBinding | undefined
+    let definitiveProviderRejection = false
     try {
       await database().transaction(async tx => {
         await timeouts(tx)
@@ -227,12 +247,16 @@ export function createStripeService(options: StripeServiceOptions) {
         pending = row
         const context = { ...contextFor(row), signal: budget.signal }
         binding = await owned(context, row.bindingId, row.kind === 'create_checkout' ? 'customer' : row.kind === 'reconcile_checkout' ? 'checkout' : 'payment', tx)
-        if (row.kind === 'create_checkout' && row.firstDispatchAt && Date.now() >= row.firstDispatchAt.getTime() + replayMs) { await tx.update(operations).set({ status: 'reconciliation_required', errorCode: 'conflict', updatedAt: new Date() }).where(eq(operations.id, id)); return }
+        if (row.kind === 'create_checkout' && !row.resultBindingId && row.firstDispatchAt && Date.now() >= row.firstDispatchAt.getTime() + replayMs) { await tx.update(operations).set({ status: 'reconciliation_required', errorCode: 'conflict', updatedAt: new Date() }).where(eq(operations.id, id)); return }
         if (row.kind === 'create_checkout') {
           const [unresolved] = await tx.select({ id: operations.id }).from(operations).where(and(eq(operations.bindingId, binding.id), eq(operations.kind, 'create_checkout'), eq(operations.status, 'reconciliation_required'))).limit(1)
           if (unresolved) throw new StripeCapabilityError('conflict')
         }
         await leaseBinding(tx, binding, token)
+        if (row.kind === 'create_checkout' && row.resultBindingId) {
+          checkoutBinding = await owned(context, row.resultBindingId, 'checkout', tx)
+          await leaseBinding(tx, checkoutBinding, token)
+        }
         ;[attempt] = await tx.update(operations).set({ status: 'dispatching', leaseToken: token, leaseUntil: new Date(Date.now() + leaseMs), firstDispatchAt: row.firstDispatchAt ?? new Date(), updatedAt: new Date(), revision: sql`${operations.revision} + 1` }).where(eq(operations.id, id)).returning()
       })
       if (!attempt || !binding) return { status: 'ignored' as const }
@@ -242,10 +266,33 @@ export function createStripeService(options: StripeServiceOptions) {
       let session: Stripe.Checkout.Session | undefined, payment: Stripe.PaymentIntent | undefined
       if (attempt.kind === 'create_checkout') {
         if (!attempt.intent || configured.accountId !== attempt.intent.accountId || configured.mode !== attempt.intent.mode) throw new StripeCapabilityError('conflict')
-        session = await stripeOperation(configured, client => client.checkout.sessions.create(attempt!.intent!.parameters, { idempotencyKey: `gs-stripe:${attempt!.id}` }), { signal: budget.signal, environment: options.env?.NODE_ENV })
+        if (checkoutBinding) ({ session } = await retrieve(configured, checkoutBinding, budget.signal))
+        else {
+          try { session = await stripeOperation(configured, client => client.checkout.sessions.create(attempt!.intent!.parameters, { idempotencyKey: `gs-stripe:${attempt!.id}` }), { signal: budget.signal, environment: options.env?.NODE_ENV }) }
+          catch (error) {
+            definitiveProviderRejection = !(error instanceof StripeCapabilityError) && error instanceof Error && 'statusCode' in error && typeof error.statusCode === 'number' && error.statusCode >= 400 && error.statusCode < 500 && error.statusCode !== 429
+            throw error
+          }
+        }
       }
       else ({ session, payment } = await retrieve(configured, binding, budget.signal))
       if (session && (session.livemode !== (configured.mode === 'live') || (attempt.kind === 'create_checkout' && session.customer !== binding.remoteId))) throw new StripeCapabilityError('unsupported')
+      if (session && attempt.kind === 'create_checkout' && !checkoutBinding) {
+        // Preserve an authoritative accepted identity before optional child reads.
+        // Any later failure reconciles this binding with GET, never another POST.
+        checkoutProjection(session)
+        checkoutBinding = await database().transaction(async tx => {
+          await timeouts(tx); budget.check()
+          const [current] = await tx.select().from(operations).where(and(eq(operations.id, id), eq(operations.leaseToken, token), eq(operations.status, 'dispatching'))).for('update')
+          const [source] = await tx.select().from(bindings).where(and(eq(bindings.id, binding!.id), eq(bindings.leaseToken, token), isNull(bindings.retiredAt))).for('update')
+          if (!current || !source) throw new StripeCapabilityError('conflict')
+          await owned(context, source.id, 'customer', tx)
+          const [target] = await tx.insert(bindings).values({ id: randomUUID(), scopeKind: source.scopeKind, scopeId: source.scopeId, localResourceId: id, connectionId: source.connectionId, resourceKind: 'checkout', remoteId: session!.id, leaseToken: token, leaseUntil: new Date(Date.now() + leaseMs) }).returning()
+          if (!target) throw new StripeCapabilityError('conflict')
+          await tx.update(operations).set({ resultBindingId: target.id }).where(eq(operations.id, id))
+          return target
+        })
+      }
       if (session) payment = await checkoutPayment(configured, attempt.kind === 'create_checkout' ? { ...binding, localResourceId: id } : binding, session, token, budget.signal, child => { childBinding = child })
       budget.check()
       await database().transaction(async tx => {
@@ -255,8 +302,8 @@ export function createStripeService(options: StripeServiceOptions) {
         await owned(context, binding!.id, binding!.resourceKind, tx)
         let target = binding!
         if (attempt!.kind === 'create_checkout') {
-          checkoutProjection(session!)
-          target = (await tx.insert(bindings).values({ id: randomUUID(), scopeKind: binding!.scopeKind, scopeId: binding!.scopeId, localResourceId: id, connectionId: binding!.connectionId, resourceKind: 'checkout', remoteId: session!.id, leaseToken: token, leaseUntil: new Date(Date.now() + leaseMs) }).returning())[0]!
+          if (!checkoutBinding) throw new StripeCapabilityError('conflict')
+          target = checkoutBinding
           await tx.update(bindings).set({ leaseToken: null, leaseUntil: null }).where(and(eq(bindings.id, binding!.id), eq(bindings.leaseToken, token)))
         }
         await persist(tx, target, token, session, session ? undefined : payment)
@@ -269,7 +316,7 @@ export function createStripeService(options: StripeServiceOptions) {
     catch (error) {
       const safe = safeError(error), write = attempt?.kind === 'create_checkout'
       // Stripe's cached errors and ambiguous acceptance never trigger an automatic fresh create.
-      const definitive = error instanceof Error && 'statusCode' in error && typeof error.statusCode === 'number' && error.statusCode >= 400 && error.statusCode < 500 && error.statusCode !== 429
+      const definitive = definitiveProviderRejection
       const retry = !write && ['unavailable', 'deadline_exceeded'].includes(safe.code) && job.retryCount < (job.retryLimit ?? 5)
       if (!attempt && pending && !retry) await database().update(operations).set({ status: 'failed', errorCode: safe.code, updatedAt: new Date() }).where(and(eq(operations.id, id), eq(operations.status, 'queued')))
       if (attempt) await database().transaction(async tx => {
@@ -280,7 +327,7 @@ export function createStripeService(options: StripeServiceOptions) {
       if (retry) throw new StripeCapabilityError('unavailable')
       return { status: write && !definitive ? 'reconciliation_required' as const : 'ignored' as const }
     }
-    finally { budget.close(); await releaseChild(childBinding, token) }
+    finally { budget.close(); await releaseChild(childBinding, token); await releaseChild(checkoutBinding, token) }
   }
   async function runReceipt(id: string, job: JobContext) {
     const budget = deadline(45000, job.signal), token = randomUUID()
@@ -308,7 +355,8 @@ export function createStripeService(options: StripeServiceOptions) {
         if (!receipt || !current || !options.authorizeReconciliation || !await options.authorizeReconciliation(current, budget.signal)) throw new StripeCapabilityError('forbidden')
         await persist(tx, current, token, latest.session, latest.payment)
         if (payment && childBinding) await persist(tx, childBinding, token, undefined, payment)
-        await tx.update(inbox).set({ status: 'processed', leaseToken: null, leaseUntil: null, errorCode: null, updatedAt: new Date() }).where(and(eq(inbox.id, id), eq(inbox.leaseToken, token)))
+        await tx.update(inbox).set({ status: receipt.reconcileAgain ? 'received' : 'processed', reconcileAgain: false, leaseToken: null, leaseUntil: null, errorCode: null, updatedAt: new Date() }).where(and(eq(inbox.id, id), eq(inbox.leaseToken, token)))
+        if (receipt.reconcileAgain) await enqueue(tx, 'receipt', id)
         budget.check()
       })
       return { status: 'processed' as const }
@@ -317,7 +365,7 @@ export function createStripeService(options: StripeServiceOptions) {
       const safe = safeError(error), retry = ['unavailable', 'deadline_exceeded'].includes(safe.code) && job.retryCount < (job.retryLimit ?? 5)
       if (claimed) await database().transaction(async tx => {
         await timeouts(tx)
-        await tx.update(inbox).set({ status: retry ? 'received' : 'failed', errorCode: safe.code, leaseToken: null, leaseUntil: null, updatedAt: new Date() }).where(and(eq(inbox.id, id), eq(inbox.leaseToken, token)))
+        await tx.update(inbox).set({ status: retry ? 'received' : 'failed', reconcileAgain: false, errorCode: safe.code, leaseToken: null, leaseUntil: null, updatedAt: new Date() }).where(and(eq(inbox.id, id), eq(inbox.leaseToken, token)))
         if (binding) await tx.update(bindings).set({ leaseToken: null, leaseUntil: null }).where(and(eq(bindings.id, binding.id), eq(bindings.leaseToken, token)))
       })
       if (retry) throw new StripeCapabilityError('unavailable')
@@ -325,14 +373,14 @@ export function createStripeService(options: StripeServiceOptions) {
     }
     finally { budget.close(); await releaseChild(childBinding, token) }
   }
-  /** Explicit trusted application replay, never automatic. Frozen intent/key stay unchanged. */
+  /** Explicit trusted recovery, never automatic. Known Checkout identities use GET; unknown identities retain the original key within 23h. */
   async function replayCheckout(context: TrustedContext, input: { operationId: string }) {
     const existing = await getOperation(context, input)
     if (existing.kind !== 'create_checkout' || existing.status !== 'reconciliation_required') throw new StripeCapabilityError('conflict')
     return database().transaction(async tx => {
       await timeouts(tx)
       const [row] = await tx.select().from(operations).where(eq(operations.id, input.operationId)).for('update')
-      if (!row || row.status !== 'reconciliation_required' || !row.firstDispatchAt || Date.now() >= row.firstDispatchAt.getTime() + replayMs || !row.intent) throw new StripeCapabilityError('conflict')
+      if (!row || row.status !== 'reconciliation_required' || !row.firstDispatchAt || (!row.resultBindingId && Date.now() >= row.firstDispatchAt.getTime() + replayMs) || !row.intent) throw new StripeCapabilityError('conflict')
       await owned(context, row.bindingId, 'customer', tx)
       const configured = await connection(row.connectionId, context.signal)
       if (configured.accountId !== row.intent.accountId || configured.mode !== row.intent.mode) throw new StripeCapabilityError('conflict')
@@ -343,7 +391,7 @@ export function createStripeService(options: StripeServiceOptions) {
   }
   /** Explicit trusted repair transaction; repeated repair never produces enqueue storms. */
   async function repairReceiptInTransaction(tx: StripeTransaction, id: string) {
-    const [row] = await tx.update(inbox).set({ status: 'received', errorCode: null, updatedAt: new Date() }).where(and(eq(inbox.id, validate(uuid, id)), eq(inbox.status, 'failed'))).returning()
+    const [row] = await tx.update(inbox).set({ status: 'received', reconcileAgain: false, errorCode: null, updatedAt: new Date() }).where(and(eq(inbox.id, validate(uuid, id)), eq(inbox.status, 'failed'))).returning()
     if (row) await enqueue(tx, 'receipt', row.id)
     return Boolean(row)
   }
@@ -360,7 +408,7 @@ export function createStripeService(options: StripeServiceOptions) {
       }
       const receipts = await tx.select().from(inbox).where(and(eq(inbox.status, 'processing'), lt(inbox.leaseUntil, new Date()))).limit(limit).for('update', { skipLocked: true })
       for (const row of receipts) {
-        await tx.update(inbox).set({ status: 'received', leaseToken: null, leaseUntil: null, updatedAt: new Date(), revision: sql`${inbox.revision} + 1` }).where(eq(inbox.id, row.id))
+        await tx.update(inbox).set({ status: 'received', reconcileAgain: false, leaseToken: null, leaseUntil: null, updatedAt: new Date(), revision: sql`${inbox.revision} + 1` }).where(eq(inbox.id, row.id))
         if (row.leaseToken) await tx.update(bindings).set({ leaseToken: null, leaseUntil: null }).where(eq(bindings.leaseToken, row.leaseToken))
         await enqueue(tx, 'receipt', row.id)
       }
