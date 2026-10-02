@@ -1,4 +1,5 @@
 <script setup lang="ts" generic="TData extends Record<string, unknown>">
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FlexRender, stockFeatures, useTable, type ColumnDef, type ColumnFiltersState, type PaginationState, type RowSelectionState, type SortingState, type VisibilityState } from '@tanstack/vue-table'
 import { computed, ref, watch } from 'vue'
 type Props = { data: TData[]; columns: ColumnDef<any, TData, any>[]; rowId: (row: TData, index: number) => string; sorting?: SortingState; columnFilters?: ColumnFiltersState; pagination?: PaginationState; columnVisibility?: VisibilityState; rowSelection?: RowSelectionState; manualSorting?: boolean; manualFiltering?: boolean; manualPagination?: boolean; pageCount?: number; enableRowSelection?: boolean; pageSizeOptions?: number[]; loading?: boolean; error?: string | null }
