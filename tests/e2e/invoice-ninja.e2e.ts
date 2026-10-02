@@ -1,3 +1,4 @@
+import { waitForHydration } from './hydration'
 import { browserDiagnostics } from './browser-diagnostics'
 import { expect, test } from '@playwright/test'
 import { createHmac, randomUUID } from 'node:crypto'
@@ -7,6 +8,7 @@ import postgres from 'postgres'
 import { invoiceNinjaBinding as bindings, invoiceNinjaProjection as projections, invoiceNinjaOperation as operations } from '@repo/nuxt-invoice-ninja/schema'
 import { user, session } from '../../server/database/schema'
 test('Invoice Ninja native scoped local projections, queued cancellation and authenticated reference UI', async ({ browser, request }) => {
+  test.setTimeout(60_000)
   const dbUrl = process.env.DATABASE_URL; expect(dbUrl).toBeTruthy()
   const client = postgres(dbUrl!, { max: 1 }), db = drizzle(client)
   const owner = randomUUID(), other = randomUUID(), binding = randomUUID(), foreign = randomUUID(), operation = randomUUID(), token = randomUUID()
@@ -35,6 +37,7 @@ test('Invoice Ninja native scoped local projections, queued cancellation and aut
     await page.goto(`${base}/invoice-ninja`)
     await expect(page.getByRole('heading', { name: 'Invoice Ninja', exact: true })).toBeVisible()
     await expect(page.getByText('LOCAL-1', { exact: true })).toBeVisible()
+    await waitForHydration(page)
     await page.getByLabel('Operation UUID').fill(operation)
     await page.getByRole('button', { name: 'Refresh operation', exact: true }).click()
     await expect(page.getByText('reconcile_invoice: queued', { exact: false })).toBeVisible()

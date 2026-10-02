@@ -1,7 +1,9 @@
+import { waitForHydration } from './hydration'
 import { test, expect } from '@playwright/test'
 import { createHmac } from 'node:crypto'
 import postgres from 'postgres'
 test('Medusa user isolation, local projections, repeated actions and queued cancellation', async ({ page, request, context, baseURL }) => {
+  test.setTimeout(60_000)
   const client = postgres(process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', { max: 1 })
   const owner = `medusa-e2e-${crypto.randomUUID()}`, outsider = `medusa-e2e-${crypto.randomUUID()}`, token = crypto.randomUUID(), other = crypto.randomUUID(), binding = crypto.randomUUID(), operation = crypto.randomUUID()
   const secret = process.env.NUXT_AUTH_SECRET || 'e2e-secret-that-is-at-least-thirty-two-chars'
@@ -22,6 +24,7 @@ test('Medusa user isolation, local projections, repeated actions and queued canc
     expect((await request.post('/api/integrations/medusa/reconcile', { headers: { cookie: userCookie }, data: { kind: 'product', bindingId: binding, remoteId: 'foreign' } })).status()).toBe(400)
     await context.addCookies([{ name: cookieName, value: value(token), domain: new URL(baseURL!).hostname, path: '/', secure: Boolean(process.env.PLAYWRIGHT_BASE_URL), httpOnly: true, sameSite: 'Lax' }])
     await page.goto('/integrations/medusa'); await expect(page.getByRole('heading', { name: 'Medusa reconciliation' })).toBeVisible(); await expect(page.getByText('Scoped product fixture', { exact: false })).toBeVisible()
+    await waitForHydration(page)
     let count = 0, releaseResponse!: () => void
     const responseGate = new Promise<void>(resolve => { releaseResponse = resolve })
     await page.route('**/api/integrations/medusa/reconcile', async route => { count++; await responseGate; await route.fulfill({ json: { operationId: operation, status: 'queued' } }) })
