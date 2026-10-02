@@ -1,3 +1,4 @@
+import { browserDiagnostics } from './browser-diagnostics'
 import { expect, test } from '@playwright/test'
 import { createHmac, randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
@@ -30,6 +31,7 @@ test('Invoice Ninja native scoped local projections, queued cancellation and aut
     expect(bad.status()).toBe(400); expect(await bad.json()).toEqual({ error: { code: 'invalid_input', message: 'Invalid input.', retryable: false } })
     await context.addCookies([{ name, value, domain: '127.0.0.1', path: '/', httpOnly: true, secure: Boolean(process.env.PLAYWRIGHT_BASE_URL) }])
     const page = await context.newPage(), base = process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3000'
+    browserDiagnostics(page)
     await page.goto(`${base}/invoice-ninja`)
     await expect(page.getByRole('heading', { name: 'Invoice Ninja', exact: true })).toBeVisible()
     await expect(page.getByText('LOCAL-1', { exact: true })).toBeVisible()

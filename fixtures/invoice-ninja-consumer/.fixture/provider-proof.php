@@ -11,7 +11,7 @@ if ($invoices->count() !== 1) throw new RuntimeException('Expected exactly one n
 $invoice = $invoices->first();
 if ((int) $invoice->status_id !== App\Models\Invoice::STATUS_DRAFT
     || $invoice->last_sent_date || $invoice->auto_bill_enabled
-    || $invoice->amount != 25 || $invoice->balance != 25
+    || $invoice->amount != 25 || $invoice->balance != 0
     || $invoice->discount != 0 || $invoice->total_taxes != 0
     || $invoice->tax_rate1 != 0 || $invoice->tax_rate2 != 0 || $invoice->tax_rate3 != 0) {
     throw new RuntimeException('Native draft policy mismatch');
