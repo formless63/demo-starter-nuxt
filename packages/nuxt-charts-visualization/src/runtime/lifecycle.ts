@@ -26,6 +26,8 @@ export function createChartsLifecycle<Chart, Host, Option>(deps: ChartsLifecycle
   const mount = async () => {
     active = true
     const currentGeneration = ++generation
+    await deps.nextTick()
+    if (!active || generation !== currentGeneration) return
     const host = deps.host()
     if (!host) return
     const loaded = await deps.load()

@@ -20,6 +20,7 @@ describe('charts lifecycle interruption', () => {
       setOption: vi.fn(), observe, dispose,
     })
     const first = controller.mount()
+    await Promise.resolve()
     controller.unmount()
     resolveLoader({ init })
     await first
@@ -36,6 +37,18 @@ describe('charts lifecycle interruption', () => {
     await update
     expect(dispose).toHaveBeenCalledTimes(1)
     expect(observe.mock.results[0]?.value.disconnect).toHaveBeenCalledTimes(1)
+  })
+
+  it('resolves the host after the mount tick', async () => {
+    let ready = false
+    const init = vi.fn(() => ({}))
+    const controller = createChartsLifecycle({
+      load: async () => ({ init }), host: () => ready ? {} : null, option: () => ({}),
+      nextTick: async () => { ready = true }, setOption: vi.fn(),
+      observe: () => ({ disconnect: vi.fn() }), dispose: vi.fn(),
+    })
+    await controller.mount()
+    expect(init).toHaveBeenCalledTimes(1)
   })
 
   it('applies a reduced-motion option change to the mounted instance', async () => {
