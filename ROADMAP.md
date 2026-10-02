@@ -44,6 +44,7 @@ The generic `packages:*` commands build and exercise the catalog entries. Hard c
 | Status | Capability |
 | --- | --- |
 | Done (23) | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI; Import / Export; Ops / Admin; Invoice Ninja; Stripe; Medusa; Data Table; Charts / Visualization; Command System; Markdown / Code Content; Rich Text / Tiptap; File UI |
+| In progress | Internationalization |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
 Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All twenty-three remain opt-in for clean consumers and explicitly enabled in the reference app.
@@ -287,7 +288,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Notifications, Realtime
 - External: none
 
-### Internationalization (`planned`)
+### Internationalization (`in-progress`)
 
 - Requires: none
 - Integrates with: UI-facing capabilities
@@ -326,3 +327,5 @@ Rich Text source `1666bb6e252fbedbbe20b545de8117e8a246820f` passed [all 23 CI jo
 File UI is completed as a private native Nuxt package. Only Object Storage is a hard dependency; trusted identity/policy and atomic durable metadata belong to the application. It remains opt-in; its reviewed source passed all exact-head hosted lifecycle, browser, provider and native HTTP gates. Later composition requires its own exact-head acceptance.
 
 File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040678932), including packed native/provider/browser/removal and root application/production gates. This Rich Text / File UI composition records 23 completed opt-in, reference-enabled capabilities; its own exact-head full CI and independent composition review are required before acceptance.
+
+Internationalization is in progress: native Vue request-local engines, bounded plain-text catalogs, CLDR categories and canonical first-render formatting. Routing remains application-owned; full packed/native-browser/removal gates are required before completion.

@@ -12,7 +12,7 @@ test('all twenty-three completed packages are explicitly enabled and discovered 
   const nuxt = readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')
   expect(catalog.capabilities.filter((entry: { status: string }) => entry.status === 'done').map((entry: { id: string }) => entry.id).sort()).toEqual([...completed].sort())
   expect(completed).toHaveLength(23)
-  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed].sort())
+  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed, 'internationalization'].sort())
   for (const id of [...completed]) {
     const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === id)
     expect(entry.defaultInstalled).toBe(false)
@@ -23,7 +23,7 @@ test('all twenty-three completed packages are explicitly enabled and discovered 
   expect(result.status).toBe(0)
   const authored = catalog.capabilities.filter((entry: { status: string, packageTest?: unknown, packagePath?: string }) => ['done', 'in-progress'].includes(entry.status) && entry.packagePath && entry.packageTest).map((entry: { id: string }) => entry.id)
   expect(JSON.parse(result.stdout).capability.sort()).toEqual(authored.sort())
-  expect(authored.sort()).toEqual([...completed].sort())
+  expect(authored.sort()).toEqual([...completed, 'internationalization'].sort())
 })
 
 test('Webhooks and Notifications require Jobs; Audit, Cache and Realtime fixtures remain independent', () => {
@@ -84,9 +84,20 @@ test('Command is completed and reference-enabled while preserving its packed bro
 })
 
 
-test('root application browser discovery includes Rich Text and File UI', () => {
+test('root application browser discovery includes Rich Text, File UI and Internationalization', () => {
   const result = spawnSync('bun', ['x', 'playwright', 'test', '--list'], { cwd: root, encoding: 'utf8' })
   expect(result.status).toBe(0)
   expect(result.stdout).toContain('[application] › rich-text.e2e.ts')
   expect(result.stdout).toContain('[application] › file-ui.e2e.ts')
+  expect(result.stdout).toContain('[application] › internationalization.e2e.ts')
+})
+
+
+test('Internationalization remains independent and in progress until hosted acceptance', () => {
+  const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === 'internationalization')
+  expect(entry.status).toBe('in-progress')
+  expect(entry.defaultInstalled).toBe(false)
+  expect(entry.requires).toEqual([])
+  expect(entry.packageTest.runtimeScript).toBe('package:test:runtime')
+  expect(catalog.referenceApplication.enabledCapabilities).toContain('internationalization')
 })

@@ -78,3 +78,5 @@ Rich Text is an independent opt-in package with framework-neutral strict JSON va
 File UI is a completed opt-in Storage-only native package. Root trusted session/CSRF transport supplies owner and Postgres.js atomic metadata; reusable package has no Auth/Drizzle/Jobs import. Raw Node input is bounded before concatenation. Quarantined keys require independently stopped writers before operator cleanup.
 
 File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040678932), including packed native/provider/browser/removal and root application/production gates. This Rich Text / File UI composition records 23 completed opt-in, reference-enabled capabilities; its own exact-head full CI and independent composition review are required before acceptance.
+
+Internationalization is an independent opt-in native Vue module. Always create canonical payloads before Nuxt transport; no global SSR composer, browser detection or automatic routing. Plain text only; application owns document lang/dir and successful query/history commits.

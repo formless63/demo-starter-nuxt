@@ -31,6 +31,7 @@ The root application deliberately enables all twenty-three completed capabilitie
 | `stripe` | `@repo/nuxt-stripe` | Enabled | No | Jobs, Webhooks | Stripe on use | [Stripe](../capabilities/stripe/CAPABILITY.md) |
 | `medusa` | `@repo/nuxt-medusa` | Enabled | No | Jobs, Webhooks | Medusa on use; optional operator bridge | [Medusa](../capabilities/medusa/CAPABILITY.md) |
 | `data-table` | `@repo/nuxt-data-table` | Enabled | No | None | None | [Data Table](../capabilities/data-table/CAPABILITY.md) |
+| `internationalization` | `@repo/nuxt-internationalization` | Enabled (in progress) | No | None | None | [Internationalization](../capabilities/internationalization/CAPABILITY.md) |
 | `rich-text` | `@repo/nuxt-rich-text` | Enabled | No | None | None | [Rich Text / Tiptap](../capabilities/rich-text/CAPABILITY.md) |
 | `markdown-code` | `@repo/nuxt-markdown-code` | Enabled | No | None | None | [Markdown / Code](../capabilities/markdown-code/CAPABILITY.md) |
 | `command-system` | `@repo/nuxt-command-system` | Enabled | No | None | None | [Command System](../capabilities/command-system/CAPABILITY.md) |
@@ -193,3 +194,7 @@ Rich Text source `1666bb6e252fbedbbe20b545de8117e8a246820f` passed [all 23 CI jo
 Explicitly enable `@repo/nuxt-file-ui` plus Object Storage. Trusted identity/policy and atomic metadata are application adapters; the independent fixture uses bounded non-durable memory only. Root `/files` uses existing auth/PostgreSQL. See [contract](../capabilities/file-ui/CAPABILITY.md).
 
 File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040678932), including packed native/provider/browser/removal and root application/production gates. This Rich Text / File UI composition records 23 completed opt-in, reference-enabled capabilities; its own exact-head full CI and independent composition review are required before acceptance.
+
+## Internationalization (in progress)
+
+Opt-in `@repo/nuxt-internationalization` supplies request-local plain-text translation, CLDR plurals and canonical SSR formatting. The reference app explicitly enables `/i18n-test`; no automatic locale routing or persistence. See [contract](../capabilities/internationalization/CAPABILITY.md) for install, validation, browser gates and exact removal recipe.
