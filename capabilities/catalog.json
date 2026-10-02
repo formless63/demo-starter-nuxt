@@ -16,7 +16,8 @@
       "search",
       "ai",
       "import-export",
-      "ops-admin"
+      "ops-admin",
+      "invoice-ninja"
     ]
   },
   "baseline": [
@@ -1074,7 +1075,10 @@
             "package:test:runtime"
           ],
           "paths": [
-            ".fixture/package-test.ts"
+            ".fixture/package-test.ts",
+            "server/jobs/registry.ts",
+            ".fixture/database.ts",
+            ".fixture/protocol.ts"
           ],
           "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
         },

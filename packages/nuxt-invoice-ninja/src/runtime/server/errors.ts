@@ -18,3 +18,6 @@ export class InvoiceNinjaError extends Error {
 export function safeError(error: unknown, write = false) {
   return error instanceof InvoiceNinjaError ? new InvoiceNinjaError(error.code, write ? false : error.retryable) : new InvoiceNinjaError('unavailable', !write)
 }
+
+/** A complete provider 4xx rejection, with no response body retained. */
+export class InvoiceNinjaRejection extends InvoiceNinjaError {}

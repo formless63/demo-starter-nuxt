@@ -11,7 +11,7 @@ test('all fourteen completed packages are explicitly enabled and discovered by t
   const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
   const nuxt = readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')
   expect(catalog.capabilities.filter((entry: { status: string }) => entry.status === 'done').map((entry: { id: string }) => entry.id).sort()).toEqual([...completed].sort())
-  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed].sort())
+  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed, 'invoice-ninja'].sort())
   for (const id of completed) {
     const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === id)
     expect(entry.defaultInstalled).toBe(false)
