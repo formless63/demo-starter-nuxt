@@ -10,7 +10,7 @@ test.describe('charts visualization', () => {
     await expect(page.getByRole('heading', { name: 'Revenue' })).toBeVisible()
     await expect(page.locator('#primary-chart table')).toBeVisible()
     await expect(page.locator('#primary-chart canvas')).toBeVisible()
-    await expect(page.locator('#primary-chart [aria-describedby="primary-chart-description"]')).toHaveCount(1)
+    await expect(page.locator('#primary-chart[aria-describedby="primary-chart-description"]')).toHaveCount(1)
     await expect(page.locator('figure[aria-labelledby]')).toHaveCount(2)
     const ids = await page.locator('figure[aria-labelledby]').evaluateAll(nodes => nodes.map(node => node.getAttribute('aria-labelledby')))
     expect(new Set(ids).size).toBe(2)
