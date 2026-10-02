@@ -92,6 +92,6 @@ onBeforeUnmount(() => { alive = false; cancel() })
       <button type="button" :disabled="readOnly" @click="importJson">Import JSON</button>
       <output data-persistence-status aria-live="polite">{{ status }}</output>
     </div>
-    <FlowCanvas v-model="second" document-key="independent" title="Independent diagram" />
+    <FlowCanvas v-model="second" :document-key="record" title="Independent diagram" />
   </main>
 </template>

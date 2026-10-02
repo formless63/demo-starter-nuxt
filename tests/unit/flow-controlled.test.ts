@@ -46,6 +46,17 @@ describe('Flow semantic controlled UI', () => {
     expect(state.proposals).toEqual([])
     expect(button(state.host, 'Delete node a').disabled).toBe(true)
   })
+  it('expires a rejected proposal so a later equal-byte external load remounts the surface', async () => {
+    const state = mount(); await settle()
+    await vi.waitFor(() => expect(state.host.querySelector('[data-test-surface]')).not.toBeNull())
+    button(state.host, 'Delete node a').click(); await settle()
+    const previous = state.host.querySelector('[data-test-surface]')
+    expect(state.graph.value.nodes).toHaveLength(2)
+    state.graph.value = state.proposals.at(-1)!
+    await settle()
+    await vi.waitFor(() => expect(state.host.querySelector('[data-test-surface]')).not.toBeNull())
+    expect(state.host.querySelector('[data-test-surface]')).not.toBe(previous)
+  })
   it('Escape cancels without proposing; text Delete is not intercepted', async () => {
     const state = mount(); await settle()
     button(state.host, 'Edit node a').click(); await settle()
