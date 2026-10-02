@@ -3,7 +3,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-01',
   devtools: { enabled: true },
-  // Explicitly opt in to synthetic browser-test diagnostics; never ship by default.
+  // Explicit synthetic test diagnostics are disabled in ordinary builds.
   plugins: process.env.NUXT_E2E_DIAGNOSTICS === 'true'
     ? [`${import.meta.dirname}/tests/e2e/fixtures/hydration-diagnostics.client.ts`]
     : [],
@@ -17,7 +17,8 @@ export default defineNuxtConfig({
     // runtime imports explicitly to avoid cold-start optimizer invalidation.
     // Enabled Nuxt DevTools imports these two clients lazily; discovering them
     // after serving entry.js invalidates already loaded diagnostic chunks.
-    optimizeDeps: { include: ['@vue/devtools-core', '@vue/devtools-kit', 'errx', 'nostics', 'nostics/formatters/ansi', 'nostics/reporters/dev', '@tabler/icons-vue', '@vueuse/core', 'better-auth/vue', 'better-auth/client/plugins', 'class-variance-authority', 'clsx', 'reka-ui', 'tailwind-merge', 'vue-sonner', 'zod'] },  },
+    optimizeDeps: { include: ['@vue/devtools-core', '@vue/devtools-kit', 'errx', 'nostics', 'nostics/formatters/ansi', 'nostics/reporters/dev', '@tabler/icons-vue', '@vueuse/core', 'better-auth/vue', 'better-auth/client/plugins', 'class-variance-authority', 'clsx', 'reka-ui', 'tailwind-merge', 'vue-sonner', 'zod'] },
+  },
   typescript: { strict: true, typeCheck: process.env.NUXT_TYPECHECK !== 'false' },
   colorMode: { classSuffix: '', fallback: 'light' },
   shadcn: {
