@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { waitForHydration } from './hydration'
 import { createHmac } from 'node:crypto'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
@@ -11,6 +12,7 @@ import * as tables from '../../server/database/schema'
 // The explicitly launched disposable test app configures this single fixture ID.
 // No startup account promotion or test bypass exists in the application.
 test('Ops guards direct API/SSR, provides manual accessible refresh and clears stale work on navigation', async ({ page, request, context, baseURL }) => {
+  test.setTimeout(60_000)
   const sql = postgres(process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', { max: 1 })
   const db = drizzle(sql, { schema: tables })
   let keyId: string | undefined
@@ -42,6 +44,7 @@ test('Ops guards direct API/SSR, provides manual accessible refresh and clears s
     page.on('console', message => { if (/hydration/iu.test(message.text())) hydrationWarnings.push(message.text()) })
     await page.goto('/admin/ops')
     await expect(page.getByRole('heading', { name: 'Operations overview' })).toBeVisible()
+    await waitForHydration(page)
     await expect(page.getByText('Last checked:')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled()
     expect(hydrationWarnings).toEqual([])

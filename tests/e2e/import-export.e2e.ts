@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { waitForHydration } from './hydration'
 import { createHmac, randomUUID } from 'node:crypto'
 import { spawn } from 'node:child_process'
 import { cp, mkdir, mkdtemp, readdir, rm, symlink } from 'node:fs/promises'
@@ -64,6 +65,7 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     await context.addCookies([{ name, value: encodeURIComponent(`${token}.${signature}`), domain: '127.0.0.1', path: '/', httpOnly: true, secure: production }])
     const page = await context.newPage()
     await page.goto(`${base}/app/projects`)
+    await waitForHydration(page)
     await expect(page.getByRole('heading', { name: 'Project CSV transfers' })).toBeVisible()
     await expect(page.getByLabel('CSV file')).toBeEnabled({ timeout: 15000 })
     await page.getByLabel('CSV file').setInputFiles({ name: 'local-fixture.csv', mimeType: 'text/csv', buffer: Buffer.from('name,description\r\nBrowser CSV,"line1\nline2"\r\n') })
