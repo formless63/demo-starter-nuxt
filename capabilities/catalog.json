@@ -1068,7 +1068,7 @@
       "id": "stripe",
       "displayName": "Stripe",
       "kind": "business-integration",
-      "status": "planned",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [
         "jobs",
@@ -1086,7 +1086,8 @@
           "required": true
         }
       ],
-      "summary": "Stripe billing, synchronization, and webhook integration."
+      "summary": "Stripe billing, synchronization, and webhook integration.",
+      "documentationPath": "capabilities/stripe/CAPABILITY.md"
     },
     {
       "id": "medusa",
