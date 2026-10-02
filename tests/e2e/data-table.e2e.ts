@@ -14,6 +14,7 @@ test('data table renders accessibly and preserves stable row identity', async ({
   await expect(page.getByRole('columnheader', { name: 'Name' })).toBeVisible()
   await page.getByRole('checkbox', { name: 'Select row a' }).check()
   await expect(page.getByRole('checkbox', { name: 'Select row a' })).toBeChecked()
+  await page.getByRole('combobox', { name: 'Rows per page' }).selectOption('25')
   await page.getByTestId('replace').click()
   await expect(page.getByRole('checkbox', { name: 'Select row a' })).toBeChecked()
   const sort = page.getByRole('button', { name: 'Sort by Name' })
