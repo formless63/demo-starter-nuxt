@@ -9,3 +9,5 @@ The [create request](https://github.com/invoiceninja/invoiceninja/blob/v5.13.43/
 Native invoice transformer omits currency. Applications must resolve an explicitly vetted current client/company currency mapping; no guessed currency from an invoice hint. Exact numeric lexemes prevent additional starter-side float conversion, but cannot undo rounding already performed by the provider transformer.
 
 Actual pinned-instance numeric-string encoding, unsent draft, zero-tax/discount/company-hooks proof is unverified and blocks compatibility certification. Application policy denies draft creation unless that deployment has explicit evidence. No live or sandbox requests or callback registration are part of local protocol fixtures.
+
+The pinned StoreInvoiceRequest validates `number`, not `invoice_number`. The native serializer therefore uses `number` for explicit numbering as a source-grounded compatibility correction to the draft contract; no arbitrary property bag is accepted. This does not certify numeric-string or company-policy runtime compatibility.

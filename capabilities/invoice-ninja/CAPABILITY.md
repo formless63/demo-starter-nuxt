@@ -1,7 +1,37 @@
 # Invoice Ninja
 
-Implementation in progress against frozen Nuxt main `7d2490cd964d0d76be25c300104d3412a3f7cead`. Independent private Nuxt module; hard dependencies Jobs and Webhooks; optional Organizations, Audit Log and Notifications. Clean consumers remain opt-in.
+Private opt-in package `@repo/nuxt-invoice-ninja`. Hard dependencies: Jobs and Webhooks. Organizations, Audit Log and Notifications are optional application wiring; no optional imports. Source presence never installs routes or starts a provider connection. The reference app explicitly owns native routes under `/api/integrations/invoice-ninja`, `/invoice-ninja`, its schema and the existing standalone Jobs registry.
 
-Target: Invoice Ninja v5.13.43, commit `382020072bc79e8c7ede49f7e9ce91b0aeb1a051`. Native bounded fetch, local owned bindings/projections, durable operations and receipts. Callback possession-secret authentication is a reconciliation hint, not a body signature. Draft ambiguity must never automatically repeat POST.
+## Ownership and configuration
 
-Compatibility is unverified. Actual pinned instance proof of numeric-string draft encoding and supported unsent zero-tax/discount company policy remains required. No external provider calls, accounts, credentials or callback registration are authorized.
+Build trusted context after restoring a native authenticated session. User scope must equal actor identity. Supply current `authorizeScope` and `authorizeBoundResource` policies; both deny when absent. Tenant authorization is application-owned and absent in the reference app. Explicit server-created bindings uniquely connect local resources/scopes to registered machine connection identifiers and remote identities. Retire bindings instead of remapping them. No browser binding/connection/credential creation endpoint exists.
+
+Callback workers use the distinct trusted `authorizeReconciliation(binding,signal)` seam, deny by default, with no invented actor. Reference policy accepts only a current server-owned user binding and an existing local owner. User workers reload their stored actor and current scope authorization before transport and before projection commit.
+
+Default lazy configuration: `INVOICE_NINJA_BASE_URL`, `INVOICE_NINJA_API_TOKEN`, `INVOICE_NINJA_WEBHOOK_SECRET`, optional `INVOICE_NINJA_WEBHOOK_SECRET_PREVIOUS`. A trusted server resolver may supply registered connections. Missing configuration is operation-local 503; startup/build/health need none. Entity requests use X-API-TOKEN and X-Requested-With only. API secret is not automatically sent; custom deployment authentication needs separately reviewed adapter wiring.
+
+HTTPS, no userinfo/fragments/redirects; development/test HTTP permits original literal 127.0.0.1 or [::1] only. Native fetch has one attempt and remains abortable through streamed response consumption. Request/provider-response/webhook/public bounds are respectively 256KiB/2MiB/1MiB/256KiB. Provider calls have 15s deadlines, Jobs 45s, receipts 5s; caller cancellation shortens them.
+
+## Local API and durability
+
+Getters return local projections only. `requestClientReconciliation` (`reconcile_client`) explicitly populates a bound client's minimal projection; invoice reconciliation is similarly explicit. Lists use scoped descending (createdAt,id) keysets, default25/max100 and canonical versioned cursors. Closed serializers omit contact details, provider JSON and payment links. Currency comes from an explicitly vetted current client/company mapping because the pinned invoice entity omits currency. Missing mapping exposes null and a safe unsupported operation outcome.
+
+`createBindingInTransaction` and `retireBindingInTransaction` preserve caller transaction ownership. Command and receipt convenience APIs explicitly own short insert+Jobs enqueue transactions. Existing Jobs same-database routing checks apply. No SQL transaction is held over provider fetch. PostgreSQL binding leases and operation/inbox revision tokens fence late writes. Jobs inputs contain only operationId/inboxId; closed outputs contain only processing status and safe error code. Reads have five retries,30s initial exponential backoff,max900s. Explicit bounded `recoverExpiredAttempts` repairs stale reads/receipts and marks stale draft attempts reconciliation_required; nothing scans/contact providers at startup. `repairFailedReceiptInTransaction` is a trusted explicit repair extension.
+
+## Draft and callback limits
+
+Draft input is closed: bound client, caller key, real invoice/due dates, numbering policy and1–100 plain lines with positive decimal quantity/nonnegative decimal unit cost. Decimal strings are normalized without binary float conversion; provider numeric lexemes are preserved. This cannot repair precision already lost by the provider's own transformer.
+
+The reference app intentionally has no draft policy. `resolveDraftPolicy` must identify a vetted currency and deployment configuration and affirm actual numeric-string encoding plus unsent zero-tax/discount/company-hook evidence. Workers recheck immutable policy identity before dispatch. Explicit numbering uses native `number` (the pinned StoreInvoiceRequest field), a source-grounded correction to the draft contract's `invoice_number`. No send/action/payment endpoint is called.
+
+Scope/connection/kind/caller key uniqueness plus normalized digest makes same-intent repeats return the original operation and changed input conflict. Dispatch markers precede transport. Ambiguous create never automatically POSTs again; it stays reconciliation_required. Known remote IDs are retained privately. `resolveAmbiguousDraft` is server-only and denies absent `authorizeDraftResolution`; attach-existing verifies authoritative GET/client and relies on application's explicit same-company decision, while confirm-not-created closes the old intent. It never repeats POST; a new intent needs separate authorization. No browser resolution route exists.
+
+Callbacks use fixed registered connection/event routes and a dedicated rotating possession secret header. Constant-time comparison precedes parsing. The native sender emits an unwrapped entity; bound invoice ID hints trigger latest-state GET. Receipt identity is connection/event kind/SHA256(raw body). Raw bodies are dropped. Authenticated unsupported/unbound hints are durably ignored; duplicates return200 without enqueue storms. Possession-secret authentication is not a body signature or timestamp replay defense. Confirmed authenticated404 can retain a tombstone;403/transient failures cannot.
+
+## Migration, removal and compatibility
+
+Reserved SQL `0009_invoice_ninja.sql` adds four tables; original eight SQL files and journal entries are unchanged. Branch-local provisional journal idx8/snapshot metadata is disposable until parent integration. No0008 SQL/dummy file or Identity migration is used. Explicit app migrations and Jobs migration/doctor precede app/worker startup.
+
+Stop processing and settle/expire active attempts before removing handlers. Remove native routes/page/shutdown wiring/registry definitions, root module/dependency and root schema exports, then package installation. Preserve applied SQL, tables, bindings, projections, ledgers and inbox data. Callback deregistration, credential revocation and remote deletion require separate explicit operator action. Generic fixture lifecycle witnesses retained rows/indexes/migration history after uninstall and final rebuild.
+
+Target provider: v5.13.43, commit `382020072bc79e8c7ede49f7e9ce91b0aeb1a051`. Node24/Bun local wire/PostgreSQL fixtures are mocked protocol evidence. Actual pinned disposable provider numeric-string, unsent policy and company-hooks compatibility remains unverified and a compatibility release blocker. No external live/sandbox provider calls, accounts, credentials, remote callbacks, legal acceptance or payments were performed. See [evaluation](../../INVOICE_NINJA_MODULE_EVALUATION.md).

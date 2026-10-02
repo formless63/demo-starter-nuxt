@@ -1,5 +1,5 @@
 export { createInvoiceNinjaService } from './service'
-export type { InvoiceNinjaOptions, InvoiceNinjaDatabase, InvoiceNinjaTransaction } from './service'
+export type { InvoiceNinjaOptions, InvoiceNinjaDatabase, InvoiceNinjaTransaction, DraftResolution } from './service'
 export { InvoiceNinjaError, safeError } from './errors'
 export type { ErrorCode } from './errors'
 export { draftInput, parse, decodeCursor } from './validation'

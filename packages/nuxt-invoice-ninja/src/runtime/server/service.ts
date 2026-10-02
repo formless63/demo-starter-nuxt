@@ -6,7 +6,7 @@ import { defineJob, sendRegisteredJobInTransaction } from '@repo/nuxt-jobs/serve
 import type { createJobsBoss, JobContext } from '@repo/nuxt-jobs/server'
 import { invoiceNinjaBinding as bindings, invoiceNinjaProjection as projections, invoiceNinjaOperation as operations, invoiceNinjaInbox as inbox } from './schema'
 import type { Binding, Operation, OperationKind, DraftPolicy, FrozenDraft, InvoiceProjection } from './schema'
-import { InvoiceNinjaError, safeError } from './errors'
+import { InvoiceNinjaError, InvoiceNinjaRejection, safeError } from './errors'
 import { parse, opaqueId, scopeSchema, uuid, connectionId, bindingRef, operationRef, draftInput, clientReconcileInput, invoiceReconcileInput, listInput, decodeCursor } from './validation'
 import type { TrustedContext, DraftInput } from './validation'
 import { checkSignal, operationSignal, providerRequest, resolveEnvironmentConnection, validateConnection, verifyWebhookSecret, readBytes, parseExactJSON } from './transport'
@@ -27,8 +27,11 @@ export interface InvoiceNinjaOptions {
   resolveDraftPolicy?(context: TrustedContext, binding: Binding, input: DraftInput, signal: AbortSignal): Promise<DraftPolicy>
   /** Native invoice entity has no currency field. Resolve a vetted current client/company mapping server-side. */
   resolveInvoiceCurrency?(binding: Binding, signal: AbortSignal): Promise<string | null>
+  /** Server operator must explicitly verify same company/client and record its decision externally. */
+  authorizeDraftResolution?(context: TrustedContext, operation: Operation, decision: DraftResolution): Promise<boolean>
   fetch?: typeof fetch
 }
+export type DraftResolution = { mode: 'attach-existing', remoteId: string } | { mode: 'confirm-not-created' }
 const events = z.enum(['invoice-created', 'invoice-updated', 'invoice-sent', 'invoice-archived', 'invoice-deleted'])
 const digest = (s: string | Uint8Array) => createHash('sha256').update(s).digest('hex')
 function view(row: Operation) {
@@ -221,7 +224,7 @@ export function createInvoiceNinjaService(options: InvoiceNinjaOptions) {
       if (row.kind === 'create_draft') {
         const intent = row.intent!, input = intent.input
         const body = { client_id: intent.remoteClientId, currency_id: intent.policy.currencyId, date: input.invoiceDate, ...(input.dueDate ? { due_date: input.dueDate } : {}),
-          ...(input.numbering.mode === 'explicit' ? { invoice_number: input.numbering.number } : {}),
+          ...(input.numbering.mode === 'explicit' ? { number: input.numbering.number } : {}),
           line_items: input.lines.map(line => ({ notes: line.description, quantity: line.quantity, cost: line.unitCost })) }
         dispatched = true
         const response = await providerRequest(c, 'invoice', null, body, signal, options.fetch)
@@ -240,21 +243,22 @@ export function createInvoiceNinjaService(options: InvoiceNinjaOptions) {
         if (!active) throw new InvoiceNinjaError('conflict')
         if (target.id !== current.id) await tx.insert(bindings).values(target)
         await commitProjection(tx, target, projection)
-        await tx.update(operations).set({ status: 'succeeded', resultBindingId: target.id, errorCode: null, attemptToken: null, leaseUntil: null, updatedAt: new Date(), revision: sql`${operations.revision} + 1` }).where(and(eq(operations.id, row!.id), eq(operations.attemptToken, token), eq(operations.revision, row!.revision)))
+        await tx.update(operations).set({ status: 'succeeded', resultBindingId: target.id, errorCode: 'currency' in projection && projection.currency === null ? 'unsupported' : null, attemptToken: null, leaseUntil: null, updatedAt: new Date(), revision: sql`${operations.revision} + 1` }).where(and(eq(operations.id, row!.id), eq(operations.attemptToken, token), eq(operations.revision, row!.revision)))
         await releaseBinding(tx, current, token)
       })
       return { status: 'processed' as const }
     }
     catch (error) {
-      const safe = safeError(error, dispatched), retry = !dispatched && safe.retryable && job.retryCount < (job.retryLimit ?? 5)
+      const ambiguous = row?.kind === 'create_draft' && !(error instanceof InvoiceNinjaRejection)
+      const safe = safeError(error, dispatched || ambiguous), retry = !dispatched && !ambiguous && safe.retryable && job.retryCount < (job.retryLimit ?? 5)
       if (row) await db().transaction(async tx => {
-        await tx.update(operations).set({ status: dispatched ? 'reconciliation_required' : retry ? 'queued' : 'failed', errorCode: safe.code,
+        await tx.update(operations).set({ status: ambiguous ? 'reconciliation_required' : retry ? 'queued' : 'failed', errorCode: safe.code,
           attemptToken: null, leaseUntil: null, updatedAt: new Date(), revision: sql`${operations.revision} + 1` }).where(and(eq(operations.id, id), eq(operations.attemptToken, token), eq(operations.revision, row!.revision)))
         if (b) await releaseBinding(tx, b, token)
       })
       else await db().update(operations).set({ status: retry ? 'queued' : 'failed', errorCode: safe.code, updatedAt: new Date() }).where(and(eq(operations.id, id), eq(operations.status, 'queued')))
       if (retry) throw new InvoiceNinjaError(safe.code)
-      return { status: dispatched ? 'reconciliation_required' as const : 'ignored' as const, errorCode: safe.code }
+      return { status: ambiguous ? 'reconciliation_required' as const : 'ignored' as const, errorCode: safe.code }
     }
   }
   async function runReceipt(id: string, job: JobContext) {
@@ -318,7 +322,39 @@ export function createInvoiceNinjaService(options: InvoiceNinjaOptions) {
       return { operations: stale.length, receipts: receipts.length }
     })
   }
-  return { createBindingInTransaction, retireBindingInTransaction, getClient: (c: TrustedContext, v: unknown) => get(c, v, 'client'), getInvoice: (c: TrustedContext, v: unknown) => get(c, v, 'invoice'),
+  /** Trusted server-only resolution. Never replays POST; no browser route. */
+  async function resolveAmbiguousDraft(context: TrustedContext, input: unknown, decision: DraftResolution) {
+    await authorize(context)
+    const id = parse(operationRef, input).operationId
+    const clean = parse(z.discriminatedUnion('mode', [z.object({ mode: z.literal('attach-existing'), remoteId: opaqueId }).strict(), z.object({ mode: z.literal('confirm-not-created') }).strict()]), decision)
+    const [row] = await db().select().from(operations).where(and(eq(operations.id, id), eq(operations.scopeKind, context.scope.kind), eq(operations.scopeId, context.scope.id), eq(operations.kind, 'create_draft'), eq(operations.status, 'reconciliation_required'))).limit(1)
+    if (!row?.intent) throw new InvoiceNinjaError('not_found')
+    if (!options.authorizeDraftResolution || !await options.authorizeDraftResolution(context, row, clean)) throw new InvoiceNinjaError('forbidden')
+    const current = await bound(context, row.bindingId, 'client'), signal = operationSignal(context.signal, 15_000)
+    let target: Binding | undefined, projection: ReturnType<typeof projectEntity> | undefined
+    if (clean.mode === 'attach-existing') {
+      const value = await providerRequest(await connection(row.connectionId, signal), 'invoice', clean.remoteId, undefined, signal, options.fetch)
+      if (value === null) throw new InvoiceNinjaError('not_found')
+      if (entity(value).client_id !== row.intent.remoteClientId) throw new InvoiceNinjaError('forbidden')
+      target = { ...current, id: randomUUID(), localResourceId: row.id, remoteId: clean.remoteId, resourceKind: 'invoice', createdAt: new Date(), leaseToken: null, leaseUntil: null, revision: 0 }
+      projection = projectEntity(target, value, row.intent.policy.currency)
+    }
+    await db().transaction(async tx => {
+      await bound(context, current.id, 'client', tx); checkSignal(signal)
+      if (!await options.authorizeDraftResolution!(context, row, clean)) throw new InvoiceNinjaError('forbidden')
+      if (target && projection) { await tx.insert(bindings).values(target); await commitProjection(tx, target, projection) }
+      const [changed] = await tx.update(operations).set({ status: target ? 'succeeded' : 'failed', resultBindingId: target?.id ?? null,
+        errorCode: target ? null : 'conflict', updatedAt: new Date(), revision: sql`${operations.revision} + 1` }).where(and(eq(operations.id, id), eq(operations.revision, row.revision), eq(operations.status, 'reconciliation_required'))).returning()
+      if (!changed) throw new InvoiceNinjaError('conflict')
+    })
+    return getOperation(context, { operationId: id })
+  }
+  async function repairFailedReceiptInTransaction(tx: InvoiceNinjaTransaction, id: string) {
+    const [changed] = await tx.update(inbox).set({ status: 'received', errorCode: null, updatedAt: new Date(), revision: sql`${inbox.revision} + 1` }).where(and(eq(inbox.id, parse(uuid, id)), eq(inbox.status, 'failed'))).returning()
+    if (changed) await enqueue(tx, 'invoice-ninja.receipt', { inboxId: changed.id })
+    return Boolean(changed)
+  }
+  return { resolveAmbiguousDraft, repairFailedReceiptInTransaction, createBindingInTransaction, retireBindingInTransaction, getClient: (c: TrustedContext, v: unknown) => get(c, v, 'client'), getInvoice: (c: TrustedContext, v: unknown) => get(c, v, 'invoice'),
     requestClientReconciliation: (c: TrustedContext, v: unknown) => reconcile(c, v, 'client'), requestInvoiceReconciliation: (c: TrustedContext, v: unknown) => reconcile(c, v, 'invoice'),
     requestDraftInvoice, getOperation, listInvoices, cancelOperation, receiveWebhook, recoverExpiredAttempts, operationJob, receiptJob }
 }

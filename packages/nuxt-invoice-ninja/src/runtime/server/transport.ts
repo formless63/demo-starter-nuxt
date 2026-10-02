@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
-import { InvoiceNinjaError, safeError } from './errors'
+import { InvoiceNinjaError, InvoiceNinjaRejection, safeError } from './errors'
 import { parse, opaqueId, hasControls } from './validation'
 export interface Connection { baseUrl: string, apiToken: string, webhookSecret?: string, previousWebhookSecret?: string }
 export function resolveEnvironmentConnection(): Connection {
@@ -76,10 +76,11 @@ export async function providerRequest(connection: Connection, kind: 'client' | '
     })
     const bytes = await readBytes(response.body, 2 * 1024 * 1024, signal)
     if (response.status === 404 && !body) return null
+    if (!response.ok && body && [400, 401, 403, 404, 405, 409, 422].includes(response.status)) throw new InvoiceNinjaRejection(response.status === 422 ? 'unsupported' : 'forbidden', false)
     if (!response.ok) throw new InvoiceNinjaError(response.status === 422 ? 'unsupported' : response.status >= 500 || response.status === 429 ? 'unavailable' : 'forbidden', !body && (response.status >= 500 || response.status === 429))
     return parseExactJSON(bytes)
   }
-  catch (error) { checkSignal(signal); throw safeError(error, Boolean(body)) }
+  catch (error) { checkSignal(signal); if (error instanceof InvoiceNinjaRejection) throw error; throw safeError(error, Boolean(body)) }
 }
 function validSecret(s: string | undefined) { return s !== undefined && Buffer.byteLength(s) >= 32 && Buffer.byteLength(s) <= 256 && !hasControls(s) }
 export function verifyWebhookSecret(header: string | undefined, connection: Connection) {
