@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="TData extends Record<string, unknown>">
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFilteredRowModel, createPaginatedRowModel, createSortedRowModel, filterFns, FlexRender, sortFns, stockFeatures, tableFeatures, useTable, type ColumnDef, type ColumnFiltersState, type PaginationState, type RowSelectionState, type SortingState, type VisibilityState } from '@tanstack/vue-table'
-import { computed, type ComputedRef } from 'vue'
+import { computed, watchEffect } from 'vue'
 
 type Props = { data: TData[]; columns: ColumnDef<any, TData, any>[]; rowId: (row: TData, index: number) => string; sorting?: SortingState; globalFilter?: string; columnFilters?: ColumnFiltersState; pagination?: PaginationState; columnVisibility?: VisibilityState; rowSelection?: RowSelectionState; manualSorting?: boolean; manualFiltering?: boolean; manualPagination?: boolean; pageCount?: number; enableRowSelection?: boolean; pageSizeOptions?: number[]; loading?: boolean; error?: string | null }
 const props = withDefaults(defineProps<Props>(), { sorting: () => [], globalFilter: '', columnFilters: () => [], pagination: () => ({ pageIndex: 0, pageSize: 10 }), columnVisibility: () => ({}), rowSelection: () => ({}), pageSizeOptions: () => [10, 25, 50], pageCount: undefined, loading: false, error: null })
@@ -14,13 +14,20 @@ const features = tableFeatures({
   filterFns,
   sortFns,
 })
-// Vue Table 9.2.4 falls back to the original ref when its value is undefined.
-// Core pagination explicitly accepts null as "derive from rows"; keep that
-// runtime sentinel local until the adapter preserves undefined option values.
-const pageCount = computed(() => props.manualPagination ? props.pageCount ?? -1 : null)
-const table = useTable({ features, data: computed(() => props.data), columns: computed(() => props.columns) as any, getRowId: props.rowId, state: computed(() => ({ sorting: props.sorting, globalFilter: props.globalFilter, columnFilters: props.columnFilters, pagination: props.pagination, columnVisibility: props.columnVisibility, rowSelection: props.rowSelection })) as any, manualSorting: computed(() => props.manualSorting), manualFiltering: computed(() => props.manualFiltering), manualPagination: computed(() => props.manualPagination), pageCount: pageCount as ComputedRef<number | undefined>, enableRowSelection: computed(() => props.enableRowSelection), onSortingChange: (u: any) => emit('update:sorting', typeof u === 'function' ? u(props.sorting ?? []) : u), onGlobalFilterChange: (u: any) => emit('update:globalFilter', typeof u === 'function' ? u(props.globalFilter ?? '') : u), onColumnFiltersChange: (u: any) => emit('update:columnFilters', typeof u === 'function' ? u(props.columnFilters ?? []) : u), onPaginationChange: (u: any) => emit('update:pagination', typeof u === 'function' ? u(props.pagination ?? { pageIndex: 0, pageSize: 10 }) : u), onColumnVisibilityChange: (u: any) => emit('update:columnVisibility', typeof u === 'function' ? u(props.columnVisibility ?? {}) : u), onRowSelectionChange: (u: any) => emit('update:rowSelection', typeof u === 'function' ? u(props.rowSelection ?? {}) : u) })
+const table = useTable({ features, data: computed(() => props.data), columns: computed(() => props.columns) as any, getRowId: props.rowId, state: computed(() => ({ sorting: props.sorting, globalFilter: props.globalFilter, columnFilters: props.columnFilters, pagination: props.pagination, columnVisibility: props.columnVisibility, rowSelection: props.rowSelection })) as any, manualSorting: computed(() => props.manualSorting), manualFiltering: computed(() => props.manualFiltering), manualPagination: computed(() => props.manualPagination), enableRowSelection: computed(() => props.enableRowSelection), onSortingChange: (u: any) => emit('update:sorting', typeof u === 'function' ? u(props.sorting ?? []) : u), onGlobalFilterChange: (u: any) => emit('update:globalFilter', typeof u === 'function' ? u(props.globalFilter ?? '') : u), onColumnFiltersChange: (u: any) => emit('update:columnFilters', typeof u === 'function' ? u(props.columnFilters ?? []) : u), onPaginationChange: (u: any) => emit('update:pagination', typeof u === 'function' ? u(props.pagination ?? { pageIndex: 0, pageSize: 10 }) : u), onColumnVisibilityChange: (u: any) => emit('update:columnVisibility', typeof u === 'function' ? u(props.columnVisibility ?? {}) : u), onRowSelectionChange: (u: any) => emit('update:rowSelection', typeof u === 'function' ? u(props.rowSelection ?? {}) : u) })
 const rows = computed(() => table.getRowModel().rows)
 const currentPagination = computed(() => table.atoms.pagination.get())
+// v9.2.4's Vue option merger cannot clear an optional reactive pageCount.
+// Publish an explicit numeric count after construction so native pagination
+// handles both client and manual modes without undefined refs or null clamps.
+watchEffect(() => {
+  const rowCount = table.getPrePaginatedRowModel().rows.length
+  const pageSize = props.pagination.pageSize
+  const pageCount = props.manualPagination
+    ? props.pageCount ?? -1
+    : pageSize === Infinity && rowCount > 0 ? 1 : Math.ceil(rowCount / pageSize)
+  table.setOptions(options => ({ ...options, pageCount }))
+})
 function sort(column: any) { column.toggleSorting(column.getIsSorted() === 'asc') }
 </script>
 
