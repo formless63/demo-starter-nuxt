@@ -21,6 +21,7 @@ test.describe('charts visualization', () => {
           pageErrors: browserErrors,
           consoleErrors,
           requestFailures: failedRequests,
+          state: await page.locator('[data-echarts-state]').textContent(),
           html: (await page.content()).slice(0, 100_000),
         }, null, 2),
       })
