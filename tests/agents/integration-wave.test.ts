@@ -12,7 +12,7 @@ test('all twenty-one completed packages are explicitly enabled and discovered by
   const nuxt = readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')
   expect(catalog.capabilities.filter((entry: { status: string }) => entry.status === 'done').map((entry: { id: string }) => entry.id).sort()).toEqual([...completed].sort())
   expect(completed).toHaveLength(21)
-  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed].sort())
+  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed, 'flow-canvas'].sort())
   for (const id of [...completed]) {
     const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === id)
     expect(entry.defaultInstalled).toBe(false)
@@ -23,7 +23,7 @@ test('all twenty-one completed packages are explicitly enabled and discovered by
   expect(result.status).toBe(0)
   const authored = catalog.capabilities.filter((entry: { status: string, packageTest?: unknown, packagePath?: string }) => ['done', 'in-progress'].includes(entry.status) && entry.packagePath && entry.packageTest).map((entry: { id: string }) => entry.id)
   expect(JSON.parse(result.stdout).capability.sort()).toEqual(authored.sort())
-  expect(authored.sort()).toEqual([...completed].sort())
+  expect(authored.sort()).toEqual([...completed, 'flow-canvas'].sort())
 })
 
 test('Webhooks and Notifications require Jobs; Audit, Cache and Realtime fixtures remain independent', () => {

@@ -95,7 +95,8 @@
     "@repo/nuxt-charts-visualization": "workspace:*",
     "@repo/nuxt-data-table": "workspace:*",
     "@repo/nuxt-command-system": "workspace:*",
-    "@repo/nuxt-markdown-code": "workspace:*"
+    "@repo/nuxt-markdown-code": "workspace:*",
+    "@repo/nuxt-flow-canvas": "workspace:*"
   },
   "devDependencies": {
     "@nuxt/eslint": "1.17.0",

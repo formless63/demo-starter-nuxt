@@ -72,3 +72,5 @@ All twenty-one completed capabilities remain `defaultInstalled:false` and explic
 Command System is an opt-in native Nuxt module with a Vue registry and Reka Dialog palette; no server or global request state. Applications own commands, navigation, authorization and cancellation. Presentation generations suppress stale async results; an independent mutex prevents execution overlap across close/reopen and controlled transitions.
 
 Markdown / Code Content (`done`) is an opt-in private module with `/server` parsing and `/components` native Vue rendering. Never import the server entry in Vue/browser code. Deliver only bounded closed `MarkdownDocument` nodes; no raw HTML, external content fetch or custom renderer attributes. Root `/markdown` is application-owned.
+
+Flow / Canvas is an opt-in native Nuxt module with a pure graph export, semantic SSR and isolated client Vue Flow stores. Required documentKey fences record switches; emitted changes are proposals, not persistence. No service, migration or hard capability dependency.

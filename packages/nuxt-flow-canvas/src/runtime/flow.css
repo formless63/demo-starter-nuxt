@@ -1,0 +1,12 @@
+.flow-canvas { border: 1px solid currentColor; border-radius: .5rem; padding: 1rem; margin-block: 1rem; }
+.flow-canvas h2 { font-size: 1.4rem; font-weight: 700; }
+.flow-canvas h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1rem; }
+.flow-canvas form, .flow-canvas li { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-block: .5rem; }
+.flow-canvas button, .flow-canvas input, .flow-canvas select { padding: .35rem .6rem; border: 1px solid currentColor; border-radius: .25rem; }
+.flow-canvas button:disabled { opacity: .5; }
+.flow-canvas :focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+.flow-surface { height: 24rem; width: 100%; border: 1px solid currentColor; margin-block: 1rem; }
+.flow-surface .vue-flow__node-safe { background: #fff; color: #111; border: 2px solid #334155; border-radius: .5rem; padding: 1rem; min-width: 7rem; overflow-wrap: anywhere; max-width: 18rem; }
+.flow-surface .vue-flow__edge-text { fill: #111; }
+.flow-canvas output { display: block; min-height: 1.5rem; }
+@media (prefers-reduced-motion: reduce) { .flow-canvas *, .flow-canvas *::before, .flow-canvas *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

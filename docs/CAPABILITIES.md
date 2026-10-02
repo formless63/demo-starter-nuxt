@@ -182,3 +182,7 @@ Keep `"@repo/nuxt-charts-visualization": "workspace:*"` and explicitly register 
 ## Markdown / Code Content (done)
 
 Optional private `@repo/nuxt-markdown-code`; no hard dependencies, backend or migrations. Root `/markdown` explicitly demonstrates server-only bounded markdown-it/Shiki and safe native Vue. See [contract](../capabilities/markdown-code/CAPABILITY.md).
+
+## Flow / Canvas (in progress)
+
+Optional private `@repo/nuxt-flow-canvas` provides controlled native Vue editing and bounded server-safe graph JSON. Default installation remains false; this reference explicitly enables `/flow-test`. Applications own state and persistence. No database, migrations, network, or hard capability dependencies. See [contract](../capabilities/flow-canvas/CAPABILITY.md). Remove the explicit module/dependency and `app/pages/flow-test.vue`/`server/api/flow-reference.get.ts`, update reference enablement/tests, then install/typecheck/build; existing graph documents are application-owned. Hosted gates remain pending.
