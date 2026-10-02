@@ -1215,7 +1215,7 @@
       "id": "charts-visualization",
       "displayName": "Charts / Visualization",
       "kind": "operations-ui",
-      "status": "in-progress",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
