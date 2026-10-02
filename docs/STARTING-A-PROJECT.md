@@ -1,18 +1,20 @@
 # Starting a project
 
-The repository is both a baseline starter and a reference application. Choose which of the fifteen completed capabilities belong in the product before building domain features around them.
+The repository is both a baseline starter and a reference application. Choose which of the eighteen completed capabilities belong in the product before building domain features around them.
 
 ## Full/reference setup
 
-The root application explicitly registers Jobs, API Platform, Observability, Object Storage, Email, Webhooks, Audit Log, Cache / Coordination, Realtime, Notifications, Search, AI, Import / Export, Ops / Admin and Charts / Visualization. It includes:
+The root application explicitly registers Jobs, API Platform, Observability, Object Storage, Email, Webhooks, Audit Log, Cache / Coordination, Realtime, Notifications, Search, AI, Import / Export, Ops / Admin, Invoice Ninja, Stripe, Medusa and Charts / Visualization. It includes:
 
 - one Jobs registry and standalone worker with transactional enqueue;
 - Better Auth and owner-scoped browser and machine API routes;
-- explicit application/API/Audit/Notification/Transfer migrations, a Projects search vector/index, and separate pg-boss migrations;
+- explicit application/API/Audit/Notification/Transfer/provider migrations, a Projects search vector/index, and separate pg-boss migrations;
 - one production image for the app, migration tools and worker;
-- lazy optional S3, SMTP, Cache and AI adapters with no provider required at startup;
+- lazy optional S3, SMTP, Cache, AI, Invoice Ninja, Stripe and Medusa adapters with no provider required at startup;
 - transactionally appended audit history and notifications, plus ID-only post-commit hints over authenticated SSE/WebSocket transports;
-- all fifteen catalog-driven package install/runtime/removal/rebuild checks in generic CI.
+- all eighteen catalog-driven package install/runtime/removal/rebuild checks in generic CI.
+
+The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused and Identity remains separately paused.
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
 
@@ -30,7 +32,7 @@ The package-level core of these recipes is continuously verified by `bun run pac
 
 ## Remove Jobs
 
-First remove the hard-dependent Import / Export integration using its recipe below, preserving receipts, domain rows, objects and immutable migration history. Notifications and Webhooks also require Jobs. Remove Ops Jobs/Webhooks cards, helper and shutdown hook while retaining the baseline login, health and remaining Ops adapters.
+First remove the hard-dependent Import / Export, Invoice Ninja, Stripe and Medusa integrations using their recipes below, preserving receipts, domain/provider rows, objects and immutable migration history. Notifications and Webhooks also require Jobs. Remove Ops Jobs/Webhooks cards, helper and shutdown hook while retaining the baseline login, health and remaining Ops adapters.
 
 Remove Notifications and Webhooks first because both hard-require Jobs. Retain independent Realtime/Email/Audit/Cache when selected.
 
@@ -118,12 +120,14 @@ After either path, `bun run capabilities:status` should report whether the capab
 
 ## Remove Webhooks
 
+First remove the hard-dependent Invoice Ninja, Stripe and Medusa integrations using their recipes below, retaining all provider data and applied migrations.
+
 1. Drain or deliberately cancel application webhook delivery work. Remove `'@repo/nuxt-webhooks'` from Nuxt modules, its workspace dependency and `webhooks` from referenceApplication enabled metadata.
 2. Remove `server/webhooks/registry.ts` and its import/definition from `server/jobs/registry.ts`. Remove application webhook route/config/calls if added. Keep Jobs, `starter.echo`, the existing worker and migration roles.
 3. Remove `scripts/webhooks-smoke.ts`, root `webhooks:smoke` alias/catalog script declaration and Webhooks-only tests; remove the test-only `standardwebhooks` dependency if no retained tests use it. Adjust the expected Jobs registry names in its test.
 4. Clear generated Nuxt state, reinstall, then run capability checks, Jobs fixture, normal checks and the production worker path. Keep generic Jobs schema/history and external webhook endpoints untouched.
 
-For permanent pruning, consistently update catalog/docs before removing `packages/nuxt-webhooks`, `fixtures/webhooks-consumer`, its contract/evaluation and skill. Preserve its roadmap ID where planned business integrations reference it. Remove Webhooks first before removing its hard Jobs dependency.
+For permanent pruning, consistently update catalog/docs before removing `packages/nuxt-webhooks`, `fixtures/webhooks-consumer`, its contract/evaluation and skill. Preserve its roadmap ID where business integrations reference it. Remove Webhooks first before removing its hard Jobs dependency.
 
 ## Remove Audit Log
 
@@ -174,3 +178,20 @@ Stop transfer producers and drain or preserve pending work before unregistering 
 For Ops/Admin removal, remove `@repo/nuxt-ops-admin` from dependencies/modules, the `opsAdmin` option, `server/ops`, `server/plugins/ops-admin-jobs.ts` and `server/plugins/ops-admin-storage.ts`, any navigation entry, and `OPS_ADMIN_USER_IDS`. Remove each optional adapter/import when pruning its provider capability. No data/provider cleanup exists. [Contract](../capabilities/ops-admin/CAPABILITY.md).
 
 When retaining Ops during Storage removal, also remove `server/ops/storage.ts` and `server/plugins/ops-admin-storage.ts` alongside its application card/import. During Jobs removal, remove its hard dependents and Ops Jobs/Webhooks cards/imports, `server/ops/jobs.ts` and `server/plugins/ops-admin-jobs.ts`. Cache/Observability direct Ops imports and cards must be removed with their providers; the static Audit card is removed with Audit.
+
+## Remove Invoice Ninja
+
+Stop new commands/callback receipts and drain or expire active attempts before unregistering Jobs handlers. Remove `server/api/integrations/invoice-ninja`, `server/invoice-ninja`, `server/plugins/invoice-ninja.ts`, `app/pages/invoice-ninja.vue`, registry and worker shutdown references. Remove module/root dependency and `referenceApplication.enabledCapabilities` entry. Move the retained schema declarations into application-owned code before removing package schema imports/exports; preserve the applied migration artifacts. Keep all four provider tables, rows and SQL history; never regenerate old migrations to drop them. Remote callback deregistration, credential revocation and resource deletion are separate explicit operator actions. Retain Jobs/Webhooks if other capabilities use them. Generic packed uninstall/rebuild witnesses retained data.
+
+## Remove Stripe
+
+First stop all workers processing `stripe.operation`/`stripe.receipt`, settle or expire active attempts and explicitly recover uncertain state. Remove those registry definitions, `server/stripe`, `server/api/integrations/stripe`, `server/plugins/stripe.ts`, `app/pages/stripe.vue`, the Nuxt module, root package dependency, worker shutdown references and `referenceApplication.enabledCapabilities` entry. Preserve the application-included Stripe schema exports and applied migrations/history; move retained schema declarations into application-owned code before removing the package. Preserve bindings, projections, ledgers and inbox rows. Removing Stripe never deletes remote resources or unregisters webhooks; those require separate operator decisions. Jobs/Webhooks remain independently installed.
+
+## Remove Medusa
+
+1. Stop accepting Medusa requests/callbacks and drain bounded attempts with `service.stop()`. Stop every worker using the old registry or let its 45-second leases expire before explicitly repairing retained reads on reinstall.
+2. Remove Medusa definitions from `server/jobs/registry.ts`, worker shutdown references, `server/medusa`, `server/api/integrations/medusa`, `server/plugins/medusa.ts` and `app/pages/integrations/medusa.vue`.
+3. Remove the Nuxt module, root package dependency and `referenceApplication.enabledCapabilities` entry. Move retained schema declarations into application-owned code before removing package imports. Preserve all four tables, bindings, projections, operations/inbox rows and applied SQL/journal/snapshots.
+4. Retain Jobs/Webhooks if still used. Remove unused `MEDUSA_*` environment wiring, clear generated output, reinstall and run catalog/typecheck/build and normal verification. The generic packed fixture proves retained data survives uninstall/rebuild.
+
+The separately installed provider bridge, remote credentials and remote resources require explicit operator decisions; capability removal never deregisters or deletes them. See the [Medusa contract](../capabilities/medusa/CAPABILITY.md#remove-independently).

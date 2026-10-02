@@ -17,7 +17,10 @@
       "ai",
       "import-export",
       "ops-admin",
-      "charts-visualization"
+      "charts-visualization",
+      "invoice-ninja",
+      "medusa",
+      "stripe"
     ]
   },
   "baseline": [
@@ -1046,7 +1049,7 @@
       "id": "invoice-ninja",
       "displayName": "Invoice Ninja",
       "kind": "business-integration",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [
         "jobs",
@@ -1063,13 +1066,52 @@
           "required": true
         }
       ],
-      "summary": "Invoice Ninja synchronization and webhook integration."
+      "summary": "Invoice Ninja synchronization and webhook integration.",
+      "packageName": "@repo/nuxt-invoice-ninja",
+      "packagePath": "packages/nuxt-invoice-ninja",
+      "fixturePath": "fixtures/invoice-ninja-consumer",
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            ".fixture/package-test.ts",
+            "server/jobs/registry.ts",
+            ".fixture/database.ts",
+            ".fixture/protocol.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        },
+        "postRemovalScript": "package:test:retention",
+        "cleanupScript": "package:test:cleanup"
+      },
+      "documentationPath": "capabilities/invoice-ninja/CAPABILITY.md",
+      "evaluationDocument": "INVOICE_NINJA_MODULE_EVALUATION.md",
+      "baselineRequirements": [
+        "postgresql"
+      ],
+      "environmentVariables": [
+        "INVOICE_NINJA_BASE_URL",
+        "INVOICE_NINJA_API_TOKEN",
+        "INVOICE_NINJA_WEBHOOK_SECRET",
+        "INVOICE_NINJA_WEBHOOK_SECRET_PREVIOUS"
+      ],
+      "migrations": [
+        "0009_invoice_ninja additive application schema"
+      ],
+      "runtimeProcesses": [
+        "worker",
+        "migrate (one-shot)"
+      ]
     },
     {
       "id": "stripe",
       "displayName": "Stripe",
       "kind": "business-integration",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [
         "jobs",
@@ -1087,13 +1129,61 @@
           "required": true
         }
       ],
-      "summary": "Stripe billing, synchronization, and webhook integration."
+      "summary": "Stripe billing, synchronization, and webhook integration.",
+      "documentationPath": "capabilities/stripe/CAPABILITY.md",
+      "packageName": "@repo/nuxt-stripe",
+      "packagePath": "packages/nuxt-stripe",
+      "fixturePath": "fixtures/stripe-consumer",
+      "evaluationDocument": "STRIPE_MODULE_EVALUATION.md",
+      "baselineRequirements": [
+        "postgresql",
+        "drizzle",
+        "node-runtime"
+      ],
+      "scripts": [
+        "packages:build",
+        "packages:test",
+        "db:migrate",
+        "jobs:migrate",
+        "jobs:doctor"
+      ],
+      "environmentVariables": [
+        "STRIPE_SECRET_KEY",
+        "STRIPE_WEBHOOK_SECRET",
+        "STRIPE_WEBHOOK_SECRET_PREVIOUS",
+        "STRIPE_MODE",
+        "STRIPE_ACCOUNT_ID"
+      ],
+      "migrations": [
+        "0011_stripe_v1 and 0012_stripe_receipt_conflicts additive application schema"
+      ],
+      "runtimeProcesses": [
+        "Nitro application",
+        "existing standalone Jobs worker"
+      ],
+      "packageTest": {
+        "ownedDependencies": [
+          "stripe"
+        ],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server/api/stripe-status.get.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        },
+        "postRemovalScript": "package:test:survival",
+        "cleanupScript": "package:test:cleanup"
+      }
     },
     {
       "id": "medusa",
       "displayName": "Medusa",
       "kind": "business-integration",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [
         "jobs",
@@ -1110,7 +1200,48 @@
           "required": true
         }
       ],
-      "summary": "Medusa commerce integration with durable synchronization and webhooks."
+      "summary": "Medusa commerce integration with durable synchronization and webhooks.",
+      "documentationPath": "capabilities/medusa/CAPABILITY.md",
+      "evaluationDocument": "MEDUSA_MODULE_EVALUATION.md",
+      "packageName": "@repo/nuxt-medusa",
+      "packagePath": "packages/nuxt-medusa",
+      "fixturePath": "fixtures/medusa-consumer",
+      "baselineRequirements": [
+        "postgresql",
+        "drizzle",
+        "node-runtime"
+      ],
+      "environmentVariables": [
+        "MEDUSA_BASE_URL",
+        "MEDUSA_SECRET_API_KEY",
+        "MEDUSA_BRIDGE_WEBHOOK_SECRET",
+        "MEDUSA_BRIDGE_WEBHOOK_SECRET_PREVIOUS"
+      ],
+      "runtimeProcesses": [
+        "Existing Jobs worker"
+      ],
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "postRemovalScript": "package:test:retained",
+        "cleanupScript": "package:test:cleanup",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            ".fixture/package-test.ts",
+            ".fixture/contract.ts",
+            ".fixture/runner.ts",
+            "server/api/probe.get.ts",
+            ".fixture/pinned-backend.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      },
+      "migrations": [
+        "0013_medusa.sql"
+      ]
     },
     {
       "id": "ops-admin",

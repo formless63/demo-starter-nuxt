@@ -15,6 +15,8 @@ export default defineConfig({
   },
   webServer: externalBaseURL ? undefined : {
     command: 'bun run dev --host 127.0.0.1',
+    // Keep Nuxt's discovered-dependency hints available when cold startup fails.
+    stdout: 'pipe',
     url: 'http://127.0.0.1:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
