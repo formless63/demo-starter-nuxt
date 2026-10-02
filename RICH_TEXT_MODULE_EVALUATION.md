@@ -31,3 +31,11 @@ This successor merges accepted Markdown main `073ca065d2e664cf00d8cca1c0e1829301
 Local combined-tree checks pass: both affected package preparations, full root strict typecheck and production build, 89 focused tests (the 87 source tests plus real resolved Nuxt/Vite composition and pre-transport serialization tests), six inventory/governance tests, catalog validation, lint and frozen-lock installation. The composition test preserves Data Table/Charts/Tiptap optimizer entries, Markdown's server-boundary plugin/CSS and caller Vite options. Lock audit preserves every existing package resolution from accepted main; accepted Rich Text package runtime is byte-identical; fixture/reference transport checks are strengthened without changing its public API. These local results do not replace the pending combined hosted runtime/full-CI gate.
 
 The pre-transport contract explicitly requires server-side parsing before Nuxt payload serialization and sharing that canonical model between SSR and client. The fixture reproduces the actual pinned devalue/UTF-8 lone-surrogate loss on Bun and Node, then proves validated documents round-trip. Its useAsyncData Unicode example puts canonical LF/emoji/U+FFFD text in the real Nuxt payload; browser checks compare that payload and hydrated DOM. Component-only post-transport validation is not claimed to preserve arbitrary uncanonical input.
+
+## Reviewed promotion source
+
+The Markdown/Rich Text promotion `f1bbea44407704973dd2168cda3c23115028c487` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37037650525) and independent final composition review. It is the unchanged Rich Text source for this File UI composition. This later composition requires its own exact-head hosted gates and review before acceptance.
+
+## Root browser discovery correction in File UI composition
+
+The reviewed source root test used `rich-text.spec.ts`, but root Playwright selects `**/*.e2e.ts`; historical full-CI success therefore did not execute that root Rich Text test. The independent packed Rich Text browser lifecycle did execute. This composition renames the unchanged root test to `rich-text.e2e.ts` and adds a real Playwright discovery assertion for both Rich Text and File UI. The new combined exact-head CI must supply root development/production browser coverage before acceptance.

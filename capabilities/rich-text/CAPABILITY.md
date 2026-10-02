@@ -1,6 +1,6 @@
 # Rich Text / Tiptap
 
-Status: `done`. Independent opt-in private package `@repo/nuxt-rich-text`; `defaultInstalled: false`, no hard capability dependencies, external services, migrations or credentials. Source `1666bb6e252fbedbbe20b545de8117e8a246820f` passed [all 23 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37031826840), including the packed browser/runtime and root production gates. The combined Markdown/Rich Text metadata promotion must pass its own exact-head CI before acceptance.
+Status: `done`. Independent opt-in private package `@repo/nuxt-rich-text`; `defaultInstalled: false`, no hard capability dependencies, external services, migrations or credentials. Source `1666bb6e252fbedbbe20b545de8117e8a246820f` passed [all 23 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37031826840), including the packed browser/runtime and root production gates. The combined Markdown/Rich Text promotion `f1bbea44407704973dd2168cda3c23115028c487` subsequently passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37037650525) and independent composition review. Later compositions require their own exact-head CI before acceptance.
 
 ## Installation and contract
 
@@ -20,4 +20,4 @@ Native buttons expose pressed/disabled state, a labeled formatting fieldset, tex
 
 `bun x vitest run --config vitest.rich-text.config.ts` runs neutral validation and real mounted Vue/Tiptap behavior. `bun run packages:test rich-text` owns packed installation, independent strict types/build, real SSR/UTF-8 response hydration/browser behavior, removal and rebuild. The generic matrix includes this completed fixture. Root `/rich-text-test` is a public static example with no persistence or private data, with an explicit hydration readiness marker.
 
-To remove from a consumer, remove the module registration, component usages and imports, then uninstall the package. No data or migrations are deleted. From the reference app additionally remove `app/pages/rich-text-test.vue` and `tests/e2e/rich-text.spec.ts`, root package dependency and catalog reference enablement. Source package and fixture may remain without activating anything.
+To remove from a consumer, remove the module registration, component usages and imports, then uninstall the package. No data or migrations are deleted. From the reference app additionally remove `app/pages/rich-text-test.vue` and `tests/e2e/rich-text.e2e.ts`, root package dependency and catalog reference enablement. Source package and fixture may remain without activating anything.
