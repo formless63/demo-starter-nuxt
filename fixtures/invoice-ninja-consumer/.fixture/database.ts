@@ -12,7 +12,7 @@ import { createInvoiceNinjaService } from '@repo/nuxt-invoice-ninja/server'
 import { invoiceNinjaBinding as bindings, invoiceNinjaOperation as operations, invoiceNinjaInbox as inbox } from '@repo/nuxt-invoice-ninja/schema'
 import { createJobsBoss, defineQueues, resolveJobsConfig } from '@repo/nuxt-jobs/server'
 import { runJobsMigration, runJobsDoctor } from '@repo/nuxt-jobs/cli'
-import { saveState, witness } from './lifecycle'
+import { saveState, witness, details } from './lifecycle'
 const adminUrl = process.env.DATABASE_URL; assert(adminUrl)
 const admin = postgres(adminUrl, { max: 1 }), databaseName = `invoice_nuxt_fixture_${randomUUID().replaceAll('-', '')}`
 await admin.unsafe(`CREATE DATABASE "${databaseName}"`)
@@ -120,7 +120,7 @@ try {
   for (const forbidden of ['private@example.test', 'Private financial intent', 'private-api-fixture', 'contacts']) assert.ok(!publicData.includes(forbidden))
   await db.transaction(tx => service.retireBindingInTransaction(tx, a, { bindingId: ca.id })); await assert.rejects(service.getClient(a, { bindingId: ca.id }), { code: 'not_found' })
   assert.equal((await db.select().from(bindings)).length, 4)
-  await saveState({ databaseName, url: url.toString(), witness: await witness(client) })
+  await saveState({ databaseName, url: url.toString(), witness: await witness(client), details: await details(client) })
   console.info('Invoice Ninja PostgreSQL ownership/operations/receipts/rollback/crash/privacy passed; mocked provider only')
 }
 finally { await boss.stop({ graceful: true }); server.closeAllConnections(); await new Promise<void>(r => server.close(() => r())); await client.end(); await admin.end() }

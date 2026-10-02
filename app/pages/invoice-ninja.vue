@@ -5,6 +5,8 @@ type Invoice = { bindingId: string, remoteId: string, number: string | null, sta
 const bindingId = ref(''), kind = ref('client'), busy = ref(false), message = ref(''), operationId = ref('')
 const operation = ref<Operation | null>(null)
 const { data, refresh } = await useFetch<{ items: Invoice[] }>('/api/integrations/invoice-ninja/invoices', { default: () => ({ items: [] }) })
+const ready = ref(false)
+onMounted(() => { ready.value = true })
 let controller: AbortController | undefined
 async function action(work: (signal: AbortSignal) => Promise<void>) {
   if (busy.value) return
@@ -31,20 +33,20 @@ onBeforeUnmount(() => controller?.abort())
     <p class="text-sm text-muted-foreground">Draft creation requires a deployment-verified unsent company policy. The reference application has no configured draft policy.</p>
     <form class="flex flex-wrap gap-3 rounded-lg border p-4" @submit.prevent="reconcile">
       <label>Resource <select v-model="kind" class="rounded border p-2"><option value="client">Client</option><option value="invoice">Invoice</option></select></label>
-      <label>Binding UUID <input v-model="bindingId" required class="rounded border p-2" placeholder="Server-owned binding UUID"></label>
-      <Button type="submit" :disabled="busy">Request reconciliation</Button>
+      <label>Binding UUID <input v-model="bindingId" :disabled="!ready" required class="rounded border p-2" placeholder="Server-owned binding UUID"></label>
+      <Button type="submit" :disabled="busy || !ready">Request reconciliation</Button>
       <Button v-if="busy" type="button" variant="outline" @click="controller?.abort()">Stop waiting</Button>
     </form>
     <p role="status">{{ message }}</p>
     <section class="space-y-3 rounded-lg border p-4" aria-label="Operation status">
-      <label>Operation UUID <input v-model="operationId" class="rounded border p-2"></label>
-      <Button :disabled="busy || !operationId" @click="status">Refresh operation</Button>
-      <Button variant="outline" :disabled="busy || !operationId" @click="cancelQueued">Cancel queued operation</Button>
+      <label>Operation UUID <input v-model="operationId" :disabled="!ready" class="rounded border p-2"></label>
+      <Button :disabled="busy || !ready || !operationId" @click="status">Refresh operation</Button>
+      <Button variant="outline" :disabled="busy || !ready || !operationId" @click="cancelQueued">Cancel queued operation</Button>
       <p v-if="operation">{{ operation.kind }}: {{ operation.status }} {{ operation.error?.message }}</p>
     </section>
     <section class="space-y-3" aria-label="Local invoice projections">
       <h2 class="text-lg font-semibold">Local invoices</h2>
-      <Button variant="outline" :disabled="busy" @click="refresh()">Refresh local list</Button>
+      <Button variant="outline" :disabled="busy || !ready" @click="refresh()">Refresh local list</Button>
       <p v-if="!data?.items.length">No synchronized invoices in your scope.</p>
       <ul v-else class="space-y-3"><li v-for="invoice in data.items" :key="invoice.bindingId" class="rounded-lg border p-4">
         <strong>{{ invoice.number || 'Unnumbered invoice' }}</strong> — {{ invoice.status }}<br>
