@@ -1,10 +1,13 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Request } from '@playwright/test'
 
 test.describe('charts visualization', () => {
   test('enhances SSR fallback and supports kinds, replacement, accessibility, motion, and cleanup', async ({ page }, testInfo) => {
     const browserErrors: string[] = []
     const consoleErrors: string[] = []
     const failedRequests: string[] = []
+    const startedAt = Date.now()
+    const pendingRequests = new Map<Request, { path: string, type: string, at: number }>()
+    const finishedScripts: Array<{ path: string, started: number, finished: number }> = []
     const sanitize = (value: string) => { try { return new URL(value).pathname } catch { return value.replace(/[?].*$/u, '') } }
     const record = (kind: string, value: string) => {
       const body = Buffer.from(JSON.stringify({ kind, value, url: sanitize(page.url()) }, null, 2))
@@ -13,6 +16,13 @@ test.describe('charts visualization', () => {
     page.on('pageerror', error => { const value = error.stack || error.message; browserErrors.push(value); record('pageerror', value) })
     page.on('console', message => { if (message.type() === 'error') { consoleErrors.push(message.text()); record('console-error', message.text()) } })
     page.on('requestfailed', request => { const value = `${request.method()} ${sanitize(request.url())} :: ${request.failure()?.errorText || 'unknown'}`; failedRequests.push(value); record('requestfailed', value) })
+    page.on('request', request => { pendingRequests.set(request, { path: sanitize(request.url()), type: request.resourceType(), at: Date.now() - startedAt }) })
+    page.on('requestfinished', request => {
+      const pending = pendingRequests.get(request)
+      if (pending && request.resourceType() === 'script') finishedScripts.push({ path: pending.path, started: pending.at, finished: Date.now() - startedAt })
+      pendingRequests.delete(request)
+    })
+    page.on('requestfailed', request => { pendingRequests.delete(request) })
     const snapshot = async () => {
       try {
         return await Promise.race([
@@ -20,18 +30,18 @@ test.describe('charts visualization', () => {
             const state = document.querySelector('[data-echarts-state]')?.textContent ?? null
             const host = document.querySelector('#primary-chart .charts-visualization__canvas')
             const rect = host?.getBoundingClientRect()
-            return { hydrated: document.readyState === 'complete', state, host: host ? { present: true, width: rect?.width ?? 0, height: rect?.height ?? 0, canvas: host.querySelector('canvas') !== null } : { present: false } }
+            return { documentReady: document.readyState, elapsed: Math.round(performance.now()), nuxtStages: document.documentElement.dataset.nuxtE2eStages ?? null, state, host: host ? { present: true, width: rect?.width ?? 0, height: rect?.height ?? 0, canvas: host.querySelector('canvas') !== null } : { present: false } }
           }),
           new Promise<null>(resolve => setTimeout(() => resolve(null), 1000)),
         ])
       }
       catch { return null }
     }
-    const attachDiagnostics = async () => {
+    const attachDiagnostics = async (phase: string) => {
       try {
-        const report = { url: sanitize(page.url()), pageErrors: browserErrors, consoleErrors, requestFailures: failedRequests, snapshot: await snapshot() }
+        const report = { phase, elapsed: Date.now() - startedAt, url: sanitize(page.url()), pageErrors: browserErrors, consoleErrors, requestFailures: failedRequests, pendingRequests: [...pendingRequests.values()].slice(-40), finishedScripts: finishedScripts.slice(-20), snapshot: await snapshot() }
         console.log(`[charts-diagnostics] ${JSON.stringify(report)}`)
-        await testInfo.attach('browser-diagnostics', { contentType: 'application/json', body: JSON.stringify(report, null, 2) })
+        await testInfo.attach(`browser-diagnostics-${phase}`, { contentType: 'application/json', body: JSON.stringify(report, null, 2) })
       }
       catch (error) { console.log(`[charts-diagnostics-error] ${error instanceof Error ? error.message : 'snapshot failed'}`) }
     }
@@ -73,6 +83,13 @@ test.describe('charts visualization', () => {
     expect(browserErrors).toEqual([])
       expect(consoleErrors).toEqual([])
     }
-    finally { await attachDiagnostics() }
+    catch (error) {
+      await attachDiagnostics('assertion-failed')
+      // Preserve the original assertion failure. A later snapshot distinguishes
+      // slow cold hydration from a bootstrap that remains stalled.
+      await page.waitForTimeout(10_000)
+      await attachDiagnostics('ten-seconds-after-failure')
+      throw error
+    }
   })
 })
