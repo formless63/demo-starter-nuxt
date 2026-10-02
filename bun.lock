@@ -40,7 +40,9 @@
         "zod": "4.6.5",
         "@repo/nuxt-stripe": "workspace:*",
         "@repo/nuxt-medusa": "workspace:*",
-        "@repo/nuxt-data-table": "workspace:*"
+        "@repo/nuxt-data-table": "workspace:*",
+        "@repo/nuxt-charts-visualization": "workspace:*",
+        "@repo/nuxt-command-system": "workspace:*"
       },
       "devDependencies": {
         "@nuxt/eslint": "1.17.0",
@@ -664,6 +666,64 @@
       },
       "peerDependencies": {
         "nuxt": ">=4.0.0 <5"
+      }
+    },
+    "fixtures/charts-visualization-consumer": {
+      "name": "charts-visualization-consumer",
+      "dependencies": {
+        "@repo/nuxt-charts-visualization": "workspace:*",
+        "@vue/server-renderer": "3.5.43",
+        "nuxt": "4.5.2",
+        "vue": "3.5.43"
+      },
+      "devDependencies": {
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7"
+      }
+    },
+    "packages/nuxt-charts-visualization": {
+      "name": "@repo/nuxt-charts-visualization",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+        "echarts": "6.1.0"
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "nuxt": "4.5.2",
+        "vue": "3.5.43"
+      },
+      "peerDependencies": {
+        "nuxt": ">=4.0.0 <5"
+      }
+    },
+    "fixtures/command-system-consumer": {
+      "name": "command-system-consumer-fixture",
+      "dependencies": {
+        "@repo/nuxt-command-system": "workspace:*",
+        "nuxt": "4.5.2",
+        "vue": "3.5.43"
+      },
+      "devDependencies": {
+        "@playwright/test": "1.63.0",
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7"
+      }
+    },
+    "packages/nuxt-command-system": {
+      "name": "@repo/nuxt-command-system",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+        "reka-ui": "2.10.5"
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "nuxt": "4.5.2"
+      },
+      "peerDependencies": {
+        "nuxt": ">=4.0.0 <5",
+        "vue": "^3.5.0"
       }
     }
   },
@@ -12822,10 +12882,10 @@
       "sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w=="
     ],
     "tslib": [
-      "tslib@2.8.1",
+      "tslib@2.3.0",
       "",
       {},
-      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+      "sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg=="
     ],
     "tsx": [
       "tsx@4.23.15",
@@ -17434,6 +17494,231 @@
     ],
     "data-table-consumer-fixture": [
       "data-table-consumer-fixture@workspace:fixtures/data-table-consumer"
+    ],
+    "@repo/nuxt-charts-visualization": [
+      "@repo/nuxt-charts-visualization@workspace:packages/nuxt-charts-visualization"
+    ],
+    "charts-visualization-consumer": [
+      "charts-visualization-consumer@workspace:fixtures/charts-visualization-consumer"
+    ],
+    "echarts": [
+      "echarts@6.1.0",
+      "",
+      {
+        "dependencies": {
+          "tslib": "2.3.0",
+          "zrender": "6.1.0"
+        }
+      },
+      "sha512-q0yaFPggC9FUdsWH4blavRWFmxdrIodbkoKNAjJudAI6CA9gNPxHtV2RcZNEepZVlk4yvBYkOkbk6HIVpIyHZA=="
+    ],
+    "zrender": [
+      "zrender@6.1.0",
+      "",
+      {
+        "dependencies": {
+          "tslib": "2.3.0"
+        }
+      },
+      "sha512-oEGMDB6pOP2S6OwRR4PdVv610zrjnA3Bh+JnSG12fYJlBKjtNAoEb5fSUoCOOINlH96I2fU38/A2UpRKs67xYQ=="
+    ],
+    "@aws-sdk/checksums/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/client-s3/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/core/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/credential-provider-env/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/credential-provider-http/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/credential-provider-ini/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/credential-provider-login/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/credential-provider-node/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/credential-provider-process/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/credential-provider-sso/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/credential-provider-web-identity/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/middleware-sdk-s3/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/nested-clients/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/s3-request-presigner/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/signature-v4-multi-region/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/token-providers/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/types/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@aws-sdk/xml-builder/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@emnapi/core/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@emnapi/runtime/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@emnapi/wasi-threads/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@smithy/core/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@smithy/credential-provider-imds/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@smithy/fetch-http-handler/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@smithy/node-http-handler/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@smithy/signature-v4/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@smithy/types/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@swc/helpers/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@tybys/wasm-util/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "aria-hidden/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@unrs/resolver-binding-wasm32-wasi/@emnapi/core/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@unrs/resolver-binding-wasm32-wasi/@emnapi/runtime/tslib": [
+      "tslib@2.8.1",
+      "",
+      {},
+      "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    ],
+    "@repo/nuxt-command-system": [
+      "@repo/nuxt-command-system@workspace:packages/nuxt-command-system"
+    ],
+    "command-system-consumer-fixture": [
+      "command-system-consumer-fixture@workspace:fixtures/command-system-consumer"
     ]
   }
 }

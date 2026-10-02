@@ -24,7 +24,7 @@ CI pins Bun 1.4.2 independently and uses `actions/setup-node` for Node 24 in bot
 - `bun run packages:prepare`: prepare selected done/in-progress root packages and their catalog hard-dependency closure; root postinstall runs this before Nuxt preparation.
 - `bun run packages:build <id>`: produce a completed capability's publish-shaped package artifact without publishing it; omit IDs to build all completed package capabilities.
 - `bun run packages:test <id>`: pack a completed capability and its hard-dependency closure, replace workspace references with local tarballs, install it in its catalog-declared fixture, run common typecheck/build and its optional fixture-owned runtime check, remove it, and prove the remaining app typechecks/builds; omit IDs to test all.
-- `bun run packages:matrix`: emit the catalog-derived JSON matrix used by CI for completed packages and authored fixture-backed in-progress packages; it currently contains all eighteen completed capabilities.
+- `bun run packages:matrix`: emit the catalog-derived JSON matrix used by CI for completed packages and authored fixture-backed in-progress packages; it currently contains all twenty completed capabilities.
 - Explicit `packages:build <id>` / `packages:test <id>` may target an in-progress package while developing it; unqualified build/test commands select only completed packages, while the CI matrix also includes authored fixture-backed in-progress packages.
 - Observability package verification: `bun run packages:test observability`; the fixture owns safe-output/context/span/metric tests, actual local OTLP/HTTP JSON receiving, no-backend/independent-signal checks and bounded app/standalone shutdown. No external collector is needed.
 - API package verification: `bun run packages:build api-platform` and `bun run packages:test api-platform`; the fixture owns database/auth/permission/OpenAPI/docs checks while generic orchestration owns packed install and removal.
@@ -75,6 +75,24 @@ Stripe verification: `bun run packages:test stripe` uses the official pinned SDK
 
 Medusa: `bun run packages:test medusa` exercises native Admin protocol and raw application-bridge verification on Bun1.4.2/actual Node24 plus a separately installed disposable Medusa2.21.2 backend/subscriber, PostgreSQL18 receipt+Jobs/retained-data/remove/rebuild. No external provider services or payment workflows. Apply app migration0013 and existing Jobs migration/doctor explicitly. Authenticated reference page: `/integrations/medusa`.
 
-Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. Re-run full CI for subsequent revisions; static local checks alone do not replace database, Docker, browser or package runtime coverage.
+Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. Re-run full CI for subsequent revisions; static local checks alone do not replace database, Docker, browser or package runtime coverage.
+
+Charts source `7e8daa68c9862ef982c6dd0aa7e4269903eda9fd` passed [all 20 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37018899032). Command retains its separately verified implementation ([all 20 jobs at e0a01fa](https://github.com/formless63/demo-starter-nuxt/actions/runs/37012702417)). The composed twenty-capability tree requires a new full exact-head CI run; these source results are not evidence for this combination.
 
 Data Table: `bun run packages:test data-table` verifies the actual packed component's SSR pagination/sorting/global and column filtering/manual modes/navigation states, then clean removal and rebuild. `bun run test tests/unit/data-table.test.ts tests/unit/data-table-vite-config.test.ts` verifies mounted controlled updates and actual Nuxt/Vite module-owned configuration. Root E2E covers the hydrated reference page; include it in full exact-head CI.
+
+Command System: `bun run packages:test command-system` verifies packed production SSR/browser behavior and clean removal/typecheck/rebuild without a database.
+
+Interactive browser tests await the root application’s public `data-app-hydrated="true"` marker set by `onNuxtReady`, before using controls. The shared helper gives cold startup 30 seconds; feature assertions retain the normal five-second budget in both dev and production.
+
+
+Charts / Visualization: `bun run packages:test charts-visualization` verifies packed selective ECharts rendering and SSR table fallback, then clean removal and rebuild. Root chart unit/config/importer and browser contracts cover module-owned dependency discovery, exact zrender tslib resolution, responsive lifecycle and accessible fallback.
+
+
+### Browser infrastructure ownership
+
+Playwright runs the `application` project before the dependent `import-export` project. The latter creates/removes a disposable Docker bridge, so it must not overlap ordinary browser navigations. Both projects inherit the same development or explicit `PLAYWRIGHT_BASE_URL` production target, retain every assertion and timeout, and add no retries. A dependency failure blocks the downstream project and keeps CI failed; it is not a pass or skipped acceptance gate.
+
+`bun run test:e2e --project=application` selects the application set. `bun run test:e2e --project=import-export` includes its application dependency; `--no-deps` is an explicit standalone fixture diagnostic and must not be used alongside another browser run. File/grep filters follow [Playwright dependency semantics](https://playwright.dev/docs/test-projects#test-filtering).
+
+Evidence: [bounded CI probe](https://github.com/formless63/demo-starter-nuxt/actions/runs/37018590706/job/110875526426) on Chromium153.0.8010.12 held eight loopback module requests with six accepted connections. In both development and production passes, the two pending requests failed `ERR_NETWORK_CHANGED`19–38ms before the fixture's Docker network-create event. The real feature assertions remained intact. Ordinary acceptance does not intentionally abort requests; the investigative probe remains in the linked run and diagnostic history. Its bounded event/error evidence omits payloads, credentials, addresses and unrelated resource identities.
