@@ -89,6 +89,9 @@
     "@repo/nuxt-ai": "workspace:*",
     "@repo/nuxt-import-export": "workspace:*",
     "@repo/nuxt-ops-admin": "workspace:*",
+    "@repo/nuxt-invoice-ninja": "workspace:*",
+    "@repo/nuxt-stripe": "workspace:*",
+    "@repo/nuxt-medusa": "workspace:*",
     "@repo/nuxt-data-table": "workspace:*"
   },
   "devDependencies": {

@@ -43,8 +43,12 @@ The generic `packages:*` commands build and exercise the catalog entries. Hard c
 
 | Status | Capability |
 | --- | --- |
-| Done | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI |
+| Done (17) | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI; Import / Export; Ops / Admin; Invoice Ninja; Stripe; Medusa |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
+
+Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/36978353705) passed all 19 jobs at `4478e41f2835bfe1495dab762756b2fec08bd98e`, including all 17 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All seventeen remain opt-in for clean consumers and explicitly enabled in the reference app.
+
+The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused and Identity remains separately paused.
 
 API Platform is capability #2. Observability is capability #3: server-only logs, request correlation, explicit spans/metrics, optional OTLP export and a clean-consumer lifecycle. No new service is required.
 
@@ -195,23 +199,27 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 ## Business integrations
 
-### Invoice Ninja (`planned`)
+### Invoice Ninja (`done`)
 
 - Requires: Jobs, Webhooks
 - Integrates with: Organizations, Audit Log, Notifications
-- External: Invoice Ninja
+- External: Invoice Ninja on use; no startup provider calls.
+- Private `@repo/nuxt-invoice-ninja`, independent packed consumer and authenticated reference integration; pinned disposable 5.13.43 numeric-string draft/GET and isolated unsent zero-tax/discount compatibility verified. Deployment-specific currency/company-hook policy remains application-owned and denies by default. [Contract](capabilities/invoice-ninja/CAPABILITY.md).
 
-### Stripe (`planned`)
+### Stripe (`done`)
 
 - Requires: Jobs, Webhooks
 - Integrates with: Organizations, Authorization, Audit Log, Notifications
-- External: Stripe
+- External: Stripe; optional configuration is lazy and no startup provider calls occur.
+- Implementation: private `@repo/nuxt-stripe`, independent consumer, native Checkout/payment-status routes, trusted scoped bindings, durable ledger/inbox and existing Jobs; [contract](capabilities/stripe/CAPABILITY.md). Packed lifecycle, local SDK/database and full reference/production acceptance passed; no remote Stripe request or financial certification.
 
-### Medusa (`planned`)
+### Medusa (`done`)
 
 - Requires: Jobs, Webhooks
 - Integrates with: Object Storage, Organizations, Search
-- External: Medusa
+- External: Medusa2.21.2 required only when refreshing; optional bridge installed by operator in separate provider project.
+- Private `@repo/nuxt-medusa` and independent packed consumer fixture; application-included scoped schemas, native Admin GETs, existing Jobs reconciliation, application-owned Standard Webhooks bridge and authenticated reference UI. Pinned disposable 2.21.2 backend/subscriber, local protocol/database, packed lifecycle and full reference/production acceptance passed; no payment workflow or production event-infrastructure certification.
+- Contract: [`capabilities/medusa/CAPABILITY.md`](capabilities/medusa/CAPABILITY.md)
 
 ## Operations / UI infrastructure
 

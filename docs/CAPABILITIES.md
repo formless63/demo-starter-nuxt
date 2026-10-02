@@ -6,7 +6,7 @@ The baseline starter always includes Nuxt/Nitro, strict TypeScript, Bun tooling,
 
 A capability is an optional, independently maintained feature package layered onto that baseline. Package source existing under `packages/` does not activate anything. A consumer must keep the workspace dependency, register the Nuxt module, and perform the capability's documented application integration. Unused packages do not become modules, routes, workers, or runtime services merely because their source exists.
 
-The root application deliberately enables every completed capability for continuous integration, recorded in `referenceApplication.enabledCapabilities`. That is separate from `defaultInstalled`: this field means “will a clean consumer/base application receive this capability without explicitly selecting or enabling it?” All current capabilities answer no.
+The root application deliberately enables all seventeen completed capabilities for continuous integration, recorded in `referenceApplication.enabledCapabilities`. That is separate from `defaultInstalled`: this field means “will a clean consumer/base application receive this capability without explicitly selecting or enabling it?” All current capabilities answer no.
 
 `@repo/*` is the private internal workspace scope. The packages are not published, so commands such as `bun add @repo/nuxt-jobs` will not work in an unrelated external repository. A real npm scope will be chosen deliberately if publication happens later.
 
@@ -27,7 +27,12 @@ The root application deliberately enables every completed capability for continu
 | `notifications` | `@repo/nuxt-notifications` | Enabled | No | Jobs | ntfy optional; Email integration optional | [Notifications](../capabilities/notifications/CAPABILITY.md) |
 | `search` | `@repo/nuxt-search` | Enabled | No | None | Existing PostgreSQL | [Search](../capabilities/search/CAPABILITY.md) |
 | `import-export` | `@repo/nuxt-import-export` | Enabled | No | Jobs, Object Storage | Existing PostgreSQL and S3 on use | [Import / Export](../capabilities/import-export/CAPABILITY.md) |
+| `invoice-ninja` | `@repo/nuxt-invoice-ninja` | Enabled | No | Jobs, Webhooks | Invoice Ninja on use | [Invoice Ninja](../capabilities/invoice-ninja/CAPABILITY.md) |
+| `stripe` | `@repo/nuxt-stripe` | Enabled | No | Jobs, Webhooks | Stripe on use | [Stripe](../capabilities/stripe/CAPABILITY.md) |
+| `medusa` | `@repo/nuxt-medusa` | Enabled | No | Jobs, Webhooks | Medusa on use; optional operator bridge | [Medusa](../capabilities/medusa/CAPABILITY.md) |
 | `ops-admin` | `@repo/nuxt-ops-admin` | Enabled | No | None | None; optional provider adapters | [Ops / Admin](../capabilities/ops-admin/CAPABILITY.md) |
+
+All seventeen entries above are `done`. Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/36978353705) passed all 19 jobs at `4478e41f2835bfe1495dab762756b2fec08bd98e`, including all 17 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
 
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
 
@@ -142,3 +147,17 @@ Private `@repo/nuxt-import-export` requires Jobs and Object Storage; PostgreSQL/
 Ops / Admin (`done`) is an optional private `@repo/nuxt-ops-admin` package. Enable with `opsAdmin.application` pointing to an application-owned baseline session resolver/static adapter registry. No service/migration or hard capability dependencies. [Contract](../capabilities/ops-admin/CAPABILITY.md).
 
 Ops reference verification uses `bun run test:ops-reference` after building the root. Its disposable protocol services and temporary source copies prove read-only inspection and independent adapter/full Ops removal; they are test-only, not an application installer.
+
+## Invoice Ninja
+
+[Contract](../capabilities/invoice-ninja/CAPABILITY.md): independent opt-in private package, application-owned Drizzle schemas and native routes. Getter calls read local projections only; reconcile client/invoice explicitly through existing Jobs. Draft policy denies absent actual deployment evidence. Callback possession secret is distinct from a cryptographic body signature. The pinned disposable 5.13.43 backend and generic lifecycle passed; this proves the isolated fixture policy, not arbitrary deployment/company-hook settings.
+
+## Stripe
+
+Stripe v1 is available (`done`): `@repo/nuxt-stripe` requires Jobs and Webhooks; clean consumers remain opt-in. Native routes are application-owned under `/api/integrations/stripe`; the reference page is `/stripe`. The completed generic package lifecycle verifies local SDK/database behavior and retained-data removal. [Stripe contract](../capabilities/stripe/CAPABILITY.md) and [design evaluation](../STRIPE_MODULE_EVALUATION.md) distinguish local SDK compatibility from financial certification.
+
+## Medusa
+
+The reference app explicitly enables private `@repo/nuxt-medusa`; clean consumers default to uninstalled. Requires Jobs and Webhooks. [Provider contract](../capabilities/medusa/CAPABILITY.md) covers bounded scoped Admin reconciliation, the operator-installed application bridge, verification and independent removal. `/integrations/medusa` reads approved local product/order projections; no provider configuration is required for startup.
+
+The pinned disposable Medusa 2.21.2 backend/subscriber and packed lifecycle passed. The fixture uses real event infrastructure and source-verified `order.placed` payloads without invoking checkout/payment workflows; remote production event delivery remains an operator responsibility.
