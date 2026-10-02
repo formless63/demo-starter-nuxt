@@ -1,0 +1,43 @@
+{
+  "name": "@repo/nuxt-rich-text",
+  "version": "0.1.0",
+  "description": "Bounded native Vue rich text with safe SSR and lazy Tiptap editing",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs",
+      "default": "./dist/module.mjs"
+    },
+    "./runtime": {
+      "types": "./dist/runtime/index.d.ts",
+      "import": "./dist/runtime/index.js",
+      "default": "./dist/runtime/index.js"
+    }
+  },
+  "main": "./dist/module.mjs",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev:prepare": "nuxt-module-build prepare && nuxt-module-build build",
+    "prepack": "nuxt-module-build prepare && nuxt-module-build build"
+  },
+  "dependencies": {
+    "@nuxt/kit": "4.5.2",
+    "@tiptap/vue-3": "3.31.4",
+    "@tiptap/core": "3.31.4",
+    "@tiptap/pm": "3.31.4",
+    "@tiptap/starter-kit": "3.31.4"
+  },
+  "peerDependencies": {
+    "nuxt": ">=4.0.0 <5",
+    "vue": ">=3.5.0 <4"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "1.0.3",
+    "nuxt": "4.5.2",
+    "vue": "3.5.43"
+  }
+}

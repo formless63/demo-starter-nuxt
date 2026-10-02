@@ -1,0 +1,19 @@
+# File UI evaluation
+
+Native Nuxt 4.5.2/Vue3.5.43 package with no UI upload dependency. Framework-neutral workflow and lifecycle tests are adapted from the reviewed TanStack File UI tree adaf33a8da7dc14a32719311f9c54e719e0a79c5, but transport, database adapter and UI are native Nuxt/Postgres.js/Vue.
+
+Installed H3 1.15.11 source demonstrates readRawBody buffering and getRequestWebStream lacking flow control. The package implements a bounded Node incoming stream instead, with declared/actual byte limits, pause/resume and cancellation. Backendless startup is preserved. AWS SDK comes from existing Object Storage; the File UI factory explicitly forces one PUT attempt while leaving ordinary Storage defaults unchanged.
+
+No claim of durable memory metadata, lease-based stopped-writer proof, zero orphans or browser cancellation rollback. Root durable metadata and clean consumer fixture boundaries are deliberately distinct. Source security/lifecycle review and exact-head full hosted CI passed; the capability is completed. The Rich Text composition still requires its own independent review and full hosted gate.
+
+## Rich Text / File UI composition verification
+
+The acceptance composition preserves the reviewed Rich Text source `f1bbea44407704973dd2168cda3c23115028c487` and File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` with both heads in its ancestry. Feature runtime is unchanged apart from removal of trailing whitespace in the File UI workflow; fixture/HTTP-script whitespace is also cleaned up. Every pre-existing main lock resolution, SQL/snapshot byte and journal record is retained. The only new application migration is File UI journal idx12 / `0014_file_ui`, snapshot `0012_snapshot.json`. Other capability contracts and paused Identity/Organizations/Authorization scope are unchanged.
+
+Local combined-tree verification passed frozen install with all package preparations, capability/harness checks, 103 agent/governance tests, 89 Rich Text/composition tests, root lint and strict typecheck, production build, and disposable PostgreSQL clean/upgrade migration, ownership/reservation/CAS/restart/retained-receipt checks. The full root Vitest invocation produced 306 passing tests and four failures: three require unavailable Docker, while the existing standalone Jobs telemetry export assertion also fails in isolation on the unchanged reviewed Rich Text worktree. No full local pass is claimed. Native provider/browser/production acceptance still requires the new exact-head hosted CI. The resource-bounded successful build used Node heap 3072 MiB and `RAYON_NUM_THREADS=2`, `UV_THREADPOOL_SIZE=2`, `GOMAXPROCS=2`; initial default preparation heap exhaustion and an unbounded-worker build SIGKILL were recovered without source changes.
+
+Composition review found that the former root Rich Text test filename (`rich-text.spec.ts`) did not match root Playwright's `**/*.e2e.ts`. It is now renamed without changing its test body, and a governance test runs actual Playwright CLI discovery and requires both `rich-text.e2e.ts` and `file-ui.e2e.ts` in the application project. Historical Rich Text packed browser coverage passed, but historical root CI success did not execute that previously undiscovered root test. This composition's hosted development and production browser runs must establish the corrected root coverage.
+
+## Source completion gate
+
+File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040678932), including packed native/provider/browser/removal and root application/production gates. This Rich Text / File UI composition records 23 completed opt-in, reference-enabled capabilities; its own exact-head full CI and independent composition review are required before acceptance.

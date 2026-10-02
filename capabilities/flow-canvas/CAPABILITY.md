@@ -1,6 +1,6 @@
 # Flow / Canvas
 
-Status: **in-progress**. `defaultInstalled: false`. Private package `@repo/nuxt-flow-canvas`; no hard capability dependencies. Realtime, Object Storage and Audit Log remain optional application integrations. No migrations, service, network, autosave, layout engine, workflow execution or collaboration protocol.
+Status: **done**, based on source CI and independent review. `defaultInstalled: false`. Private package `@repo/nuxt-flow-canvas`; no hard capability dependencies. Realtime, Object Storage and Audit Log remain optional application integrations. No migrations, service, network, autosave, layout engine, workflow execution or collaboration protocol.
 
 ## Install and ownership
 
@@ -18,8 +18,12 @@ Closed v1 fields: `schemaVersion:1`, nodes `{id,kind:'default',position:{x,y},la
 
 `/flow-test` demonstrates two independent editors and application-owned synthetic async save/load, repeated requests, failure/dirty preservation, stale edits/record switches, cancellation and unmount. This is an explicit in-memory test example, not a persistence backend.
 
-Run `bun run packages:test flow-canvas`: generic isolated tarball installation, strict types/build, shipped graph/SSR/browser contract, removal and post-removal types/build. The module-owned optimizeDeps registration merges at Nuxt setup time, preserving caller Vite settings. Root production browser tests await public Nuxt hydration. Hosted exact-head browser/lifecycle/full-CI gates are mandatory; blocked local sockets do not waive them. Do not mark done before all gates pass.
+Run `bun run packages:test flow-canvas`: generic isolated tarball installation, strict types/build, shipped graph/SSR/browser contract, removal and post-removal types/build. The module-owned optimizeDeps registration merges at Nuxt setup time, preserving caller Vite settings. Root production browser tests await public Nuxt hydration. Hosted exact-head browser/lifecycle/full-CI gates are mandatory; blocked local sockets do not waive them. Combined revisions still require their own full exact-head CI before merge.
 
 ## Removal
 
 Remove the explicit root module and dependency, application-owned `app/pages/flow-test.vue` and `server/api/flow-reference.get.ts`, reference enablement and corresponding tests; run Bun install, typecheck and build. Consumers remove their imported component/helper usages and module entry. No database or external data is touched. Retain any application-owned graph documents according to the application's own retention policy.
+
+## Accepted source and composition
+
+Flow / Canvas source `1999dab23987aa90efa62411275b7075b974d593` passed [all 24 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040851945), including the real native browser and independent packed install/runtime/removal/rebuild gates, and independent review. The combined 24-capability tree adds accepted main `bf15830889757b76b44a71fac80461deaca22cd1`; its full exact-head CI remains pending.

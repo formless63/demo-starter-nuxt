@@ -1,0 +1,31 @@
+# Disposable hosted verification only. No production services or external endpoints.
+services:
+  rustfs:
+    image: rustfs/rustfs:1.0.0
+    profiles: [rustfs]
+    command: ["/data"]
+    environment:
+      RUSTFS_ACCESS_KEY: file-ui-synthetic-access
+      RUSTFS_SECRET_KEY: file-ui-synthetic-secret-only
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CONSOLE_ENABLE: "false"
+      RUSTFS_OBS_LOGGER_LEVEL: error
+      RUSTFS_OBS_LOG_DIRECTORY: /data/logs
+    ports: ["127.0.0.1::9000"]
+    volumes: [rustfs-data:/data]
+  garage:
+    image: dxflrs/garage:v2.4.1
+    profiles: [garage]
+    command: ["/garage", "server", "--single-node", "--default-bucket"]
+    environment:
+      GARAGE_DEFAULT_ACCESS_KEY: GK0123456789abcdef0123456789abcdef
+      GARAGE_DEFAULT_SECRET_KEY: file-ui-synthetic-secret-only
+      GARAGE_DEFAULT_BUCKET: file-ui-fixture
+      RUST_LOG: warn
+    ports: ["127.0.0.1::3900"]
+    volumes:
+      - ./garage.toml:/etc/garage.toml:ro
+      - garage-data:/var/lib/garage
+volumes:
+  rustfs-data:
+  garage-data:
