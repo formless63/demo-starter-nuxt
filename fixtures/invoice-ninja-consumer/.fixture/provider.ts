@@ -16,7 +16,11 @@ const temporary = await mkdtemp(join(tmpdir(), 'invoice-native-wire-'))
 function docker(args: string[], timeout = 180_000) {
   const result = spawnSync('docker', args, { encoding: 'utf8', timeout, maxBuffer: 4 * 1024 * 1024 })
   // Never echo command arguments, environment values, provider bodies or tokens.
-  if (result.status !== 0) throw new Error(`Native Invoice Ninja fixture Docker ${args[0]} failed (exit ${result.status ?? 'unavailable'})`)
+  if (result.status !== 0) {
+    const diagnostic = `${result.stdout}\n${result.stderr}`.split('\n').find(line => /^GS_NATIVE_WIRE_FAILURE stage=[a-z_]+ code=[a-z_]+$/.test(line))
+    if (diagnostic) console.error(diagnostic)
+    throw new Error(`Native Invoice Ninja fixture Docker ${args[0]} failed (exit ${result.status ?? 'unavailable'})`)
+  }
   return result.stdout.trim()
 }
 async function waitFor(check: () => boolean | Promise<boolean>, label: string, milliseconds = 120_000) {
