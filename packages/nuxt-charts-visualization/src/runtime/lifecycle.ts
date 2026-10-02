@@ -5,6 +5,7 @@ export interface ChartsLifecycleDeps<Chart, Host, Option> {
   nextTick: () => Promise<void>
   setOption: (chart: Chart, option: Option) => void
   observe: (host: Host, onResize: () => void) => { disconnect: () => void }
+  resize?: (chart: Chart) => void
   dispose: (chart: Chart) => void
 }
 
@@ -36,7 +37,7 @@ export function createChartsLifecycle<Chart, Host, Option>(deps: ChartsLifecycle
       chart = undefined
       return
     }
-    observer = deps.observe(host, () => undefined)
+    observer = deps.observe(host, () => { if (chart && deps.resize) deps.resize(chart) })
   }
 
   const unmount = () => {

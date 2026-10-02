@@ -44,6 +44,7 @@ const lifecycleController = createChartsLifecycle<ECharts, HTMLElement, EChartsO
   nextTick,
   setOption: (instance, value) => instance.setOption(value, { notMerge: true, lazyUpdate: false }),
   observe: (element, onResize) => { const observer = new ResizeObserver(onResize); observer.observe(element); return observer },
+  resize: instance => instance.resize(),
   dispose: instance => instance.dispose(),
 })
 
@@ -83,7 +84,7 @@ onMounted(() => {
   void lifecycleController.mount()
 })
 
-watch(() => [props.kind, props.labels, props.series, props.animated], () => void render(), { deep: true })
+watch(() => [props.kind, props.labels, props.series, props.animated], () => void lifecycleController.render(), { deep: true })
 onBeforeUnmount(() => {
   mounted.value = false
   lifecycle += 1
