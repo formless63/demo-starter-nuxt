@@ -1,4 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
+import { isIP } from 'node:net'
 import { InvoiceNinjaError, InvoiceNinjaRejection, safeError } from './errors'
 import { parse, opaqueId, hasControls } from './validation'
 export interface Connection { baseUrl: string, apiToken: string, webhookSecret?: string, previousWebhookSecret?: string }
@@ -7,12 +8,12 @@ export function resolveEnvironmentConnection(): Connection {
   if (!baseUrl || !apiToken) throw new InvoiceNinjaError('unconfigured')
   return { baseUrl, apiToken, webhookSecret: process.env.INVOICE_NINJA_WEBHOOK_SECRET, previousWebhookSecret: process.env.INVOICE_NINJA_WEBHOOK_SECRET_PREVIOUS }
 }
-export function validateConnection(connection: Connection, allowLocal = process.env.NODE_ENV !== 'production') {
+export function validateConnection(connection: Connection, allowLocal = ['development', 'test'].includes(process.env.NODE_ENV ?? '')) {
   try {
     const url = new URL(connection.baseUrl)
     // URL normalization can convert nonliteral numeric hostnames; inspect the original authority too.
     const originalHost = /^[a-z]+:\/\/([^/?#]+)/i.exec(connection.baseUrl)?.[1]?.replace(/:\d+$/, '')
-    const literalLoopback = originalHost === '[::1]' || originalHost === '127.0.0.1'
+    const literalLoopback = originalHost === '[::1]' || (typeof originalHost === 'string' && isIP(originalHost) === 4 && originalHost.startsWith('127.'))
     if (url.username || url.password || url.hash || url.search || (url.protocol !== 'https:' && !(allowLocal && url.protocol === 'http:' && literalLoopback))) throw new Error()
     if (!connection.apiToken || Buffer.byteLength(connection.apiToken) > 8192 || hasControls(connection.apiToken)) throw new Error()
     return url
@@ -24,6 +25,12 @@ export function operationSignal(signal: AbortSignal | undefined, milliseconds: n
 }
 export function checkSignal(signal?: AbortSignal) {
   if (signal?.aborted) throw new InvoiceNinjaError(signal.reason?.name === 'TimeoutError' ? 'deadline_exceeded' : 'cancelled')
+}
+export async function awaitWithSignal<T>(signal: AbortSignal, action: () => Promise<T>): Promise<T> {
+  checkSignal(signal)
+  let abort: (() => void) | undefined
+  const cancelled = new Promise<never>((_, reject) => { abort = () => { try { checkSignal(signal) } catch (error) { reject(error) } }; signal.addEventListener('abort', abort, { once: true }) })
+  try { return await Promise.race([action(), cancelled]) } finally { if (abort) signal.removeEventListener('abort', abort) }
 }
 export async function readBytes(stream: ReadableStream<Uint8Array> | null, maximum: number, signal: AbortSignal) {
   if (!stream) return Buffer.alloc(0)
@@ -41,7 +48,7 @@ export async function readBytes(stream: ReadableStream<Uint8Array> | null, maxim
     }
     return Buffer.concat(chunks, size)
   }
-  finally { signal.removeEventListener('abort', cancel); reader.releaseLock() }
+  finally { if (signal.aborted) cancel(); signal.removeEventListener('abort', cancel); reader.releaseLock() }
 }
 /** Preserve JSON numeric lexemes before any binary floating point conversion. */
 export function parseExactJSON(bytes: Uint8Array): unknown {

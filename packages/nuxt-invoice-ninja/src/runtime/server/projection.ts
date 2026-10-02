@@ -25,8 +25,8 @@ export function projectEntity(binding: Binding, value: unknown, currency: string
   let sourceUpdatedAt: string | null = null
   // Native updated_at is Unix seconds; exact integral conversion within the Date range only.
   if (typeof data.updated_at === 'string' && /^\d{1,13}$/.test(data.updated_at)) {
-    const ms = BigInt(data.updated_at) * 1000n
-    if (ms <= 8640000000000000n) sourceUpdatedAt = new Date(Number(ms)).toISOString()
+    const ms = BigInt(data.updated_at) * BigInt(1000)
+    if (ms <= BigInt('8640000000000000')) sourceUpdatedAt = new Date(Number(ms)).toISOString()
   }
   return { bindingId: binding.id, remoteId: binding.remoteId, number, status: statuses[String(data.status_id)] ?? 'unknown', currency,
     amount: outputDecimal(data.amount), balance: outputDecimal(data.balance), sourceUpdatedAt, syncedAt, deleted: data.is_deleted === true }
