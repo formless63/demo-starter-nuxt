@@ -5,7 +5,7 @@
   "description": "Accessible Nuxt chart primitives with semantic SSR fallbacks",
   "type": "module",
   "main": "./dist/module.mjs",
-  "exports": { ".": { "types": "./dist/types.d.mts", "import": "./dist/module.mjs", "default": "./dist/module.mjs" } },
+  "exports": { ".": { "types": "./dist/types.d.mts", "import": "./dist/module.mjs", "default": "./dist/module.mjs" }, "./runtime/components/ChartsVisualization.vue": "./dist/runtime/components/ChartsVisualization.vue" },
   "files": ["dist"],
   "engines": { "node": ">=24.0.0" },
   "scripts": { "dev:prepare": "nuxt-module-build prepare && nuxt-module-build build", "prepack": "nuxt-module-build prepare && nuxt-module-build build" },
