@@ -5,15 +5,15 @@ import { resolve } from 'node:path'
 
 const root = resolve(import.meta.dir, '../..')
 const catalog = JSON.parse(readFileSync(resolve(root, 'capabilities/catalog.json'), 'utf8'))
-const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export', 'ops-admin']
+const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export', 'ops-admin', 'invoice-ninja', 'stripe', 'medusa']
 
-test('completed packages and authored provider fixtures are explicitly enabled and discovered by the generic matrix', () => {
+test('all seventeen completed packages are explicitly enabled and discovered by the generic matrix', () => {
   const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
   const nuxt = readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')
   expect(catalog.capabilities.filter((entry: { status: string }) => entry.status === 'done').map((entry: { id: string }) => entry.id).sort()).toEqual([...completed].sort())
-  const verifyingProviders = catalog.capabilities.filter((entry: { id: string, status: string }) => ['invoice-ninja', 'stripe', 'medusa'].includes(entry.id) && entry.status === 'in-progress').map((entry: { id: string }) => entry.id)
-  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed, ...verifyingProviders].sort())
-  for (const id of [...completed, ...verifyingProviders]) {
+  expect(completed).toHaveLength(17)
+  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed].sort())
+  for (const id of completed) {
     const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === id)
     expect(entry.defaultInstalled).toBe(false)
     expect(manifest.dependencies[entry.packageName]).toBe('workspace:*')
@@ -23,7 +23,7 @@ test('completed packages and authored provider fixtures are explicitly enabled a
   expect(result.status).toBe(0)
   const authored = catalog.capabilities.filter((entry: { status: string, packageTest?: unknown, packagePath?: string }) => ['done', 'in-progress'].includes(entry.status) && entry.packagePath && entry.packageTest).map((entry: { id: string }) => entry.id)
   expect(JSON.parse(result.stdout).capability.sort()).toEqual(authored.sort())
-  expect(authored).toEqual(expect.arrayContaining(['invoice-ninja', 'stripe', 'medusa']))
+  expect(authored.sort()).toEqual([...completed].sort())
 })
 
 test('Webhooks and Notifications require Jobs; Audit, Cache and Realtime fixtures remain independent', () => {
