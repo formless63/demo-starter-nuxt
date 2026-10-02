@@ -15,6 +15,7 @@ const props = withDefaults(defineProps<{
   height?: string
   animated?: boolean
 }>(), { kind: 'line', description: '', height: '20rem', animated: true })
+const emit = defineEmits<{ enhancementError: [message: string] }>()
 
 const attrs = useAttrs()
 const host = ref<HTMLElement | null>(null)
@@ -67,7 +68,9 @@ onMounted(() => {
   motionListener = event => { reducedMotion.value = event.matches; void lifecycleController.render() }
   mediaQuery.addEventListener('change', motionListener)
   void lifecycleController.mount().catch(error => {
-    console.error('[charts-visualization] client enhancement failed', error instanceof Error ? error.message : 'unknown error')
+    const message = error instanceof Error ? error.message : 'unknown error'
+    emit('enhancementError', message)
+    console.error('[charts-visualization] client enhancement failed', message)
   })
 })
 

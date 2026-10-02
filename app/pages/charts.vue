@@ -11,6 +11,7 @@ const revision = ref(0)
 const labels = computed(() => revision.value ? ['Jan', 'Feb', 'Mar'] : ['Jan', 'Feb'])
 const values = computed(() => empty.value ? [] : revision.value ? [12, 18, 9] : [10, 15])
 const chartState = ref({ type: '', data: [] as unknown[], animation: true, area: false, width: 0 })
+const chartError = ref('')
 let stateTimer: ReturnType<typeof setInterval> | undefined
 function isRecord(value: unknown): value is Record<string, unknown> { return typeof value === 'object' && value !== null }
 
@@ -52,8 +53,8 @@ onBeforeUnmount(() => { if (stateTimer) clearInterval(stateTimer) })
       <button type="button" @click="mounted = !mounted">Toggle mount</button>
     </div>
     <p v-if="loading" role="status">Loading chart data…</p>
-    <output data-echarts-state class="sr-only">{{ JSON.stringify(chartState) }}</output>
-    <ChartsVisualization v-if="mounted" id="primary-chart" :kind="kind" title="Revenue" description="Monthly revenue" :labels="labels" :series="[{ name: 'Revenue', data: values } ]" />
+    <output data-echarts-state class="sr-only">{{ JSON.stringify({ ...chartState, error: chartError }) }}</output>
+    <ChartsVisualization v-if="mounted" id="primary-chart" :kind="kind" title="Revenue" description="Monthly revenue" :labels="labels" :series="[{ name: 'Revenue', data: values } ]" @enhancement-error="chartError = $event" />
     <ChartsVisualization v-if="mounted" kind="bar" title="Users" :labels="labels" :series="[{ name: 'Users', data: values } ]" />
   </main>
 </template>
