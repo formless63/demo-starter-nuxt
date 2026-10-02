@@ -10,7 +10,7 @@ const empty = ref(false)
 const revision = ref(0)
 const labels = computed(() => revision.value ? ['Jan', 'Feb', 'Mar'] : ['Jan', 'Feb'])
 const values = computed(() => empty.value ? [] : revision.value ? [12, 18, 9] : [10, 15])
-const chartState = ref({ type: '', data: [] as unknown[], animation: true, width: 0 })
+const chartState = ref({ type: '', data: [] as unknown[], animation: true, area: false, width: 0 })
 let stateTimer: ReturnType<typeof setInterval> | undefined
 
 function startUpdate() {
@@ -31,6 +31,7 @@ onMounted(() => {
       type: String(option?.series?.[0]?.type ?? ''),
       data: (option?.series?.[0]?.data ?? []) as unknown[],
       animation: option?.animation !== false,
+      area: option?.series?.[0]?.areaStyle !== undefined,
       width: instance?.getWidth() ?? 0,
     }
   }, 25)
