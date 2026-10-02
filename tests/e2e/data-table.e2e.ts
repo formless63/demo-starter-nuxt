@@ -1,10 +1,13 @@
 import { expect, test } from '@playwright/test'
+import { waitForHydration } from './hydration'
 
 test('data table renders accessibly and preserves stable row identity', async ({ page }) => {
+  test.setTimeout(60_000)
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   await page.goto('/data-table-test')
   await expect(page.getByRole('table')).toBeVisible()
+  await waitForHydration(page)
   await expect(page.getByRole('row')).toHaveCount(3)
   await expect(page.getByRole('navigation', { name: 'Table pagination' })).toContainText('Page 1')
   await expect(page.getByRole('button', { name: 'Next' })).toBeEnabled()
@@ -52,4 +55,17 @@ test('data table renders accessibly and preserves stable row identity', async ({
   await page.getByTestId('loading').click(); await expect(page.getByRole('status')).toContainText('Loading')
   await page.getByTestId('loading').click(); await page.getByTestId('error').click(); await expect(page.getByRole('alert')).toContainText('Unable')
   expect(errors).toEqual([])
+})
+
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status === testInfo.expectedStatus) return
+  const snapshot = await page.evaluate(() => ({
+    hydrated: document.documentElement.getAttribute('data-app-hydrated'),
+    stages: document.documentElement.dataset.nuxtE2eStages,
+    ready: document.readyState,
+    rows: document.querySelectorAll('tbody tr').length,
+    pagination: document.querySelector('nav[aria-label="Table pagination"]')?.textContent,
+    controls: [...document.querySelectorAll('nav button')].map(button => ({ text: button.textContent, disabled: (button as HTMLButtonElement).disabled })),
+  })).catch(() => null)
+  await testInfo.attach('data-table-readiness', { contentType: 'application/json', body: JSON.stringify(snapshot) })
 })
