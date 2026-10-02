@@ -7,12 +7,12 @@ const root = resolve(import.meta.dir, '../..')
 const catalog = JSON.parse(readFileSync(resolve(root, 'capabilities/catalog.json'), 'utf8'))
 const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export', 'ops-admin']
 
-test('all fourteen completed packages are explicitly enabled and discovered by the generic matrix', () => {
+test('fourteen completed packages and the authored Medusa fixture are enabled and discovered by the generic matrix', () => {
   const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
   const nuxt = readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')
   expect(catalog.capabilities.filter((entry: { status: string }) => entry.status === 'done').map((entry: { id: string }) => entry.id).sort()).toEqual([...completed].sort())
-  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed].sort())
-  for (const id of completed) {
+  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed, 'medusa'].sort())
+  for (const id of [...completed, 'medusa']) {
     const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === id)
     expect(entry.defaultInstalled).toBe(false)
     expect(manifest.dependencies[entry.packageName]).toBe('workspace:*')
@@ -20,7 +20,7 @@ test('all fourteen completed packages are explicitly enabled and discovered by t
   }
   const result = spawnSync('bun', ['scripts/packages.ts', 'matrix'], { cwd: root, encoding: 'utf8' })
   expect(result.status).toBe(0)
-  expect(JSON.parse(result.stdout).capability.sort()).toEqual([...completed].sort())
+  expect(JSON.parse(result.stdout).capability.sort()).toEqual([...completed, 'medusa'].sort())
 })
 
 test('Webhooks and Notifications require Jobs; Audit, Cache and Realtime fixtures remain independent', () => {
