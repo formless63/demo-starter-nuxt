@@ -6,7 +6,10 @@ export function browserDiagnostics(page: Page) {
     const code = message.includes('Failed to fetch dynamically imported module') ? 'dynamic_import_failed'
       : message.includes('does not provide an export named') ? 'missing_module_export'
         : message.includes('Cannot access') ? 'module_initialization_failed' : 'unclassified_page_error'
-    console.info(`[browser-diagnostic] ${code}`)
+    const match = /https?:\/\/[^\s]+/.exec(message)
+    let filename = 'unknown'
+    if (match) { try { filename = new URL(match[0]!).pathname.split('/').at(-1)!.replace(/[^a-zA-Z0-9_.-]/g, '_') } catch { /* no raw message */ } }
+    console.info(`[browser-diagnostic] ${code} file=${filename}`)
   })
   page.on('response', response => {
     if (response.request().resourceType() !== 'script' || response.status() < 400) return
