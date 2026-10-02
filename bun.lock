@@ -10,6 +10,7 @@
         "@repo/nuxt-api": "workspace:*",
         "@repo/nuxt-audit-log": "workspace:*",
         "@repo/nuxt-cache": "workspace:*",
+        "@repo/nuxt-data-table": "workspace:*",
         "@repo/nuxt-email": "workspace:*",
         "@repo/nuxt-import-export": "workspace:*",
         "@repo/nuxt-jobs": "workspace:*",
@@ -105,6 +106,18 @@
         "vue-tsc": "3.1.7",
       },
     },
+    "fixtures/data-table-consumer": {
+      "name": "data-table-consumer-fixture",
+      "dependencies": {
+        "@repo/nuxt-data-table": "workspace:*",
+        "nuxt": "4.5.2",
+        "vue": "3.5.43",
+      },
+      "devDependencies": {
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7",
+      },
+    },
     "fixtures/email-consumer": {
       "name": "email-consumer",
       "dependencies": {
@@ -130,6 +143,7 @@
       "devDependencies": {
         "@types/node": "24.10.1",
         "drizzle-kit": "0.31.11",
+        "pg-boss": "12.35.0",
         "typescript": "5.9.3",
         "vue-tsc": "3.1.7",
       },
@@ -313,6 +327,22 @@
       "devDependencies": {
         "@nuxt/module-builder": "1.0.3",
         "nuxt": "4.5.2",
+      },
+      "peerDependencies": {
+        "nuxt": ">=4.0.0 <5",
+      },
+    },
+    "packages/nuxt-data-table": {
+      "name": "@repo/nuxt-data-table",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+        "@tanstack/vue-table": "9.2.4",
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "nuxt": "4.5.2",
+        "vue": "3.5.43",
       },
       "peerDependencies": {
         "nuxt": ">=4.0.0 <5",
@@ -989,6 +1019,8 @@
 
     "@repo/nuxt-cache": ["@repo/nuxt-cache@workspace:packages/nuxt-cache"],
 
+    "@repo/nuxt-data-table": ["@repo/nuxt-data-table@workspace:packages/nuxt-data-table"],
+
     "@repo/nuxt-email": ["@repo/nuxt-email@workspace:packages/nuxt-email"],
 
     "@repo/nuxt-import-export": ["@repo/nuxt-import-export@workspace:packages/nuxt-import-export"],
@@ -1227,7 +1259,13 @@
 
     "@tailwindcss/vite": ["@tailwindcss/vite@4.3.3", "", { "dependencies": { "@tailwindcss/node": "4.3.3", "@tailwindcss/oxide": "4.3.3", "tailwindcss": "4.3.3" }, "peerDependencies": { "vite": "^5.2.0 || ^6 || ^7 || ^8" } }, "sha512-yYU8cogLeSh/ms2jh8Fj7jaba/EWa7Ja6GoUqYZaraEuCI5YS6ms6ObZgjjedm+jm6XZjdNRWBpPP6Z86oOxcw=="],
 
+    "@tanstack/store": ["@tanstack/store@0.11.2", "", {}, "sha512-sJ4mjol8uQsHV0gOJzzjwXfh2Fwm+Sz0+8deqiTm4jGbMdjzNSW+xZCFm0kUa870uhd8yi+DpKnZb5Kc4apa0Q=="],
+
+    "@tanstack/table-core": ["@tanstack/table-core@9.2.4", "", { "dependencies": { "@tanstack/store": "^0.11.1" } }, "sha512-GwdDyGGr6UXAtubF14yAwcXvdaogqfsQgIk89Suebjxob/Rjq2xvfmXsjDF1rQmKmhHsJm9TOY7myxv3i6geJw=="],
+
     "@tanstack/virtual-core": ["@tanstack/virtual-core@3.17.11", "", {}, "sha512-+ILjvtHup6Y2hzQ6YzwMgX1Q+oQpxEGOXCEsCNaPoIP0VxMbizIBTmYTDtkerkIQS8/CbP1BRuyt8V/8BCsy1g=="],
+
+    "@tanstack/vue-table": ["@tanstack/vue-table@9.2.4", "", { "dependencies": { "@tanstack/store": "^0.11.1", "@tanstack/table-core": "9.2.4" }, "peerDependencies": { "vue": ">=3.2" } }, "sha512-GSD6ZkeQvADs6u9KUyhUuiD+qYgA+Lt6hTBDSEadCBIbC8q2SaoHzseLwgDKVUnRClTIMj9+NwCEF+Gp3P7ChQ=="],
 
     "@tanstack/vue-virtual": ["@tanstack/vue-virtual@3.13.39", "", { "dependencies": { "@tanstack/virtual-core": "3.17.11" }, "peerDependencies": { "vue": "^2.7.0 || ^3.0.0" } }, "sha512-AG8sI+6nfrDvN6ixuHJL9LaJTf3//0V5VITZYW3UOaIuSVexnEzsbMu4LH/JhMfRTxwhUXPnLqkl1DlzkZbRtg=="],
 
@@ -1612,6 +1650,8 @@
     "csv-stringify": ["csv-stringify@6.9.0", "", {}, "sha512-6b3e29CILFfSQ2nDRuZMRROzQOpPuJ+s8zPB5H7eK5ncXBbFOyVuRLU5Sx/zAUmVri3Ly49GyC8NEme4SVSAbA=="],
 
     "cva": ["cva@1.0.0-beta.4", "", { "dependencies": { "clsx": "^2.1.1" }, "peerDependencies": { "typescript": ">= 4.5.5" }, "optionalPeers": ["typescript"] }, "sha512-F/JS9hScapq4DBVQXcK85l9U91M6ePeXoBMSp7vypzShoefUBxjQTo3g3935PUHgQd+IW77DjbPRIxugy4/GCQ=="],
+
+    "data-table-consumer-fixture": ["data-table-consumer-fixture@workspace:fixtures/data-table-consumer"],
 
     "db0": ["db0@0.3.4", "", { "peerDependencies": { "@electric-sql/pglite": "*", "@libsql/client": "*", "better-sqlite3": "*", "drizzle-orm": "*", "mysql2": "*", "sqlite3": "*" }, "optionalPeers": ["@electric-sql/pglite", "@libsql/client", "better-sqlite3", "drizzle-orm", "mysql2", "sqlite3"] }, "sha512-RiXXi4WaNzPTHEOu8UPQKMooIbqOEyqA1t7Z6MsdxSCeb8iUC9ko3LcmsLmeUt2SM5bctfArZKkRQggKZz7JNw=="],
 
