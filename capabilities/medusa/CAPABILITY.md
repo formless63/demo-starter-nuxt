@@ -1,6 +1,6 @@
 # Medusa v1
 
-`@repo/nuxt-medusa` is an independent private Nuxt4 package. Hard dependencies: Jobs and Webhooks. Optional application wiring: Object Storage, Organizations and Search. Clean consumers retain `defaultInstalled:false`; the root reference app explicitly enables Medusa. No provider configuration is needed to install/build/start the app or worker.
+`@repo/nuxt-medusa` is a completed (`done`) independent private Nuxt4 package. Hard dependencies: Jobs and Webhooks. Optional application wiring: Object Storage, Organizations and Search. Clean consumers retain `defaultInstalled:false`; the root reference app explicitly enables Medusa. No provider configuration is needed to install/build/start the app or worker.
 
 ## Install and server wiring
 
@@ -46,7 +46,7 @@ Generic `bun run packages:test medusa` owns private pack/install/type/build/runt
 
 Mocked wire fixtures prove scope/forgery, canonical cursors, secret rotation/replay/tampering/duplicates, out-of-order authoritative refresh, body/deadline/cancellation bounds, rollback, current authorization, explicit recovery, queue/public privacy and removal retention. Separate pinned backend fixture installs Medusa2.21.2 in an isolated temporary project/database with telemetry disabled. It seeds local products/orders, inspects native Basic Admin GETs/exact major-unit totals, runs the exact operator subscriber artifact, and couples received hints to existing Jobs/scoped projection updates. Order.placed payload is checked against pinned complete-cart source and emitted through the real native event infrastructure; no checkout/payment workflow or payment provider is invoked. This is disposable compatibility proof, not financial or production event-infrastructure certification.
 
-Current work remains in-progress until all exact-SHA hosted checks pass. No live/sandbox provider service, Cloud account, remote registration, provisioning, payment, legal acceptance, main merge, deployment or registry publication is part of verification.
+Completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/36978353705) passed all 19 jobs at `4478e41f2835bfe1495dab762756b2fec08bd98e`, including all 17 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. No live/sandbox provider service, Cloud account, remote registration, provisioning, payment, legal acceptance, main merge, deployment or registry publication is part of verification.
 
 ## Remove independently
 
@@ -55,4 +55,4 @@ Current work remains in-progress until all exact-SHA hosted checks pass. No live
 3. Remove the Nuxt module/root dependency and update reference catalog enablement. Keep tables/schema/migrations and bindings/projections/operations/inbox rows/history. Rebuild to prove routes and runtime handlers are absent.
 4. Remote bridge deregistration, credential revocation, resource deletion and data-retention policy are separate explicit operator actions. Capability removal never performs them.
 
-The feature journal's contiguous idx8 and coherent snapshot are provisional against the frozen main; SQL prefix0013 is reserved. Parent integration preserves the original eight histories/authored SQL bytes and regenerates combined metadata in Invoice/Stripe/Medusa order. Slot0008 remains unused for SQL; Identity remains separately paused.
+The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused and Identity remains separately paused.

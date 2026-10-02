@@ -1048,7 +1048,7 @@
       "id": "invoice-ninja",
       "displayName": "Invoice Ninja",
       "kind": "business-integration",
-      "status": "in-progress",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [
         "jobs",
@@ -1110,7 +1110,7 @@
       "id": "stripe",
       "displayName": "Stripe",
       "kind": "business-integration",
-      "status": "in-progress",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [
         "jobs",
@@ -1154,7 +1154,7 @@
         "STRIPE_ACCOUNT_ID"
       ],
       "migrations": [
-        "Additive application-owned Stripe tables; reserved SQL 0011/0012"
+        "0011_stripe_v1 and 0012_stripe_receipt_conflicts additive application schema"
       ],
       "runtimeProcesses": [
         "Nitro application",
@@ -1182,7 +1182,7 @@
       "id": "medusa",
       "displayName": "Medusa",
       "kind": "business-integration",
-      "status": "in-progress",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [
         "jobs",
