@@ -4,8 +4,8 @@ import { mergeChartsOptimizeDeps } from '../../packages/nuxt-charts-visualizatio
 
 describe('charts lifecycle interruption', () => {
   it('owns chart prebundle entries while preserving and deduplicating consumer entries', () => {
-    const config = { optimizeDeps: { include: ['consumer-entry', 'echarts/core'] } }
-    expect(mergeChartsOptimizeDeps(config)).toEqual({ optimizeDeps: { include: ['consumer-entry', 'echarts/core', 'echarts/renderers', 'echarts/components', 'echarts/charts'] } })
+    const config = { optimizeDeps: { include: ['consumer-entry', 'echarts/core'], exclude: ['consumer-exclusion'], noDiscovery: true } }
+    expect(mergeChartsOptimizeDeps(config)).toEqual({ optimizeDeps: { include: ['consumer-entry', 'echarts/core', 'echarts/renderers', 'echarts/components', 'echarts/charts'], exclude: ['consumer-exclusion'], noDiscovery: true } })
     expect(mergeChartsOptimizeDeps({})).toEqual({ optimizeDeps: { include: ['echarts/core', 'echarts/renderers', 'echarts/components', 'echarts/charts'] } })
   })
 

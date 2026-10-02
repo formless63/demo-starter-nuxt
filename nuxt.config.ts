@@ -9,6 +9,9 @@ export default defineNuxtConfig({
     plugins: [tailwindcss()],
     optimizeDeps: {
       include: [
+        // Nuxt's excluded runtime imports these diagnostic entries. Discovering
+        // them after the first client request invalidates the cold dev bundle.
+        'errx', 'nostics', 'nostics/formatters/ansi', 'nostics/reporters/dev',
         '@tabler/icons-vue', '@vueuse/core', 'better-auth/vue', 'better-auth/client/plugins',
         'class-variance-authority', 'clsx', 'reka-ui', 'tailwind-merge', 'vue-sonner', 'zod',
       ],
