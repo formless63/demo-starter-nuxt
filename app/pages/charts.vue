@@ -10,9 +10,11 @@ const revision = ref(0)
 const labels = computed(() => revision.value ? ['Jan', 'Feb', 'Mar'] : ['Jan', 'Feb'])
 const values = computed(() => empty.value ? [] : revision.value ? [12, 18, 9] : [10, 15])
 
-async function replaceData() {
+function startUpdate() {
   loading.value = true
-  await new Promise(resolve => setTimeout(resolve, 200))
+}
+
+function replaceData() {
   revision.value++
   loading.value = false
 }
@@ -23,7 +25,8 @@ async function replaceData() {
     <h1 class="text-2xl font-bold">Charts visualization</h1>
     <div class="flex flex-wrap gap-2">
       <button v-for="option in ['line', 'bar', 'area']" :key="option" type="button" :aria-pressed="kind === option" @click="kind = option as typeof kind">{{ option }}</button>
-      <button type="button" @click="replaceData">Replace data</button>
+      <button type="button" @click="startUpdate">Start update</button>
+      <button type="button" @click="replaceData">Apply update</button>
       <button type="button" @click="empty = !empty">Toggle empty</button>
       <button type="button" @click="mounted = !mounted">Toggle mount</button>
     </div>
