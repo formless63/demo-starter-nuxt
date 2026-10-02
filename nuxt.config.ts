@@ -7,7 +7,7 @@ export default defineNuxtConfig({
   plugins: process.env.NUXT_E2E_DIAGNOSTICS === 'true'
     ? [`${import.meta.dirname}/tests/e2e/fixtures/hydration-diagnostics.client.ts`]
     : [],
-  modules: ['@nuxt/eslint', '@nuxtjs/color-mode', 'shadcn-nuxt', '@repo/nuxt-charts-visualization', '@repo/nuxt-jobs', '@repo/nuxt-api', '@repo/nuxt-observability', '@repo/nuxt-storage', '@repo/nuxt-email', '@repo/nuxt-webhooks', '@repo/nuxt-audit-log', '@repo/nuxt-cache', '@repo/nuxt-realtime', '@repo/nuxt-notifications', '@repo/nuxt-search', '@repo/nuxt-ai', '@repo/nuxt-import-export', '@repo/nuxt-ops-admin'],
+  modules: ['@nuxt/eslint', '@nuxtjs/color-mode', 'shadcn-nuxt', '@repo/nuxt-charts-visualization', '@repo/nuxt-jobs', '@repo/nuxt-api', '@repo/nuxt-observability', '@repo/nuxt-storage', '@repo/nuxt-email', '@repo/nuxt-webhooks', '@repo/nuxt-audit-log', '@repo/nuxt-cache', '@repo/nuxt-realtime', '@repo/nuxt-notifications', '@repo/nuxt-search', '@repo/nuxt-ai', '@repo/nuxt-import-export', '@repo/nuxt-ops-admin', '@repo/nuxt-invoice-ninja', '@repo/nuxt-stripe', '@repo/nuxt-medusa'],
   css: ['~/assets/css/main.css'],
   vite: {
     plugins: [tailwindcss()],

@@ -44,12 +44,17 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Audit Log | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; optional authentication | Transactional append-oriented history and bounded keyset queries |
 | Realtime | Available (`done`) | Optional | Node runtime; application session policy; no capability dependency | Bounded server-to-browser SSE and WebSocket event adapters |
 | Notifications | Available (`done`) | Optional | Jobs; PostgreSQL/Drizzle; optional Email/Realtime/ntfy | Recipient-scoped persistent notifications and transactional delivery |
+| Invoice Ninja | Available (`done`) | Optional | Jobs, Webhooks; configured provider on use | Scoped projections, reconciliation and durable draft ledger; pinned disposable provider compatibility verified |
+| Stripe | Available (`done`) | Optional | Jobs, Webhooks; configured provider on use | Bound one-time Checkout, local payment projections and native signed-event reconciliation |
+| Medusa | Available (`done`) | Optional | Jobs, Webhooks; configured provider on use | Scoped Admin product/order reads and an operator-installed application bridge |
 | Ops / Admin | Available (`done`) | Optional | Baseline human session; privileged server allowlist | Read-only sanitized application-owned diagnostic adapters |
 | Search | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; no extra service | Owner-scoped weighted FTS and deterministic keyset pages |
 | Import / Export | Available (`done`) | Optional | Jobs, Object Storage; PostgreSQL/Drizzle/Node | Durable bounded CSV transfer; personal Project round-trip |
-| Charts / Visualization | In progress | Optional | None | Accessible line, bar, and area charts with SSR table fallback |
+| Charts / Visualization | Available (`done`) | Optional | None | Accessible line, bar, and area charts with SSR table fallback |
 
-`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache and AI remain lazy with no provider required to boot/build.
+`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache, AI, Invoice Ninja, Stripe and Medusa remain lazy with no provider required to boot/build. All eighteen capabilities are `done`.
+
+Provider-baseline completion evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/36978353705) passed all 19 jobs at `4478e41f2835bfe1495dab762756b2fec08bd98e`, including all 17 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
 
 See [Using capabilities](docs/CAPABILITIES.md) for installation and removal guidance and [ROADMAP.md](ROADMAP.md) for the future design plan.
 
@@ -66,7 +71,7 @@ bun run jobs:migrate
 bun run dev
 ```
 
-Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all fifteen completed capability packages; `db:migrate` applies the application/API/Audit/Notification/transfer tables and Projects search vector/index and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
+Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all eighteen completed capability packages; `db:migrate` applies the application/API/Audit/Notification/transfer/provider tables and Projects search vector/index and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
 
 ## Authentication notes
 
@@ -178,3 +183,17 @@ Opt-in PostgreSQL-native `@repo/nuxt-search` server helpers; the reference Proje
 Explicitly enabled, server-only and operation-lazy. `@repo/nuxt-ai/server` provides text, incremental streaming and Zod structured generation; default provider openai-compatible, timeout 60 seconds, no retries, 1 MiB output cap. Set AI_MODEL and optional server AI_API_KEY/AI_BASE_URL only when used. `bun run ai:smoke` performs one intentional configured operation without logging generated content. See the [contract](capabilities/ai/CAPABILITY.md) and [evaluation](AI_MODULE_EVALUATION.md).
 
 Ops / Admin is available (`done`): opt-in read-only `/admin/ops`, privileged server-only baseline-user allowlist and application-owned safe adapters. [Contract](capabilities/ops-admin/CAPABILITY.md).
+
+## Invoice Ninja
+
+Invoice Ninja is available (`done`) as `@repo/nuxt-invoice-ninja`. The pinned disposable 5.13.43 fixture verifies native numeric-string draft/GET behavior and its isolated unsent zero-tax/discount policy. The reference app still has no draft policy: each deployment must supply its own currency/company-hook evidence. See the [contract](capabilities/invoice-ninja/CAPABILITY.md) and [evaluation](INVOICE_NINJA_MODULE_EVALUATION.md).
+
+## Stripe
+
+Stripe v1 is available (`done`), independently packaged as `@repo/nuxt-stripe` with Jobs/Webhooks hard dependencies. The `/stripe` reference requires authentication and explicit server customer bindings; optional operator-owned `STRIPE_REFERENCE_PRICE_ID`, `STRIPE_REFERENCE_CURRENCY`, `STRIPE_REFERENCE_SUCCESS_URL` and `STRIPE_REFERENCE_CANCEL_URL` configure the single registered `starter.one-time` offer. Missing configuration remains lazy503. [Contract](capabilities/stripe/CAPABILITY.md); [design/compatibility limits](STRIPE_MODULE_EVALUATION.md). No remote account, payment or registration is required for base startup or local verification.
+
+## Medusa
+
+The reference app explicitly enables private `@repo/nuxt-medusa`; clean consumers default to uninstalled. Requires Jobs and Webhooks. [Provider contract](capabilities/medusa/CAPABILITY.md) covers bounded scoped Admin reconciliation, the operator-installed application bridge, verification and independent removal. `/integrations/medusa` reads approved local product/order projections; no provider configuration is required for startup.
+
+Medusa 2.21.2 backend/subscriber compatibility is verified against the pinned disposable fixture. None of these provider checks certify financial activity or a remote production deployment.

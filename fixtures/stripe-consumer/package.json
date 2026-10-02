@@ -1,0 +1,28 @@
+{
+  "name": "stripe-consumer-fixture",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck",
+    "package:test:runtime": "bun .fixture/protocol.ts && node --experimental-strip-types .fixture/protocol.ts && node --experimental-strip-types .fixture/boot.ts && bun .fixture/upgrade.ts && bun .fixture/durable.ts && bun .fixture/retention.ts cleanup && node --experimental-strip-types .fixture/durable.ts",
+    "package:test:survival": "bun .fixture/retention.ts verify",
+    "package:test:cleanup": "bun .fixture/retention.ts cleanup"
+  },
+  "dependencies": {
+    "nuxt": "4.5.2",
+    "@repo/nuxt-jobs": "workspace:*",
+    "drizzle-orm": "0.45.3",
+    "postgres": "3.4.9",
+    "zod": "4.6.5",
+    "@repo/nuxt-stripe": "workspace:*",
+    "@repo/nuxt-webhooks": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vue-tsc": "3.1.7",
+    "@types/node": "24.10.1",
+    "drizzle-kit": "0.31.11",
+    "pg-boss": "12.35.0"
+  }
+}
