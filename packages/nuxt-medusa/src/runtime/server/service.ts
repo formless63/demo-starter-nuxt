@@ -243,12 +243,15 @@ export function createMedusaService(options: MedusaOptions) {
       return claimed!
     })
   }
-  async function synchronize(bindingId: string, ctx: TrustedContext | undefined, budget: Deadline, finish?: (tx: MedusaTransaction) => Promise<void>, supplied?: unknown) {
+  async function synchronize(bindingId: string, ctx: TrustedContext | undefined, budget: Deadline, finish?: (tx: MedusaTransaction) => Promise<void>) {
     const claimed = await claimBinding(bindingId, ctx, budget)
     try {
       const conn = await cancellable(connection(claimed.connectionId, budget.signal), budget.signal)
       budget.check()
-      const response = supplied === undefined ? await adminGet(conn, claimed.resourceKind, { remoteId: claimed.remoteId }, { signal: budget.signal, env: env(), fetch: options.fetch }) : supplied
+      // A discovery page was fetched before this binding's lease. Its snapshot
+      // cannot overwrite a newer independently reconciled projection. Read the
+      // authoritative resource only after acquiring the per-binding lease.
+      const response = await adminGet(conn, claimed.resourceKind, { remoteId: claimed.remoteId }, { signal: budget.signal, env: env(), fetch: options.fetch })
       budget.check()
       await transaction(budget, async (tx) => {
         const [current] = await tx.select().from(medusaBinding).where(eq(medusaBinding.id, bindingId)).for('update')
@@ -317,7 +320,7 @@ export function createMedusaService(options: MedusaOptions) {
             const [current] = await tx.select().from(medusaOperation).where(fence).for('update')
             if (!current || current.status !== 'dispatching' || current.leaseExpiresAt!.getTime() <= Date.now()) throw new MedusaError('conflict')
             await tx.update(medusaOperation).set({ progress: sql`${medusaOperation.progress} + 1`, updatedAt: new Date() }).where(fence)
-          }, { [row.intent.kind]: entry })
+          })
         }
         await transaction(budget, async (tx) => {
           await finish(tx)
