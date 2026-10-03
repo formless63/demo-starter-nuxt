@@ -100,7 +100,8 @@
     "@repo/nuxt-rich-text": "workspace:*",
     "@repo/nuxt-file-ui": "workspace:*",
     "@repo/nuxt-flow-canvas": "workspace:*",
-    "@repo/nuxt-internationalization": "workspace:*"
+    "@repo/nuxt-internationalization": "workspace:*",
+    "@repo/nuxt-pwa-offline": "workspace:*"
   },
   "devDependencies": {
     "@nuxt/eslint": "1.17.0",

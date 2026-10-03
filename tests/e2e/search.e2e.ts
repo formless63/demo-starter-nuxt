@@ -13,7 +13,11 @@ test('authenticated Projects search scopes owners, validates input and returns r
   const other = crypto.randomUUID()
   const term = `needle${owner.replaceAll('-', '')}`
   try {
-    expect((await request.get(`/api/search/projects?q=${term}`)).status()).toBe(401)
+    // Correlate only this anonymous request in the opt-in disposable CI probe.
+    const diagnosticHeaders = process.env.CI === 'true' && process.env.NUXT_E2E_SEARCH_TRANSPORT_DIAGNOSTICS === 'true'
+      ? { 'X-Request-ID': `search-e2e-${crypto.randomUUID()}` }
+      : undefined
+    expect((await request.get(`/api/search/projects?q=${term}`, { headers: diagnosticHeaders })).status()).toBe(401)
     await db.insert(user).values([{ id: owner, name: 'Owner', email: `${owner}@example.test` }, { id: other, name: 'Other', email: `${other}@example.test` }])
     await db.insert(project).values([
       { id: `${owner}-title`, ownerId: owner, name: term },

@@ -27,7 +27,8 @@
       "rich-text",
       "file-ui",
       "flow-canvas",
-      "internationalization"
+      "internationalization",
+      "pwa-offline"
     ]
   },
   "baseline": [
@@ -1619,7 +1620,7 @@
       "id": "pwa-offline",
       "displayName": "PWA / Offline",
       "kind": "client-platform",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1627,7 +1628,44 @@
         "realtime"
       ],
       "externalRequirements": [],
-      "summary": "Installability, offline behavior, and resilient client synchronization."
+      "summary": "Explicit installability and public-only offline notice with natural service-worker lifecycle.",
+      "packageName": "@repo/nuxt-pwa-offline",
+      "packagePath": "packages/nuxt-pwa-offline",
+      "fixturePath": "fixtures/pwa-offline-consumer",
+      "documentationPath": "capabilities/pwa-offline/CAPABILITY.md",
+      "evaluationDocument": "PWA_OFFLINE_MODULE_EVALUATION.md",
+      "scripts": [
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [],
+      "migrations": [],
+      "runtimeProcesses": [],
+      "packageTest": {
+        "ownedDependencies": [
+          "@vite-pwa/nuxt",
+          "vite-plugin-pwa",
+          "workbox-build"
+        ],
+        "runtimeScript": "package:test:runtime",
+        "postRemovalScript": "package:test:post-removal",
+        "cleanupScript": "package:test:cleanup",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "app/pages/pwa-test.vue",
+            ".fixture/package-test.ts",
+            "app/pages/away.vue",
+            "public/foreign-sw.js",
+            "server/api/login.post.ts",
+            "server/api/logout.post.ts",
+            "server/api/private.get.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     },
     {
       "id": "internationalization",

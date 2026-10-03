@@ -1,0 +1,24 @@
+{
+  "name": "pwa-offline-consumer-fixture",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck && tsc --project .fixture/tsconfig.json",
+    "package:test:runtime": "bun .fixture/package-test.ts",
+    "package:test:post-removal": "bun .fixture/post-removal.ts",
+    "package:test:cleanup": "bun .fixture/cleanup.ts"
+  },
+  "dependencies": {
+    "nuxt": "4.5.2",
+    "vue": "3.5.43",
+    "h3": "1.15.11",
+    "@repo/nuxt-pwa-offline": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "typescript": "5.9.3",
+    "vue-tsc": "3.1.7",
+    "@types/node": "24.10.1"
+  }
+}
