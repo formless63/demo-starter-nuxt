@@ -46,7 +46,8 @@
         "vue-sonner": "2.0.9",
         "zod": "4.6.5",
         "@repo/nuxt-file-ui": "workspace:*",
-        "@repo/nuxt-flow-canvas": "workspace:*"
+        "@repo/nuxt-flow-canvas": "workspace:*",
+        "@repo/nuxt-internationalization": "workspace:*"
       },
       "devDependencies": {
         "@nuxt/eslint": "1.17.0",
@@ -847,6 +848,37 @@
       "dependencies": {
         "@nuxt/kit": "4.5.2",
         "@vue-flow/core": "1.48.2"
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "nuxt": "4.5.2"
+      },
+      "peerDependencies": {
+        "nuxt": ">=4.0.0 <5",
+        "vue": ">=3.5.0 <4"
+      }
+    },
+    "fixtures/internationalization-consumer": {
+      "name": "internationalization-consumer-fixture",
+      "dependencies": {
+        "@repo/nuxt-internationalization": "workspace:*",
+        "nuxt": "4.5.2",
+        "vue": "3.5.43"
+      },
+      "devDependencies": {
+        "@playwright/test": "1.63.0",
+        "devalue": "5.9.4",
+        "happy-dom": "20.0.11",
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7"
+      }
+    },
+    "packages/nuxt-internationalization": {
+      "name": "@repo/nuxt-internationalization",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+        "vue-i18n": "11.4.13"
       },
       "devDependencies": {
         "@nuxt/module-builder": "1.0.3",
@@ -18726,6 +18758,74 @@
         }
       },
       "sha512-LHpC8711VFZlDaYUXEBbFBCQ7GS3dVU9mjOhhMhXP6txTV4EhYQg/KGnQuvt/sPAtoUKq7VVUnL6mVtFoL42sA=="
+    ],
+    "@intlify/core-base": [
+      "@intlify/core-base@11.4.13",
+      "",
+      {
+        "dependencies": {
+          "@intlify/devtools-types": "11.4.13",
+          "@intlify/message-compiler": "11.4.13",
+          "@intlify/shared": "11.4.13"
+        }
+      },
+      "sha512-3qGv1/j0fl6ZSeehGaznE78A4i3hCaOeOyDh7jq7SV6ch/XGoy96xIrYuALTV3xhIqj2rktsIKcwlLZ3CbOhkA=="
+    ],
+    "@intlify/devtools-types": [
+      "@intlify/devtools-types@11.4.13",
+      "",
+      {
+        "dependencies": {
+          "@intlify/core-base": "11.4.13",
+          "@intlify/shared": "11.4.13"
+        }
+      },
+      "sha512-f38d2yvjNc1/c+BnTLsxTB0729clTtyy7kTxHu4FFlvI6FpmBOp7b9sLYtsKJpXSZ70kIEexvNwDSzLkIlYnlQ=="
+    ],
+    "@intlify/message-compiler": [
+      "@intlify/message-compiler@11.4.13",
+      "",
+      {
+        "dependencies": {
+          "@intlify/shared": "11.4.13",
+          "source-map-js": "^1.0.2"
+        }
+      },
+      "sha512-cjKsDeWUD/i3mj0QtC8hydLCFP5mgZtTU1xZZaN9/O3FG94EXc0rTbecYpifglp26rpoJoIjSlW137VejLKsZw=="
+    ],
+    "@intlify/shared": [
+      "@intlify/shared@11.4.13",
+      "",
+      {},
+      "sha512-ZjcNgEED1FtTCFb+ohWBdR21k5kvleKtM9peobQtLB83mNIfEhJK86dEbhfk+OcUrybrEbc4eDeE9UbFUVHsjQ=="
+    ],
+    "@repo/nuxt-internationalization": [
+      "@repo/nuxt-internationalization@workspace:packages/nuxt-internationalization"
+    ],
+    "internationalization-consumer-fixture": [
+      "internationalization-consumer-fixture@workspace:fixtures/internationalization-consumer"
+    ],
+    "vue-i18n": [
+      "vue-i18n@11.4.13",
+      "",
+      {
+        "dependencies": {
+          "@intlify/core-base": "11.4.13",
+          "@intlify/devtools-types": "11.4.13",
+          "@intlify/shared": "11.4.13",
+          "@vue/devtools-api": "^6.5.0"
+        },
+        "peerDependencies": {
+          "vue": "^3.0.0"
+        }
+      },
+      "sha512-2G7LC9XcdZ0IljFib7lKGHNiBBOTv6HO+2bnBaOiQgDYZ+uUnqSpuED5DbBo1t7su50o/WRGn+ZfDQTGd26xEw=="
+    ],
+    "vue-i18n/@vue/devtools-api": [
+      "@vue/devtools-api@6.6.4",
+      "",
+      {},
+      "sha512-sGhTPMuXqZ1rVOk32RylztWkfXTRhuS7vgAKv0zjqk8gbsHkJ7xfFf+jbySxt7tWObEJwyKaHMikV/WGDiQm8g=="
     ]
   }
 }

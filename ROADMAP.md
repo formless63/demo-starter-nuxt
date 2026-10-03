@@ -43,10 +43,10 @@ The generic `packages:*` commands build and exercise the catalog entries. Hard c
 
 | Status | Capability |
 | --- | --- |
-| Done (23) | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI; Import / Export; Ops / Admin; Invoice Ninja; Stripe; Medusa; Data Table; Charts / Visualization; Command System; Markdown / Code Content; Rich Text / Tiptap; File UI |
+| Done (25) | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI; Import / Export; Ops / Admin; Invoice Ninja; Stripe; Medusa; Data Table; Charts / Visualization; Command System; Markdown / Code Content; Rich Text / Tiptap; File UI; Flow / Canvas; Internationalization |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
-Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All twenty-four remain opt-in for clean consumers and explicitly enabled in the reference app.
+Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All twenty-five remain opt-in for clean consumers and explicitly enabled in the reference app.
 
 Charts source `7e8daa68c9862ef982c6dd0aa7e4269903eda9fd` passed [all 20 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37018899032). Command retains its separately verified implementation ([all 20 jobs at e0a01fa](https://github.com/formless63/demo-starter-nuxt/actions/runs/37012702417)). Markdown / Code Content implementation `e99539d90020a70028545ac4f252c55c16e3f432` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37029379598): all 21 generic packed package lifecycles, corrected real-browser payload/hydration/copy checks, full root checks, production browser/container/health, migrations and worker verification. This is source evidence; metadata promotion and later revisions require their own exact-head CI.
 
@@ -287,7 +287,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Notifications, Realtime
 - External: none
 
-### Internationalization (`planned`)
+### Internationalization (`done`)
 
 - Requires: none
 - Integrates with: UI-facing capabilities
@@ -329,4 +329,8 @@ File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted 
 
 Flow / Canvas is `done` (`defaultInstalled:false`), based on accepted source gates. Native module, bounded portable graph helpers, semantic SSR and application-owned persistence; no hard dependencies or migrations. See [contract](capabilities/flow-canvas/CAPABILITY.md).
 
-Flow / Canvas source `1999dab23987aa90efa62411275b7075b974d593` passed [all 24 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040851945), including the real native browser and independent packed install/runtime/removal/rebuild gates, and independent review. The combined 24-capability tree adds accepted main `bf15830889757b76b44a71fac80461deaca22cd1`; its full exact-head CI remains pending.
+Flow / Canvas source `1999dab23987aa90efa62411275b7075b974d593` passed [all 24 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040851945), including the real native browser and independent packed install/runtime/removal/rebuild gates, and independent review. The 24-capability Flow composition and Rich Text focus fix are accepted in main `f1210c7c58dcebc24558042f34c39af9c03d1929`. The new 25-capability composition requires its own exact-head CI.
+
+Internationalization is completed based on verified source gates: native Vue request-local engines, bounded plain-text catalogs, CLDR categories and canonical first-render formatting. Routing remains application-owned; packed/native-browser/removal gates passed on the source. The combined 25-capability tree requires its own exact-head CI.
+
+Internationalization source `96c24efcfc7e6fa31381dc4839be80ef75293a7b` passed [all 26 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37052330442), including root native browser/production and packed install/types/build/provider/browser/removal/rebuild gates. It is completed, default-off and explicitly reference-enabled. This 25-capability composition includes accepted Flow / Canvas and the Rich Text focus fix from main `f1210c7c58dcebc24558042f34c39af9c03d1929`; full combined exact-head CI remains pending.
