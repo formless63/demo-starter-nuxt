@@ -36,11 +36,25 @@ test('PWA controls render safely and hydrate without automatic registration', as
     return { before, after: { disabled: install.disabled, status: document.querySelector('[role="status"]')?.textContent } }
   })
   expect(synthetic.after).toEqual(synthetic.before)
+  // NuxtLink starts an asynchronous Vue Router transition. A click can finish
+  // before its lazy route is committed; Back at that point leaves for about:blank.
+  // Prove each destination and panel unmount before exercising browser history.
+  const homeHeading = page.getByRole('heading', { name: 'A practical base for your next project.', exact: true })
   await page.getByRole('link', { name: 'Home', exact: true }).click()
+  await expect(page).toHaveURL(/\/$/u)
+  await expect(homeHeading).toBeVisible()
+  await expect(page.locator('[data-pwa-hydrated]')).toHaveCount(0)
   await page.goBack()
+  await expect(page).toHaveURL(/\/pwa-test$/u)
   await expect(page.locator('[data-pwa-hydrated="true"]')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Enable offline notice' })).toBeEnabled()
   await page.goForward()
+  await expect(page).toHaveURL(/\/$/u)
+  await expect(homeHeading).toBeVisible()
+  await expect(page.locator('[data-pwa-hydrated]')).toHaveCount(0)
   await page.goBack()
+  await expect(page).toHaveURL(/\/pwa-test$/u)
+  await expect(page.locator('[data-pwa-hydrated="true"]')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Enable offline notice' })).toBeEnabled()
   expect(await page.evaluate(async () => (await navigator.serviceWorker.getRegistrations()).length)).toBe(0)
   expect(errors).toEqual([])
