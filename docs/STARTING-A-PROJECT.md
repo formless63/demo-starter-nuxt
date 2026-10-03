@@ -12,7 +12,7 @@ The root application explicitly registers Jobs, API Platform, Observability, Obj
 - one production image for the app, migration tools and worker;
 - lazy optional S3, SMTP, Cache, AI, Invoice Ninja, Stripe and Medusa adapters with no provider required at startup;
 - transactionally appended audit history and notifications, plus ID-only post-commit hints over authenticated SSE/WebSocket transports;
-- all twenty-two catalog-driven package install/runtime/removal/rebuild checks in generic CI.
+- all twenty-five catalog-driven package install/runtime/removal/rebuild checks in generic CI.
 
 The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused and Identity remains separately paused.
 
@@ -223,7 +223,13 @@ Remove `@repo/nuxt-file-ui` from module/dependency lists, `app/pages/files.vue`,
 
 Optional private `@repo/nuxt-flow-canvas` provides controlled native Vue editing and bounded server-safe graph JSON. Default installation remains false; this reference explicitly enables `/flow-test`. Applications own state and persistence. No database, migrations, network, or hard capability dependencies. See [contract](../capabilities/flow-canvas/CAPABILITY.md). Remove the explicit module/dependency and `app/pages/flow-test.vue`/`server/api/flow-reference.get.ts`, update reference enablement/tests, then install/typecheck/build; existing graph documents are application-owned. Source gates passed; combined exact-head hosted gates remain pending.
 
-Flow / Canvas source `1999dab23987aa90efa62411275b7075b974d593` passed [all 24 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040851945), including the real native browser and independent packed install/runtime/removal/rebuild gates, and independent review. The combined 24-capability tree adds accepted main `bf15830889757b76b44a71fac80461deaca22cd1`; its full exact-head CI remains pending.
+Flow / Canvas source `1999dab23987aa90efa62411275b7075b974d593` passed [all 24 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040851945), including the real native browser and independent packed install/runtime/removal/rebuild gates, and independent review. The 24-capability Flow composition and Rich Text focus fix are accepted in main `f1210c7c58dcebc24558042f34c39af9c03d1929`. The new 25-capability composition requires its own exact-head CI.
+
+## Internationalization
+
+Opt-in `@repo/nuxt-internationalization` supplies request-local plain-text translation, CLDR plurals and canonical SSR formatting. The reference app explicitly enables `/i18n-test`; no automatic locale routing or persistence. See [contract](../capabilities/internationalization/CAPABILITY.md) for install, validation, browser gates and exact removal recipe.
+
+Remove the internationalization reference page/component/API endpoint, root package dependency and module registration, and catalog reference enablement. Regenerate the lockfile, typecheck and build. There are no owned data, migrations or remote resources to delete.
 
 ## PWA / Offline (in progress)
 
