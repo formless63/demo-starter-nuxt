@@ -57,7 +57,8 @@ function page(input: { limit?: number, cursor?: string }) {
   }
   return { limit, cursor }
 }
-function result<T extends { id: string, createdAt: Date }>(rows: T[], limit: number) {
+interface CursorPage<T> { items: T[], nextCursor: string | null }
+function result<T extends { id: string, createdAt: Date }>(rows: T[], limit: number): CursorPage<T> {
   const items = rows.slice(0, limit)
   const last = items.at(-1)
   return { items, nextCursor: rows.length > limit && last ? Buffer.from(JSON.stringify([1, last.createdAt.toISOString(), last.id])).toString('base64url') : null }

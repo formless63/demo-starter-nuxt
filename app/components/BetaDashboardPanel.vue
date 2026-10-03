@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { authClient } from '~~/lib/auth-client'
 import { Button } from '@/components/ui/button'
-const { betaDashboard } = useFeatureFlags()
+const { data: session } = await authClient.useSession(useFetch)
+const { betaDashboard } = useFeatureFlags(() => session.value?.user.id ?? null)
 const message = ref('')
 async function loadPreview() {
   try { message.value = (await $fetch<{message:string}>('/api/dashboard/beta')).message }
