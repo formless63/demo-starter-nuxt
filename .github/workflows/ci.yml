@@ -91,7 +91,13 @@ jobs:
       - run: bun run test
       - run: bun run test:notification-email
       - run: bunx playwright install --with-deps chromium
-      - run: bun run test:e2e
+      - name: Verify scoped transport diagnostics
+        run: node --test tests/diagnostics/search-transport.test.cjs
+      - name: Verify development HTTP and browser contracts
+        env:
+          NUXT_E2E_SEARCH_TRANSPORT_DIAGNOSTICS: 'true'
+          NODE_OPTIONS: --require=./tests/e2e/fixtures/search-transport-diagnostics.cjs
+        run: bun run test:e2e
       - run: bun run build
       - run: bun run test:file-ui-reference
       - run: bun run packages:test ops-admin
