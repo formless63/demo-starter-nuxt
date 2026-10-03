@@ -117,10 +117,18 @@ test('production PWA never retains real authenticated API or SSR content across 
     await page.goto('/pwa-test')
     await context.setOffline(true)
     await expect(page.goto('/app/projects')).rejects.toThrow()
-    await page.goto('/pwa-test')
-    await expect(page.getByRole('heading', { name: 'You are offline' })).toBeVisible()
-    expect(await page.locator('body').textContent()).not.toContain(privateName)
-    expect(await page.locator('body').textContent()).not.toContain(token)
+    // Chromium may still be committing its error document after goto rejects.
+    // A fresh page shares the same offline context, registration, and cache.
+    const offlinePage = await context.newPage()
+    try {
+      await offlinePage.goto('/pwa-test')
+      await expect(offlinePage.getByRole('heading', { name: 'You are offline' })).toBeVisible()
+      expect(await offlinePage.locator('body').textContent()).not.toContain(privateName)
+      expect(await offlinePage.locator('body').textContent()).not.toContain(token)
+    }
+    finally {
+      await offlinePage.close()
+    }
   }
   finally {
     await context.setOffline(false)
