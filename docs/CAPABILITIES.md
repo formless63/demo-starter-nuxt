@@ -45,6 +45,8 @@ All twenty-six entries above are `done`. Data Table source-baseline evidence: th
 
 Charts source `7e8daa68c9862ef982c6dd0aa7e4269903eda9fd` passed [all 20 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37018899032). Command retains its separately verified implementation ([all 20 jobs at e0a01fa](https://github.com/formless63/demo-starter-nuxt/actions/runs/37012702417)). Markdown / Code Content implementation `e99539d90020a70028545ac4f252c55c16e3f432` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37029379598): all 21 generic packed package lifecycles, corrected real-browser payload/hydration/copy checks, full root checks, production browser/container/health, migrations and worker verification. This is source evidence; metadata promotion and later revisions require their own exact-head CI.
 
+Organizations, Authorization and Feature Flags are independent opt-in private packages with preserved historical evidence. Current integrated lifecycle, root and release gates remain pending and paused. They are explicitly registered and recorded as reference-enabled, without status promotion. See [Organizations](../capabilities/organizations/CAPABILITY.md), [Authorization](../capabilities/authorization/CAPABILITY.md), [Feature Flags](../capabilities/feature-flags/CAPABILITY.md) and their linked decision documents.
+
 Run `bun run capabilities:status` for the catalog-derived status of completed and planned capabilities and their current root-reference enablement.
 
 ## Adding or enabling a capability

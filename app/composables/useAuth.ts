@@ -1,4 +1,5 @@
 import { createAuthClient } from 'better-auth/vue'
+import { organizationClient } from '@repo/nuxt-organizations/client'
 import { magicLinkClient } from 'better-auth/client/plugins'
 
 /**
@@ -13,6 +14,6 @@ export function useAuth() {
   return createAuthClient({
     baseURL: url.origin,
     fetchOptions: { headers },
-    plugins: [magicLinkClient()],
+    plugins: [magicLinkClient(), organizationClient()],
   })
 }

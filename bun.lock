@@ -48,7 +48,10 @@
         "vue": "3.5.43",
         "vue-sonner": "2.0.9",
         "zod": "4.6.5",
-        "@repo/nuxt-internationalization": "workspace:*"
+        "@repo/nuxt-internationalization": "workspace:*",
+        "@repo/nuxt-organizations": "workspace:*",
+        "@repo/nuxt-authorization": "workspace:*",
+        "@repo/nuxt-feature-flags": "workspace:*"
       },
       "devDependencies": {
         "@nuxt/eslint": "1.17.0",
@@ -921,6 +924,103 @@
       "peerDependencies": {
         "nuxt": ">=4.0.0 <5",
         "vue": ">=3.5.0 <4"
+      }
+    },
+    "packages/nuxt-organizations": {
+      "name": "@repo/nuxt-organizations",
+      "version": "0.1.0",
+      "dependencies": {
+        "@better-auth/core": "1.7.7",
+        "@nuxt/kit": "4.5.2",
+        "better-auth": "1.7.7",
+        "drizzle-orm": "0.45.3"
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "nuxt": "4.5.2"
+      },
+      "peerDependencies": {
+        "nuxt": ">=4.0.0 <5"
+      }
+    },
+    "fixtures/organizations-consumer": {
+      "name": "organizations-consumer-fixture",
+      "dependencies": {
+        "@better-auth/core": "1.7.7",
+        "@repo/nuxt-organizations": "workspace:*",
+        "better-auth": "1.7.7",
+        "drizzle-orm": "0.45.3",
+        "nuxt": "4.5.2",
+        "pg": "8.23.0",
+        "postgres": "3.4.9"
+      },
+      "devDependencies": {
+        "@types/pg": "8.15.6",
+        "drizzle-kit": "0.31.11",
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7"
+      }
+    },
+    "packages/nuxt-authorization": {
+      "name": "@repo/nuxt-authorization",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+        "drizzle-orm": "0.45.3"
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "nuxt": "4.5.2"
+      },
+      "peerDependencies": {
+        "nuxt": ">=4.0.0 <5"
+      }
+    },
+    "fixtures/authorization-consumer": {
+      "name": "authorization-consumer-fixture",
+      "dependencies": {
+        "@repo/nuxt-authorization": "workspace:*",
+        "drizzle-orm": "0.45.3",
+        "nuxt": "4.5.2",
+        "pg": "8.23.0",
+        "postgres": "3.4.9"
+      },
+      "devDependencies": {
+        "@types/pg": "8.15.6",
+        "drizzle-kit": "0.31.11",
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7"
+      }
+    },
+    "packages/nuxt-feature-flags": {
+      "name": "@repo/nuxt-feature-flags",
+      "version": "0.1.0",
+      "dependencies": {
+        "@nuxt/kit": "4.5.2",
+        "drizzle-orm": "0.45.3"
+      },
+      "devDependencies": {
+        "@nuxt/module-builder": "1.0.3",
+        "nuxt": "4.5.2"
+      },
+      "peerDependencies": {
+        "nuxt": ">=4.0.0 <5"
+      }
+    },
+    "fixtures/feature-flags-consumer": {
+      "name": "feature-flags-consumer-fixture",
+      "dependencies": {
+        "@repo/nuxt-feature-flags": "workspace:*",
+        "drizzle-orm": "0.45.3",
+        "nuxt": "4.5.2",
+        "pg": "8.23.0",
+        "postgres": "3.4.9"
+      },
+      "devDependencies": {
+        "@types/pg": "8.15.6",
+        "drizzle-kit": "0.31.11",
+        "typescript": "5.9.3",
+        "vue-tsc": "3.1.7"
       }
     }
   },
@@ -21752,6 +21852,52 @@
       "",
       {},
       "sha512-sGhTPMuXqZ1rVOk32RylztWkfXTRhuS7vgAKv0zjqk8gbsHkJ7xfFf+jbySxt7tWObEJwyKaHMikV/WGDiQm8g=="
+    ],
+    "@repo/nuxt-authorization": [
+      "@repo/nuxt-authorization@workspace:packages/nuxt-authorization"
+    ],
+    "@repo/nuxt-feature-flags": [
+      "@repo/nuxt-feature-flags@workspace:packages/nuxt-feature-flags"
+    ],
+    "@repo/nuxt-organizations": [
+      "@repo/nuxt-organizations@workspace:packages/nuxt-organizations"
+    ],
+    "@types/pg": [
+      "@types/pg@8.15.6",
+      "",
+      {
+        "dependencies": {
+          "@types/node": "*",
+          "pg-protocol": "*",
+          "pg-types": "^2.2.0"
+        }
+      },
+      "sha512-NoaMtzhxOrubeL/7UZuNTrejB4MPAJ0RpxZqXQf2qXuVlTPuG6Y8p4u9dKRaue4yjmC7ZhzVO2/Yyyn25znrPQ=="
+    ],
+    "authorization-consumer-fixture": [
+      "authorization-consumer-fixture@workspace:fixtures/authorization-consumer"
+    ],
+    "feature-flags-consumer-fixture": [
+      "feature-flags-consumer-fixture@workspace:fixtures/feature-flags-consumer"
+    ],
+    "organizations-consumer-fixture": [
+      "organizations-consumer-fixture@workspace:fixtures/organizations-consumer"
+    ],
+    "@types/pg/@types/node": [
+      "@types/node@26.6.2",
+      "",
+      {
+        "dependencies": {
+          "undici-types": "~8.9.0"
+        }
+      },
+      "sha512-X1P21scMv4zGKLYqjdGjaKa7COa0RKVYYZZN/NfvLQ1JegxFhdhpZG/Lyn8AXx6CDUavKAd11v6BvfpkDByK8g=="
+    ],
+    "@types/pg/@types/node/undici-types": [
+      "undici-types@8.9.0",
+      "",
+      {},
+      "sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg=="
     ]
   }
 }

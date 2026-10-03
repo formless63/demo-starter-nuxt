@@ -1,3 +1,6 @@
+import { flagDefinition, flagOverride } from '@repo/nuxt-feature-flags/schema'
+import { roleAssignment } from '@repo/nuxt-authorization/schema'
+import { organization, member, invitation, activeOrganizationId } from '@repo/nuxt-organizations/schema'
 import { invoiceNinjaBinding, invoiceNinjaProjection, invoiceNinjaOperation, invoiceNinjaInbox } from '@repo/nuxt-invoice-ninja/schema'
 import { stripeBinding, stripeOperationLedger, stripeProjection, stripeInbox } from '@repo/nuxt-stripe/schema'
 import { medusaBinding, medusaProjection, medusaOperation, medusaInbox } from '@repo/nuxt-medusa/schema'
@@ -8,7 +11,7 @@ import { auditEvent } from '@repo/nuxt-audit-log/server'
 import { notification } from '@repo/nuxt-notifications/schema'
 import { apikey } from '@repo/nuxt-api/server'
 
-export { invoiceNinjaBinding, invoiceNinjaProjection, invoiceNinjaOperation, invoiceNinjaInbox, apikey, auditEvent, notification, transfer, stripeBinding, stripeOperationLedger, stripeProjection, stripeInbox, medusaBinding, medusaProjection, medusaOperation, medusaInbox }
+export { flagDefinition, flagOverride, roleAssignment, organization, member, invitation, invoiceNinjaBinding, invoiceNinjaProjection, invoiceNinjaOperation, invoiceNinjaInbox, apikey, auditEvent, notification, transfer, stripeBinding, stripeOperationLedger, stripeProjection, stripeInbox, medusaBinding, medusaProjection, medusaOperation, medusaInbox }
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -25,6 +28,7 @@ export const user = pgTable('user', {
 }, table => [uniqueIndex('user_email_idx').on(table.email)])
 
 export const session = pgTable('session', {
+  activeOrganizationId: activeOrganizationId(),
   id: text('id').primaryKey(),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   token: text('token').notNull(),
@@ -74,6 +78,12 @@ export const project = pgTable('project', {
   ...timestamps,
 }, table => [index('project_owner_updated_idx').on(table.ownerId, table.updatedAt), index('project_search_vector_gin_idx').using('gin', table.searchVector)])
 
-export const schema = { user, session, account, verification, apikey, project, auditEvent, notification, transfer, invoiceNinjaBinding, invoiceNinjaProjection, invoiceNinjaOperation, invoiceNinjaInbox, stripeBinding, stripeOperationLedger, stripeProjection, stripeInbox, medusaBinding, medusaProjection, medusaOperation, medusaInbox }
+export const organizationNote = pgTable('organization_note', {
+  id: text('id').primaryKey(), organizationId: text('organization_id').notNull(), title: text('title').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true, precision: 3 }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true, precision: 3 }).notNull().defaultNow(),
+}, table => [index('organization_note_scope_created_idx').on(table.organizationId, table.createdAt, table.id)])
+
+export const schema = { organization, member, invitation, organizationNote, roleAssignment, flagDefinition, flagOverride, user, session, account, verification, apikey, project, auditEvent, notification, transfer, invoiceNinjaBinding, invoiceNinjaProjection, invoiceNinjaOperation, invoiceNinjaInbox, stripeBinding, stripeOperationLedger, stripeProjection, stripeInbox, medusaBinding, medusaProjection, medusaOperation, medusaInbox }
 
 export { fileUiFiles } from './file-ui-schema'

@@ -1,3 +1,4 @@
+import { applicationPolicy, personalPolicyContext } from '../utils/application-policy'
 import { searchRows } from '@repo/nuxt-search/server'
 import type { SearchInput } from '@repo/nuxt-search/server'
 import { appendAuditEvent } from '@repo/nuxt-audit-log/server'
@@ -11,7 +12,8 @@ type ProjectInput = { name: string, description: string | null }
 // Public domain fields are stable as internal/generated columns are added.
 const projectFields = { id: project.id, name: project.name, description: project.description, ownerId: project.ownerId, createdAt: project.createdAt, updatedAt: project.updatedAt }
 
-export function listProjects(db: Database, ownerId: string) {
+export async function listProjects(db: Database, ownerId: string, credentialGrants?: ReadonlySet<string>) {
+  await applicationPolicy.requirePermission(db, personalPolicyContext(ownerId, credentialGrants), 'projects.read', { ownerId })
   return db
     .select(projectFields)
     .from(project)
@@ -20,6 +22,7 @@ export function listProjects(db: Database, ownerId: string) {
 }
 
 export async function getProject(db: Database, ownerId: string, projectId: string) {
+  await applicationPolicy.requirePermission(db, personalPolicyContext(ownerId), 'projects.read', { ownerId })
   const [row] = await db
     .select(projectFields)
     .from(project)
@@ -29,14 +32,15 @@ export async function getProject(db: Database, ownerId: string, projectId: strin
   return row
 }
 
-type ProjectTransaction = import('drizzle-orm/pg-core').PgDatabase<import('drizzle-orm/pg-core').PgQueryResultHKT>
-export async function insertProjectInTransaction(tx: Pick<ProjectTransaction, 'insert'>, ownerId: string, input: ProjectInput, actor: AuditActor = { type: 'user', id: ownerId }) {
+type ProjectTransaction = import('@repo/nuxt-authorization/server').AuthorizationConnection
+export async function insertProjectInTransaction(tx: ProjectTransaction, ownerId: string, input: ProjectInput, actor: AuditActor = { type: 'user', id: ownerId }, credentialGrants?: ReadonlySet<string>) {
+  await applicationPolicy.requirePermissionTx(tx, personalPolicyContext(ownerId, credentialGrants), 'projects.create', { ownerId }, true)
   const [row] = await tx.insert(project).values({ id: crypto.randomUUID(), ownerId, ...input }).returning(projectFields)
   if (row) await appendAuditEvent(tx, { actorType: actor.type, actorId: actor.id, action: 'projects.create', subjectType: 'project', subjectId: row.id, outcome: 'success' })
   return row
 }
-export async function createProject(db: Database, ownerId: string, input: ProjectInput, actor: AuditActor = { type: 'user', id: ownerId }) {
-  return db.transaction(tx => insertProjectInTransaction(tx, ownerId, input, actor))
+export async function createProject(db: Database, ownerId: string, input: ProjectInput, actor: AuditActor = { type: 'user', id: ownerId }, credentialGrants?: ReadonlySet<string>) {
+  return db.transaction(tx => insertProjectInTransaction(tx, ownerId, input, actor, credentialGrants))
 }
 
 export async function updateProject(
@@ -47,6 +51,7 @@ export async function updateProject(
   actor: AuditActor = { type: 'user', id: ownerId },
 ) {
   return db.transaction(async (tx) => {
+    await applicationPolicy.requirePermissionTx(tx, personalPolicyContext(ownerId), 'projects.update', { ownerId }, true)
     const [row] = await tx
       .update(project)
       .set({ ...input, updatedAt: new Date() })
@@ -60,6 +65,7 @@ export async function updateProject(
 
 export async function deleteProject(db: Database, ownerId: string, projectId: string, actor: AuditActor = { type: 'user', id: ownerId }) {
   return db.transaction(async (tx) => {
+    await applicationPolicy.requirePermissionTx(tx, personalPolicyContext(ownerId), 'projects.delete', { ownerId }, true)
     const [row] = await tx
       .delete(project)
       .where(and(eq(project.id, projectId), eq(project.ownerId, ownerId)))
@@ -70,7 +76,8 @@ export async function deleteProject(db: Database, ownerId: string, projectId: st
   })
 }
 
-export function searchProjects(db: Database, ownerId: string, input: SearchInput) {
+export async function searchProjects(db: Database, ownerId: string, input: SearchInput) {
+  await applicationPolicy.requirePermission(db, personalPolicyContext(ownerId), 'projects.read', { ownerId })
   return searchRows({ vector: project.searchVector, updatedAt: project.updatedAt, id: project.id }, eq(project.ownerId, ownerId), input, plan => db
     .select({ ...projectFields, rank: plan.rank, cursorUpdatedAt: plan.cursorUpdatedAt })
     .from(project)
