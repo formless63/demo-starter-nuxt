@@ -112,7 +112,8 @@ test('production PWA never retains real authenticated API or SSR content across 
     expect(await page.evaluate(async () => (await fetch('/api/projects')).status)).toBe(401)
     const afterLogout = await page.goto('/app/projects')
     expect(await afterLogout!.text()).not.toContain(privateName)
-    await expect(page).not.toHaveURL(/\/app\/projects$/u)
+    // The auth redirect retains the private destination in its query string.
+    await expect(page).toHaveURL(url => url.pathname === '/')
     await page.goto('/pwa-test')
     await context.setOffline(true)
     await expect(page.goto('/app/projects')).rejects.toThrow()
