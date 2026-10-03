@@ -46,3 +46,21 @@ The [official 1.7.7 release](https://github.com/better-auth/better-auth/releases
 The existing `storeToken:'hashed'` with global `verification.storeIdentifier` unset already matches an upstream mitigation; no confirmed vulnerable configuration is claimed. Password-disabled providers, SSR cookie forwarding, secure production cookies and OIDC settings are preserved. All nodes sharing verification storage must upgrade together: old pending magic links and Better Auth OAuth/SAML sign-in/linking states cannot complete and must restart. No database schema or user/account migration is needed; no applied migration was changed.
 
 Regression coverage uses disposable PostgreSQL/Mailpit and fake provider redirect initiation, with no actual OAuth callback exchange, real credentials or new grants. It checks fresh/replayed/expired links, OAuth-state-as-link rejection and legacy unprefixed link/state rejection; the packed API fixture and browser suite retain machine-key owner/permission/expiry/revocation/session-isolation coverage.
+
+## Official-driver compatibility investigation
+
+On 2026-10-01, the official [release list](https://github.com/porsager/postgres/releases) and npm dist-tags still identify 3.4.9 as latest. [Issue1208](https://github.com/porsager/postgres/issues/1208) matches the null-socket write; proposed [PR1209](https://github.com/porsager/postgres/pull/1209) and disconnected-transaction [PR1215](https://github.com/porsager/postgres/pull/1215) remain open/unmerged. No contributor fork or unreleased patch is adopted.
+
+Usage was checked against the installed official README and Drizzle adapter: `db.transaction` delegates to supported `sql.begin`; callers await the transaction; fixture-owned teardown uses supported `sql.end({timeout:1})` (seconds). The bare reproduction keeps the pool alive for 100ms after rejection and checks a subsequent query before teardown, so the crash is not caused by our end call. No capability code, Drizzle or Better Auth is imported by the driver probe.
+
+Official npm tarball candidates were exercised on Bun1.4.2 and Node24.19 against disposable PostgreSQL18:
+
+| Official version | Termination during awaited query, then next query | Paused terminated callback resumes during replacement transaction |
+| --- | --- | --- |
+| 3.4.9 / 3.4.8 | Null-socket TypeError; Bun can hang until child deadline | 3.4.9 changes the replacement transaction ID |
+| 3.4.7 / 3.4.6 / 3.4.5 | Safe rejection and next query pass | Changes the replacement transaction ID |
+| 3.3.5 | Safe rejection and next query pass | Hangs until child deadline |
+
+3.4.7 also passed deferred commit-time unique failure, real statement cancellation and explicit callback rollback on both runtimes. Nevertheless, it is rejected as a compatibility downgrade: the old callback's automatic COMMIT can finish the replacement transaction. That violates caller-transaction ownership and isolation. The same late-callback defect is described by PR1215; it is not a teardown workaround. There is no demonstrated safe official pin change, so package manifests/lockfile remain unchanged.
+
+Committed standalone probes are in `tests/fixtures/postgres-driver`. Run `bun tests/fixtures/postgres-driver/run.ts --local-fixture` against a disposable loopback DATABASE_URL. An explicit installed official candidate can be tested via POSTGRES_PROBE_DRIVER_PATH. The runner executes Bun and Node, records private child artifacts, bounds and kills stalled child processes, and fails if any case fails. It does not suppress exceptions or swallow failures. Required three-capability both-driver lifecycles and the hosted all15 matrix remain completion gates.

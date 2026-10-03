@@ -60,7 +60,11 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Import / Export | Available (`done`) | Optional | Jobs, Object Storage; PostgreSQL/Drizzle/Node | Durable bounded CSV transfer; personal Project round-trip |
 | Charts / Visualization | Available (`done`) | Optional | None | Accessible line, bar, and area charts with SSR table fallback |
 
-`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache, AI, Invoice Ninja, Stripe and Medusa remain lazy with no provider required to boot/build. All twenty-six capabilities are `done`.
+| Organizations / Tenancy | In progress; current verification paused | Opt-in | Baseline Authentication/PostgreSQL/Drizzle/Node | [Native acceptance transaction finding](ORGANIZATIONS_MODULE_EVALUATION.md) |
+| Authorization | In progress; current verification paused | Opt-in | Baseline Authentication/PostgreSQL/Drizzle/Node | [Exact-scope application policy](capabilities/authorization/CAPABILITY.md) |
+| Feature Flags | In progress; current verification paused | Opt-in | Baseline PostgreSQL/Drizzle/Node | [Server boolean controls](capabilities/feature-flags/CAPABILITY.md) |
+
+`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache, AI, Invoice Ninja, Stripe and Medusa remain lazy with no provider required to boot/build. The accepted twenty-six capabilities remain `done`; Organizations, Authorization and Feature Flags are additionally reference-enabled and remain `in-progress`.
 
 Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
 

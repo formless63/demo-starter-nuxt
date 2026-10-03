@@ -27,7 +27,7 @@ try {
     await migrate(db, { migrationsFolder: folder });
    }
    await migrate(db, { migrationsFolder: 'server/database/migrations' }); await migrate(db, { migrationsFolder: 'server/database/migrations' });
-   const before: Array<{ hash: string; created_at: string }> = (await pool.unsafe('select hash,created_at from drizzle.__drizzle_migrations order by id')); assert.equal(before.length, 13);
+   const before: Array<{ hash: string; created_at: string }> = (await pool.unsafe('select hash,created_at from drizzle.__drizzle_migrations order by id')); assert.equal(before.length, 16);
    const store = createPostgresFileMetadata(db); const row: FileRecord = { id: randomUUID(), owner: 'synthetic-owner', key: `file-ui/${randomUUID()}`, idempotencyKey: randomUUID(), digest: 'a'.repeat(64), fingerprint: 'b'.repeat(64), name: 'fixture.txt', type: 'text/plain', size: 5, state: 'uploading', writerStopped: false, revision: 0, createdAt: Date.now() };
    const results = await Promise.all(Array.from({ length: 8 }, () => store.reserve({ ...row, id: randomUUID(), key: `file-ui/${randomUUID()}` })));
    assert.equal(results.filter(r => r.created).length, 1); assert.equal(new Set(results.map(r => r.record.id)).size, 1);

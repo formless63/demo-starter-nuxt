@@ -59,7 +59,7 @@ describe('API Platform auth integration', () => {
       magicLinkEnabled: true,
     })
 
-    expect(plugins.map(plugin => plugin.id)).toEqual(['api-key', 'generic-oauth', 'magic-link'])
+    expect(plugins.map(plugin => plugin.id)).toEqual(['api-key', 'organization', 'organizations-v1-guard', 'generic-oauth', 'magic-link'])
     vi.unstubAllEnvs()
   })
 

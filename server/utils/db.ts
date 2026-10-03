@@ -17,3 +17,13 @@ export function useDb() {
   client ??= postgres(databaseUrl, { max: 10, idle_timeout: 20 })
   return drizzle(client, { schema })
 }
+
+// Auth operations use a separately bounded pool; domain/Jobs pools are not reconfigured.
+let authClient: ReturnType<typeof postgres> | undefined
+export function useAuthDb() {
+  const config = useRuntimeConfig()
+  const databaseUrl = config.databaseUrl || process.env.DATABASE_URL
+  if (!databaseUrl) throw createError({ statusCode: 503, statusMessage: 'Database is unavailable' })
+  authClient ??= postgres(databaseUrl, { max: 10, idle_timeout: 20, connection: { statement_timeout: 5000, lock_timeout: 2000 } })
+  return drizzle(authClient, { schema })
+}

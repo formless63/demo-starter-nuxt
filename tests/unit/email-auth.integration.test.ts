@@ -25,11 +25,11 @@ describe('SMTP-backed root auth configuration', () => {
   })
   it('needs no SMTP while disabled and validates structural config when enabled', () => {
     vi.stubEnv('SMTP_HOST', '')
-    expect(configuredAuthPlugins({ magicLinkEnabled: false }).map(plugin => plugin.id)).toEqual(['api-key'])
+    expect(configuredAuthPlugins({ magicLinkEnabled: false }).map(plugin => plugin.id)).toEqual(['api-key', 'organization', 'organizations-v1-guard'])
     expect(() => configuredAuthPlugins({ magicLinkEnabled: true })).toThrow('configuration')
     for (const [key, value] of Object.entries(mailpitEnv(1025))) vi.stubEnv(key, value)
     vi.stubEnv('NODE_ENV', 'production')
-    expect(configuredAuthPlugins({ magicLinkEnabled: true }).map(plugin => plugin.id)).toEqual(['api-key', 'magic-link'])
+    expect(configuredAuthPlugins({ magicLinkEnabled: true }).map(plugin => plugin.id)).toEqual(['api-key', 'organization', 'organizations-v1-guard', 'magic-link'])
     expect(() => renderMagicLinkEmail('https://foreign.test/?token=SECRET', 'https://canonical.test')).toThrow('message')
   })
 })

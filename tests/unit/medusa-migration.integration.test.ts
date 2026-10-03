@@ -21,7 +21,7 @@ suite('Medusa additive migration retention', () => {
       for (const entry of journal.entries.slice(0, 8)) expect(createHash('sha256').update(await readFile(join(full, `${entry.tag}.sql`))).digest('hex')).toBe(expectedHashes[entry.tag])
       const fullEntries = [...journal.entries] as { idx: number, when: number, tag: string }[]
       expect(fullEntries.map(entry => entry.idx)).toEqual(fullEntries.map((_, index) => index))
-      expect(fullEntries.slice(8).map(entry => entry.tag)).toEqual(['0009_invoice_ninja', '0011_stripe_v1', '0012_stripe_receipt_conflicts', '0013_medusa', '0014_file_ui'])
+      expect(fullEntries.slice(8).map(entry => entry.tag)).toEqual(['0009_invoice_ninja', '0011_stripe_v1', '0012_stripe_receipt_conflicts', '0013_medusa', '0014_file_ui', '0015_third_justice', '0016_bored_shocker', '0017_mushy_cannonball'])
       const fullHashes = await Promise.all(fullEntries.map(async entry => createHash('sha256').update(await readFile(join(full, `${entry.tag}.sql`))).digest('hex')))
       journal.entries = journal.entries.slice(0, prefix); await writeFile(journalPath, JSON.stringify(journal))
       await migrate(db, { migrationsFolder: folder })

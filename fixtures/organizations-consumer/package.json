@@ -1,0 +1,28 @@
+{
+  "name": "organizations-consumer-fixture",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "probe:upstream-atomicity": "bun .fixture/upstream-atomicity.ts",
+    "typecheck": "nuxt typecheck",
+    "build": "nuxt build",
+    "package:test:runtime": "bun .fixture/package-test.ts",
+    "package:test:survival": "bun .fixture/post-removal.ts",
+    "package:test:cleanup": "bun .fixture/cleanup.ts"
+  },
+  "dependencies": {
+    "better-auth": "1.7.7",
+    "drizzle-orm": "0.45.3",
+    "postgres": "3.4.9",
+    "pg": "8.23.0",
+    "@better-auth/core": "1.7.7",
+    "@repo/nuxt-organizations": "workspace:*",
+    "nuxt": "4.5.2"
+  },
+  "devDependencies": {
+    "@types/pg": "8.15.6",
+    "typescript": "5.9.3",
+    "vue-tsc": "3.1.7",
+    "drizzle-kit": "0.31.11"
+  }
+}
