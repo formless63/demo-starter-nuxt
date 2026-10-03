@@ -5,13 +5,13 @@ import { resolve } from 'node:path'
 
 const root = resolve(import.meta.dir, '../..')
 const catalog = JSON.parse(readFileSync(resolve(root, 'capabilities/catalog.json'), 'utf8'))
-const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export', 'ops-admin', 'invoice-ninja', 'stripe', 'medusa', 'data-table', 'charts-visualization', 'command-system', 'markdown-code', 'rich-text', 'file-ui', 'flow-canvas']
+const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export', 'ops-admin', 'invoice-ninja', 'stripe', 'medusa', 'data-table', 'charts-visualization', 'command-system', 'markdown-code', 'rich-text', 'file-ui', 'flow-canvas', 'internationalization']
 
-test('all twenty-four completed packages are explicitly enabled and discovered by the generic matrix', () => {
+test('all twenty-five completed packages are explicitly enabled and discovered by the generic matrix', () => {
   const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
   const nuxt = readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')
   expect(catalog.capabilities.filter((entry: { status: string }) => entry.status === 'done').map((entry: { id: string }) => entry.id).sort()).toEqual([...completed].sort())
-  expect(completed).toHaveLength(24)
+  expect(completed).toHaveLength(25)
   expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed].sort())
   for (const id of [...completed]) {
     const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === id)
@@ -84,9 +84,39 @@ test('Command is completed and reference-enabled while preserving its packed bro
 })
 
 
-test('root application browser discovery includes Rich Text and File UI', () => {
+test('root application browser discovery includes Rich Text, File UI, Flow and Internationalization', () => {
   const result = spawnSync('bun', ['x', 'playwright', 'test', '--list'], { cwd: root, encoding: 'utf8' })
   expect(result.status).toBe(0)
   expect(result.stdout).toContain('[application] › rich-text.e2e.ts')
   expect(result.stdout).toContain('[application] › file-ui.e2e.ts')
+  expect(result.stdout).toContain('[application] › internationalization.e2e.ts')
+  expect(result.stdout).toContain('[application] › flow-canvas.e2e.ts')
+})
+
+
+test('Internationalization is completed from hosted source evidence and remains independent', () => {
+  const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === 'internationalization')
+  expect(entry.status).toBe('done')
+  expect(entry.defaultInstalled).toBe(false)
+  expect(entry.requires).toEqual([])
+  expect(entry.packageTest.runtimeScript).toBe('package:test:runtime')
+  expect(catalog.referenceApplication.enabledCapabilities).toContain('internationalization')
+})
+
+
+test('failed browser diagnostics keep precise synthetic-test artifacts for three days', () => {
+  const workflow = Bun.YAML.parse(readFileSync(resolve(root, '.github/workflows/ci.yml'), 'utf8')) as {
+    jobs: { check: { env: Record<string, string>, steps: Array<{ name?: string, if?: string, uses?: string, env?: Record<string, string>, with?: Record<string, string | number> }> } }
+  }
+  const check = workflow.jobs.check
+  const capture = check.steps.find(step => step.name === 'Preserve failed browser request traces')!
+  expect(capture.if).toBe('failure()')
+  expect(capture.uses).toBe('actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a')
+  expect(capture.with?.path).toBe('test-results/**/trace.zip\ntest-results/**/error-context.md\n')
+  expect(capture.with?.['retention-days']).toBe(3)
+  expect(capture.with?.['if-no-files-found']).toBe('ignore')
+  expect(check.env.DATABASE_URL).toBe('postgres://postgres:postgres@localhost:5432/nuxt_starter')
+  expect(check.env.NUXT_AUTH_SECRET).toBe('ci-secret-that-is-at-least-thirty-two-characters')
+  expect(check.env.NUXT_PUBLIC_APP_BASE_URL).toBe('http://127.0.0.1:3001')
+  expect(check.steps.find(step => step.name === 'Verify authenticated production HTTP and browser contracts')?.env?.PLAYWRIGHT_BASE_URL).toBe('http://127.0.0.1:3001')
 })

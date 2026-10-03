@@ -26,7 +26,8 @@
       "markdown-code",
       "rich-text",
       "file-ui",
-      "flow-canvas"
+      "flow-canvas",
+      "internationalization"
     ]
   },
   "baseline": [
@@ -1632,7 +1633,7 @@
       "id": "internationalization",
       "displayName": "Internationalization",
       "kind": "client-platform",
-      "status": "planned",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1647,7 +1648,45 @@
         "pwa-offline"
       ],
       "externalRequirements": [],
-      "summary": "Locale routing, translation, and formatting integration for UI-facing capabilities."
+      "summary": "Explicit request-local translation, CLDR plurals and canonical formatting; application-owned locale routing.",
+      "baselineRequirements": [
+        "node-runtime"
+      ],
+      "scripts": [
+        "packages:build",
+        "packages:test"
+      ],
+      "environmentVariables": [],
+      "migrations": [],
+      "runtimeProcesses": [
+        "Nitro application; no external service"
+      ],
+      "documentationPath": "capabilities/internationalization/CAPABILITY.md",
+      "evaluationDocument": "INTERNATIONALIZATION_MODULE_EVALUATION.md",
+      "packageName": "@repo/nuxt-internationalization",
+      "packagePath": "packages/nuxt-internationalization",
+      "fixturePath": "fixtures/internationalization-consumer",
+      "packageTest": {
+        "ownedDependencies": [
+          "vue-i18n"
+        ],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "app/pages/i18n-test.vue",
+            "app/components",
+            "server/api/i18n-reference.get.ts",
+            ".fixture/package-test.ts",
+            ".fixture/browser.ts",
+            ".fixture/transport.ts",
+            ".fixture/provider.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        }
+      }
     }
   ]
 }

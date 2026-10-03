@@ -1,0 +1,52 @@
+{
+  "name": "@repo/nuxt-internationalization",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Request-local native Vue internationalization with bounded canonical payloads",
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs",
+      "default": "./dist/module.mjs"
+    },
+    "./runtime": {
+      "types": "./dist/runtime/index.d.ts",
+      "import": "./dist/runtime/index.js",
+      "default": "./dist/runtime/index.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/types.d.mts"
+      ],
+      "runtime": [
+        "./dist/runtime/index.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev:prepare": "nuxt-module-build prepare && nuxt-module-build build",
+    "prepack": "nuxt-module-build prepare && nuxt-module-build build"
+  },
+  "dependencies": {
+    "@nuxt/kit": "4.5.2",
+    "vue-i18n": "11.4.13"
+  },
+  "peerDependencies": {
+    "nuxt": ">=4.0.0 <5",
+    "vue": ">=3.5.0 <4"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "1.0.3",
+    "nuxt": "4.5.2"
+  }
+}
