@@ -5,15 +5,15 @@ import { resolve } from 'node:path'
 
 const root = resolve(import.meta.dir, '../..')
 const catalog = JSON.parse(readFileSync(resolve(root, 'capabilities/catalog.json'), 'utf8'))
-const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export', 'ops-admin', 'invoice-ninja', 'stripe', 'medusa', 'data-table', 'charts-visualization', 'command-system', 'markdown-code', 'rich-text', 'file-ui', 'flow-canvas', 'internationalization']
+const completed = ['jobs', 'api-platform', 'observability', 'object-storage', 'email', 'webhooks', 'audit-log', 'cache-coordination', 'realtime', 'notifications', 'search', 'ai', 'import-export', 'ops-admin', 'invoice-ninja', 'stripe', 'medusa', 'data-table', 'charts-visualization', 'command-system', 'markdown-code', 'rich-text', 'file-ui', 'flow-canvas', 'internationalization', 'pwa-offline']
 
-test('all twenty-five completed packages and in-progress PWA are explicitly enabled and discovered by the generic matrix', () => {
+test('all twenty-six completed packages are explicitly enabled and discovered by the generic matrix', () => {
   const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
   const nuxt = readFileSync(resolve(root, 'nuxt.config.ts'), 'utf8')
   expect(catalog.capabilities.filter((entry: { status: string }) => entry.status === 'done').map((entry: { id: string }) => entry.id).sort()).toEqual([...completed].sort())
-  expect(completed).toHaveLength(25)
-  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed, 'pwa-offline'].sort())
-  for (const id of [...completed, 'pwa-offline']) {
+  expect(completed).toHaveLength(26)
+  expect([...catalog.referenceApplication.enabledCapabilities].sort()).toEqual([...completed].sort())
+  for (const id of [...completed]) {
     const entry = catalog.capabilities.find((candidate: { id: string }) => candidate.id === id)
     expect(entry.defaultInstalled).toBe(false)
     expect(manifest.dependencies[entry.packageName]).toBe('workspace:*')
@@ -23,9 +23,9 @@ test('all twenty-five completed packages and in-progress PWA are explicitly enab
   expect(result.status).toBe(0)
   const authored = catalog.capabilities.filter((entry: { status: string, packageTest?: unknown, packagePath?: string }) => ['done', 'in-progress'].includes(entry.status) && entry.packagePath && entry.packageTest).map((entry: { id: string }) => entry.id)
   expect(JSON.parse(result.stdout).capability.sort()).toEqual(authored.sort())
-  expect(authored.sort()).toEqual([...completed, 'pwa-offline'].sort())
+  expect(authored.sort()).toEqual([...completed].sort())
   const pwa = catalog.capabilities.find((entry: { id: string }) => entry.id === 'pwa-offline')
-  expect(pwa.status).toBe('in-progress')
+  expect(pwa.status).toBe('done')
   expect(pwa.requires).toEqual([])
   expect(pwa.packageTest.runtimeScript).toBe('package:test:runtime')
   expect(pwa.packageTest.postRemovalScript).toBe('package:test:post-removal')
