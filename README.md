@@ -54,6 +54,7 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Markdown / Code Content | Available (`done`) | Optional | None | Bounded server Markdown/Shiki with safe native Vue SSR and copy UI |
 | File UI | Available (`done`) | Optional | Object Storage | Bounded raw uploads, owner-authorized attachment downloads and atomic retained receipts |
 | Flow / Canvas | Available (`done`) | Optional | None | Controlled native Vue diagrams with bounded graph JSON and semantic SSR |
+| PWA / Offline | In progress | Optional | None | Explicit native registration; only a public inert notice and fingerprinted icons |
 | Rich Text / Tiptap | Available (`done`) | Optional | None | Bounded canonical JSON, safe Vue SSR and controlled lazy editing with explicit record identity |
 | Import / Export | Available (`done`) | Optional | Jobs, Object Storage; PostgreSQL/Drizzle/Node | Durable bounded CSV transfer; personal Project round-trip |
 | Charts / Visualization | Available (`done`) | Optional | None | Accessible line, bar, and area charts with SSR table fallback |
@@ -223,3 +224,9 @@ File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted 
 Optional private `@repo/nuxt-flow-canvas` provides controlled native Vue editing and bounded server-safe graph JSON. Default installation remains false; this reference explicitly enables `/flow-test`. Applications own state and persistence. No database, migrations, network, or hard capability dependencies. See [contract](capabilities/flow-canvas/CAPABILITY.md). Remove the explicit module/dependency and `app/pages/flow-test.vue`/`server/api/flow-reference.get.ts`, update reference enablement/tests, then install/typecheck/build; existing graph documents are application-owned. Source gates passed; combined exact-head hosted gates remain pending.
 
 Flow / Canvas source `1999dab23987aa90efa62411275b7075b974d593` passed [all 24 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040851945), including the real native browser and independent packed install/runtime/removal/rebuild gates, and independent review. The combined 24-capability tree adds accepted main `bf15830889757b76b44a71fac80461deaca22cd1`; its full exact-head CI remains pending.
+
+## PWA / Offline (in progress)
+
+The optional native `@repo/nuxt-pwa-offline` module is explicitly reference-enabled at `/pwa-test`; clean consumers default off and have no fallback paths. Three reviewed public assets only; no SSR/account/API/application chunks are cached. Natural updates never reload open forms. See [the contract](capabilities/pwa-offline/CAPABILITY.md).
+
+Removal requires deploying `pwaOffline.retired: true` at the same worker URL/scope, allowing natural activation, and retaining that exact retirement script in `public/pwa-offline-sw.js` through all subsequent lean builds for returning clients. Only then remove the explicit module/dependency, page/imports and reference metadata. Never delete unrelated registrations/caches. Hosted exact-head acceptance and independent review remain required.

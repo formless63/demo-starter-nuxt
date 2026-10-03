@@ -41,3 +41,5 @@ Official Nuxt documentation should be the primary source. Agents supporting MCP 
 Markdown / Code Content owns stable markdown-it15.0.2/Shiki4.5.0; only JS/TS/JSON and GitHub dual themes, server-only fine-grained highlighter. Native Vue render functions and Nuxt module-builder, no React/Start runtime.
 
 Flow / Canvas owns stable @vue-flow/core 1.48.2 and uses controlled native events with applyDefault:false. Graph JSON is a bounded closed format, not a serialized native renderer.
+
+PWA / Offline is reconstructed and in-progress: private native `@repo/nuxt-pwa-offline`, @vite-pwa/nuxt1.1.1/plugin1.3.0/Workbox7.4.1, explicit registration, default-empty public fallback paths and only three hash-verified public assets. Native final hook clears payload/app-manifest additions; worker URL/scope/cache ownership are exact. No private SSR/API/auth caching, synchronization, mutation replay or forced activation. `bun run packages:test pwa-offline` includes real native HTTP/browser and persistent returning-client retirement after lean removal. Retain the same-URL tombstone for dormant clients; no skip replaces hosted acceptance.
