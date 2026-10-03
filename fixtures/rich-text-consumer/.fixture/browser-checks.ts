@@ -17,10 +17,15 @@ export async function verifyRichText(page:Page){
  await expect(editor.locator('strong')).toHaveText('Edited document');
  await editor.press('ControlOrMeta+a');
  await page.getByLabel('Link URL',{exact:true}).fill('javascript:alert(1)');
+ await expect(page.getByLabel('Link URL',{exact:true})).toBeFocused();
+ await expect(page.getByLabel('Link URL',{exact:true})).toHaveValue('javascript:alert(1)');
+ await expect(editor).toHaveText('Edited document');
  await page.getByRole('button',{name:'Apply link'}).click();
  await expect(page.getByRole('alert')).toContainText('absolute HTTP');
  await expect(editor.locator('a')).toHaveCount(0);
  await page.getByLabel('Link URL',{exact:true}).fill('https://example.test/path');
+ await expect(page.getByLabel('Link URL',{exact:true})).toBeFocused();
+ await expect(editor).toHaveText('Edited document');
  await page.getByRole('button',{name:'Apply link'}).click();
  await expect(editor.locator('a')).toHaveAttribute('href','https://example.test/path');
  await page.getByRole('button',{name:'Remove link'}).click();

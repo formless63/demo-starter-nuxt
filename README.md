@@ -52,13 +52,14 @@ Optional capabilities are not baseline features. Their source may exist in the r
 | Search | Available (`done`) | Optional | Baseline PostgreSQL/Drizzle; no extra service | Owner-scoped weighted FTS and deterministic keyset pages |
 | Data Table | Available (`done`) | Optional | None | Accessible controlled TanStack Vue tables with manual server modes |
 | Markdown / Code Content | Available (`done`) | Optional | None | Bounded server Markdown/Shiki with safe native Vue SSR and copy UI |
-| Internationalization | In progress | Optional | None | Explicit locale, bounded translations, CLDR plurals and canonical SSR formatting |
+| Internationalization | Available (`done`) | Optional | None | Explicit locale, bounded translations, CLDR plurals and canonical SSR formatting |
 | File UI | Available (`done`) | Optional | Object Storage | Bounded raw uploads, owner-authorized attachment downloads and atomic retained receipts |
+| Flow / Canvas | Available (`done`) | Optional | None | Controlled native Vue diagrams with bounded graph JSON and semantic SSR |
 | Rich Text / Tiptap | Available (`done`) | Optional | None | Bounded canonical JSON, safe Vue SSR and controlled lazy editing with explicit record identity |
 | Import / Export | Available (`done`) | Optional | Jobs, Object Storage; PostgreSQL/Drizzle/Node | Durable bounded CSV transfer; personal Project round-trip |
 | Charts / Visualization | Available (`done`) | Optional | None | Accessible line, bar, and area charts with SSR table fallback |
 
-`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache, AI, Invoice Ninja, Stripe and Medusa remain lazy with no provider required to boot/build. All twenty-three capabilities are `done`.
+`defaultInstalled: false` means a clean consumer must explicitly select and enable the capability. The root reference application explicitly enables the capability packages so their integration is continuously tested; Storage, Email, Cache, AI, Invoice Ninja, Stripe and Medusa remain lazy with no provider required to boot/build. All twenty-five capabilities are `done`.
 
 Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks.
 
@@ -79,7 +80,7 @@ bun run jobs:migrate
 bun run dev
 ```
 
-Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all twenty-three completed capability packages; `db:migrate` applies the application/API/Audit/Notification/transfer/provider tables and Projects search vector/index and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
+Set a strong `NUXT_AUTH_SECRET` of at least 32 characters. The checked-out reference app explicitly enables all twenty-five completed capability packages; `db:migrate` applies the application/API/Audit/Notification/transfer/provider tables and Projects search vector/index and `jobs:migrate` applies the separately owned pg-boss schema. OAuth providers are optional for local startup.
 
 ## Authentication notes
 
@@ -216,8 +217,16 @@ Rich Text source `1666bb6e252fbedbbe20b545de8117e8a246820f` passed [all 23 CI jo
 
 File UI (`done`) is an opt-in native Nuxt package with bounded raw uploads, owner-authorized attachment downloads, atomic lifecycle adapters and an accessible Vue manager. Root reference: `/files`; [contract](capabilities/file-ui/CAPABILITY.md). Only Object Storage is a hard dependency. Source review and full hosted gates passed; this combined successor still requires its own hosted verification.
 
-File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040678932), including packed native/provider/browser/removal and root application/production gates. This Rich Text / File UI composition records 23 completed opt-in, reference-enabled capabilities; its own exact-head full CI and independent composition review are required before acceptance.
+File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040678932), including packed native/provider/browser/removal and root application/production gates. Historical Rich Text / File UI composition checkpoint: 23 completed opt-in, reference-enabled capabilities, with its own CI/review pending at that time. Accepted main `bf15830889757b76b44a71fac80461deaca22cd1` is now the baseline for the 24-capability Flow composition below.
 
-## Internationalization (in progress)
+## Flow / Canvas
+
+Optional private `@repo/nuxt-flow-canvas` provides controlled native Vue editing and bounded server-safe graph JSON. Default installation remains false; this reference explicitly enables `/flow-test`. Applications own state and persistence. No database, migrations, network, or hard capability dependencies. See [contract](capabilities/flow-canvas/CAPABILITY.md). Remove the explicit module/dependency and `app/pages/flow-test.vue`/`server/api/flow-reference.get.ts`, update reference enablement/tests, then install/typecheck/build; existing graph documents are application-owned. Source gates passed; combined exact-head hosted gates remain pending.
+
+Flow / Canvas source `1999dab23987aa90efa62411275b7075b974d593` passed [all 24 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040851945), including the real native browser and independent packed install/runtime/removal/rebuild gates, and independent review. The 24-capability Flow composition and Rich Text focus fix are accepted in main `f1210c7c58dcebc24558042f34c39af9c03d1929`. The new 25-capability composition requires its own exact-head CI.
+
+## Internationalization
 
 Opt-in `@repo/nuxt-internationalization` supplies request-local plain-text translation, CLDR plurals and canonical SSR formatting. The reference app explicitly enables `/i18n-test`; no automatic locale routing or persistence. See [contract](capabilities/internationalization/CAPABILITY.md) for install, validation, browser gates and exact removal recipe.
+
+Internationalization source `96c24efcfc7e6fa31381dc4839be80ef75293a7b` passed [all 26 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37052330442), including root native browser/production and packed install/types/build/provider/browser/removal/rebuild gates. It is completed, default-off and explicitly reference-enabled. This 25-capability composition includes accepted Flow / Canvas and the Rich Text focus fix from main `f1210c7c58dcebc24558042f34c39af9c03d1929`; full combined exact-head CI remains pending.

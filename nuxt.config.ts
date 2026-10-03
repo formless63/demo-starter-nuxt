@@ -7,7 +7,7 @@ export default defineNuxtConfig({
   plugins: process.env.NUXT_E2E_DIAGNOSTICS === 'true'
     ? [`${import.meta.dirname}/tests/e2e/fixtures/hydration-diagnostics.client.ts`]
     : [],
-  modules: ['@nuxt/eslint', '@nuxtjs/color-mode', 'shadcn-nuxt', '@repo/nuxt-jobs', '@repo/nuxt-api', '@repo/nuxt-observability', '@repo/nuxt-storage', '@repo/nuxt-email', '@repo/nuxt-webhooks', '@repo/nuxt-audit-log', '@repo/nuxt-cache', '@repo/nuxt-realtime', '@repo/nuxt-notifications', '@repo/nuxt-search', '@repo/nuxt-ai', '@repo/nuxt-import-export', '@repo/nuxt-ops-admin', '@repo/nuxt-invoice-ninja', '@repo/nuxt-stripe', '@repo/nuxt-medusa', '@repo/nuxt-data-table', '@repo/nuxt-charts-visualization', '@repo/nuxt-command-system', '@repo/nuxt-markdown-code', '@repo/nuxt-rich-text', '@repo/nuxt-file-ui', '@repo/nuxt-internationalization'],
+  modules: ['@repo/nuxt-flow-canvas', '@nuxt/eslint', '@nuxtjs/color-mode', 'shadcn-nuxt', '@repo/nuxt-jobs', '@repo/nuxt-api', '@repo/nuxt-observability', '@repo/nuxt-storage', '@repo/nuxt-email', '@repo/nuxt-webhooks', '@repo/nuxt-audit-log', '@repo/nuxt-cache', '@repo/nuxt-realtime', '@repo/nuxt-notifications', '@repo/nuxt-search', '@repo/nuxt-ai', '@repo/nuxt-import-export', '@repo/nuxt-ops-admin', '@repo/nuxt-invoice-ninja', '@repo/nuxt-stripe', '@repo/nuxt-medusa', '@repo/nuxt-data-table', '@repo/nuxt-charts-visualization', '@repo/nuxt-command-system', '@repo/nuxt-markdown-code', '@repo/nuxt-rich-text', '@repo/nuxt-file-ui', '@repo/nuxt-internationalization'],
   css: ['~/assets/css/main.css'],
   vite: {
     plugins: [tailwindcss()],
