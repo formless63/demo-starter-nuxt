@@ -1620,7 +1620,7 @@
       "id": "pwa-offline",
       "displayName": "PWA / Offline",
       "kind": "client-platform",
-      "status": "in-progress",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [

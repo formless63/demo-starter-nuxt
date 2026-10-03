@@ -1,6 +1,6 @@
 # PWA / Offline v1
 
-Status: in-progress and reference-enabled at `/pwa-test`; reconstructed native Nuxt code requires independent review and exact-head full hosted acceptance. Independently opt-in (`defaultInstalled: false`), no hard capability dependencies. Notifications and Realtime are optional future integrations, not installed or used by v1.
+Status: done and reference-enabled at `/pwa-test`; independently reviewed native Nuxt source passed all 28 hosted CI jobs. The metadata-only promotion still requires exact-head full hosted acceptance. Independently opt-in (`defaultInstalled: false`), no hard capability dependencies. Notifications and Realtime are optional future integrations, not installed or used by v1.
 
 ## Scope and threat model
 
@@ -37,3 +37,7 @@ The generic clean fixture builds and serves native retirement, retains its exact
 ## Verification
 
 `bun run packages:test pwa-offline` owns packed strict types, actual native build/HTTP/browser, scope/default-empty fallback, credential omission/privacy, natural updates, same-version reuse, failed-install preservation, retirement and source-removed lean rebuild. The persistent test profile must prove a returning old client sees the exact retained tombstone, unregisters and removes only owned caches. Root `.e2e.ts` covers the actual application integration and private-session isolation. VM/policy tests supplement browser proof and never replace it. Asynchronous browser predicates use awaited `expect.poll` with an explicit false/false/true regression for the pinned Playwright driver. No unavailable-browser skip can count as acceptance.
+
+## Acceptance evidence
+
+PWA / Offline source `5214f541fdbf6c3c8c7842a749d74ab437ad5a54` passed [all 28 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37132857767), including all 26 generic packed lifecycles and the root production authenticated-session/privacy/offline-fallback checks. Independent review is complete. All 26 capabilities are done, explicitly reference-enabled and default-off. This metadata-only promotion requires its own exact-head full CI before acceptance. The intermittent anonymous Search timeout did not recur; diagnostic-only success does not establish its cause or a runtime fix.
