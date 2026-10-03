@@ -9,12 +9,13 @@ import { expect, it } from 'vitest'
 import charts from '../../packages/nuxt-charts-visualization/src/module'
 import dataTable from '../../packages/nuxt-data-table/src/module'
 import command from '../../packages/nuxt-command-system/src/module'
+import flowCanvas from '../../packages/nuxt-flow-canvas/src/module'
 import internationalization from '../../packages/nuxt-internationalization/src/module'
 
 const chartEntries = ['echarts/core', 'echarts/renderers', 'echarts/components', 'echarts/charts']
 
 it('composes UI modules without losing consumer or module-owned prebundles in either registration order', async () => {
-  for (const modules of [[charts, dataTable, command, internationalization], [internationalization, command, dataTable, charts]]) {
+  for (const modules of [[charts, dataTable, command, internationalization, flowCanvas], [flowCanvas, internationalization, command, dataTable, charts]]) {
     const root = await mkdtemp(join(tmpdir(), 'ui-module-composition-'))
     const nuxt = createNuxt(await loadNuxtConfig({ cwd: root, overrides: {
       dev: true,
@@ -36,10 +37,12 @@ it('composes UI modules without losing consumer or module-owned prebundles in ei
         })
       }
       const optimizer = (await resolveConfig(config, 'serve')).environments.client!.optimizeDeps
-      expect(optimizer.include).toEqual(expect.arrayContaining(['clsx', '@tanstack/vue-table', 'vue-i18n', ...chartEntries]))
+      expect(optimizer.include).toEqual(expect.arrayContaining(['clsx', '@tanstack/vue-table', 'vue-i18n', '@vue-flow/core', ...chartEntries]))
       expect(optimizer.exclude).toEqual(expect.arrayContaining(['consumer-exclusion', 'vue']))
       expect(optimizer.noDiscovery).toBe(true)
-      expect(optimizer.include.filter(entry => entry === 'vue-i18n')).toHaveLength(1)
+      for (const nativeEntry of ['vue-i18n', '@vue-flow/core']) {
+        expect(optimizer.include.filter(entry => entry === nativeEntry)).toHaveLength(1)
+      }
     }
     finally {
       await nuxt.close()

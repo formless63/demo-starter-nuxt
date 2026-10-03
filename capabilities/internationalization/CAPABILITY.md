@@ -1,6 +1,6 @@
 # Internationalization
 
-In progress. Independent private native Nuxt module `@repo/nuxt-internationalization`; default-off for clean consumers, explicitly enabled in the root reference app. No hard capability dependencies, credentials, external service, migrations, background processes or persistent data. Uses pinned stable vue-i18n 11.4.13 in Composition API mode.
+Completed. Independent private native Nuxt module `@repo/nuxt-internationalization`; default-off for clean consumers, explicitly enabled in the root reference app. No hard capability dependencies, credentials, external service, migrations, background processes or persistent data. Uses pinned stable vue-i18n 11.4.13 in Composition API mode.
 
 Install the package and explicitly add it to Nuxt `modules`. `InternationalizationProvider` owns a fresh native Vue engine scoped to its application subtree; `useInternationalization` injects its runtime. The module registers its native Vue runtime dependency for Vite optimization during module setup, before per-environment configurations are copied, preserving consumer optimizer settings and sibling-module entries. There is no mutable SSR singleton or globally installed plugin. Native composers are disposed when replaced or unmounted. `useLocaleLoader(initial, load)` stages a validated engine offscreen and only commits the newest active generation; cancel/unmount/failure preserve the previous visible payload even when the application loader ignores its AbortSignal.
 
@@ -12,6 +12,8 @@ Trusted named number presets are `decimal` and EUR `currency`; date presets are 
 
 The module changes only its section's `lang`/`dir`. Applications own document attributes, routing, query/history and fetching. No automatic route prefixes, redirects, detection, cookies, localStorage or remote requests. The `/i18n-test` application demo updates query/history only after successful commit and invalidates pending work on Back. Its endpoint uses static application catalogs.
 
-`bun run packages:test internationalization` covers packed install, strict types, production build, native Node/Bun transport, mandatory browser hydration/transitions and removal/rebuild. Hosted browser gates are mandatory on platforms where local Chromium cannot launch. Status remains in progress until full exact-head CI passes.
+`bun run packages:test internationalization` covers packed install, strict types, production build, native Node/Bun transport, mandatory browser hydration/transitions and removal/rebuild. Hosted browser gates are mandatory on platforms where local Chromium cannot launch. Source gates passed; each later composition requires its own exact-head CI.
 
 Removal: remove `/i18n-test`, `app/components/i18n`, `/api/i18n-reference`, the root package dependency/module entry and the reference enabled-capability entry; reinstall, typecheck and build. No data or migrations are deleted. The generated fixture removal retains its baseline home page.
+
+Internationalization source `96c24efcfc7e6fa31381dc4839be80ef75293a7b` passed [all 26 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37052330442), including root native browser/production and packed install/types/build/provider/browser/removal/rebuild gates. It is completed, default-off and explicitly reference-enabled. This 25-capability composition includes accepted Flow / Canvas and the Rich Text focus fix from main `f1210c7c58dcebc24558042f34c39af9c03d1929`; full combined exact-head CI remains pending.

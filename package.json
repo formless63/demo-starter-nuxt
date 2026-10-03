@@ -99,6 +99,7 @@
     "@repo/nuxt-markdown-code": "workspace:*",
     "@repo/nuxt-rich-text": "workspace:*",
     "@repo/nuxt-file-ui": "workspace:*",
+    "@repo/nuxt-flow-canvas": "workspace:*",
     "@repo/nuxt-internationalization": "workspace:*"
   },
   "devDependencies": {

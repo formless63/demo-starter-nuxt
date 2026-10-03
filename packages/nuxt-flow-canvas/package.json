@@ -1,0 +1,43 @@
+{
+  "name": "@repo/nuxt-flow-canvas",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Controlled native Vue flow canvas and bounded server-safe graph primitives",
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs",
+      "default": "./dist/module.mjs"
+    },
+    "./graph": {
+      "types": "./dist/runtime/graph.d.ts",
+      "import": "./dist/runtime/graph.js",
+      "default": "./dist/runtime/graph.js"
+    },
+    "./runtime/components/FlowCanvas.vue": "./dist/runtime/components/FlowCanvas.vue"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev:prepare": "nuxt-module-build prepare && nuxt-module-build build",
+    "prepack": "nuxt-module-build prepare && nuxt-module-build build"
+  },
+  "dependencies": {
+    "@nuxt/kit": "4.5.2",
+    "@vue-flow/core": "1.48.2"
+  },
+  "peerDependencies": {
+    "nuxt": ">=4.0.0 <5",
+    "vue": ">=3.5.0 <4"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "1.0.3",
+    "nuxt": "4.5.2"
+  }
+}
