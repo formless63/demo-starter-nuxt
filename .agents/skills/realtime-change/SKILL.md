@@ -5,7 +5,7 @@ description: Changing authenticated SSE/WebSocket streams, realtime event schema
 
 # Realtime change
 
-Read `capabilities/realtime/CAPABILITY.md`, `REALTIME_MODULE_EVALUATION.md` and current official Nitro/H3/CrossWS APIs; apply `capability-change` for packaging/contracts.
+Read `capabilities/realtime/CAPABILITY.md`, `docs/evaluations/REALTIME_MODULE_EVALUATION.md` and current official Nitro/H3/CrossWS APIs; apply `capability-change` for packaging/contracts.
 
 - Preserve both adapters and the three explicit onboarding choices; runtime default SSE. No Socket.IO, second router, RPC/client commands, replay/history/presence/chat/CRDT.
 - Application owns normal human cookie/session auth and full exact authorized channel set before upgrade/stream. No browser API keys, channel wildcards/query tokens; protect WebSocket origin. Connection grants require application-owned close on revocation.

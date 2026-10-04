@@ -18,7 +18,7 @@ The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_strip
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
 
-Storage stays unused/backendless until configured. Supply a region explicitly through `STORAGE_REGION`, `AWS_REGION` or `AWS_DEFAULT_REGION`; no implicit region is assumed. Local helpers supply RustFS `us-east-1` / Garage `garage`. Optional Noooste Garage UI v0.13.0 is third-party, not official Garage or required for S3, and stays localhost-bound. Its privileged admin-token login is operator-only; known dev tokens are local-only, never application browser configuration or normal S3 credentials. See the [Storage contract](../capabilities/object-storage/CAPABILITY.md) and [shared baseline](../OBJECT_STORAGE_MODULE_EVALUATION.md#shared-cross-framework-baseline).
+Storage stays unused/backendless until configured. Supply a region explicitly through `STORAGE_REGION`, `AWS_REGION` or `AWS_DEFAULT_REGION`; no implicit region is assumed. Local helpers supply RustFS `us-east-1` / Garage `garage`. Optional Noooste Garage UI v0.13.0 is third-party, not official Garage or required for S3, and stays localhost-bound. Its privileged admin-token login is operator-only; known dev tokens are local-only, never application browser configuration or normal S3 credentials. See the [Storage contract](../capabilities/object-storage/CAPABILITY.md) and [shared baseline](evaluations/OBJECT_STORAGE_MODULE_EVALUATION.md#shared-cross-framework-baseline).
 
 ## Choose realtime transports
 
@@ -46,7 +46,7 @@ Remove Notifications and Webhooks first because both hard-require Jobs. Retain i
 
 The pg-boss schema is external to Drizzle application migrations. Keep it by default for rollback and queued-work safety. For an already-deployed application, dropping it is a separate destructive database operation that requires explicit review. A fresh, never-deployed project can simply omit `jobs:migrate`; no pg-boss schema will be created.
 
-If a downstream fork will never reuse Jobs, follow the pruning metadata guidance in [Using capabilities](CAPABILITIES.md#prune-from-a-downstream-fork), then optionally delete `packages/nuxt-jobs/`, `fixtures/jobs-consumer/`, `capabilities/jobs/`, `JOBS_MODULE_EVALUATION.md`, and `.agents/skills/jobs-change/`. Do this only after the root no longer imports the package.
+If a downstream fork will never reuse Jobs, follow the pruning metadata guidance in [Using capabilities](CAPABILITIES.md#prune-from-a-downstream-fork), then optionally delete `packages/nuxt-jobs/`, `fixtures/jobs-consumer/`, `capabilities/jobs/`, `docs/evaluations/JOBS_MODULE_EVALUATION.md`, and `.agents/skills/jobs-change/`. Do this only after the root no longer imports the package.
 
 ## Remove API Platform
 
@@ -63,7 +63,7 @@ Keep `server/database/migrations/0001_api-platform.sql` and the migration journa
 
 For a truly fresh project where no local, shared, CI, staging, or production database has ever applied the API migration, you may remove the API table from the desired schema and regenerate a coherent migration history before the first deployment. Do not delete only the SQL file while leaving Drizzle journal/snapshot metadata inconsistent; verify the regenerated history against an empty database. Retaining the unused table migration is also safe and simpler.
 
-If a downstream fork will never reuse API Platform, follow the pruning metadata guidance in [Using capabilities](CAPABILITIES.md#prune-from-a-downstream-fork), then optionally delete `packages/nuxt-api/`, `fixtures/api-consumer/`, `capabilities/api-platform/`, `API_PLATFORM_MODULE_EVALUATION.md`, and `.agents/skills/api-contract-change/`. Do this only after auth, schema, routes, UI, and tests no longer import the package.
+If a downstream fork will never reuse API Platform, follow the pruning metadata guidance in [Using capabilities](CAPABILITIES.md#prune-from-a-downstream-fork), then optionally delete `packages/nuxt-api/`, `fixtures/api-consumer/`, `capabilities/api-platform/`, `docs/evaluations/API_PLATFORM_MODULE_EVALUATION.md`, and `.agents/skills/api-contract-change/`. Do this only after auth, schema, routes, UI, and tests no longer import the package.
 
 ## Remove Observability
 
@@ -86,7 +86,7 @@ First remove hard-dependent Import / Export using its recipe below, retaining al
 4. Remove `tests/unit/storage.test.ts` and `tests/unit/storage-observability.test.ts` (or adapt independent assertions). No SQL migration/schema change exists. Stop only the explicitly named local storage project if no longer used, retaining volumes by default.
 5. Clear `.nuxt`/`.output`, reinstall and run capability validation, typecheck/build and normal verification. The package fixture verifies owned AWS dependencies disappear when unused; a temporary reference copy verifies these broader integration steps.
 
-Do not delete remote buckets/objects, revoke remote access keys or delete named-volume data automatically. These resources are operator-controlled and may outlive the application code. For permanent pruning, update catalog/docs consistently before deleting `packages/nuxt-storage`, `fixtures/storage-consumer`, capability contract, `OBJECT_STORAGE_MODULE_EVALUATION.md` and `.agents/skills/storage-change`. Preserve the roadmap ID for File UI/Import/Export and other relationships.
+Do not delete remote buckets/objects, revoke remote access keys or delete named-volume data automatically. These resources are operator-controlled and may outlive the application code. For permanent pruning, update catalog/docs consistently before deleting `packages/nuxt-storage`, `fixtures/storage-consumer`, capability contract, `docs/evaluations/OBJECT_STORAGE_MODULE_EVALUATION.md` and `.agents/skills/storage-change`. Preserve the roadmap ID for File UI/Import/Export and other relationships.
 
 When removing **Observability but retaining Storage**, remove the optional imports/runner in `observed-storage.ts` and use plain `createStorage()`/`getStorage()`; remove initialization/shutdown instrumentation from `scripts/storage.ts`. Keep Storage commands/core API/provider configuration. This does not introduce a hard dependency.
 
@@ -96,7 +96,7 @@ When removing **Observability but retaining Storage**, remove the optional impor
 2. Remove `'@repo/nuxt-email'` from Nuxt modules, root workspace dependency, and `email` from `referenceApplication.enabledCapabilities`.
 3. If retaining Notifications, remove its optional Email adapter/import from `server/notifications/delivery.ts` and `server/notifications/email-adapter.ts`; leave in-app records/Jobs and other channels intact. Remove `server/utils/observed-email.ts`, `scripts/email.ts`, `compose.email.yaml`, root `email:*` aliases and matching catalog script declarations. Remove SMTP/EMAIL env entries and any consumer-owned mail callers. Delete/adapt Email-specific tests; retain unrelated auth/API coverage.
 4. Clear generated output, reinstall, run agents/capability checks and normal typecheck/build/tests/Playwright/container verification. No migration exists. Do not touch external SMTP accounts, DNS or remote credentials. The independent retained package/fixture remains available without activating infrastructure.
-5. For permanent pruning, update catalog/docs first, then optionally remove `packages/nuxt-email`, `fixtures/email-consumer`, capability contract, `EMAIL_MODULE_EVALUATION.md` and `.agents/skills/email-change`. Retain the roadmap ID where other capabilities reference it.
+5. For permanent pruning, update catalog/docs first, then optionally remove `packages/nuxt-email`, `fixtures/email-consumer`, capability contract, `docs/evaluations/EMAIL_MODULE_EVALUATION.md` and `.agents/skills/email-change`. Retain the roadmap ID where other capabilities reference it.
 
 When removing **Observability but retaining Email**, replace `sendObservedEmail` with package `sendEmail`, and command verification with `verifyEmailTransport`; remove only the telemetry wrapper. Keep SMTP/auth/canonical validation. Also retain plain Storage helpers as documented above.
 

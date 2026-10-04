@@ -176,7 +176,7 @@ Webhooks is explicitly enabled as `@repo/nuxt-webhooks` and requires Jobs; see i
 
 ## Cache / Coordination
 
-Explicitly enabled in the reference app and lazy at boot/build. Server-only `@repo/nuxt-cache` supplies exact namespaced string/byte values, expiring writes, atomic counters, advisory leases and non-durable pub/sub. Optional application-owned Realtime fanout uses pub/sub; Jobs remains PostgreSQL-durable. `cache:dev:valkey` starts pinned disposable localhost Valkey; `cache:check`, `cache:smoke` and `cache:dev:down` use explicit configuration. Leases have no fencing or quorum and cannot alone protect irreversible correctness. See the [contract](capabilities/cache-coordination/CAPABILITY.md) and [evaluation](CACHE_COORDINATION_MODULE_EVALUATION.md).
+Explicitly enabled in the reference app and lazy at boot/build. Server-only `@repo/nuxt-cache` supplies exact namespaced string/byte values, expiring writes, atomic counters, advisory leases and non-durable pub/sub. Optional application-owned Realtime fanout uses pub/sub; Jobs remains PostgreSQL-durable. `cache:dev:valkey` starts pinned disposable localhost Valkey; `cache:check`, `cache:smoke` and `cache:dev:down` use explicit configuration. Leases have no fencing or quorum and cannot alone protect irreversible correctness. See the [contract](capabilities/cache-coordination/CAPABILITY.md) and [evaluation](docs/evaluations/CACHE_COORDINATION_MODULE_EVALUATION.md).
 
 ## Realtime and Notifications
 
@@ -186,21 +186,21 @@ Notifications stores recipient-scoped plain records in an application-migrated t
 
 ## Search
 
-Opt-in PostgreSQL-native `@repo/nuxt-search` server helpers; the reference Projects endpoint searches owner rows using weighted `simple` FTS. Apply the explicit application migration first. Page size 25 (1–100); canonical rank/timestamp/ID cursor. No query logs or extra service. See [Search contract](capabilities/search/CAPABILITY.md) and [evaluation](SEARCH_MODULE_EVALUATION.md).
+Opt-in PostgreSQL-native `@repo/nuxt-search` server helpers; the reference Projects endpoint searches owner rows using weighted `simple` FTS. Apply the explicit application migration first. Page size 25 (1–100); canonical rank/timestamp/ID cursor. No query logs or extra service. See [Search contract](capabilities/search/CAPABILITY.md) and [evaluation](docs/evaluations/SEARCH_MODULE_EVALUATION.md).
 
 ## AI
 
-Explicitly enabled, server-only and operation-lazy. `@repo/nuxt-ai/server` provides text, incremental streaming and Zod structured generation; default provider openai-compatible, timeout 60 seconds, no retries, 1 MiB output cap. Set AI_MODEL and optional server AI_API_KEY/AI_BASE_URL only when used. `bun run ai:smoke` performs one intentional configured operation without logging generated content. See the [contract](capabilities/ai/CAPABILITY.md) and [evaluation](AI_MODULE_EVALUATION.md).
+Explicitly enabled, server-only and operation-lazy. `@repo/nuxt-ai/server` provides text, incremental streaming and Zod structured generation; default provider openai-compatible, timeout 60 seconds, no retries, 1 MiB output cap. Set AI_MODEL and optional server AI_API_KEY/AI_BASE_URL only when used. `bun run ai:smoke` performs one intentional configured operation without logging generated content. See the [contract](capabilities/ai/CAPABILITY.md) and [evaluation](docs/evaluations/AI_MODULE_EVALUATION.md).
 
 Ops / Admin is available (`done`): opt-in read-only `/admin/ops`, privileged server-only baseline-user allowlist and application-owned safe adapters. [Contract](capabilities/ops-admin/CAPABILITY.md).
 
 ## Invoice Ninja
 
-Invoice Ninja is available (`done`) as `@repo/nuxt-invoice-ninja`. The pinned disposable 5.13.43 fixture verifies native numeric-string draft/GET behavior and its isolated unsent zero-tax/discount policy. The reference app still has no draft policy: each deployment must supply its own currency/company-hook evidence. See the [contract](capabilities/invoice-ninja/CAPABILITY.md) and [evaluation](INVOICE_NINJA_MODULE_EVALUATION.md).
+Invoice Ninja is available (`done`) as `@repo/nuxt-invoice-ninja`. The pinned disposable 5.13.43 fixture verifies native numeric-string draft/GET behavior and its isolated unsent zero-tax/discount policy. The reference app still has no draft policy: each deployment must supply its own currency/company-hook evidence. See the [contract](capabilities/invoice-ninja/CAPABILITY.md) and [evaluation](docs/evaluations/INVOICE_NINJA_MODULE_EVALUATION.md).
 
 ## Stripe
 
-Stripe v1 is available (`done`), independently packaged as `@repo/nuxt-stripe` with Jobs/Webhooks hard dependencies. The `/stripe` reference requires authentication and explicit server customer bindings; optional operator-owned `STRIPE_REFERENCE_PRICE_ID`, `STRIPE_REFERENCE_CURRENCY`, `STRIPE_REFERENCE_SUCCESS_URL` and `STRIPE_REFERENCE_CANCEL_URL` configure the single registered `starter.one-time` offer. Missing configuration remains lazy503. [Contract](capabilities/stripe/CAPABILITY.md); [design/compatibility limits](STRIPE_MODULE_EVALUATION.md). No remote account, payment or registration is required for base startup or local verification.
+Stripe v1 is available (`done`), independently packaged as `@repo/nuxt-stripe` with Jobs/Webhooks hard dependencies. The `/stripe` reference requires authentication and explicit server customer bindings; optional operator-owned `STRIPE_REFERENCE_PRICE_ID`, `STRIPE_REFERENCE_CURRENCY`, `STRIPE_REFERENCE_SUCCESS_URL` and `STRIPE_REFERENCE_CANCEL_URL` configure the single registered `starter.one-time` offer. Missing configuration remains lazy503. [Contract](capabilities/stripe/CAPABILITY.md); [design/compatibility limits](docs/evaluations/STRIPE_MODULE_EVALUATION.md). No remote account, payment or registration is required for base startup or local verification.
 
 ## Medusa
 

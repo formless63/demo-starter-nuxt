@@ -1,6 +1,6 @@
 # Jobs capability
 
-PostgreSQL-backed background jobs implemented by the independently installable Nuxt package `@repo/nuxt-jobs`. `@repo/*` is an internal workspace scope, not a publication decision, and the package remains private. Implementation findings remain in [`JOBS_MODULE_EVALUATION.md`](../../JOBS_MODULE_EVALUATION.md).
+PostgreSQL-backed background jobs implemented by the independently installable Nuxt package `@repo/nuxt-jobs`. `@repo/*` is an internal workspace scope, not a publication decision, and the package remains private. Implementation findings remain in [`JOBS_MODULE_EVALUATION.md`](../../docs/evaluations/JOBS_MODULE_EVALUATION.md).
 
 `defaultInstalled` is false: clean consumers do not receive Jobs without selecting it. The root reference application enables it deliberately for integration testing.
 
