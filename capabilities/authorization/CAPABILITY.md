@@ -24,4 +24,4 @@ No new environment variables or policy service. Baseline PostgreSQL/DATABASE_URL
 
 Enable the private package explicitly in nuxt.config and include `/schema` roleAssignment in application Drizzle schema; generate/review/apply an additive migration explicitly. Nothing migrates or seeds on import/build/startup. Removal removes package/integration/config code and restores explicit root owner checks; preserve assignment tables, rows, indexes and applied migration history. Organizations native administration and API-key restrictions remain independent.
 
-See [the evaluation](../../AUTHORIZATION_MODULE_EVALUATION.md). The isolated packed-consumer lifecycle passed on both drivers and runtimes, including retained assignment/index/migration history after removal. Root verification is pending; this document does not mark completion.
+See [the evaluation](../../docs/evaluations/AUTHORIZATION_MODULE_EVALUATION.md). The isolated packed-consumer lifecycle passed on both drivers and runtimes, including retained assignment/index/migration history after removal. Root verification is pending; this document does not mark completion.

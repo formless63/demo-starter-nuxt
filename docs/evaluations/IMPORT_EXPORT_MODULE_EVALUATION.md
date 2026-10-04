@@ -1,6 +1,6 @@
 # Import / Export evaluation
 
-Status: in-progress, not release accepted. Canonical API/lifecycle contract is [CAPABILITY.md](capabilities/import-export/CAPABILITY.md). No sibling repository was consulted.
+Status: in-progress, not release accepted. Canonical API/lifecycle contract is [CAPABILITY.md](../../capabilities/import-export/CAPABILITY.md). No sibling repository was consulted.
 
 ## Dependency selection
 

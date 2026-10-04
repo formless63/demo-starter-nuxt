@@ -5,7 +5,7 @@ description: Changing ephemeral Cache/Coordination keys, values, TTLs, counters,
 
 # Cache change
 
-Read `capabilities/cache-coordination/CAPABILITY.md` and `CACHE_COORDINATION_MODULE_EVALUATION.md`; use `capability-change` for package/service contract changes.
+Read `capabilities/cache-coordination/CAPABILITY.md` and `docs/evaluations/CACHE_COORDINATION_MODULE_EVALUATION.md`; use `capability-change` for package/service contract changes.
 
 - Ephemeral primitives only. No durable store/session database/queue/Jobs/Realtime/search/rate-limit product/persistent event bus.
 - Server-only lazy configuration and clients; no startup connection, routes or browser imports. Preserve Nitro singleton close handling; caller-created instances must be closed by their caller, and closeCache only resets/closes the singleton.

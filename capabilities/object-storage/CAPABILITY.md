@@ -1,6 +1,6 @@
 # Object Storage capability
 
-`@repo/nuxt-storage` is capability #4: a private, publish-shaped, server-only Nuxt 4 package. Clean consumers explicitly opt in (`defaultInstalled: false`); the root reference app enables it. See [evaluation](../../OBJECT_STORAGE_MODULE_EVALUATION.md).
+`@repo/nuxt-storage` is capability #4: a private, publish-shaped, server-only Nuxt 4 package. Clean consumers explicitly opt in (`defaultInstalled: false`); the root reference app enables it. See [evaluation](../../docs/evaluations/OBJECT_STORAGE_MODULE_EVALUATION.md).
 
 ## Requirements
 

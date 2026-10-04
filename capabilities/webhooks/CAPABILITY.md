@@ -2,7 +2,7 @@
 
 `@repo/nuxt-webhooks` is a private Nuxt 4 package, explicitly selected by consumers (`defaultInstalled: false`). The root reference app enables it deliberately. It requires **Jobs**; `requires: ["jobs"]`, the Jobs peer (`>=0.1.0 <0.2`) and Nuxt 4 `moduleDependencies` enforce that relationship. Install both packages and supply the consumer-owned Jobs registry. Audit Log, Observability and API Platform are optional integration patterns with no imports/dependencies.
 
-The package root is the Nuxt module; `/server` exports server-only helpers. The module adds imports only, with no routes, UI, endpoint CRUD, subscriptions, router, worker or database table. It uses the existing Jobs worker and explicit pg-boss migration. Remote endpoints are required only for real outbound use; build, boot and health require no target configuration. See [evaluation](../../WEBHOOKS_MODULE_EVALUATION.md).
+The package root is the Nuxt module; `/server` exports server-only helpers. The module adds imports only, with no routes, UI, endpoint CRUD, subscriptions, router, worker or database table. It uses the existing Jobs worker and explicit pg-boss migration. Remote endpoints are required only for real outbound use; build, boot and health require no target configuration. See [evaluation](../../docs/evaluations/WEBHOOKS_MODULE_EVALUATION.md).
 
 ## Installation and API
 
