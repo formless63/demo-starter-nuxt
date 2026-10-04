@@ -1,6 +1,6 @@
 # Observability capability
 
-`@repo/nuxt-observability` is a private, publish-shaped, independently installable Nuxt 4 package. It is capability #3, server-only, and `defaultInstalled: false`; the reference app explicitly enables it. See [evaluation](../../OBSERVABILITY_MODULE_EVALUATION.md).
+`@repo/nuxt-observability` is a private, publish-shaped, independently installable Nuxt 4 package. It is capability #3, server-only, and `defaultInstalled: false`; the reference app explicitly enables it. See [evaluation](../../docs/evaluations/OBSERVABILITY_MODULE_EVALUATION.md).
 
 ## Requirements
 

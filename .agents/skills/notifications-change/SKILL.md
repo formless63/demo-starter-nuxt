@@ -5,7 +5,7 @@ description: Changing persistent notifications, recipient-scoped queries/read st
 
 # Notifications change
 
-Read `capabilities/notifications/CAPABILITY.md`, `NOTIFICATIONS_MODULE_EVALUATION.md`, Jobs transaction API and Email/Audit contracts. Apply `capability-change`, `jobs-change` and `database-migration` when applicable.
+Read `capabilities/notifications/CAPABILITY.md`, `docs/evaluations/NOTIFICATIONS_MODULE_EVALUATION.md`, Jobs transaction API and Email/Audit contracts. Apply `capability-change`, `jobs-change` and `database-migration` when applicable.
 
 - Jobs is the only hard capability edge. Keep optional Email/Realtime/Audit/Observability application-owned. Package exports schema; application owns inclusion/SQL/migrations and session routes. Never migrate at startup or contact optional services on boot.
 - Create owns UUID/createdAt/unread state; metadata/input bounds reject secret keys/runtime objects/accessors/control strings. No automatic copying of notification title/body/metadata into Audit or logs. Plain text only in v1.
