@@ -1,6 +1,6 @@
 # Organizations / Tenancy
 
-Status: **in progress**. The opt-in package has an independent packed-consumer fixture; root composition is under verification. Existing personal Projects and machine credential ownership are unchanged.
+Status: **done**. The opt-in package has an independent packed-consumer fixture; root composition is accepted. Existing personal Projects and machine credential ownership are unchanged.
 
 The private opt-in package is `@repo/nuxt-organizations`, using the official Better Auth organization plugin at the baseline's matching version. Its canonical v1 boundaries are one immutable creator/owner, owner/admin/member single roles, verified-email invitations, bounded native admission checks, no teams/dynamic roles/deletion/automatic organization provisioning, and explicit authoritative tenant membership contexts. Personal Projects remain personal. Optional application-owned Audit and Notifications integrations must not become package dependencies.
 
@@ -39,3 +39,7 @@ Register `@repo/nuxt-organizations` explicitly in Nuxt modules. Compose both plu
 Settings are server-only: `ORGANIZATIONS_CREATION_LIMIT` default10/range1–100, `ORGANIZATIONS_MEMBERSHIP_LIMIT` default100/range1–1000, `ORGANIZATIONS_INVITATION_LIMIT` default100/range1–1000, `ORGANIZATIONS_INVITATION_TTL_SECONDS` default172800/range300–604800. Empty/undefined uses defaults; other invalid integer syntax fails locally. Native read-then-check admission limits are not serialized concurrency quotas. Helper transactions bound statements to5 seconds and locks to2 seconds; the root uses a separately bounded auth pool rather than reconfiguring shared domain/Jobs connections.
 
 The root deliberately adds organization-owned notes with exact tenant predicates. Current members read; owner/admin writes recheck locked membership in the same transaction. Personal Projects are never moved or shared by selecting an organization. Invitations are persisted with an authorized copy-link UI and explicit created/not-sent state; no Email/Jobs dependency or startup provisioning exists. Optional root Audit writes for notes share their transaction; native plugin operations do not claim atomic Audit integration.
+
+## Current roadmap acceptance
+
+Acceptance verified on 2026-10-04: merged main `237186860f0a079e8d01fb295023375a0e34ebd0` passed [all 31 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37181894995), including the three identity capability lifecycles and the root application checks. Organizations, Authorization and Feature Flags are done, reference-enabled and opt-in (`defaultInstalled: false`). This records the tested implementation baseline; later changes still require their applicable checks.

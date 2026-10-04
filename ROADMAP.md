@@ -43,15 +43,14 @@ The generic `packages:*` commands build and exercise the catalog entries. Hard c
 
 | Status | Capability |
 | --- | --- |
-| Done (26) | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI; Import / Export; Ops / Admin; Invoice Ninja; Stripe; Medusa; Data Table; Charts / Visualization; Command System; Markdown / Code Content; Rich Text / Tiptap; File UI; Flow / Canvas; Internationalization; PWA / Offline |
-| In progress | Organizations / Tenancy; Authorization; Feature Flags |
-| Planned | All remaining capabilities below unless explicitly changed in the catalog |
+| Done (29) | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI; Import / Export; Ops / Admin; Invoice Ninja; Stripe; Medusa; Data Table; Charts / Visualization; Command System; Markdown / Code Content; Rich Text / Tiptap; File UI; Flow / Canvas; Internationalization; PWA / Offline; Organizations / Tenancy; Authorization; Feature Flags |
+| Planned | None in the current 29-capability scope |
 
-Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All twenty-six remain opt-in for clean consumers and explicitly enabled in the reference app.
+Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All twenty-nine remain opt-in for clean consumers and explicitly enabled in the reference app.
 
 Charts source `7e8daa68c9862ef982c6dd0aa7e4269903eda9fd` passed [all 20 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37018899032). Command retains its separately verified implementation ([all 20 jobs at e0a01fa](https://github.com/formless63/demo-starter-nuxt/actions/runs/37012702417)). Markdown / Code Content implementation `e99539d90020a70028545ac4f252c55c16e3f432` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37029379598): all 21 generic packed package lifecycles, corrected real-browser payload/hydration/copy checks, full root checks, production browser/container/health, migrations and worker verification. This is source evidence; metadata promotion and later revisions require their own exact-head CI.
 
-The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused. Identity is appended as SQL0015–0017 / journal idx13–15; its runtime verification remains paused.
+The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused. Identity is appended as SQL0015–0017 / journal idx13–15; its lifecycle and integrated checks passed in the merged-main CI recorded below.
 
 API Platform is capability #2. Observability is capability #3: server-only logs, request correlation, explicit spans/metrics, optional OTLP export and a clean-consumer lifecycle. No new service is required.
 
@@ -182,26 +181,26 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 ## Identity / policy
 
-### Organizations / Tenancy (`in-progress`)
+### Organizations / Tenancy (`done`)
 
-- Adopted compatibility revision: native Better Auth 1.7.7 acceptance uses a single-winner claim, transactional membership/session creation and best-effort compensation, without crash-atomicity; see the [reproducible evaluation](docs/evaluations/ORGANIZATIONS_MODULE_EVALUATION.md). Historical isolated lifecycle evidence predates the stronger fault gates; integrated lifecycle/root/release verification is pending and paused.
+- Adopted compatibility revision: native Better Auth 1.7.7 acceptance uses a single-winner claim, transactional membership/session creation and best-effort compensation, without crash-atomicity; see the [reproducible evaluation](docs/evaluations/ORGANIZATIONS_MODULE_EVALUATION.md). Historical isolated lifecycle evidence predates the stronger fault gates; integrated lifecycle/root/release verification passed on the merged main recorded below.
 - Contract: [`capabilities/organizations/CAPABILITY.md`](capabilities/organizations/CAPABILITY.md)
 
 - Requires: starter authentication (baseline, not a capability edge)
 - Integrates with: Audit Log, Notifications
 - External: PostgreSQL
 
-### Authorization (`in-progress`)
+### Authorization (`done`)
 
-- Integrated verification pending and paused; [contract](capabilities/authorization/CAPABILITY.md) and [decision](docs/evaluations/AUTHORIZATION_MODULE_EVALUATION.md).
+- Integrated verification passed; [contract](capabilities/authorization/CAPABILITY.md) and [decision](docs/evaluations/AUTHORIZATION_MODULE_EVALUATION.md).
 
 - Requires: starter authentication (baseline, not a capability edge)
 - Integrates with: Organizations, API Platform, Audit Log
 - External: PostgreSQL
 
-### Feature Flags (`in-progress`)
+### Feature Flags (`done`)
 
-- Integrated verification pending and paused; [contract](capabilities/feature-flags/CAPABILITY.md) and [decision](docs/evaluations/FEATURE_FLAGS_MODULE_EVALUATION.md).
+- Integrated verification passed; [contract](capabilities/feature-flags/CAPABILITY.md) and [decision](docs/evaluations/FEATURE_FLAGS_MODULE_EVALUATION.md).
 
 - Requires: none
 - Integrates with: Organizations, Authorization, Audit Log
@@ -329,7 +328,7 @@ Every implemented capability gets `capabilities/<id>/CAPABILITY.md`. Changes to 
 
 Rich Text is implemented as independent `@repo/nuxt-rich-text`; see [contract](capabilities/rich-text/CAPABILITY.md). The source and Markdown/Rich Text promotion passed all hosted gates; the File UI composition was awaiting exact-head CI at that historical checkpoint and is now included in accepted main `bf158308`.
 
-Rich Text source `1666bb6e252fbedbbe20b545de8117e8a246820f` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37031826840), including its real packed browser/removal lifecycle and full root production gates. The reviewed Markdown/Rich Text promotion `f1bbea44407704973dd2168cda3c23115028c487` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37037650525), recording 22 completed opt-in capabilities. This File UI composition requires its own exact-head full CI before acceptance.
+Rich Text source `1666bb6e252fbedbbe20b545de8117e8a246820f` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37031826840), including its real packed browser/removal lifecycle and full root production gates. The reviewed Markdown/Rich Text promotion `f1bbea44407704973dd2168cda3c23115028c487` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37037650525), recording 22 completed opt-in capabilities. That historical File UI composition is now included in accepted main; current evidence is linked in this document.
 
 File UI is completed as a private native Nuxt package. Only Object Storage is a hard dependency; trusted identity/policy and atomic durable metadata belong to the application. It remains opt-in; its reviewed source passed all exact-head hosted lifecycle, browser, provider and native HTTP gates. Later composition requires its own exact-head acceptance.
 
@@ -343,4 +342,12 @@ Internationalization is completed based on verified source gates: native Vue req
 
 Internationalization source `96c24efcfc7e6fa31381dc4839be80ef75293a7b` passed [all 26 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37052330442), including root native browser/production and packed install/types/build/provider/browser/removal/rebuild gates. It is completed, default-off and explicitly reference-enabled. This 25-capability composition includes accepted Flow / Canvas and the Rich Text focus fix from main `f1210c7c58dcebc24558042f34c39af9c03d1929`; it subsequently passed [all 27 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37122326222) and was accepted as main `d8ca417919b5f9dd352fb7ba0b41d427da503e5a`.
 
-PWA / Offline source `5214f541fdbf6c3c8c7842a749d74ab437ad5a54` passed [all 28 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37132857767), including all 26 generic packed lifecycles and the root production authenticated-session/privacy/offline-fallback checks. Independent review is complete. All 26 capabilities are done, explicitly reference-enabled and default-off. This metadata-only promotion requires its own exact-head full CI before acceptance. The intermittent anonymous Search timeout did not recur; diagnostic-only success does not establish its cause or a runtime fix.
+PWA / Offline source `5214f541fdbf6c3c8c7842a749d74ab437ad5a54` passed [all 28 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37132857767), including all 26 generic packed lifecycles and the root production authenticated-session/privacy/offline-fallback checks. Independent review is complete. At that historical checkpoint, all 26 implemented capabilities were done, explicitly reference-enabled and default-off. This historical promotion is now included in accepted main; current evidence is linked in this document. The intermittent anonymous Search timeout did not recur; diagnostic-only success does not establish its cause or a runtime fix.
+
+## Current roadmap acceptance
+
+Acceptance verified on 2026-10-04: merged main `237186860f0a079e8d01fb295023375a0e34ebd0` passed [all 31 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37181894995), including the three identity capability lifecycles and the root application checks. Organizations, Authorization and Feature Flags are done, reference-enabled and opt-in (`defaultInstalled: false`). This records the tested implementation baseline; later changes still require their applicable checks.
+
+## Scope completion
+
+All 29 capability modules in this roadmap are implemented, merged and verified in the reference application. Framework/library evaluation ideas remain optional research, not missing modules. Package publication, live provider accounts, deployment-specific policy and production operation remain separate application-owner responsibilities. All generated-consumer defaults remain false.

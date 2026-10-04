@@ -1,12 +1,12 @@
 # Starting a project
 
-The repository is both a baseline starter and a reference application. Choose which of the twenty-six completed capabilities belong in the product before building domain features around them.
+The repository is both a baseline starter and a reference application. Choose which of the twenty-nine completed capabilities belong in the product before building domain features around them.
 
-Organizations, Authorization and Feature Flags have preserved independent packed-consumer fixtures and explicit root registrations. Their current integrated lifecycle and full release gates remain pending and paused. Follow each [capability contract](CAPABILITIES.md) for opt-in installation/schema composition; apply committed migrations explicitly. Personal Project ownership remains enforced, independent of active organization and feature controls.
+Organizations, Authorization and Feature Flags have preserved independent packed-consumer fixtures and explicit root registrations. Their integrated lifecycles and full release gates passed in merged-main CI. Follow each [capability contract](CAPABILITIES.md) for opt-in installation/schema composition; apply committed migrations explicitly. Personal Project ownership remains enforced, independent of active organization and feature controls.
 
 ## Full/reference setup
 
-The root application explicitly enables all twenty-six capabilities listed in the [capability table](CAPABILITIES.md). It includes:
+The root application explicitly enables all twenty-nine capabilities listed in the [capability table](CAPABILITIES.md). It includes:
 
 - one Jobs registry and standalone worker with transactional enqueue;
 - Better Auth and owner-scoped browser and machine API routes;
@@ -14,9 +14,9 @@ The root application explicitly enables all twenty-six capabilities listed in th
 - one production image for the app, migration tools and worker;
 - lazy optional S3, SMTP, Cache, AI, Invoice Ninja, Stripe and Medusa adapters with no provider required at startup;
 - transactionally appended audit history and notifications, plus ID-only post-commit hints over authenticated SSE/WebSocket transports;
-- all twenty-six catalog-driven package install/runtime/removal/rebuild checks in generic CI.
+- all twenty-nine catalog-driven package install/runtime/removal/rebuild checks in generic CI.
 
-The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused. Identity is appended as SQL0015–0017 / journal idx13–15; its runtime verification remains paused.
+The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused. Identity is appended as SQL0015–0017 / journal idx13–15; its lifecycle and integrated checks passed in the merged-main CI recorded below.
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
 
@@ -223,7 +223,7 @@ Remove `@repo/nuxt-file-ui` from module/dependency lists, `app/pages/files.vue`,
 
 ## Flow / Canvas
 
-Optional private `@repo/nuxt-flow-canvas` provides controlled native Vue editing and bounded server-safe graph JSON. Default installation remains false; this reference explicitly enables `/flow-test`. Applications own state and persistence. No database, migrations, network, or hard capability dependencies. See [contract](../capabilities/flow-canvas/CAPABILITY.md). Remove the explicit module/dependency and `app/pages/flow-test.vue`/`server/api/flow-reference.get.ts`, update reference enablement/tests, then install/typecheck/build; existing graph documents are application-owned. Source gates passed; combined exact-head hosted gates remain pending.
+Optional private `@repo/nuxt-flow-canvas` provides controlled native Vue editing and bounded server-safe graph JSON. Default installation remains false; this reference explicitly enables `/flow-test`. Applications own state and persistence. No database, migrations, network, or hard capability dependencies. See [contract](../capabilities/flow-canvas/CAPABILITY.md). Remove the explicit module/dependency and `app/pages/flow-test.vue`/`server/api/flow-reference.get.ts`, update reference enablement/tests, then install/typecheck/build; existing graph documents are application-owned. Source and merged-main hosted gates passed; see the current acceptance evidence below.
 
 Flow / Canvas source `1999dab23987aa90efa62411275b7075b974d593` passed [all 24 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040851945), including the real native browser and independent packed install/runtime/removal/rebuild gates, and independent review. The 24-capability Flow composition and Rich Text focus fix are accepted in main `f1210c7c58dcebc24558042f34c39af9c03d1929`. That historical 25-capability composition subsequently passed full CI and was accepted as main `d8ca417919b5f9dd352fb7ba0b41d427da503e5a`.
 
@@ -239,7 +239,7 @@ The optional native `@repo/nuxt-pwa-offline` module is explicitly reference-enab
 
 Removal requires deploying `pwaOffline.retired: true` at the same worker URL/scope, allowing natural activation, and retaining that exact retirement script in `public/pwa-offline-sw.js` through all subsequent lean builds for returning clients. Only then remove the explicit module/dependency, page/imports and reference metadata. Never delete unrelated registrations/caches. Hosted exact-head acceptance and independent review remain required.
 
-PWA / Offline source `5214f541fdbf6c3c8c7842a749d74ab437ad5a54` passed [all 28 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37132857767), including all 26 generic packed lifecycles and the root production authenticated-session/privacy/offline-fallback checks. Independent review is complete. All 26 capabilities are done, explicitly reference-enabled and default-off. This metadata-only promotion requires its own exact-head full CI before acceptance. The intermittent anonymous Search timeout did not recur; diagnostic-only success does not establish its cause or a runtime fix.
+PWA / Offline source `5214f541fdbf6c3c8c7842a749d74ab437ad5a54` passed [all 28 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37132857767), including all 26 generic packed lifecycles and the root production authenticated-session/privacy/offline-fallback checks. Independent review is complete. At that historical checkpoint, all 26 implemented capabilities were done, explicitly reference-enabled and default-off. This historical promotion is now included in accepted main; current evidence is linked in this document. The intermittent anonymous Search timeout did not recur; diagnostic-only success does not establish its cause or a runtime fix.
 
 
 ## Remove Organizations
@@ -263,3 +263,7 @@ The generic fixture proves retained data/index/migration history after clean rem
 ## Explicit local identity demonstration
 
 `bun run identity:fixture seed OPERATOR_ID SUBJECT_ID --local-fixture` creates disabled beta.dashboard in a disposable loopback database, without automatic startup seeding. `toggle OPERATOR_ID SUBJECT_ID EXPECTED_REVISION true|false` requires the current revision. `grant`/`revoke` manage only the code-owned dashboard-reader role in the exact subject user scope; identities must already exist and operator authority is explicitly supplied. These commands are development/test fixtures, never production provisioning or a public IAM console. They log a safe operation outcome only.
+
+## Current roadmap acceptance
+
+Acceptance verified on 2026-10-04: merged main `237186860f0a079e8d01fb295023375a0e34ebd0` passed [all 31 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37181894995), including the three identity capability lifecycles and the root application checks. Organizations, Authorization and Feature Flags are done, reference-enabled and opt-in (`defaultInstalled: false`). This records the tested implementation baseline; later changes still require their applicable checks.
