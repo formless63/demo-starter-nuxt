@@ -12,9 +12,13 @@ The source of truth is the delegated v1 packet and [CAPABILITY.md](../../capabil
 
 ## Evidence
 
-`fixtures/feature-flags-consumer` uses independently packed artifacts, committed explicit migrations and uniquely owned disposable PostgreSQL18 databases on Bun/Node24 on node-postgres. The generic lifecycle passed install/typecheck/build, node-postgres on Bun/Node24, runtime vectors/precedence/revisions/rollback/snapshot/actual timeout/context isolation, then removal/rebuild with retained definitions/overrides/indexes/migration history. Root and final release gates remain pending; no completion claim is made here.
+`fixtures/feature-flags-consumer` uses independently packed artifacts, committed explicit migrations and uniquely owned disposable PostgreSQL18 databases on Bun/Node24 on node-postgres. The generic lifecycle passed install/typecheck/build, node-postgres on Bun/Node24, runtime vectors/precedence/revisions/rollback/snapshot/actual timeout/context isolation, then removal/rebuild with retained definitions/overrides/indexes/migration history. Root and final release gates passed on the merged main recorded below.
 
 ## Connection-loss verification
 
 The disposable PostgreSQL18 fixture terminates its own backend during an explicit transaction and requires a safe unavailable result with no mutation replay. It runs on node-postgres (`pg`) on Bun and Node 24, with the standard connection-error listener registered on fixture-owned clients. postgres-js was removed from the repository because 3.4.9 can throw an asynchronous TypeError at `connection.js:255` after the socket is cleared; the investigation and rejected alternatives are recorded in [STACK_EVALUATION.md](STACK_EVALUATION.md#postgresql-driver-node-postgres-only-october-2026). No global exception suppression, driver fork, automatic replay or reduced outage gate is adopted.
 
+
+## Current roadmap acceptance
+
+Acceptance verified on 2026-10-04: merged main `237186860f0a079e8d01fb295023375a0e34ebd0` passed [all 31 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37181894995), including the three identity capability lifecycles and the root application checks. Organizations, Authorization and Feature Flags are done, reference-enabled and opt-in (`defaultInstalled: false`). This records the tested implementation baseline; later changes still require their applicable checks.

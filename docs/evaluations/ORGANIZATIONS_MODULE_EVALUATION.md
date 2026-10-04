@@ -27,7 +27,7 @@ The native source claims the invitation before `runWithTransaction`; its catch a
 
 The parent architecture decision accepts native Better Auth1.7.7 semantics: a single-winner pending-to-accepted claim, followed by transactional membership/session creation where supported, with best-effort restoration to pending on ordinary failure. Claim and membership are **not crash-atomic**. Keep native dispatch/hooks and membership uniqueness; no outer dispatch transaction layer, copied plugin internals or generic transaction framework is adopted.
 
-An accepted invitation with no authoritative membership never grants tenant access or successful admission. The application must refresh/verify membership after an ambiguous result. A guarded read-only diagnostic and explicit operator-review/reinvite recipe are documented in [CAPABILITY.md](../../capabilities/organizations/CAPABILITY.md#operator-recovery). The integration must prove normal success, concurrent single-winner acceptance, ordinary insertion-failure compensation and the durable crash window on both native entrypoints and drivers.
+An accepted invitation with no authoritative membership never grants tenant access or successful admission. The application must refresh/verify membership after an ambiguous result. A guarded read-only diagnostic and explicit operator-review/reinvite recipe are documented in [CAPABILITY.md](../../capabilities/organizations/CAPABILITY.md#operator-recovery). The integration must prove normal success, concurrent single-winner acceptance, ordinary insertion-failure compensation and the durable crash window on both native entrypoints and supported runtimes.
 
 The enclosing-context experiment remains evidence explaining the upstream boundary; it is not runtime integration code.
 
@@ -37,7 +37,7 @@ The separately dispatched createOrganization limitation remains: organization cr
 
 The revised shared observable acceptance contract requires a single-winner invitation claim, subsequent transactional membership/session creation where supported, best-effort ordinary-failure restoration, unique membership, conflict/already-consumed on competing acceptance, and no successful tenant response/access without authoritative membership. Claim+membership crash-atomicity is explicitly not promised. Native upstream endpoint shapes may remain versioned; transport does not excuse unequal safety outcomes. Only this Nuxt repository was inspected; no sibling repository was consulted.
 
-Other Organizations contract boundaries, optional relationships, independent removal and new schema are tracked in [CAPABILITY.md](../../capabilities/organizations/CAPABILITY.md). The capability remains `defaultInstalled: false` and in-progress. Authorization and Feature Flags are separate assigned capabilities whose implementation follows Organizations isolated-consumer proof.
+Other Organizations contract boundaries, optional relationships, independent removal and new schema are tracked in [CAPABILITY.md](../../capabilities/organizations/CAPABILITY.md). The capability is done and remains `defaultInstalled: false`. Authorization and Feature Flags are separately completed capabilities.
 
 ## Connection-loss verification
 
@@ -46,3 +46,7 @@ The disposable PostgreSQL18 fixture terminates its own backend during an explici
 ## Owner-only organization update regression
 
 Independent review identified that Better Auth defaults allow admins to update an organization. Global update dispatch and beforeUpdateOrganization now both re-read the authenticated actor's exact organization membership and require owner. The real HTTP/auth.api fixture asserts owner normalization/success, admin/member403, and unchanged persisted id/name/slug after each denial on both runtimes and pg. Existing owner and admission invariants remain covered.
+
+## Current roadmap acceptance
+
+Acceptance verified on 2026-10-04: merged main `237186860f0a079e8d01fb295023375a0e34ebd0` passed [all 31 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37181894995), including the three identity capability lifecycles and the root application checks. Organizations, Authorization and Feature Flags are done, reference-enabled and opt-in (`defaultInstalled: false`). This records the tested implementation baseline; later changes still require their applicable checks.

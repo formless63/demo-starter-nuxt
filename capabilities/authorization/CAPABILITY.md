@@ -1,6 +1,6 @@
 # Authorization
 
-Status: in-progress; defaultInstalled:false. `@repo/nuxt-authorization` is a server-only Nuxt module and code-defined policy registry with independent exact-scope PostgreSQL assignments. It imports no Organizations, API Platform, Audit or other capability.
+Status: done; defaultInstalled:false. `@repo/nuxt-authorization` is a server-only Nuxt module and code-defined policy registry with independent exact-scope PostgreSQL assignments. It imports no Organizations, API Platform, Audit or other capability.
 
 ## API and authority
 
@@ -24,4 +24,8 @@ No new environment variables or policy service. Baseline PostgreSQL/DATABASE_URL
 
 Enable the private package explicitly in nuxt.config and include `/schema` roleAssignment in application Drizzle schema; generate/review/apply an additive migration explicitly. Nothing migrates or seeds on import/build/startup. Removal removes package/integration/config code and restores explicit root owner checks; preserve assignment tables, rows, indexes and applied migration history. Organizations native administration and API-key restrictions remain independent.
 
-See [the evaluation](../../docs/evaluations/AUTHORIZATION_MODULE_EVALUATION.md). The isolated packed-consumer lifecycle passed on both drivers and runtimes, including retained assignment/index/migration history after removal. Root verification is pending; this document does not mark completion.
+See [the evaluation](../../docs/evaluations/AUTHORIZATION_MODULE_EVALUATION.md). The isolated packed-consumer lifecycle passed on node-postgres on both Bun and Node 24, including retained assignment/index/migration history after removal. Root verification passed on the merged main recorded below.
+
+## Current roadmap acceptance
+
+Acceptance verified on 2026-10-04: merged main `237186860f0a079e8d01fb295023375a0e34ebd0` passed [all 31 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37181894995), including the three identity capability lifecycles and the root application checks. Organizations, Authorization and Feature Flags are done, reference-enabled and opt-in (`defaultInstalled: false`). This records the tested implementation baseline; later changes still require their applicable checks.
