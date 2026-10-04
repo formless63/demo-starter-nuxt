@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import pg from 'pg'
 import { auditEvent, project, user } from '../../server/database/schema'
 import { createProject, deleteProject, updateProject } from '../../server/services/projects'
 import { queryAuditEvents } from '@repo/nuxt-audit-log/server'
@@ -9,7 +9,7 @@ import { queryAuditEvents } from '@repo/nuxt-audit-log/server'
 const databaseUrl = process.env.DATABASE_URL
 const suite = databaseUrl ? describe : describe.skip
 suite('root Project transactional audit', () => {
-  const client = postgres(databaseUrl!, { max: 2 })
+  const client = new pg.Pool({ connectionString: databaseUrl!, max: 2 }).on('error', () => {})
   const db = drizzle(client)
   const ownerId = crypto.randomUUID()
   const otherId = crypto.randomUUID()

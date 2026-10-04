@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import { createServer } from 'node:http'
 import { randomUUID } from 'node:crypto'
-import postgres from 'postgres'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import { migrate } from 'drizzle-orm/postgres-js/migrator'
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { eq } from 'drizzle-orm'
 import { createJobsBoss, defineQueues, registerWorkers } from '@repo/nuxt-jobs/server'
 import { signWebhook } from '@repo/nuxt-webhooks/server'
@@ -18,7 +18,9 @@ import { medusaBinding, medusaProjection, medusaOperation, medusaInbox } from '@
 export async function runContract(databaseUrl: string) {
   if (!process.versions.bun) assert.equal(Number(process.versions.node.split('.')[0]), 24, 'Actual Node24 required')
   else assert.equal(process.versions.bun, '1.4.2', 'Pinned Bun required')
-  const sql = postgres(databaseUrl, { max: 4 }), db = drizzle(sql)
+  const pool = new pg.Pool({ connectionString: databaseUrl, max: 4 }), db = drizzle(pool)
+  pool.on('error', () => {})
+  const sql = async (strings: TemplateStringsArray, ...values: unknown[]) => (await pool.query(strings.reduce((text, part, index) => text + (index ? `$${index}` : '') + part, ''), values)).rows
   await migrate(db, { migrationsFolder: 'server/database/migrations' })
   const config = { databaseUrl, schema: 'medusa_fixture_jobs', concurrency: 1, useListenNotify: false }
   const migrator = createJobsBoss(config, 'migration'); await migrator.start(); await migrator.stop()
@@ -210,5 +212,5 @@ export async function runContract(databaseUrl: string) {
     assert.equal((await db.select().from(medusaProjection).where(eq(medusaProjection.bindingId, a.id))).length, 1)
     console.info(`[medusa] ${process.versions.bun ? 'Bun' : 'Node'} scoped protocol, receipt, rollback, authorization, cancellation, privacy and real Jobs contract passed`)
   }
-  finally { await service.stop(); await boss.stop(); await new Promise<void>((resolve) => { fixture.close(() => resolve()); fixture.closeAllConnections() }); await sql.end() }
+  finally { await service.stop(); await boss.stop(); await new Promise<void>((resolve) => { fixture.close(() => resolve()); fixture.closeAllConnections() }); await pool.end() }
 }

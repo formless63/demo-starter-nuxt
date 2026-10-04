@@ -5,15 +5,15 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { apiPlatformAuth } from '@repo/nuxt-api/server'
 import { eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import pg from 'pg'
 import * as tables from '../../server/database/schema'
 
 // The explicitly launched disposable test app configures this single fixture ID.
 // No startup account promotion or test bypass exists in the application.
 test('Ops guards direct API/SSR, provides manual accessible refresh and clears stale work on navigation', async ({ page, request, context, baseURL }) => {
   test.setTimeout(60_000)
-  const sql = postgres(process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', { max: 1 })
+  const sql = new pg.Pool({ connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', max: 1 }).on('error', () => {})
   const db = drizzle(sql, { schema: tables })
   let keyId: string | undefined
   const operator = 'ops-e2e-operator', outsider = crypto.randomUUID(), token = crypto.randomUUID(), outsideToken = crypto.randomUUID()

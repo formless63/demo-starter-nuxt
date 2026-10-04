@@ -1,14 +1,14 @@
 import { expect, test } from '@playwright/test'
 import { createHmac } from 'node:crypto'
-import postgres from 'postgres'
-import { drizzle } from 'drizzle-orm/postgres-js'
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { and, eq } from 'drizzle-orm'
 import { defineFeatureFlags } from '@repo/nuxt-feature-flags/server'
 import { defineAuthorization } from '@repo/nuxt-authorization/server'
 import { flagDefinition, member, organization, organizationNote, roleAssignment, session, user } from '../../server/database/schema'
 
 test('tenant boundaries, independent policy and private flags hold in HTTP and browser', async ({ request, page, baseURL }) => {
-  const client = postgres(process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', { max: 4 })
+  const client = new pg.Pool({ connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', max: 4 }).on('error', () => {})
   const db = drizzle(client)
   const prefix=crypto.randomUUID(),owner=`${prefix}-owner`,reader=`${prefix}-reader`,outsider=`${prefix}-outsider`,orgA=`${prefix}-a`,orgB=`${prefix}-b`
   const secret=process.env.NUXT_AUTH_SECRET || 'e2e-secret-that-is-at-least-thirty-two-chars'

@@ -4,9 +4,8 @@ import { spawn } from 'node:child_process';
 import { createHmac, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import { createServer } from 'node:http';
-import postgres from 'postgres';
-const sql = postgres(process.env.DATABASE_URL!, { max: 2 });
-const pool = { query: (text: string, values?: string[] | string[][]) => sql.unsafe(text, values), end: () => sql.end() };
+import pg from 'pg';
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL!, max: 2 });
 const objects = new Map<string, { body: Buffer; type: string; hash: string }>(); let puts = 0;
 const storageServer = createServer(async (req, res) => {
  const key = (req.url ?? '').split('?')[0];

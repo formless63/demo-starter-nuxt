@@ -1,7 +1,8 @@
-import postgres from 'postgres'
-import { drizzle } from 'drizzle-orm/postgres-js'
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { createStripeService } from '@repo/nuxt-stripe/server'
-const sql = postgres(process.env.DATABASE_URL!, { max: 2 })
+const sql = new pg.Pool({ connectionString: process.env.DATABASE_URL!, max: 2 })
+sql.on('error', () => {})
 const service = createStripeService({
   database: () => drizzle(sql), boss: async () => { throw new Error('No enqueue in driver') },
   env: { NODE_ENV: 'test' },

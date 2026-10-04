@@ -1,14 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { eq, sql } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import { migrate } from 'drizzle-orm/postgres-js/migrator'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { migrate } from 'drizzle-orm/node-postgres/migrator'
+import pg from 'pg'
 import { project, user } from '../../server/database/schema'
 import { projectsTransferDefinition } from '../../server/transfers/application'
 
 const suite = process.env.DATABASE_URL ? describe : describe.skip
 suite('actual personal Project transfer snapshot reader', () => {
-  const client = postgres(process.env.DATABASE_URL!, { max: 2 })
+  const client = new pg.Pool({ connectionString: process.env.DATABASE_URL!, max: 2 }).on('error', () => {})
   const db = drizzle(client), owner = crypto.randomUUID(), foreign = crypto.randomUUID()
   const expected = ['before', ...Array.from({ length: 250 }, (_, index) => `tie-${String(index).padStart(3, '0')}`), 'after-a', 'after-b']
   beforeAll(async () => {

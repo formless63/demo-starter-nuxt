@@ -1,20 +1,22 @@
 import assert from 'node:assert/strict'
 import { eq, sql } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import { migrate } from 'drizzle-orm/postgres-js/migrator'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { migrate } from 'drizzle-orm/node-postgres/migrator'
+import pg from 'pg'
 import { decodeSearchCursor, encodeSearchCursor, searchDefaults, SearchError, searchRows } from '@repo/nuxt-search/server'
 import { article } from '../server/database/schema'
 import { goldenCursor, goldenToken, invalidTokens, verifyCursorContract } from './cursor-contract'
 import { saveState, snapshot } from './lifecycle'
 
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required')
-const admin = postgres(process.env.DATABASE_URL, { max: 1 })
+const admin = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1 })
+admin.on('error', () => {})
 const databaseName = `search_fixture_${crypto.randomUUID().replaceAll('-', '')}`
-await admin.unsafe(`CREATE DATABASE "${databaseName}"`)
+await admin.query(`CREATE DATABASE "${databaseName}"`)
 const url = new URL(process.env.DATABASE_URL)
 url.pathname = `/${databaseName}`
-const client = postgres(url.toString(), { max: 1 })
+const client = new pg.Pool({ connectionString: url.toString(), max: 1 })
+client.on('error', () => {})
 const db = drizzle(client)
 await saveState({ databaseName, url: url.toString() })
 const columns = { vector: article.vector, updatedAt: article.updatedAt, id: article.id }
@@ -26,12 +28,12 @@ try {
   verifyCursorContract({ decodeSearchCursor, encodeSearchCursor, searchDefaults })
   await migrate(db, { migrationsFolder: './server/database/migrations' })
   await migrate(db, { migrationsFolder: './server/database/migrations' })
-  const [version] = await client`SHOW server_version_num`
+  const [version] = (await client.query(`SHOW server_version_num`)).rows
   assert(Number(version!.server_version_num) >= 180000)
-  const [vector] = await client`SELECT data_type, is_generated, generation_expression FROM information_schema.columns WHERE table_name='article' AND column_name='search_vector'`
+  const [vector] = (await client.query(`SELECT data_type, is_generated, generation_expression FROM information_schema.columns WHERE table_name='article' AND column_name='search_vector'`)).rows
   assert.equal(vector!.data_type, 'tsvector'); assert.equal(vector!.is_generated, 'ALWAYS')
   assert.match(vector!.generation_expression, /simple/)
-  const indexes = await client`SELECT indexdef FROM pg_indexes WHERE tablename='article'`
+  const indexes = (await client.query(`SELECT indexdef FROM pg_indexes WHERE tablename='article'`)).rows
   assert(indexes.some(i => /USING gin \(search_vector\)/.test(i.indexdef)))
   await db.insert(article).values([
     { id: 'a-title', ownerId: 'a', title: 'planet', body: null },
@@ -57,9 +59,9 @@ try {
   assert.equal(searchDefaults.pageSize, 25)
   await db.insert(article).values(Array.from({ length: 130 }, (_, i) => ({ id: `tie-${String(i).padStart(3, '0')}`, ownerId: 'a', title: 'body rank', body: 'tie', updatedAt: new Date('2026-01-01T00:00:00Z') })))
   // Same JS millisecond, distinct database microseconds. Cursor must preserve both.
-  await client`UPDATE article SET updated_at='2026-01-01T00:00:00.000001Z' WHERE id='tie-000'`
-  await client`UPDATE article SET updated_at='2026-01-01T00:00:00.000002Z' WHERE id='tie-001'`
-  const full = [...await client`SELECT id FROM article WHERE body='tie' ORDER BY updated_at DESC, id DESC`].map(x => x.id)
+  await client.query(`UPDATE article SET updated_at='2026-01-01T00:00:00.000001Z' WHERE id='tie-000'`)
+  await client.query(`UPDATE article SET updated_at='2026-01-01T00:00:00.000002Z' WHERE id='tie-001'`)
+  const full = [...(await client.query(`SELECT id FROM article WHERE body='tie' ORDER BY updated_at DESC, id DESC`)).rows].map(x => x.id)
   assert.equal((await search('tie')).items.length, 25)
   assert.deepEqual(full.slice(0, 3), ['tie-001', 'tie-000', 'tie-129'])
   for (const pageSize of [1, undefined, 100]) {
@@ -73,16 +75,16 @@ try {
         const tuple = decodeSearchCursor(cursor)
         assert.equal(encodeSearchCursor(tuple), cursor)
         assert.equal(tuple[1], JSON.parse(JSON.stringify(page.items.at(-1)))!.rank)
-        const [equal] = await client`SELECT ts_rank_cd(search_vector, websearch_to_tsquery('simple', 'tie'), 32) = ${tuple[1]}::real AS exact FROM article WHERE id=${tuple[3]}`
+        const [equal] = (await client.query(`SELECT ts_rank_cd(search_vector, websearch_to_tsquery('simple', 'tie'), 32) = $1::real AS exact FROM article WHERE id=$2`, [tuple[1], tuple[3]])).rows
         assert.equal(equal!.exact, true)
       }
     } while (cursor)
     assert.deepEqual(ids, full)
   }
-  const [real] = await client`SELECT (0.2857143::real)::text AS text, encode(float4send(0.2857143::real), 'hex') AS hex`
+  const [real] = (await client.query(`SELECT (0.2857143::real)::text AS text, encode(float4send(0.2857143::real), 'hex') AS hex`)).rows
   assert.equal(Math.fround(Number(real!.text)), goldenCursor[1]); assert.equal(real!.hex, '3e924925')
   await db.insert(article).values({ id: goldenCursor[3], ownerId: 'a', title: 'body rank', body: 'unicode' })
-  await client`UPDATE article SET updated_at=${goldenCursor[2]}::timestamptz WHERE id=${goldenCursor[3]}`
+  await client.query(`UPDATE article SET updated_at=$1::timestamptz WHERE id=$2`, [goldenCursor[2], goldenCursor[3]])
   const unicode = await search('unicode')
   assert.equal(encodeSearchCursor([1, unicode.items[0]!.rank, goldenCursor[2], unicode.items[0]!.id]), goldenToken)
   assert.deepEqual((await search('planet', 100, encodeSearchCursor([1, 1, goldenCursor[2], 'b-secret']), 'a')).items.map(x => x.id), ['a-title', 'a-body'])

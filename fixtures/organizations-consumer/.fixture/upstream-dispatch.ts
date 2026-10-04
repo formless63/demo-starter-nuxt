@@ -4,22 +4,17 @@ import { betterAuth } from 'better-auth'
 import { runWithTransaction } from '@better-auth/core/context'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { organization } from 'better-auth/plugins'
-import { drizzle as postgresDrizzle } from 'drizzle-orm/postgres-js'
-import { drizzle as pgDrizzle } from 'drizzle-orm/node-postgres'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import pg from 'pg'
 import * as schema from './upstream-schema.ts'
 
 const databaseUrl = process.env.ORGANIZATIONS_PROBE_DATABASE_URL
 assert(databaseUrl, 'Disposable database URL is required')
-const driver = process.env.ORGANIZATIONS_PROBE_DRIVER
 const dispatch = process.env.ORGANIZATIONS_PROBE_DISPATCH
-assert(driver === 'postgres-js' || driver === 'pg')
 assert(dispatch === 'api' || dispatch === 'http')
-const client = driver === 'postgres-js' ? postgres(databaseUrl, { max: 3 }) : new pg.Pool({ connectionString: databaseUrl, max: 3 })
-const db = driver === 'postgres-js'
-  ? postgresDrizzle(client as ReturnType<typeof postgres>, { schema })
-  : pgDrizzle(client as pg.Pool, { schema })
+const client = new pg.Pool({ connectionString: databaseUrl, max: 3 })
+client.on('error', () => {})
+const db = drizzle(client, { schema })
 const secret = 'disposable-organization-probe-secret-only-123456789'
 const origin = 'http://localhost:3997'
 const auth = betterAuth({
@@ -65,6 +60,5 @@ try {
   console.info('dispatch completed')
 }
 finally {
-  if (driver === 'postgres-js') await (client as ReturnType<typeof postgres>).end()
-  else await (client as pg.Pool).end()
+  await client.end()
 }
