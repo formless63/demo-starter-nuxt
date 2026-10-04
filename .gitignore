@@ -26,3 +26,6 @@ fixtures/file-ui-consumer/.fixture/retained-providers.json
 
 # Fixture-owned disposable retention witnesses (never application config).
 fixtures/*/.fixture/state.json
+
+# Keep only the blank preview template; local preview secrets stay ignored.
+!.env.preview.example
