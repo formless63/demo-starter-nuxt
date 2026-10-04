@@ -5,7 +5,7 @@ description: Changing S3 object operations, signed URLs, multipart uploads, stor
 
 # Storage change
 
-Read `capabilities/object-storage/CAPABILITY.md` and `OBJECT_STORAGE_MODULE_EVALUATION.md`; use `capability-change` for package/infrastructure contract changes.
+Read `capabilities/object-storage/CAPABILITY.md` and `docs/evaluations/OBJECT_STORAGE_MODULE_EVALUATION.md`; use `capability-change` for package/infrastructure contract changes.
 
 - Credentials and SDK clients remain server-only. Preserve the AWS default credential chain when static credentials are absent; reject half-configured pairs.
 - Region resolves `STORAGE_REGION` → `AWS_REGION` → `AWS_DEFAULT_REGION` → configuration error on use. Keep validation lazy; unused installation/build/boot needs no Storage configuration. Local helpers supply explicit regions, never provider-specific package fallbacks.

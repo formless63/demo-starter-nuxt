@@ -1,5 +1,5 @@
-import postgres from 'postgres'
-import { drizzle } from 'drizzle-orm/postgres-js'
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { createTransferService, createTransferRegistry, defineTransfer } from '@repo/nuxt-import-export/server'
@@ -8,7 +8,8 @@ import { createJobsBoss, registerWorkers } from '@repo/nuxt-jobs/server'
 import { transfer } from '@repo/nuxt-import-export/schema'
 if (Number(process.versions.node.split('.')[0]) !== 24) throw new Error('Node24 fixture required')
 const databaseUrl = process.env.DATABASE_URL!
-const connection = postgres(databaseUrl, { max: 4 })
+const connection = new pg.Pool({ connectionString: databaseUrl, max: 4 })
+connection.on('error', () => {})
 const db = drizzle(connection), storage = createStorage()
 const put = storage.putObject.bind(storage)
 let transient = true

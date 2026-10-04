@@ -8,10 +8,10 @@ import { cp, mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createServer } from 'node:net'
-import postgres from 'postgres'
+import pg from 'pg'
 import { eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import { migrate } from 'drizzle-orm/postgres-js/migrator'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { createJobsBoss } from '@repo/nuxt-jobs/server'
 import { compose, startProvider } from '../../fixtures/import-export-consumer/.fixture/providers'
 import * as tables from '../../server/database/schema'
@@ -33,12 +33,12 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
   const originalDatabase = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter'
   const databaseName = `transfer_browser_${randomUUID().replaceAll('-', '')}`, databaseUrl = new URL(originalDatabase)
   databaseUrl.pathname = `/${databaseName}`
-  const admin = postgres(originalDatabase, { max: 1 }), connection = postgres(databaseUrl.href, { max: 4 }), db = drizzle(connection)
+  const admin = new pg.Pool({ connectionString: originalDatabase, max: 1 }).on('error', () => {}), connection = new pg.Pool({ connectionString: databaseUrl.href, max: 4 }).on('error', () => {}), db = drizzle(connection)
   let createdDatabase = false
   const owner = randomUUID(), other = randomUUID(), token = randomUUID(), secret = 'disposable-transfer-browser-secret-at-least32'
   let context: Awaited<ReturnType<typeof browser.newContext>> | undefined
   try {
-    await admin.unsafe(`CREATE DATABASE "${databaseName}"`); createdDatabase = true
+    await admin.query(`CREATE DATABASE "${databaseName}"`); createdDatabase = true
     await migrate(db, { migrationsFolder: join(root, 'server/database/migrations') })
     const migrationBoss = createJobsBoss({ databaseUrl: databaseUrl.href, schema: 'pgboss', concurrency: 1, useListenNotify: false }, 'migration')
     try { await migrationBoss.start() } finally { await migrationBoss.stop() }
@@ -124,7 +124,7 @@ test('personal Project CSV browser round-trip with actual Storage and existing w
     await context?.close().catch(() => {})
     for (const process of [worker, app]) if (process && process.exitCode === null) { try { globalThis.process.kill(-process.pid!, 'SIGTERM') } catch { /* Already stopped. */ } await Promise.race([new Promise(resolve => process.once('exit', resolve)), new Promise(resolve => setTimeout(resolve, 5000))]); if (process.exitCode === null) { try { globalThis.process.kill(-process.pid!, 'SIGKILL') } catch { /* Already stopped. */ } } }
     await connection.end()
-    if (createdDatabase) await admin.unsafe(`DROP DATABASE "${databaseName}" WITH (FORCE)`)
+    if (createdDatabase) await admin.query(`DROP DATABASE "${databaseName}" WITH (FORCE)`)
     await admin.end()
     backend?.storage.close(); await compose(fixtureProject, ['down', '--volumes', '--remove-orphans'])
     if (isolated) {

@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { betterAuth } from 'better-auth'
 import type { magicLink } from 'better-auth/plugins'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { drizzle } from 'drizzle-orm/postgres-js'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { eq, like } from 'drizzle-orm'
-import postgres from 'postgres'
+import pg from 'pg'
 import { closeEmail, getEmail, renderMagicLinkEmail } from '@repo/nuxt-email/server'
 import { getLogger } from '@repo/nuxt-observability/server'
 import { configuredAuthPlugins, configuredSocialProviders } from '../../server/utils/auth'
@@ -25,11 +25,11 @@ describe('SMTP-backed root auth configuration', () => {
   })
   it('needs no SMTP while disabled and validates structural config when enabled', () => {
     vi.stubEnv('SMTP_HOST', '')
-    expect(configuredAuthPlugins({ magicLinkEnabled: false }).map(plugin => plugin.id)).toEqual(['api-key'])
+    expect(configuredAuthPlugins({ magicLinkEnabled: false }).map(plugin => plugin.id)).toEqual(['api-key', 'organization', 'organizations-v1-guard'])
     expect(() => configuredAuthPlugins({ magicLinkEnabled: true })).toThrow('configuration')
     for (const [key, value] of Object.entries(mailpitEnv(1025))) vi.stubEnv(key, value)
     vi.stubEnv('NODE_ENV', 'production')
-    expect(configuredAuthPlugins({ magicLinkEnabled: true }).map(plugin => plugin.id)).toEqual(['api-key', 'magic-link'])
+    expect(configuredAuthPlugins({ magicLinkEnabled: true }).map(plugin => plugin.id)).toEqual(['api-key', 'organization', 'organizations-v1-guard', 'magic-link'])
     expect(() => renderMagicLinkEmail('https://foreign.test/?token=SECRET', 'https://canonical.test')).toThrow('message')
   })
 })
@@ -38,7 +38,7 @@ const databaseUrl = process.env.DATABASE_URL
 ;(databaseUrl ? describe : describe.skip)('real root Better Auth Email integration', () => {
   it('sends through SMTP, keeps token hashed, redeems a session and never logs mail secrets', async () => {
     const fixture = await startMailpit()
-    const sql = postgres(databaseUrl!, { max: 1 })
+    const sql = new pg.Pool({ connectionString: databaseUrl!, max: 1 }).on('error', () => {})
     const db = drizzle(sql)
     const recipient = `magic-${crypto.randomUUID()}@example.test`
     const baseURL = 'http://127.0.0.1:3197'

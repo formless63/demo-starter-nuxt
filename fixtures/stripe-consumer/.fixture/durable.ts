@@ -5,9 +5,9 @@ import { once } from 'node:events'
 import { spawn } from 'node:child_process'
 import { setTimeout as wait } from 'node:timers/promises'
 import { writeFile } from 'node:fs/promises'
-import postgres from 'postgres'
-import { migrate } from 'drizzle-orm/postgres-js/migrator'
-import { drizzle } from 'drizzle-orm/postgres-js'
+import pg from 'pg'
+import { migrate } from 'drizzle-orm/node-postgres/migrator'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { eq } from 'drizzle-orm'
 import { createJobsBoss, defineQueues } from '@repo/nuxt-jobs/server'
 import { createStripeService, API_VERSION } from '@repo/nuxt-stripe/server'
@@ -15,10 +15,12 @@ import { stripeBinding, stripeOperationLedger, stripeInbox } from '@repo/nuxt-st
 import type { StripeConnection, TrustedContext } from '@repo/nuxt-stripe/server'
 const adminUrl = process.env.DATABASE_URL
 assert.ok(adminUrl, 'Disposable local PostgreSQL is required')
-const admin = postgres(adminUrl, { max: 1 }), name = `stripe_fixture_${randomUUID().replaceAll('-', '')}`
-await admin.unsafe(`create database "${name}"`)
+const admin = new pg.Pool({ connectionString: adminUrl, max: 1 }), name = `stripe_fixture_${randomUUID().replaceAll('-', '')}`
+admin.on('error', () => {})
+await admin.query(`create database "${name}"`)
 const url = new URL(adminUrl); url.pathname = `/${name}`
-const sql = postgres(url.toString(), { max: 4 }), db = drizzle(sql)
+const sql = new pg.Pool({ connectionString: url.toString(), max: 4 }), db = drizzle(sql)
+sql.on('error', () => {})
 const config = { databaseUrl: url.toString(), schema: 'pgboss', concurrency: 1, useListenNotify: false }
 const migration = createJobsBoss(config, 'migration'); migration.on('error', () => {})
 await migration.start(); await migration.stop()
@@ -49,7 +51,7 @@ const job = () => ({ id: randomUUID(), signal: new AbortController().signal, ret
 try {
   await migrate(db, { migrationsFolder: '.fixture/migrations' })
   await migrate(db, { migrationsFolder: '.fixture/migrations' })
-  assert.equal((await sql`select count(*)::int n from drizzle.__drizzle_migrations`)[0]!.n, 2)
+  assert.equal(((await sql.query(`select count(*)::int n from drizzle.__drizzle_migrations`)).rows)[0]!.n, 2)
   const binding = await db.transaction(tx => service.bindInTransaction(tx, context, { localResourceId: 'local-customer', connectionId: 'default', resourceKind: 'customer', remoteId: 'cus_owned' }))
   const otherBinding = await db.transaction(tx => service.bindInTransaction(tx, foreign, { localResourceId: 'other-customer', connectionId: 'default', resourceKind: 'customer', remoteId: 'cus_other' }))
   const input = { customerBindingId: binding.id, idempotencyKey: 'one', items: [{ offerId: 'approved', quantity: 1 }] }
@@ -57,7 +59,7 @@ try {
   await assert.rejects(service.requestCheckout(context, { ...input, customerBindingId: randomUUID() }))
   await assert.rejects(db.transaction(async tx => { await service.requestCheckoutInTransaction(tx, context, input); throw new Error('rollback') }))
   assert.equal((await db.select().from(stripeOperationLedger)).length, 0)
-  const jobsAfterRollback = await sql`select count(*)::int n from pgboss.job where name='stripe.operation'`; assert.equal(jobsAfterRollback[0]!.n, 0)
+  const jobsAfterRollback = (await sql.query(`select count(*)::int n from pgboss.job where name='stripe.operation'`)).rows; assert.equal(jobsAfterRollback[0]!.n, 0)
   const created = await service.requestCheckout(context, input)
   const operationId = 'operationId' in created ? created.operationId : created.id
   assert.equal((await service.requestCheckout(context, input) as { id: string }).id, operationId)
@@ -101,7 +103,7 @@ try {
   assert.equal((await db.select().from(stripeInbox)).length, 0)
   await service.receive('default', first.bytes, first.signature); await service.receive('default', first.bytes, first.signature)
   const rows = await db.select().from(stripeInbox); assert.equal(rows.length, 1)
-  assert.equal((await sql`select count(*)::int n from pgboss.job where name='stripe.receipt'`)[0]!.n, 1)
+  assert.equal(((await sql.query(`select count(*)::int n from pgboss.job where name='stripe.receipt'`)).rows)[0]!.n, 1)
   providerStatus = 'paid'; providerPaymentStatus = 'succeeded'; await service.inboxJob.handler({ inboxId: rows[0]!.id }, job())
   assert.equal((await service.listPayments(context)).items[0]!.status, 'succeeded')
   const originalReceipt = (await db.select().from(stripeInbox).where(eq(stripeInbox.id, rows[0]!.id)))[0]!
@@ -112,17 +114,17 @@ try {
   assert.equal(collided.bindingId, originalReceipt.bindingId)
   assert.equal(collided.remoteHint, 'cs_owned', 'A signed collision cannot replace original ownership with its new hint')
   assert.equal(collided.status, 'received')
-  assert.equal((await sql`select count(*)::int n from pgboss.job where name='stripe.receipt'`)[0]!.n, 2, 'Repeated conflicting bytes coalesce into one new reconciliation')
+  assert.equal(((await sql.query(`select count(*)::int n from pgboss.job where name='stripe.receipt'`)).rows)[0]!.n, 2, 'Repeated conflicting bytes coalesce into one new reconciliation')
   holdNext = true; held = undefined
   const collisionWork = service.inboxJob.handler({ inboxId: collided.id }, job())
   for (let count = 0; !held && count < 500; count++) await wait(10)
   assert.ok(held)
   const during = sign('evt_first', 'cs_another_unbound')
   await service.receive('default', during.bytes, during.signature); await service.receive('default', during.bytes, during.signature)
-  assert.equal((await sql`select count(*)::int n from pgboss.job where name='stripe.receipt'`)[0]!.n, 2, 'An active receipt records one follow-up rather than dispatching parallel jobs')
+  assert.equal(((await sql.query(`select count(*)::int n from pgboss.job where name='stripe.receipt'`)).rows)[0]!.n, 2, 'An active receipt records one follow-up rather than dispatching parallel jobs')
   held!(); await collisionWork
   assert.equal((await db.select().from(stripeInbox).where(eq(stripeInbox.id, collided.id)))[0]!.status, 'received')
-  assert.equal((await sql`select count(*)::int n from pgboss.job where name='stripe.receipt'`)[0]!.n, 3)
+  assert.equal(((await sql.query(`select count(*)::int n from pgboss.job where name='stripe.receipt'`)).rows)[0]!.n, 3)
   assert.deepEqual(await service.inboxJob.handler({ inboxId: collided.id }, job()), { status: 'processed' })
   assert.equal((await db.select().from(stripeInbox).where(eq(stripeInbox.id, collided.id)))[0]!.reconcileAgain, false)
   const old = sign('evt_out_of_order'); await service.receive('default', old.bytes, old.signature)
@@ -217,12 +219,12 @@ try {
   assert.deepEqual(await service.runJob.handler({ operationId: knownId }, job()), { status: 'processed' })
   assert.equal(posts, beforeKnownRecovery, 'Known remote identity always uses authoritative GET, never POST replay')
   assert.equal((await service.getOperation(knownContext, { operationId: knownId })).status, 'succeeded')
-  const queue = JSON.stringify(await sql`select data,output from pgboss.job where name like 'stripe.%'`)
+  const queue = JSON.stringify((await sql.query(`select data,output from pgboss.job where name like 'stripe.%'`)).rows)
   assert.ok(!/checkout\.stripe|cus_owned|price_registered|sk_test|owner-one|metadata|success_url/.test(queue))
   const publicView = JSON.stringify({ operation: await service.getOperation(context, { operationId: ambiguousId }), payments: await service.listPayments(context) })
   assert.ok(!/private customer|sk_test|price_registered|metadata|success_url/.test(publicView))
   await boss.stop()
-  const snapshot = await sql`select (select jsonb_agg(to_jsonb(t) order by id) from stripe_binding t) bindings,(select jsonb_agg(to_jsonb(t) order by id) from stripe_operation t) operations,(select jsonb_agg(to_jsonb(t) order by binding_id) from stripe_projection t) projections,(select jsonb_agg(to_jsonb(t) order by id) from stripe_inbox t) inbox,(select jsonb_agg(to_jsonb(t) order by id) from drizzle.__drizzle_migrations t) history`
+  const snapshot = (await sql.query(`select (select jsonb_agg(to_jsonb(t) order by id) from stripe_binding t) bindings,(select jsonb_agg(to_jsonb(t) order by id) from stripe_operation t) operations,(select jsonb_agg(to_jsonb(t) order by binding_id) from stripe_projection t) projections,(select jsonb_agg(to_jsonb(t) order by id) from stripe_inbox t) inbox,(select jsonb_agg(to_jsonb(t) order by id) from drizzle.__drizzle_migrations t) history`)).rows
   await writeFile('.fixture/retained.json', JSON.stringify({ name, url: url.toString(), snapshot }), { mode: 0o600 })
   console.info('Stripe disposable PostgreSQL transactions, scoped state, authoritative hints, uncertainty, replay cutoff and privacy passed.')
 }

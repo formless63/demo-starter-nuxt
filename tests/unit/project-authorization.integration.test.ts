@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import pg from 'pg'
 import { project, user } from '../../server/database/schema'
 import { createProject, deleteProject, getProject, listProjects, updateProject } from '../../server/services/projects'
 
@@ -9,7 +9,7 @@ const databaseUrl = process.env.DATABASE_URL
 const describeWithDatabase = databaseUrl ? describe : describe.skip
 
 describeWithDatabase('project owner authorization', () => {
-  const sql = postgres(databaseUrl!, { max: 1 })
+  const sql = new pg.Pool({ connectionString: databaseUrl!, max: 1 }).on('error', () => {})
   const db = drizzle(sql)
   const suffix = crypto.randomUUID()
   const userA = `user-a-${suffix}`

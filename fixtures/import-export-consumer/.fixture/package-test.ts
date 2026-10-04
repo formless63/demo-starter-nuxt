@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { Readable } from 'node:stream'
-import postgres from 'postgres'
+import pg from 'pg'
 import { PgBoss } from 'pg-boss'
 import { fileURLToPath } from 'node:url'
-import { migrate } from 'drizzle-orm/postgres-js/migrator'
+import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { digestObject, saveState, snapshot } from './lifecycle'
 import type { RetainedProvider } from './lifecycle'
-import { drizzle } from 'drizzle-orm/postgres-js'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { eq, sql } from 'drizzle-orm'
 import { pgTable, text, uuid } from 'drizzle-orm/pg-core'
 import { z } from 'zod'
@@ -18,10 +18,11 @@ import { compose, startProvider } from './providers'
 const domain = pgTable('fixture_project', { id: uuid().primaryKey(), owner: text().notNull(), name: text().notNull(), description: text() })
 const originalUrl = process.env.DATABASE_URL
 assert(originalUrl, 'Disposable local PostgreSQL URL required')
-const admin = postgres(originalUrl, { max: 1 })
+const admin = new pg.Pool({ connectionString: originalUrl, max: 1 })
+admin.on('error', () => {})
 const databaseName = `transfer_fixture_${randomUUID().replaceAll('-', '')}`
 const url = new URL(originalUrl); url.pathname = `/${databaseName}`
-let connection: ReturnType<typeof postgres> | undefined
+let connection: pg.Pool | undefined
 let boss: ReturnType<typeof createJobsBoss> | undefined
 let backend: Awaited<ReturnType<typeof startProvider>> | undefined
 let project: string | undefined
@@ -30,15 +31,15 @@ let success = false
 const survivors: RetainedProvider[] = []
 let failSql = false, calls = 0, snapshotHook: (() => Promise<void>) | undefined
 try {
-  await admin.unsafe(`CREATE DATABASE "${databaseName}"`)
+  await admin.query(`CREATE DATABASE "${databaseName}"`)
   process.env.DATABASE_URL = url.href
-  connection = postgres(url.href, { max: 6 }); boss = createJobsBoss({ databaseUrl: url.href, schema: 'pgboss', concurrency: 1, useListenNotify: false }, 'migration')
+  connection = new pg.Pool({ connectionString: url.href, max: 6 }); connection.on('error', () => {}); boss = createJobsBoss({ databaseUrl: url.href, schema: 'pgboss', concurrency: 1, useListenNotify: false }, 'migration')
   await boss.start(); await boss.stop()
   boss = createJobsBoss({ databaseUrl: url.href, schema: 'pgboss', concurrency: 1, useListenNotify: false }, 'producer')
   await boss.start()
   const db = drizzle(connection)
   await migrate(db, { migrationsFolder: fileURLToPath(new URL('./migrations', import.meta.url)) })
-  await connection.unsafe('CREATE TABLE fixture_project (id uuid primary key, owner text not null, name text not null, description text)')
+  await connection.query('CREATE TABLE fixture_project (id uuid primary key, owner text not null, name text not null, description text)')
   const owner = { requesterId: 'opaque:owner', scope: { kind: 'user' as const, id: 'opaque:owner' } }
   const other = { requesterId: 'opaque:other', scope: { kind: 'user' as const, id: 'opaque:other' } }
   const rowSchema = z.object({ name: z.string().trim().min(1).max(120), description: z.string().trim().max(1000).transform(value => value || null) })
@@ -169,7 +170,7 @@ try {
       })) as typeof db.transaction }
     const capped = createTransferService({ database: () => rollbackDatabase, boss: async () => boss!, storage: () => backend!.storage, env: { DATABASE_URL: url.href, IMPORT_EXPORT_TIMEOUT_SECONDS: '90' }, registry: createTransferRegistry([defineTransfer({ name: 'sql-cap', version: '1', columns: ['name'], rowSchema: z.object({ name: z.string() }), async authorize() { return true },
       async importRows(tx, context, rows) {
-        const [bounds] = await tx.execute(sql`select extract(epoch from current_setting('statement_timeout')::interval) * 1000 as statement_ms, extract(epoch from current_setting('transaction_timeout')::interval) * 1000 as transaction_ms`) as unknown as { statement_ms: string, transaction_ms: string }[]
+        const [bounds] = (await tx.execute(sql`select extract(epoch from current_setting('statement_timeout')::interval) * 1000 as statement_ms, extract(epoch from current_setting('transaction_timeout')::interval) * 1000 as transaction_ms`) as unknown as { rows: { statement_ms: string, transaction_ms: string }[] }).rows
         assert.equal(Number(bounds!.statement_ms), 29500); assert.equal(Number(bounds!.transaction_ms), 30000)
         await tx.insert(domain).values({ id: randomUUID(), owner: context.requesterId, name: rows[0]!.name })
         await tx.execute(sql`select pg_sleep(31)`)
@@ -272,7 +273,7 @@ finally {
   await boss?.stop({ graceful: false }); await connection?.end()
   if (!success) {
     for (const fixture of survivors) await compose(fixture.project, ['down', '--volumes', '--remove-orphans'])
-    await admin.unsafe(`DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`)
+    await admin.query(`DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`)
   }
   await admin.end()
   process.env.DATABASE_URL = originalUrl

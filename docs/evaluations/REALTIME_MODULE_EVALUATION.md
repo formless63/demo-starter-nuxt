@@ -32,4 +32,4 @@ Reference routes check real Better Auth cookie sessions and origin; clean consum
 | Optional Cache, one delivery path | Disposable Valkey through existing Cache public API |
 | Independence/removal | Generic tarball lifecycle and backendless boot |
 
-Sources: [Nitro2 WebSocket/SSE](https://v2.nitro.build/guide/websocket), [H3 WebSocket/SSE](https://v1.h3.dev/guide/websocket), [CrossWS hooks](https://crossws.h3.dev/guide/hooks), [CrossWS peers](https://crossws.h3.dev/guide/peer), [Node24 globals](https://nodejs.org/docs/latest-v24.x/api/globals.html#class-websocket). Canonical install/config/removal: [capability contract](capabilities/realtime/CAPABILITY.md).
+Sources: [Nitro2 WebSocket/SSE](https://v2.nitro.build/guide/websocket), [H3 WebSocket/SSE](https://v1.h3.dev/guide/websocket), [CrossWS hooks](https://crossws.h3.dev/guide/hooks), [CrossWS peers](https://crossws.h3.dev/guide/peer), [Node24 globals](https://nodejs.org/docs/latest-v24.x/api/globals.html#class-websocket). Canonical install/config/removal: [capability contract](../../capabilities/realtime/CAPABILITY.md).

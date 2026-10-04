@@ -4,7 +4,7 @@ description: Changing application audit events, metadata validation, query curso
 ---
 # Audit log change
 
-Read `capabilities/audit-log/CAPABILITY.md` and `AUDIT_LOG_MODULE_EVALUATION.md`. Use capability-change for package contracts and database-migration for schema/index changes.
+Read `capabilities/audit-log/CAPABILITY.md` and `docs/evaluations/AUDIT_LOG_MODULE_EVALUATION.md`. Use capability-change for package contracts and database-migration for schema/index changes.
 
 - Await appendAuditEvent on the caller's existing Drizzle transaction alongside domain writes. Never create a hidden independent transaction/connection; test both commit and rollback on PostgreSQL.
 - Primitive-owned UUID/time cannot be overridden or backdated. Preserve append-oriented events and stable actor/subject IDs. Never add public update/delete APIs or claim tamper-proof history. No actor/subject FK may cascade-delete history.

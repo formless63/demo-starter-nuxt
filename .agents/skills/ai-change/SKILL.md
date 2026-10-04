@@ -5,7 +5,7 @@ description: Changing server AI provider configuration, generation, structured v
 
 # AI changes
 
-Read the capability-change skill, `capabilities/ai/CAPABILITY.md` and `AI_MODULE_EVALUATION.md`. The cross-framework v1 contract comes from the implementation prompt; do not consult another framework repository.
+Read the capability-change skill, `capabilities/ai/CAPABILITY.md` and `docs/evaluations/AI_MODULE_EVALUATION.md`. The cross-framework v1 contract comes from the implementation prompt; do not consult another framework repository.
 
 - Keep AI optional, server-only and operation-lazy. No install/build/boot/health provider requirement or automatic routes.
 - Keep no hard Jobs/Storage/Observability/Audit/auth/database dependency and no general HTTP framework.

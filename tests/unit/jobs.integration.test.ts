@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import pg from 'pg'
 import {
   createJobsBoss,
   defineQueues,
@@ -30,7 +30,7 @@ async function waitForState(
 }
 
 describeWithDatabase('PostgreSQL jobs integration', () => {
-  const client = postgres(databaseUrl!, { max: 2 })
+  const client = new pg.Pool({ connectionString: databaseUrl!, max: 2 }).on('error', () => {})
   const db = drizzle(client)
   let boss: ReturnType<typeof createJobsBoss>
   const suffix = crypto.randomUUID()
@@ -57,9 +57,10 @@ describeWithDatabase('PostgreSQL jobs integration', () => {
     const unmigrated = createJobsBoss({ ...resolveJobsConfig(), schema })
     await expect(unmigrated.start()).rejects.toThrow()
 
-    const [{ exists }] = await client<{ exists: boolean }[]>`
-      select exists(select 1 from information_schema.schemata where schema_name = ${schema})
-    `
+    const [{ exists }] = (await client.query<{ exists: boolean }>(
+      'select exists(select 1 from information_schema.schemata where schema_name = $1) as exists',
+      [schema]
+    )).rows
     expect(exists).toBe(false)
   })
 

@@ -1,6 +1,6 @@
 # API Platform capability
 
-User-owned machine credentials and explicit OpenAPI contracts implemented by the independently installable Nuxt package `@repo/nuxt-api`. `@repo/*` is an internal workspace scope, not a publication decision, and the package remains private. Implementation findings are in [`API_PLATFORM_MODULE_EVALUATION.md`](../../API_PLATFORM_MODULE_EVALUATION.md).
+User-owned machine credentials and explicit OpenAPI contracts implemented by the independently installable Nuxt package `@repo/nuxt-api`. `@repo/*` is an internal workspace scope, not a publication decision, and the package remains private. Implementation findings are in [`API_PLATFORM_MODULE_EVALUATION.md`](../../docs/evaluations/API_PLATFORM_MODULE_EVALUATION.md).
 
 `defaultInstalled` is false: clean consumers do not receive API Platform without selecting it. The root reference application enables it deliberately for integration testing.
 

@@ -28,7 +28,10 @@
       "file-ui",
       "flow-canvas",
       "internationalization",
-      "pwa-offline"
+      "pwa-offline",
+      "organizations",
+      "authorization",
+      "feature-flags"
     ]
   },
   "baseline": [
@@ -164,7 +167,7 @@
       ],
       "documentationPath": "capabilities/jobs/CAPABILITY.md",
       "agentSkill": ".agents/skills/jobs-change/SKILL.md",
-      "evaluationDocument": "JOBS_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/JOBS_MODULE_EVALUATION.md",
       "packageName": "@repo/nuxt-jobs",
       "packagePath": "packages/nuxt-jobs",
       "fixturePath": "fixtures/jobs-consumer",
@@ -228,7 +231,7 @@
       ],
       "documentationPath": "capabilities/api-platform/CAPABILITY.md",
       "agentSkill": ".agents/skills/api-contract-change/SKILL.md",
-      "evaluationDocument": "API_PLATFORM_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/API_PLATFORM_MODULE_EVALUATION.md",
       "packageName": "@repo/nuxt-api",
       "packagePath": "packages/nuxt-api",
       "fixturePath": "fixtures/api-consumer",
@@ -313,7 +316,7 @@
       ],
       "documentationPath": "capabilities/observability/CAPABILITY.md",
       "agentSkill": ".agents/skills/observability-change/SKILL.md",
-      "evaluationDocument": "OBSERVABILITY_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/OBSERVABILITY_MODULE_EVALUATION.md",
       "packageName": "@repo/nuxt-observability",
       "packagePath": "packages/nuxt-observability",
       "fixturePath": "fixtures/observability-consumer",
@@ -382,7 +385,7 @@
       ],
       "documentationPath": "capabilities/object-storage/CAPABILITY.md",
       "agentSkill": ".agents/skills/storage-change/SKILL.md",
-      "evaluationDocument": "OBJECT_STORAGE_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/OBJECT_STORAGE_MODULE_EVALUATION.md",
       "packageName": "@repo/nuxt-storage",
       "packagePath": "packages/nuxt-storage",
       "fixturePath": "fixtures/storage-consumer",
@@ -454,7 +457,7 @@
         "EMAIL_MAX_RECIPIENTS"
       ],
       "documentationPath": "capabilities/email/CAPABILITY.md",
-      "evaluationDocument": "EMAIL_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/EMAIL_MODULE_EVALUATION.md",
       "agentSkill": ".agents/skills/email-change/SKILL.md",
       "packageName": "@repo/nuxt-email",
       "packagePath": "packages/nuxt-email",
@@ -514,7 +517,7 @@
       ],
       "documentationPath": "capabilities/webhooks/CAPABILITY.md",
       "agentSkill": ".agents/skills/webhooks-change/SKILL.md",
-      "evaluationDocument": "WEBHOOKS_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/WEBHOOKS_MODULE_EVALUATION.md",
       "packageName": "@repo/nuxt-webhooks",
       "packagePath": "packages/nuxt-webhooks",
       "fixturePath": "fixtures/webhooks-consumer",
@@ -580,7 +583,7 @@
       ],
       "documentationPath": "capabilities/audit-log/CAPABILITY.md",
       "agentSkill": ".agents/skills/audit-log-change/SKILL.md",
-      "evaluationDocument": "AUDIT_LOG_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/AUDIT_LOG_MODULE_EVALUATION.md",
       "packageName": "@repo/nuxt-audit-log",
       "packagePath": "packages/nuxt-audit-log",
       "fixturePath": "fixtures/audit-log-consumer",
@@ -643,7 +646,7 @@
       ],
       "documentationPath": "capabilities/ai/CAPABILITY.md",
       "agentSkill": ".agents/skills/ai-change/SKILL.md",
-      "evaluationDocument": "AI_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/AI_MODULE_EVALUATION.md",
       "packageName": "@repo/nuxt-ai",
       "packagePath": "packages/nuxt-ai",
       "fixturePath": "fixtures/ai-consumer",
@@ -709,7 +712,7 @@
       ],
       "documentationPath": "capabilities/cache-coordination/CAPABILITY.md",
       "agentSkill": ".agents/skills/cache-change/SKILL.md",
-      "evaluationDocument": "CACHE_COORDINATION_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/CACHE_COORDINATION_MODULE_EVALUATION.md",
       "packageName": "@repo/nuxt-cache",
       "packagePath": "packages/nuxt-cache",
       "fixturePath": "fixtures/cache-consumer",
@@ -754,7 +757,7 @@
       ],
       "summary": "PostgreSQL-native weighted full-text search on application-owned rows.",
       "documentationPath": "capabilities/search/CAPABILITY.md",
-      "evaluationDocument": "SEARCH_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/SEARCH_MODULE_EVALUATION.md",
       "agentSkill": ".agents/skills/search-change/SKILL.md",
       "packageName": "@repo/nuxt-search",
       "packagePath": "packages/nuxt-search",
@@ -824,7 +827,7 @@
         "Nitro application"
       ],
       "documentationPath": "capabilities/realtime/CAPABILITY.md",
-      "evaluationDocument": "REALTIME_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/REALTIME_MODULE_EVALUATION.md",
       "agentSkill": ".agents/skills/realtime-change/SKILL.md",
       "packageName": "@repo/nuxt-realtime",
       "packagePath": "packages/nuxt-realtime",
@@ -891,7 +894,7 @@
         "Existing Jobs worker"
       ],
       "documentationPath": "capabilities/notifications/CAPABILITY.md",
-      "evaluationDocument": "NOTIFICATIONS_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/NOTIFICATIONS_MODULE_EVALUATION.md",
       "agentSkill": ".agents/skills/notifications-change/SKILL.md",
       "packageName": "@repo/nuxt-notifications",
       "packagePath": "packages/nuxt-notifications",
@@ -945,7 +948,7 @@
       "fixturePath": "fixtures/import-export-consumer",
       "documentationPath": "capabilities/import-export/CAPABILITY.md",
       "agentSkill": ".agents/skills/import-export-change/SKILL.md",
-      "evaluationDocument": "IMPORT_EXPORT_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/IMPORT_EXPORT_MODULE_EVALUATION.md",
       "scripts": [
         "packages:build",
         "packages:test",
@@ -992,7 +995,7 @@
       "id": "organizations",
       "displayName": "Organizations / Tenancy",
       "kind": "identity-policy",
-      "status": "planned",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1000,7 +1003,10 @@
         "notifications"
       ],
       "baselineRequirements": [
-        "authentication"
+        "authentication",
+        "postgresql",
+        "drizzle",
+        "node-runtime"
       ],
       "externalRequirements": [
         {
@@ -1008,13 +1014,36 @@
           "required": true
         }
       ],
-      "summary": "Authenticated organization membership and tenant scoping."
+      "summary": "Authenticated organization membership and tenant scoping.",
+      "documentationPath": "capabilities/organizations/CAPABILITY.md",
+      "evaluationDocument": "docs/evaluations/ORGANIZATIONS_MODULE_EVALUATION.md",
+      "packageName": "@repo/nuxt-organizations",
+      "packagePath": "packages/nuxt-organizations",
+      "fixturePath": "fixtures/organizations-consumer",
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server",
+            ".fixture/contract.ts",
+            ".fixture/package-test.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        },
+        "postRemovalScript": "package:test:survival",
+        "cleanupScript": "package:test:cleanup"
+      },
+      "agentSkill": ".agents/skills/organizations-change/SKILL.md"
     },
     {
       "id": "authorization",
       "displayName": "Authorization",
       "kind": "identity-policy",
-      "status": "planned",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1023,7 +1052,10 @@
         "audit-log"
       ],
       "baselineRequirements": [
-        "authentication"
+        "authentication",
+        "postgresql",
+        "drizzle",
+        "node-runtime"
       ],
       "externalRequirements": [
         {
@@ -1031,13 +1063,35 @@
           "required": true
         }
       ],
-      "summary": "Reusable application policy and permission primitives beyond the starter's owner checks."
+      "summary": "Reusable application policy and permission primitives beyond the starter's owner checks.",
+      "packageName": "@repo/nuxt-authorization",
+      "packagePath": "packages/nuxt-authorization",
+      "fixturePath": "fixtures/authorization-consumer",
+      "evaluationDocument": "docs/evaluations/AUTHORIZATION_MODULE_EVALUATION.md",
+      "documentationPath": "capabilities/authorization/CAPABILITY.md",
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server",
+            ".fixture/contract.ts",
+            ".fixture/package-test.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        },
+        "postRemovalScript": "package:test:survival",
+        "cleanupScript": "package:test:cleanup"
+      }
     },
     {
       "id": "feature-flags",
       "displayName": "Feature Flags",
       "kind": "identity-policy",
-      "status": "planned",
+      "status": "in-progress",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1051,7 +1105,37 @@
           "required": true
         }
       ],
-      "summary": "Database-backed feature rollout and targeting controls."
+      "summary": "Database-backed feature rollout and targeting controls.",
+      "baselineRequirements": [
+        "postgresql",
+        "drizzle",
+        "node-runtime"
+      ],
+      "baselineIntegrations": [
+        "authentication"
+      ],
+      "packageName": "@repo/nuxt-feature-flags",
+      "packagePath": "packages/nuxt-feature-flags",
+      "fixturePath": "fixtures/feature-flags-consumer",
+      "evaluationDocument": "docs/evaluations/FEATURE_FLAGS_MODULE_EVALUATION.md",
+      "documentationPath": "capabilities/feature-flags/CAPABILITY.md",
+      "packageTest": {
+        "ownedDependencies": [],
+        "runtimeScript": "package:test:runtime",
+        "removal": {
+          "scripts": [
+            "package:test:runtime"
+          ],
+          "paths": [
+            "server",
+            ".fixture/contract.ts",
+            ".fixture/package-test.ts"
+          ],
+          "replacementNuxtConfig": ".fixture/base-nuxt.config.ts"
+        },
+        "postRemovalScript": "package:test:survival",
+        "cleanupScript": "package:test:cleanup"
+      }
     },
     {
       "id": "invoice-ninja",
@@ -1097,7 +1181,7 @@
         "cleanupScript": "package:test:cleanup"
       },
       "documentationPath": "capabilities/invoice-ninja/CAPABILITY.md",
-      "evaluationDocument": "INVOICE_NINJA_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/INVOICE_NINJA_MODULE_EVALUATION.md",
       "baselineRequirements": [
         "postgresql"
       ],
@@ -1142,7 +1226,7 @@
       "packageName": "@repo/nuxt-stripe",
       "packagePath": "packages/nuxt-stripe",
       "fixturePath": "fixtures/stripe-consumer",
-      "evaluationDocument": "STRIPE_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/STRIPE_MODULE_EVALUATION.md",
       "baselineRequirements": [
         "postgresql",
         "drizzle",
@@ -1210,7 +1294,7 @@
       ],
       "summary": "Medusa commerce integration with durable synchronization and webhooks.",
       "documentationPath": "capabilities/medusa/CAPABILITY.md",
-      "evaluationDocument": "MEDUSA_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/MEDUSA_MODULE_EVALUATION.md",
       "packageName": "@repo/nuxt-medusa",
       "packagePath": "packages/nuxt-medusa",
       "fixturePath": "fixtures/medusa-consumer",
@@ -1276,7 +1360,7 @@
       "packagePath": "packages/nuxt-ops-admin",
       "fixturePath": "fixtures/ops-admin-consumer",
       "documentationPath": "capabilities/ops-admin/CAPABILITY.md",
-      "evaluationDocument": "OPS_ADMIN_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/OPS_ADMIN_MODULE_EVALUATION.md",
       "scripts": [
         "packages:build",
         "packages:test",
@@ -1324,7 +1408,7 @@
       "packagePath": "packages/nuxt-command-system",
       "fixturePath": "fixtures/command-system-consumer",
       "documentationPath": "capabilities/command-system/CAPABILITY.md",
-      "evaluationDocument": "COMMAND_SYSTEM_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/COMMAND_SYSTEM_MODULE_EVALUATION.md",
       "scripts": [
         "packages:build",
         "packages:test"
@@ -1366,7 +1450,7 @@
       "externalRequirements": [],
       "summary": "Accessible controlled tables for sorting, filtering, pagination, visibility, selection, and manual server modes.",
       "documentationPath": "capabilities/data-table/CAPABILITY.md",
-      "evaluationDocument": "DATA_TABLE_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/DATA_TABLE_MODULE_EVALUATION.md",
       "packageName": "@repo/nuxt-data-table",
       "packagePath": "packages/nuxt-data-table",
       "fixturePath": "fixtures/data-table-consumer",
@@ -1412,7 +1496,7 @@
         "Nitro application; no external service"
       ],
       "documentationPath": "capabilities/markdown-code/CAPABILITY.md",
-      "evaluationDocument": "MARKDOWN_CODE_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/MARKDOWN_CODE_MODULE_EVALUATION.md",
       "packageName": "@repo/nuxt-markdown-code",
       "packagePath": "packages/nuxt-markdown-code",
       "fixturePath": "fixtures/markdown-code-consumer",
@@ -1454,7 +1538,7 @@
       "externalRequirements": [],
       "summary": "Accessible line, bar, and area chart primitives with semantic SSR fallbacks and client-only enhancement.",
       "documentationPath": "capabilities/charts-visualization/CAPABILITY.md",
-      "evaluationDocument": "CHARTS_VISUALIZATION_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/CHARTS_VISUALIZATION_MODULE_EVALUATION.md",
       "packageName": "@repo/nuxt-charts-visualization",
       "packagePath": "packages/nuxt-charts-visualization",
       "fixturePath": "fixtures/charts-visualization-consumer",
@@ -1493,7 +1577,7 @@
       "packagePath": "packages/nuxt-file-ui",
       "fixturePath": "fixtures/file-ui-consumer",
       "documentationPath": "capabilities/file-ui/CAPABILITY.md",
-      "evaluationDocument": "FILE_UI_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/FILE_UI_MODULE_EVALUATION.md",
       "scripts": [
         "packages:build",
         "packages:test",
@@ -1547,7 +1631,7 @@
       "externalRequirements": [],
       "summary": "Rich-text editing built around Tiptap and Vue-native UI.",
       "documentationPath": "capabilities/rich-text/CAPABILITY.md",
-      "evaluationDocument": "RICH_TEXT_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/RICH_TEXT_MODULE_EVALUATION.md",
       "packageName": "@repo/nuxt-rich-text",
       "packagePath": "packages/nuxt-rich-text",
       "fixturePath": "fixtures/rich-text-consumer",
@@ -1588,7 +1672,7 @@
       "packagePath": "packages/nuxt-flow-canvas",
       "fixturePath": "fixtures/flow-canvas-consumer",
       "documentationPath": "capabilities/flow-canvas/CAPABILITY.md",
-      "evaluationDocument": "FLOW_CANVAS_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/FLOW_CANVAS_MODULE_EVALUATION.md",
       "scripts": [
         "packages:build",
         "packages:test"
@@ -1633,7 +1717,7 @@
       "packagePath": "packages/nuxt-pwa-offline",
       "fixturePath": "fixtures/pwa-offline-consumer",
       "documentationPath": "capabilities/pwa-offline/CAPABILITY.md",
-      "evaluationDocument": "PWA_OFFLINE_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/PWA_OFFLINE_MODULE_EVALUATION.md",
       "scripts": [
         "packages:build",
         "packages:test"
@@ -1700,7 +1784,7 @@
         "Nitro application; no external service"
       ],
       "documentationPath": "capabilities/internationalization/CAPABILITY.md",
-      "evaluationDocument": "INTERNATIONALIZATION_MODULE_EVALUATION.md",
+      "evaluationDocument": "docs/evaluations/INTERNATIONALIZATION_MODULE_EVALUATION.md",
       "packageName": "@repo/nuxt-internationalization",
       "packagePath": "packages/nuxt-internationalization",
       "fixturePath": "fixtures/internationalization-consumer",

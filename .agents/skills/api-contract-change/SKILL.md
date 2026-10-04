@@ -5,7 +5,7 @@ description: Changing external API routes, OpenAPI contracts, machine credential
 
 # API contract change
 
-Read `capabilities/api-platform/CAPABILITY.md`, `API_PLATFORM_MODULE_EVALUATION.md`, and the relevant application contract and native Nitro route files. Also use the auth-change workflow for credential/session changes and the database-migration workflow for schema changes.
+Read `capabilities/api-platform/CAPABILITY.md`, `docs/evaluations/API_PLATFORM_MODULE_EVALUATION.md`, and the relevant application contract and native Nitro route files. Also use the auth-change workflow for credential/session changes and the database-migration workflow for schema changes.
 
 - Keep native Nitro routes authoritative. Do not add a parallel router.
 - Keep Zod runtime request/response schemas and the explicitly registered OpenAPI contract aligned. Add or update runtime and generated-spec tests with every public route change.

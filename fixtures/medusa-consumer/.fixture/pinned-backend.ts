@@ -4,8 +4,8 @@ import { createServer as reserveServer } from 'node:net'
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
-import postgres from 'postgres'
-import { drizzle } from 'drizzle-orm/postgres-js'
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { createMedusaService, adminGet } from '@repo/nuxt-medusa/server'
 import { medusaInbox } from '@repo/nuxt-medusa/schema'
 import { createJobsBoss, defineQueues, registerWorkers } from '@repo/nuxt-jobs/server'
@@ -19,12 +19,13 @@ async function port() {
 /** Actual pinned backend; isolated provider graph never enters the starter runtime. */
 export async function runPinnedBackend(applicationUrl: string) {
   const root = await mkdtemp(join(tmpdir(), 'medusa-pinned-2-21-2-')), providerName = `medusa_native_${crypto.randomUUID().replaceAll('-', '')}`
-  const admin = postgres(process.env.DATABASE_URL!, { max: 1 })
-  await admin.unsafe(`CREATE DATABASE "${providerName}"`)
+  const admin = new pg.Pool({ connectionString: process.env.DATABASE_URL!, max: 1 }); admin.on('error', () => {})
+  await admin.query(`CREATE DATABASE "${providerName}"`)
   const providerUrl = new URL(process.env.DATABASE_URL!); providerUrl.pathname = `/${providerName}`
   const connectionPort = await port(), receiverPort = await port(), keySecret = `whsec_${Buffer.alloc(32, 44).toString('base64')}`
   const providerEnv = { ...process.env, XDG_CONFIG_HOME: join(root, 'config'), MEDUSA_DISABLE_TELEMETRY: 'true', NODE_ENV: 'development', DATABASE_URL: providerUrl.toString(), MEDUSA_BRIDGE_WEBHOOK_SECRET: keySecret, MEDUSA_BRIDGE_CONNECTION_ID: 'default', MEDUSA_BRIDGE_TARGET_URL: `http://127.0.0.1:${receiverPort}/api/integrations/medusa/webhooks/default` }
-  const sql = postgres(applicationUrl, { max: 4 }), db = drizzle(sql), jobsConfig = { databaseUrl: applicationUrl, schema: 'medusa_native_jobs', concurrency: 1, useListenNotify: false }
+  const sql = new pg.Pool({ connectionString: applicationUrl, max: 4 }), db = drizzle(sql), jobsConfig = { databaseUrl: applicationUrl, schema: 'medusa_native_jobs', concurrency: 1, useListenNotify: false }
+  sql.on('error', () => {})
   let apiKey = ''
   const config = { id: 'default', baseUrl: `http://127.0.0.1:${connectionPort}`, get secretApiKey() { return apiKey } }
   const mappings = new Map<string, string>(), ctx = { actorUserId: 'native-owner', scope: { kind: 'user' as const, id: 'native-owner' } }
@@ -136,6 +137,6 @@ const fs=require('node:fs/promises');module.exports.default=async({container})=>
     await worker?.stop(); await service.stop(); await boss.stop()
     if (backend) { backend.kill('SIGTERM'); await backend.exited; const logs = await backendLogs!; assert(!apiKey || !logs.includes(apiKey)) }
     await new Promise<void>(resolve => { receiver.close(() => resolve()); receiver.closeAllConnections() })
-    await sql.end(); await admin.unsafe(`DROP DATABASE "${providerName}"`); await admin.end(); await rm(root, { recursive: true, force: true })
+    await sql.end(); await admin.query(`DROP DATABASE "${providerName}"`); await admin.end(); await rm(root, { recursive: true, force: true })
   }
 }
