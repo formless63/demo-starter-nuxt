@@ -56,7 +56,7 @@ test('tenant boundaries, independent policy and private flags hold in HTTP and b
     expect(await (await projected).json()).toEqual({ 'beta.dashboard': true })
     await expect(page.getByRole('region',{name:'Beta dashboard preview'})).toBeVisible()
     await page.getByRole('button',{name:'Read preview'}).click()
-    await expect(page.getByRole('status')).toContainText('separate read-only permission')
+    await expect(page.getByRole('region',{name:'Beta dashboard preview'}).getByRole('status')).toContainText('separate read-only permission')
     await flags.setOverride(db,{userId:owner},'beta.dashboard',revision,{targetKind:'tenant',targetId:orgB},false)
     let firstReady!: () => void, releaseFirst!: () => void, firstDone!: () => void, secondDone!: () => void
     const held = new Promise<void>(resolve => { firstReady = resolve }), release = new Promise<void>(resolve => { releaseFirst = resolve }), firstFinished = new Promise<void>(resolve => { firstDone = resolve }), secondFinished = new Promise<void>(resolve => { secondDone = resolve })

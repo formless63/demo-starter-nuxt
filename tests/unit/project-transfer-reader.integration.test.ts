@@ -29,7 +29,8 @@ suite('actual personal Project transfer snapshot reader', () => {
           output.push(row[0] as string)
           if (output.length > expected.length) throw new Error('Project export did not terminate at the complete dataset')
         }
-        expect(select).toHaveBeenCalledTimes(3)
+        // One in-transaction policy read plus the three snapshot pages.
+        expect(select).toHaveBeenCalledTimes(4)
         return output
       }
       finally { select.mockRestore() }
