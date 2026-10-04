@@ -24,7 +24,7 @@ H3 1.15.11 getRequestWebStream attaches a flowing data listener without backpres
 
 ## Reference and persistence
 
-Root `/files` uses existing Better Auth and PostgreSQL, with application-owned Postgres.js/Drizzle metadata. Apply additive `0014_file_ui` (journal idx12, snapshot0012) explicitly; no runtime migration occurs. Preserve all prior SQL/snapshots and first12 journal entries. The package has no Auth, Jobs, Drizzle or database hard dependency.
+Root `/files` uses existing Better Auth and PostgreSQL, with application-owned node-postgres/Drizzle metadata. Apply additive `0014_file_ui` (journal idx12, snapshot0012) explicitly; no runtime migration occurs. Preserve all prior SQL/snapshots and first12 journal entries. The package has no Auth, Jobs, Drizzle or database hard dependency.
 
 The independent consumer uses explicitly bounded non-durable memory metadata solely for synthetic fixtures. Process restart loses receipts and cannot safely reclaim stored objects. Production consumers must implement durable atomic metadata before accepting real uploads.
 

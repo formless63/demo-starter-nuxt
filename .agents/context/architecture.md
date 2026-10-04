@@ -75,7 +75,7 @@ Markdown / Code Content (`done`) is an opt-in private module with `/server` pars
 
 Rich Text is an independent opt-in package with framework-neutral strict JSON validation, native Vue safe SSR rendering and mount-only Tiptap editing. Caller owns auth/persistence; replacement/rejection resets undo history. No uploads, HTML import or hard dependencies.
 
-File UI is a completed opt-in Storage-only native package. Root trusted session/CSRF transport supplies owner and Postgres.js atomic metadata; reusable package has no Auth/Drizzle/Jobs import. Raw Node input is bounded before concatenation. Quarantined keys require independently stopped writers before operator cleanup.
+File UI is a completed opt-in Storage-only native package. Root trusted session/CSRF transport supplies owner and node-postgres atomic metadata; reusable package has no Auth/Drizzle/Jobs import. Raw Node input is bounded before concatenation. Quarantined keys require independently stopped writers before operator cleanup.
 
 File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040678932), including packed native/provider/browser/removal and root application/production gates. Historical Rich Text / File UI composition checkpoint: 23 completed opt-in, reference-enabled capabilities, with its own CI/review pending at that time. Accepted main `bf15830889757b76b44a71fac80461deaca22cd1` is now the baseline for the 24-capability Flow composition below.
 

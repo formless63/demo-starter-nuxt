@@ -1,18 +1,20 @@
 import { writeFile } from 'node:fs/promises'
 import assert from 'node:assert/strict'
-import postgres from 'postgres'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import { migrate } from 'drizzle-orm/postgres-js/migrator'
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { createServer } from 'node:net'
 import { createOpsService, parseOpsAllowlist } from '@repo/nuxt-ops-admin/server'
 
 const databaseUrl = process.env.DATABASE_URL
 assert(databaseUrl, 'Disposable PostgreSQL required')
-const admin = postgres(databaseUrl, { max: 1 })
+const admin = new pg.Pool({ connectionString: databaseUrl, max: 1 })
+admin.on('error', () => {})
 const database = `ops_fixture_${crypto.randomUUID().replaceAll('-', '')}`
-await admin.unsafe(`CREATE DATABASE "${database}"`)
+await admin.query(`CREATE DATABASE "${database}"`)
 const url = new URL(databaseUrl); url.pathname = `/${database}`
-const sql = postgres(url.toString(), { max: 1 })
+const sql = new pg.Pool({ connectionString: url.toString(), max: 1 })
+sql.on('error', () => {})
 const secret = 'ops-disposable-fixture-signing-secret-32-characters'
 async function cookie(token: string) {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
@@ -42,8 +44,8 @@ async function boot(allowlist: string, check: (base: string) => Promise<void>) {
 }
 try {
   await migrate(drizzle(sql), { migrationsFolder: 'server/database/migrations' })
-  await sql`INSERT INTO "user" (id,name,email) VALUES (${operator},'Operator','operator@example.test'),(${outsider},'Owner','owner@example.test')`
-  await sql`INSERT INTO session (id,token,user_id,expires_at) VALUES (${crypto.randomUUID()},${token},${operator},now()+interval '1 hour'),(${crypto.randomUUID()},${other},${outsider},now()+interval '1 hour')`
+  await sql.query(`INSERT INTO "user" (id,name,email) VALUES ($1,'Operator','operator@example.test'),($2,'Owner','owner@example.test')`, [operator, outsider])
+  await sql.query(`INSERT INTO session (id,token,user_id,expires_at) VALUES ($1,$2,$3,now()+interval '1 hour'),($4,$5,$6,now()+interval '1 hour')`, [crypto.randomUUID(), token, operator, crypto.randomUUID(), other, outsider])
   const operatorCookie = await cookie(token), otherCookie = await cookie(other)
   await boot(operator, async (base) => {
     for (const headers of [{}, { 'X-API-Key': 'fixture-non-session-credential' }, { cookie: otherCookie }]) {
@@ -61,9 +63,9 @@ try {
     const forbidden = await fetch(`${base}/admin/ops`, { headers: { cookie: otherCookie, 'Purpose': 'prefetch' } })
     assert.equal(forbidden.status, 403); assert((await forbidden.text()).includes('Access denied'))
     assert.equal((await fetch(`${base}/api/ops/summary`, { method: 'POST', headers: { cookie: operatorCookie } })).status, 404)
-    await sql`UPDATE session SET expires_at=now()-interval '1 second' WHERE token=${token}`
+    await sql.query(`UPDATE session SET expires_at=now()-interval '1 second' WHERE token=$1`, [token])
     assert.equal((await fetch(`${base}/api/ops/summary`, { headers: { cookie: operatorCookie } })).status, 401)
-    await sql`INSERT INTO session (id,token,user_id,expires_at) VALUES (${crypto.randomUUID()},${token},${operator},now()+interval '1 hour')`
+    await sql.query(`INSERT INTO session (id,token,user_id,expires_at) VALUES ($1,$2,$3,now()+interval '1 hour')`, [crypto.randomUUID(), token, operator])
   })
   await boot(Array(101).fill(operator).join(','), async (base) => {
     assert.equal((await fetch(`${base}/api/ops/summary`, { headers: { cookie: operatorCookie } })).status, 200)

@@ -47,13 +47,11 @@ The existing `storeToken:'hashed'` with global `verification.storeIdentifier` un
 
 Regression coverage uses disposable PostgreSQL/Mailpit and fake provider redirect initiation, with no actual OAuth callback exchange, real credentials or new grants. It checks fresh/replayed/expired links, OAuth-state-as-link rejection and legacy unprefixed link/state rejection; the packed API fixture and browser suite retain machine-key owner/permission/expiry/revocation/session-isolation coverage.
 
-## Official-driver compatibility investigation
+## PostgreSQL driver: node-postgres only (October 2026)
 
-On 2026-10-01, the official [release list](https://github.com/porsager/postgres/releases) and npm dist-tags still identify 3.4.9 as latest. [Issue1208](https://github.com/porsager/postgres/issues/1208) matches the null-socket write; proposed [PR1209](https://github.com/porsager/postgres/pull/1209) and disconnected-transaction [PR1215](https://github.com/porsager/postgres/pull/1215) remain open/unmerged. No contributor fork or unreleased patch is adopted.
+The application, Better Auth, Drizzle and every capability fixture use node-postgres (`pg` 8.23.0) through `drizzle-orm/node-postgres`. `postgres` (postgres-js) is not a dependency anywhere in the repository. pg-boss already depends on `pg`, so this removed a second driver stack instead of adding one; transactional enqueue is unchanged because `fromDrizzle(transaction, sql)` is driver-agnostic. Pools bound idle and connection time explicitly (`idleTimeoutMillis`, `connectionTimeoutMillis`), register a connection-error listener, and the auth pool keeps its `statement_timeout`/`lock_timeout`.
 
-Usage was checked against the installed official README and Drizzle adapter: `db.transaction` delegates to supported `sql.begin`; callers await the transaction; fixture-owned teardown uses supported `sql.end({timeout:1})` (seconds). The bare reproduction keeps the pool alive for 100ms after rejection and checks a subsequent query before teardown, so the crash is not caused by our end call. No capability code, Drizzle or Better Auth is imported by the driver probe.
-
-Official npm tarball candidates were exercised on Bun1.4.2 and Node24.19 against disposable PostgreSQL18:
+Why postgres-js was removed: on 2026-10-01 the official [release list](https://github.com/porsager/postgres/releases) and npm dist-tags still identified 3.4.9 as latest. [Issue1208](https://github.com/porsager/postgres/issues/1208) matches a null-socket write that can throw an asynchronous TypeError at `connection.js:255` after a backend is terminated inside a transaction; proposed [PR1209](https://github.com/porsager/postgres/pull/1209) and disconnected-transaction [PR1215](https://github.com/porsager/postgres/pull/1215) were unmerged. No contributor fork or unreleased patch was adopted, exception suppression was rejected, and no official version was a safe pin:
 
 | Official version | Termination during awaited query, then next query | Paused terminated callback resumes during replacement transaction |
 | --- | --- | --- |
@@ -61,6 +59,4 @@ Official npm tarball candidates were exercised on Bun1.4.2 and Node24.19 against
 | 3.4.7 / 3.4.6 / 3.4.5 | Safe rejection and next query pass | Changes the replacement transaction ID |
 | 3.3.5 | Safe rejection and next query pass | Hangs until child deadline |
 
-3.4.7 also passed deferred commit-time unique failure, real statement cancellation and explicit callback rollback on both runtimes. Nevertheless, it is rejected as a compatibility downgrade: the old callback's automatic COMMIT can finish the replacement transaction. That violates caller-transaction ownership and isolation. The same late-callback defect is described by PR1215; it is not a teardown workaround. There is no demonstrated safe official pin change, so package manifests/lockfile remain unchanged.
-
-Committed standalone probes are in `tests/fixtures/postgres-driver`. Run `bun tests/fixtures/postgres-driver/run.ts --local-fixture` against a disposable loopback DATABASE_URL. An explicit installed official candidate can be tested via POSTGRES_PROBE_DRIVER_PATH. The runner executes Bun and Node, records private child artifacts, bounds and kills stalled child processes, and fails if any case fails. It does not suppress exceptions or swallow failures. Required three-capability both-driver lifecycles and the hosted all15 matrix remain completion gates.
+3.4.7 avoided the immediate crash but its old callback's automatic COMMIT could finish a replacement transaction, which violates caller-transaction ownership, so a downgrade was rejected. The standalone postgres-js probes that produced this table were removed together with the driver. The abrupt connection-loss contract (terminated backend inside a transaction yields a safe unavailable result with no mutation replay) is retained as a node-postgres fixture requirement for Organizations, Authorization and Feature Flags on Bun and Node 24.

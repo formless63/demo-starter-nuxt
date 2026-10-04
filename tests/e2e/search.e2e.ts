@@ -2,12 +2,12 @@ import { expect, test } from '@playwright/test'
 import { createHmac } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import pg from 'pg'
 import { project, session, user } from '../../server/database/schema'
 
 test('authenticated Projects search scopes owners, validates input and returns rank keyset pages', async ({ request }) => {
-  const client = postgres(process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', { max: 1 })
+  const client = new pg.Pool({ connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', max: 1 }).on('error', () => {})
   const db = drizzle(client)
   const owner = crypto.randomUUID()
   const other = crypto.randomUUID()
@@ -62,7 +62,7 @@ test('authenticated Projects search scopes owners, validates input and returns r
     // Explicit opt-in only for the isolated production smoke database.
     if (process.env.DISPOSABLE_DATABASE_TESTS === 'true') {
       const privateQuery = `private-search-${crypto.randomUUID()}`
-      await client`ALTER TABLE project RENAME COLUMN search_vector TO search_vector_failure_probe`
+      await client.query(`ALTER TABLE project RENAME COLUMN search_vector TO search_vector_failure_probe`)
       try {
         const failure = await request.get('/api/search/projects', { headers, params: { q: privateQuery } })
         expect(failure.status()).toBe(503)
@@ -73,7 +73,7 @@ test('authenticated Projects search scopes owners, validates input and returns r
           for (const value of [privateQuery, term, token, otherToken, 'search_vector', 'Failed query:', 'PostgresError']) expect(logs).not.toContain(value)
         }
       }
-      finally { await client`ALTER TABLE project RENAME COLUMN search_vector_failure_probe TO search_vector` }
+      finally { await client.query(`ALTER TABLE project RENAME COLUMN search_vector_failure_probe TO search_vector`) }
     }
   }
   finally {

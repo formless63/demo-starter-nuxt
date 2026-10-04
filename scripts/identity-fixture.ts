@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import pg from 'pg'
 import { defineFeatureFlags, FeatureFlagsError } from '@repo/nuxt-feature-flags/server'
 import { defineAuthorization, AuthorizationError } from '@repo/nuxt-authorization/server'
 import { user } from '../server/database/schema'
@@ -11,7 +11,7 @@ const url = process.env.DATABASE_URL
 if (!process.argv.includes('--local-fixture') || !url || !['localhost','127.0.0.1','[::1]'].includes(new URL(url).hostname) || !operator || !subject) {
   console.error('Use --local-fixture with a loopback disposable database, operation, explicit operator and subject IDs.'); process.exit(2)
 }
-const client=postgres(url,{max:1}),db=drizzle(client),actor={userId:operator},scope={kind:'user' as const,id:subject}
+const client=new pg.Pool({connectionString:url,max:1}),db=drizzle(client),actor={userId:operator},scope={kind:'user' as const,id:subject}
 try {
   const known=await db.select({id:user.id}).from(user).where(eq(user.id,operator));const target=await db.select({id:user.id}).from(user).where(eq(user.id,subject));if(!known.length||!target.length)throw new AuthorizationError('invalid-input')
   const flags=defineFeatureFlags({managementGuard:async supplied=>supplied.userId===operator})

@@ -4,14 +4,14 @@ import { browserDiagnostics } from './browser-diagnostics'
 import { expect, test } from '@playwright/test'
 import { createHmac, randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import pg from 'pg'
 import { invoiceNinjaBinding as bindings, invoiceNinjaProjection as projections, invoiceNinjaOperation as operations } from '@repo/nuxt-invoice-ninja/schema'
 import { user, session } from '../../server/database/schema'
 test('Invoice Ninja native scoped local projections, queued cancellation and authenticated reference UI', async ({ browser, request }) => {
   test.setTimeout(60_000)
   const dbUrl = process.env.DATABASE_URL; expect(dbUrl).toBeTruthy()
-  const client = postgres(dbUrl!, { max: 1 }), db = drizzle(client)
+  const client = new pg.Pool({ connectionString: dbUrl!, max: 1 }).on('error', () => {}), db = drizzle(client)
   const owner = randomUUID(), other = randomUUID(), binding = randomUUID(), foreign = randomUUID(), operation = randomUUID(), token = randomUUID()
   const secret = process.env.NUXT_AUTH_SECRET || 'e2e-secret-that-is-at-least-thirty-two-chars'
   const name = process.env.PLAYWRIGHT_BASE_URL ? '__Secure-better-auth.session_token' : 'better-auth.session_token'

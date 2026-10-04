@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { createHmac } from 'node:crypto'
 import { createServer as httpServer, request as httpRequest } from 'node:http'
 import { createServer, connect } from 'node:net'
-import postgres from 'postgres'
+import pg from 'pg'
 import { startProvider, compose as storageCompose } from '../../storage-consumer/.fixture/providers'
 import { startValkey, compose as cacheCompose } from '../../cache-consumer/.fixture/valkey'
 const suffix = crypto.randomUUID().replaceAll('-', '')
@@ -10,7 +10,8 @@ const project = `ops-protocol-${suffix.slice(0, 8)}`
 const role = `ops_reader_${suffix}`
 const operator = `ops_protocol_${suffix}`
 const token = crypto.randomUUID(), secret = 'disposable-ops-protocol-auth-secret-32-characters'
-const sql = postgres(process.env.DATABASE_URL!, { max: 1 })
+const sql = new pg.Pool({ connectionString: process.env.DATABASE_URL!, max: 1 })
+sql.on('error', () => {})
 let backend: Awaited<ReturnType<typeof startProvider>> | undefined
 let app: ReturnType<typeof Bun.spawn> | undefined
 let heads = 0, failStorage = false
@@ -59,13 +60,13 @@ try {
   const storagePort = await listen(storageProxy), cachePort = await listen(cacheProxy)
   const reservation = createServer(); const port = await listen(reservation); await new Promise<void>(resolve => reservation.close(() => resolve()))
   const base = `http://127.0.0.1:${port}`
-  await sql.unsafe(`CREATE ROLE "${role}" LOGIN PASSWORD 'local-disposable-reader'`)
-  await sql.unsafe(`ALTER ROLE "${role}" SET default_transaction_read_only = on`)
-  await sql.unsafe(`GRANT USAGE ON SCHEMA pgboss TO "${role}"`)
-  await sql.unsafe(`GRANT SELECT ON ALL TABLES IN SCHEMA pgboss TO "${role}"`)
+  await sql.query(`CREATE ROLE "${role}" LOGIN PASSWORD 'local-disposable-reader'`)
+  await sql.query(`ALTER ROLE "${role}" SET default_transaction_read_only = on`)
+  await sql.query(`GRANT USAGE ON SCHEMA pgboss TO "${role}"`)
+  await sql.query(`GRANT SELECT ON ALL TABLES IN SCHEMA pgboss TO "${role}"`)
   const readerUrl = new URL(process.env.DATABASE_URL!); readerUrl.username = role; readerUrl.password = 'local-disposable-reader'
-  await sql`INSERT INTO "user" (id,name,email) VALUES (${operator},'Disposable Ops fixture',${operator + '@example.test'})`
-  await sql`INSERT INTO session (id,token,user_id,expires_at) VALUES (${crypto.randomUUID()},${token},${operator},now()+interval '1 hour')`
+  await sql.query(`INSERT INTO "user" (id,name,email) VALUES ($1,'Disposable Ops fixture',$2)`, [operator, operator + '@example.test'])
+  await sql.query(`INSERT INTO session (id,token,user_id,expires_at) VALUES ($1,$2,$3,now()+interval '1 hour')`, [crypto.randomUUID(), token, operator])
   app = Bun.spawn(['node', '.output/server/index.mjs'], { env: { ...process.env, NITRO_PORT: String(port), NITRO_HOST: '127.0.0.1', NUXT_DATABASE_URL: process.env.DATABASE_URL, NUXT_AUTH_SECRET: secret, NUXT_PUBLIC_APP_BASE_URL: base, OPS_ADMIN_USER_IDS: operator, PGBOSS_DATABASE_URL: readerUrl.toString(), STORAGE_BUCKET: backend.config.bucket, STORAGE_REGION: backend.config.region, STORAGE_ENDPOINT: `http://127.0.0.1:${storagePort}`, STORAGE_ACCESS_KEY_ID: backend.config.accessKeyId, STORAGE_SECRET_ACCESS_KEY: backend.config.secretAccessKey, CACHE_URL: `redis://127.0.0.1:${cachePort}` }, stdout: 'pipe', stderr: 'pipe' })
   let ready = false
   for (let i = 0; i < 100; i++) { assert.equal(app.exitCode, null); try { if ((await fetch(`${base}/api/health`)).ok) { ready = true; break } } catch { /* bounded startup */ } await Bun.sleep(100) }
@@ -94,9 +95,9 @@ finally {
   if (app?.exitCode === null) { app.kill('SIGTERM'); await app.exited }
   for (const socket of sockets) socket.destroy()
   for (const server of [storageProxy, cacheProxy]) if (server.listening) await new Promise<void>(resolve => server.close(() => resolve()))
-  await sql`DELETE FROM "user" WHERE id=${operator}`
-  await sql.unsafe(`DROP OWNED BY "${role}"`).catch(() => undefined)
-  await sql.unsafe(`DROP ROLE IF EXISTS "${role}"`)
+  await sql.query(`DELETE FROM "user" WHERE id=$1`, [operator])
+  await sql.query(`DROP OWNED BY "${role}"`).catch(() => undefined)
+  await sql.query(`DROP ROLE IF EXISTS "${role}"`)
   await sql.end()
   backend?.storage.close()
   await storageCompose(project, ['down', '--volumes', '--remove-orphans']).catch(() => undefined)

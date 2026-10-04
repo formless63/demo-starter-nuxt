@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { createJobsBoss } from '@repo/nuxt-jobs/server'
 import { access, readFile, unlink, writeFile } from 'node:fs/promises'
-import postgres from 'postgres'
+import pg from 'pg'
 import { createStorage } from '@repo/nuxt-storage/server'
 import type { StorageOptions } from '@repo/nuxt-storage/server'
 import { compose } from './providers'
@@ -15,8 +15,8 @@ export async function digestObject(storage: ReturnType<typeof createStorage>, ke
   for await (const chunk of object.body as AsyncIterable<Uint8Array>) { size += chunk.byteLength; hash.update(chunk) }
   return { key, size, hash: hash.digest('hex') }
 }
-export async function snapshot(connection: ReturnType<typeof postgres>) {
-  return { receipts: [...await connection`select to_jsonb(t) as record from transfer t order by id`], domain: [...await connection`select to_jsonb(t) as record from fixture_project t order by id`], history: [...await connection`select to_jsonb(t) as record from drizzle.__drizzle_migrations t order by id`], jobs: [...await connection`select nspname from pg_namespace where nspname='pgboss'`] }
+export async function snapshot(connection: pg.Pool) {
+  return { receipts: [...(await connection.query('select to_jsonb(t) as record from transfer t order by id')).rows], domain: [...(await connection.query('select to_jsonb(t) as record from fixture_project t order by id')).rows], history: [...(await connection.query('select to_jsonb(t) as record from drizzle.__drizzle_migrations t order by id')).rows], jobs: [...(await connection.query("select nspname from pg_namespace where nspname='pgboss'")).rows] }
 }
 export async function saveState(state: State) { await writeFile(path, JSON.stringify(state), { mode: 0o600 }) }
 if (['verify', 'cleanup'].includes(process.argv[2] ?? '')) {
@@ -28,7 +28,8 @@ if (['verify', 'cleanup'].includes(process.argv[2] ?? '')) {
     if (process.argv[2] === 'verify') {
       await assert.rejects(access('node_modules/@repo/nuxt-import-export'))
       await access('node_modules/@repo/nuxt-jobs'); await access('node_modules/@repo/nuxt-storage'); await access('.output/server/index.mjs')
-      const connection = postgres(state.url, { max: 1 })
+      const connection = new pg.Pool({ connectionString: state.url, max: 1 })
+      connection.on('error', () => {})
       try { assert.deepEqual(JSON.parse(JSON.stringify(await snapshot(connection))), state.snapshot) }
       finally { await connection.end() }
       const boss = createJobsBoss({ databaseUrl: state.url, schema: 'pgboss', concurrency: 1, useListenNotify: false }, 'reader')
@@ -55,8 +56,9 @@ if (['verify', 'cleanup'].includes(process.argv[2] ?? '')) {
         assert.match(fixture.project, /^transfer-test-(?:rustfs|garage)-[a-f0-9]{8}$/)
         await compose(fixture.project, ['down', '--volumes', '--remove-orphans'])
       }
-      const admin = postgres(process.env.DATABASE_URL!, { max: 1 })
-      try { await admin.unsafe(`DROP DATABASE "${state.databaseName}" WITH (FORCE)`) }
+      const admin = new pg.Pool({ connectionString: process.env.DATABASE_URL!, max: 1 })
+      admin.on('error', () => {})
+      try { await admin.query(`DROP DATABASE "${state.databaseName}" WITH (FORCE)`) }
       finally { await admin.end() }
       await unlink(path)
     }

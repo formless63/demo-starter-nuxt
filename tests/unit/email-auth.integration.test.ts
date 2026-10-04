@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { betterAuth } from 'better-auth'
 import type { magicLink } from 'better-auth/plugins'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { drizzle } from 'drizzle-orm/postgres-js'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { eq, like } from 'drizzle-orm'
-import postgres from 'postgres'
+import pg from 'pg'
 import { closeEmail, getEmail, renderMagicLinkEmail } from '@repo/nuxt-email/server'
 import { getLogger } from '@repo/nuxt-observability/server'
 import { configuredAuthPlugins, configuredSocialProviders } from '../../server/utils/auth'
@@ -38,7 +38,7 @@ const databaseUrl = process.env.DATABASE_URL
 ;(databaseUrl ? describe : describe.skip)('real root Better Auth Email integration', () => {
   it('sends through SMTP, keeps token hashed, redeems a session and never logs mail secrets', async () => {
     const fixture = await startMailpit()
-    const sql = postgres(databaseUrl!, { max: 1 })
+    const sql = new pg.Pool({ connectionString: databaseUrl!, max: 1 }).on('error', () => {})
     const db = drizzle(sql)
     const recipient = `magic-${crypto.randomUUID()}@example.test`
     const baseURL = 'http://127.0.0.1:3197'

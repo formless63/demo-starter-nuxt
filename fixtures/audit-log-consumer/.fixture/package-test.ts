@@ -1,30 +1,32 @@
 import assert from 'node:assert/strict'
 import { eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import { migrate } from 'drizzle-orm/postgres-js/migrator'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { migrate } from 'drizzle-orm/node-postgres/migrator'
+import pg from 'pg'
 import * as audit from '@repo/nuxt-audit-log/server'
 import { domainRecord } from '../server/database/schema'
 
 const databaseUrl = process.env.DATABASE_URL
 if (!databaseUrl) throw new Error('DATABASE_URL is required')
 // Own a disposable database, independently of root/API migration histories.
-const admin = postgres(databaseUrl, { max: 1 })
+const admin = new pg.Pool({ connectionString: databaseUrl, max: 1 })
+admin.on('error', () => {})
 const databaseName = `audit_fixture_${crypto.randomUUID().replaceAll('-', '')}`
-await admin.unsafe(`CREATE DATABASE "${databaseName}"`)
+await admin.query(`CREATE DATABASE "${databaseName}"`)
 const url = new URL(databaseUrl)
 url.pathname = `/${databaseName}`
-const client = postgres(url.toString(), { max: 3 })
+const client = new pg.Pool({ connectionString: url.toString(), max: 3 })
+client.on('error', () => {})
 const db = drizzle(client)
 const event = { actorType: 'user', actorId: 'user-1', action: 'record.created', subjectType: 'record', subjectId: 'record-1', outcome: 'success', metadata: { count: 1 } }
 
 try {
   await migrate(db, { migrationsFolder: './server/database/migrations' })
   await migrate(db, { migrationsFolder: './server/database/migrations' })
-  const columns = await client`SELECT column_name, data_type, datetime_precision FROM information_schema.columns WHERE table_name = 'audit_event'`
+  const columns = (await client.query("SELECT column_name, data_type, datetime_precision FROM information_schema.columns WHERE table_name = 'audit_event'")).rows
   assert(columns.some(c => c.column_name === 'created_at' && c.data_type === 'timestamp with time zone' && c.datetime_precision === 3))
   assert(columns.some(c => c.column_name === 'metadata' && c.data_type === 'jsonb'))
-  const indexes = await client`SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'audit_event'`
+  const indexes = (await client.query("SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'audit_event'")).rows
   for (const name of ['audit_event_created_id_idx', 'audit_event_actor_created_id_idx', 'audit_event_subject_created_id_idx', 'audit_event_action_created_id_idx']) {
     assert(indexes.some(i => i.indexname === name && /created_at DESC(?: NULLS LAST)?, id DESC/.test(i.indexdef)))
   }
@@ -110,6 +112,6 @@ try {
 }
 finally {
   await client.end()
-  await admin.unsafe(`DROP DATABASE "${databaseName}"`)
+  await admin.query(`DROP DATABASE "${databaseName}"`)
   await admin.end()
 }

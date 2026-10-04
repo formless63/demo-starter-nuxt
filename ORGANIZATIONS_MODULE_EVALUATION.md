@@ -19,7 +19,7 @@ bun fixtures/organizations-consumer/.fixture/upstream-atomicity.ts
 ORGANIZATIONS_PROBE_ENCLOSING_TRANSACTION=true bun fixtures/organizations-consumer/.fixture/upstream-atomicity.ts
 ```
 
-Each invocation runs 16 cases: Bun/Node × postgres-js/pg × HTTP/auth.api × completion/process crash. The plain native-dispatch probe confirmed independently committed claims in every case. The enclosing-context probe confirmed atomic visibility/rollback for auth.api, while HTTP still independently committed the claim. A successful diagnostic exit means the finding was reproduced, not that the desired implementation gate passed.
+Each invocation runs 8 cases: Bun/Node × HTTP/auth.api × completion/process crash, on node-postgres. The plain native-dispatch probe confirmed independently committed claims in every case. The enclosing-context probe confirmed atomic visibility/rollback for auth.api, while HTTP still independently committed the claim. A successful diagnostic exit means the finding was reproduced, not that the desired implementation gate passed.
 
 The native source claims the invitation before `runWithTransaction`; its catch attempts `accepted → pending` compensation. That compensation cannot execute after process death. The HTTP handler's `runWithAdapter` creates a fresh adapter context and replaces the attempted outer context. These facts explain the driver/runtime-independent observations without any inference about exactly-once execution.
 
@@ -39,16 +39,9 @@ The revised shared observable acceptance contract requires a single-winner invit
 
 Other Organizations contract boundaries, optional relationships, independent removal and new schema are tracked in [CAPABILITY.md](capabilities/organizations/CAPABILITY.md). The capability remains `defaultInstalled: false` and in-progress. Authorization and Feature Flags are separate assigned capabilities whose implementation follows Organizations isolated-consumer proof.
 
-## Connection-loss verification blocker
+## Connection-loss verification
 
-The strengthened disposable PostgreSQL18 fixture terminates its own backend during an explicit transaction and requires a safe unavailable result with no mutation replay. The pg8.23.0 matrix passes on Bun1.4.2 and Node24.19 after registering the standard connection-error listener on fixture-owned clients.
-
-postgres-js3.4.9 remains blocked: its transaction rejects the connection loss, then a scheduled rollback/write can throw an asynchronous TypeError at `connection.js:255` after the socket is cleared. A minimal bare-driver `begin` containing `SELECT pg_terminate_backend(pg_backend_pid())` reproduces this on Bun and Node, with prepared statements enabled or disabled and with max_pipeline=1. This is outside safe helper error normalization; the process can fail. The [pinned upstream source](https://github.com/porsager/postgres/blob/v3.4.9/src/connection.js) and [transaction implementation](https://github.com/porsager/postgres/blob/v3.4.9/src/index.js) are the relevant boundaries. No global exception suppression, driver fork, automatic replay or reduced outage gate is adopted.
-
-The earlier packed-consumer lifecycle evidence predates this stronger fault test. The capability remains in-progress until both supported drivers pass the full updated lifecycle and release gates. A compatible driver correction is required; changing the supported-driver contract requires explicit architecture coordination.
-
-## Official-driver compatibility investigation
-The official-version investigation and supported-API audit are recorded in [STACK_EVALUATION.md](STACK_EVALUATION.md#official-driver-compatibility-investigation). The demonstrated 3.4.7 downgrade avoids the immediate crash but lets a dead callback commit a replacement transaction, so it is rejected. Manifests/lockfile remain unchanged; standalone Bun/Node probes are committed in tests/fixtures/postgres-driver. Both-adapter lifecycles and the hosted all15 matrix remain gates.
+The disposable PostgreSQL18 fixture terminates its own backend during an explicit transaction and requires a safe unavailable result with no mutation replay. It runs on node-postgres (`pg`) on Bun and Node 24, with the standard connection-error listener registered on fixture-owned clients. postgres-js was removed from the repository because 3.4.9 can throw an asynchronous TypeError at `connection.js:255` after the socket is cleared; the investigation and rejected alternatives are recorded in [STACK_EVALUATION.md](STACK_EVALUATION.md#postgresql-driver-node-postgres-only-october-2026). No global exception suppression, driver fork, automatic replay or reduced outage gate is adopted.
 
 ## Owner-only organization update regression
 

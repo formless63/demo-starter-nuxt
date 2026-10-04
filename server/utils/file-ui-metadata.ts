@@ -1,5 +1,5 @@
 import { and, desc, eq, sql } from "drizzle-orm";
-import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { fileUiFiles } from "../database/file-ui-schema";
 import {
 	FileError,
@@ -7,7 +7,7 @@ import {
 	type FileRecord,
 } from "@repo/nuxt-file-ui/server";
 export function createPostgresFileMetadata<T extends Record<string, unknown>>(
-	db: PostgresJsDatabase<T>,
+	db: NodePgDatabase<T>,
 ): FileMetadata {
 	const scoped = (owner: string, id: string) =>
 		and(eq(fileUiFiles.owner, owner), eq(fileUiFiles.id, id));

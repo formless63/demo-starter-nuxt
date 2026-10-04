@@ -1,5 +1,5 @@
-import postgres from 'postgres'
-import { drizzle } from 'drizzle-orm/postgres-js'
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { eq } from 'drizzle-orm'
 import { createNotificationJobs, createNtfyAdapter, getNotification, NotificationError } from '@repo/nuxt-notifications/server'
 import { user } from '../database/schema'
@@ -8,11 +8,11 @@ import { createNotificationEmailAdapter } from './email-adapter'
 import { loadNotificationState } from './loading'
 
 // Runtime-neutral lazy database access shared by Nitro and the existing Jobs worker.
-let client: ReturnType<typeof postgres> | undefined
+let client: pg.Pool | undefined
 function deliveryDb() {
   const url = process.env.DATABASE_URL
   if (!url) throw new NotificationError('configuration')
-  client ??= postgres(url, { max: 3, idle_timeout: 20 })
+  client ??= new pg.Pool({ connectionString: url, max: 3, idleTimeoutMillis: 20_000, connectionTimeoutMillis: 30_000 }).on('error', () => { /* idle-client errors surface on the next query */ })
   return drizzle(client)
 }
 export const notificationJobs = createNotificationJobs({

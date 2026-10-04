@@ -1,6 +1,6 @@
 import { createHmac, randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
-import postgres from 'postgres'
+import pg from 'pg'
 import { publicAssets } from '../../packages/nuxt-pwa-offline/src/runtime/constants'
 import { waitForHydration } from './hydration'
 
@@ -65,7 +65,7 @@ test('production PWA never retains real authenticated API or SSR content across 
   // is mandatory in the existing production E2E run, using the same real app.
   test.skip(!production, 'Native service workers are emitted only by the production build')
   test.setTimeout(90000)
-  const sql = postgres(process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', { max: 1 })
+  const sql = new pg.Pool({ connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', max: 1 }).on('error', () => {})
   const owner = `pwa-${randomUUID()}`
   const token = randomUUID()
   const project = randomUUID()
@@ -73,9 +73,9 @@ test('production PWA never retains real authenticated API or SSR content across 
   const secret = process.env.NUXT_AUTH_SECRET || 'e2e-secret-that-is-at-least-thirty-two-chars'
   const encoded = encodeURIComponent(`${token}.${createHmac('sha256', secret).update(token).digest('base64')}`)
   try {
-    await sql`insert into "user"(id,name,email) values(${owner},${owner},${`${owner}@example.test`})`
-    await sql`insert into session(id,user_id,token,expires_at) values(${randomUUID()},${owner},${token},now()+interval '1 hour')`
-    await sql`insert into project(id,owner_id,name) values(${project},${owner},${privateName})`
+    await sql.query('insert into "user"(id,name,email) values($1,$2,$3)', [owner, owner, `${owner}@example.test`])
+    await sql.query("insert into session(id,user_id,token,expires_at) values($1,$2,$3,now()+interval '1 hour')", [randomUUID(), owner, token])
+    await sql.query('insert into project(id,owner_id,name) values($1,$2,$3)', [project, owner, privateName])
     await context.addCookies([
       { name: 'better-auth.session_token', value: encoded, domain: new URL(baseURL!).hostname, path: '/', httpOnly: true, sameSite: 'Lax' },
       { name: '__Secure-better-auth.session_token', value: encoded, domain: new URL(baseURL!).hostname, path: '/', httpOnly: true, sameSite: 'Lax', secure: true },
@@ -132,9 +132,9 @@ test('production PWA never retains real authenticated API or SSR content across 
   }
   finally {
     await context.setOffline(false)
-    await sql`delete from project where id=${project}`
-    await sql`delete from session where user_id=${owner}`
-    await sql`delete from "user" where id=${owner}`
+    await sql.query('delete from project where id=$1', [project])
+    await sql.query('delete from session where user_id=$1', [owner])
+    await sql.query('delete from "user" where id=$1', [owner])
     await sql.end()
   }
 })

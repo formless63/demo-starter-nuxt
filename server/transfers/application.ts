@@ -1,5 +1,5 @@
-import postgres from 'postgres'
-import { drizzle } from 'drizzle-orm/postgres-js'
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { and, asc, eq, sql } from 'drizzle-orm'
 import { createTransferRegistry, createTransferService, defineTransfer, TransferError } from '@repo/nuxt-import-export/server'
 import { createJobsClient, resolveJobsConfig } from '@repo/nuxt-jobs/server'
@@ -10,10 +10,10 @@ import { projectInput } from '../utils/project-input'
 import { insertProjectInTransaction } from '../services/projects'
 import { applicationPolicy, personalPolicyContext } from '../utils/application-policy'
 import { withTransferPolicy } from './policy-errors'
-let client: ReturnType<typeof postgres> | undefined
+let client: pg.Pool | undefined
 function database() {
   if (!process.env.DATABASE_URL) throw new TransferError('configuration')
-  client ??= postgres(process.env.DATABASE_URL, { max: 4, idle_timeout: 20 })
+  client ??= new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 4, idleTimeoutMillis: 20_000, connectionTimeoutMillis: 30_000 }).on('error', () => { /* idle-client errors surface on the next query */ })
   return drizzle(client)
 }
 export const projectsTransferDefinition = defineTransfer({

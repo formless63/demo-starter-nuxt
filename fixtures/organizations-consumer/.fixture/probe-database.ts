@@ -1,7 +1,7 @@
-import type postgres from 'postgres'
+import type pg from 'pg'
 
-export async function createProbeSchema(observer: ReturnType<typeof postgres>) {
-  await observer.unsafe(`
+export async function createProbeSchema(observer: pg.Pool) {
+  await observer.query(`
     CREATE TABLE "user" (id text PRIMARY KEY, name text NOT NULL, email text UNIQUE NOT NULL, email_verified boolean NOT NULL DEFAULT false, image text, created_at timestamptz(3) NOT NULL DEFAULT now(), updated_at timestamptz(3) NOT NULL DEFAULT now());
     CREATE TABLE session (id text PRIMARY KEY, token text UNIQUE NOT NULL, user_id text NOT NULL, expires_at timestamptz NOT NULL, ip_address text, user_agent text, active_organization_id text, created_at timestamptz(3) NOT NULL DEFAULT now(), updated_at timestamptz(3) NOT NULL DEFAULT now());
     CREATE TABLE account (id text PRIMARY KEY, account_id text NOT NULL, provider_id text NOT NULL, user_id text NOT NULL, access_token text, refresh_token text, id_token text, access_token_expires_at timestamptz, refresh_token_expires_at timestamptz, scope text, password text, created_at timestamptz(3) NOT NULL DEFAULT now(), updated_at timestamptz(3) NOT NULL DEFAULT now());
@@ -14,8 +14,8 @@ export async function createProbeSchema(observer: ReturnType<typeof postgres>) {
   await seedProbeRecords(observer)
 }
 
-export async function seedProbeRecords(observer: ReturnType<typeof postgres>) {
-  await observer.unsafe(`
+export async function seedProbeRecords(observer: pg.Pool) {
+  await observer.query(`
     INSERT INTO "user" (id,name,email,email_verified) VALUES ('probe-owner','Owner','owner@example.test',true), ('probe-recipient','Recipient','recipient@example.test',true);
     INSERT INTO session (id,token,user_id,expires_at) VALUES ('probe-session','probe-session-token','probe-recipient', now() + interval '1 hour');
     INSERT INTO organization (id,name,slug) VALUES ('probe-organization','Probe','probe-organization');

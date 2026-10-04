@@ -1,19 +1,18 @@
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
-import postgres from 'postgres'
 import pg from 'pg'
-import { drizzle as postgresDrizzle } from 'drizzle-orm/postgres-js'
-import { drizzle as nodeDrizzle } from 'drizzle-orm/node-postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { and, eq, sql } from 'drizzle-orm'
 import { defineAuthorization, AuthorizationError, type AuthorizationContext, type AuthorizationConnection } from '@repo/nuxt-authorization/server'
 import { roleAssignment, fixtureMembership, fixtureRecord, fixtureAudit } from '../server/database/schema.ts'
 
 const url = process.env.AUTHORIZATION_PROBE_DATABASE_URL!
-const client = process.env.AUTHORIZATION_PROBE_DRIVER === 'pg' ? new pg.Pool({ connectionString: url, max: 8 }) : postgres(url, { max: 8 })
+const client = new pg.Pool({ connectionString: url, max: 8 })
+client.on('error', () => {})
 // pg emits a connection error after rejecting an interrupted query. The fixture owns
 // these clients and registers the standard listener; safe primitive results are still asserted.
-if (client instanceof pg.Pool) client.on('connect', connection => connection.on('error', () => {}))
-const db = client instanceof pg.Pool ? nodeDrizzle(client) : postgresDrizzle(client)
+client.on('connect', connection => connection.on('error', () => {}))
+const db = drizzle(client)
 const prefix = randomUUID()
 const user = `${prefix}-user`, other = `${prefix}-other`, tenant = `${prefix}-tenant`, secondTenant = `${prefix}-second`
 const actor: AuthorizationContext = { userId: 'fixture-operator', scope: { kind: 'user', id: 'fixture-operator' } }
@@ -87,7 +86,7 @@ try {
   let waiting = false
   for (let attempt = 0; attempt < 100 && !waiting; attempt++) {
     const rows = await db.execute(sql`SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock' AND query LIKE '%authorization_assignment%'`)
-    waiting = ('rows' in rows ? rows.rows : Array.from(rows as Iterable<unknown>)).length > 0
+    waiting = rows.rows.length > 0
   }
   assert(waiting)
   assert.equal(revoked, false)
@@ -110,4 +109,4 @@ try {
   assert(decisions.every((value, index) => value === !!(index % 2)))
   console.info('[authorization fixture] registry, exact scopes, role union, credential intersection, rollback, revocation locks, timeout and isolation passed')
 }
-finally { if (client instanceof pg.Pool) await client.end(); else await client.end({ timeout: 1 }) }
+finally { await client.end() }

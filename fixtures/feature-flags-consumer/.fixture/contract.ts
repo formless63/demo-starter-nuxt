@@ -1,17 +1,16 @@
 import assert from 'node:assert/strict'
 import { randomUUID,createHash } from 'node:crypto'
-import postgres from 'postgres'
 import pg from 'pg'
-import { drizzle as postgresDrizzle } from 'drizzle-orm/postgres-js'
-import { drizzle as nodeDrizzle } from 'drizzle-orm/node-postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { eq,sql } from 'drizzle-orm'
 import { defineFeatureFlags,FeatureFlagsError,rolloutBucket } from '@repo/nuxt-feature-flags/server'
 import { flagDefinition,fixtureAudit } from '../server/database/schema.ts'
-const client=process.env.FLAGS_PROBE_DRIVER==='pg'?new pg.Pool({connectionString:process.env.FLAGS_PROBE_DATABASE_URL,max:8}):postgres(process.env.FLAGS_PROBE_DATABASE_URL!,{max:8})
+const client=new pg.Pool({connectionString:process.env.FLAGS_PROBE_DATABASE_URL,max:8})
+client.on('error',()=>{})
 // pg emits a connection error after rejecting an interrupted query. The fixture owns
 // these clients and registers the standard listener; safe primitive results are still asserted.
-if (client instanceof pg.Pool) client.on('connect', connection => connection.on('error', () => {}))
-const db=client instanceof pg.Pool?nodeDrizzle(client):postgresDrizzle(client)
+client.on('connect', connection => connection.on('error', () => {}))
+const db=drizzle(client)
 const actor={userId:'fixture-operator'},k=`fixture.${randomUUID().replaceAll('-','')}`
 const flags=defineFeatureFlags({managementGuard:async supplied=>supplied.userId===actor.userId,onChange:async(tx,_operation,definition)=>{await tx.insert(fixtureAudit).values({id:randomUUID(),flagKey:definition.key})}})
 const code=(expected:string)=>(error:unknown)=>error instanceof FeatureFlagsError&&error.code===expected
@@ -91,4 +90,4 @@ try {
   const contexts=await Promise.all(Array.from({length:20},(_,n)=>flags.evaluateBoolean(db,k,{userId:'user-a',tenantId:n%2?'tenant-a':'tenant-b'})))
   assert(contexts.every((value,n)=>value===!(n%2)))
   console.info('[feature flags fixture] canonical vectors, precedence, revision/no-op, rollback, snapshots, safe failure and concurrent context isolation passed')
-}finally{if(client instanceof pg.Pool)await client.end();else await client.end({ timeout: 1 })}
+}finally{await client.end()}

@@ -4,14 +4,15 @@ import { readFile } from 'node:fs/promises'
 import { createHmac } from 'node:crypto'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import pg from 'pg'
 import { pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 import { user, account, verification } from './upstream-schema.ts'
 import { witness } from './witness.ts'
 
 const state = JSON.parse(await readFile(new URL('./state.json', import.meta.url), 'utf8')) as { url: string, witness: Awaited<ReturnType<typeof witness>> }
-const client = postgres(state.url, { max: 2 })
+const client = new pg.Pool({ connectionString: state.url, max: 2 })
+client.on('error', () => {})
 try {
   await verifyProductionBoot(state.url, false)
   assert(JSON.stringify(await witness(client)) === JSON.stringify(state.witness), 'Capability removal/rebuild must preserve all rows and indexes')

@@ -4,9 +4,9 @@ import { verifyNotificationContract, validTitles, validMetadata } from './contra
 import { saveState, snapshot } from './lifecycle'
 import { execFileSync } from 'node:child_process'
 import { eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import { migrate } from 'drizzle-orm/postgres-js/migrator'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { migrate } from 'drizzle-orm/node-postgres/migrator'
+import pg from 'pg'
 import { createJobsBoss, defineJobRegistry, defineQueues, registerWorkers, resolveJobsConfig, sendRegisteredJobInTransaction, sendRegisteredJob } from '@repo/nuxt-jobs/server'
 import { runJobsMigration } from '@repo/nuxt-jobs/cli'
 import { appendNotification, queryNotifications, markRead, markUnread, getNotification, createNotificationJobs, createNtfyAdapter, NotificationError, validateMetadata } from '@repo/nuxt-notifications/server'
@@ -14,12 +14,14 @@ import { domainRecord } from '../server/database/schema'
 
 const databaseUrl = process.env.DATABASE_URL
 assert(databaseUrl, 'DATABASE_URL is required')
-const admin = postgres(databaseUrl, { max: 1 })
+const admin = new pg.Pool({ connectionString: databaseUrl, max: 1 })
+admin.on('error', () => {})
 const databaseName = `notifications_fixture_${crypto.randomUUID().replaceAll('-', '')}`
-await admin.unsafe(`CREATE DATABASE "${databaseName}"`)
+await admin.query(`CREATE DATABASE "${databaseName}"`)
 const url = new URL(databaseUrl); url.pathname = `/${databaseName}`
 await saveState({ databaseName, url: url.toString() })
-const client = postgres(url.toString(), { max: 5 }), db = drizzle(client)
+const client = new pg.Pool({ connectionString: url.toString(), max: 5 }), db = drizzle(client)
+client.on('error', () => {})
 const previous = { DATABASE_URL: process.env.DATABASE_URL, PGBOSS_DATABASE_URL: process.env.PGBOSS_DATABASE_URL, PGBOSS_SCHEMA: process.env.PGBOSS_SCHEMA }
 process.env.DATABASE_URL = url.toString(); process.env.PGBOSS_DATABASE_URL = url.toString(); process.env.PGBOSS_SCHEMA = 'notifications_fixture_jobs'
 const input = { recipientId: 'fixture-owner', type: 'fixture.created', title: 'Private title', body: 'Private body ☃', metadata: { reference: 'safe-id' } }
@@ -34,11 +36,11 @@ try {
   await verifyNotificationContract(notificationApi)
   await migrate(db, { migrationsFolder: './server/database/migrations' })
   await migrate(db, { migrationsFolder: './server/database/migrations' })
-  const columns = await client`SELECT column_name,data_type,datetime_precision FROM information_schema.columns WHERE table_name='notification'`
+  const columns = (await client.query("SELECT column_name,data_type,datetime_precision FROM information_schema.columns WHERE table_name='notification'")).rows
   assert(columns.some(c => c.column_name === 'created_at' && c.datetime_precision === 3 && c.data_type === 'timestamp with time zone'))
   assert(columns.some(c => c.column_name === 'read_at' && c.datetime_precision === 3))
   assert(columns.some(c => c.column_name === 'metadata' && c.data_type === 'jsonb'))
-  const indexes = await client`SELECT indexname,indexdef FROM pg_indexes WHERE tablename='notification'`
+  const indexes = (await client.query("SELECT indexname,indexdef FROM pg_indexes WHERE tablename='notification'")).rows
   for (const prefix of ['recipient', 'recipient_read', 'recipient_type']) assert(indexes.some(i => i.indexname === `notification_${prefix}_created_id_idx` && /created_at DESC(?: NULLS LAST)?, id DESC/.test(i.indexdef)))
   await runJobsMigration(); await boss.start()
   const notifications = createNotificationJobs({ load: id => getNotification(db, id) })
@@ -50,7 +52,7 @@ try {
     await sendRegisteredJobInTransaction(boss, registry, tx, 'notifications.deliver', notifications.prepare(row.id, 'email'))
     return row
   })
-  const jobs = await client.unsafe(`SELECT id,data FROM "${config.schema}".job WHERE name='notifications.deliver'`)
+  const jobs = (await client.query(`SELECT id,data FROM "${config.schema}".job WHERE name='notifications.deliver'`)).rows
   assert.equal(jobs.length, 1)
   assert.deepEqual(jobs[0]!.data, { notificationId: created.id, channel: 'email' })
   assert(!JSON.stringify(jobs).includes(input.title) && !JSON.stringify(jobs).includes(input.recipientId))
@@ -62,7 +64,7 @@ try {
   }))
   assert.equal((await db.select().from(domainRecord).where(eq(domainRecord.id, 'rollback'))).length, 0)
   assert.equal((await queryNotifications(db, 'fixture-owner')).items.length, 1)
-  assert.equal((await client.unsafe(`SELECT id FROM "${config.schema}".job`)).length, 1)
+  assert.equal((await client.query(`SELECT id FROM "${config.schema}".job`)).rows.length, 1)
   assert.equal(await markRead(db, 'foreign', created.id), false)
   assert.equal(await markUnread(db, 'foreign', created.id), false)
   assert.equal(await markRead(db, 'foreign', crypto.randomUUID()), false)

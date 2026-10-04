@@ -1,14 +1,14 @@
 import { expect, test } from '@playwright/test'
 import { createHmac } from 'node:crypto'
-import postgres from 'postgres'
-import { drizzle } from 'drizzle-orm/postgres-js'
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { invalidTypes } from '../../fixtures/notifications-consumer/.fixture/contract-vectors'
 import { eq } from 'drizzle-orm'
 import * as tables from '../../server/database/schema'
 
 test('real session recipient isolation and post-commit ID-only hints over SSE and WebSocket', async ({ page, context, request }) => {
   test.setTimeout(60000)
-  const client = postgres(process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', { max: 3 })
+  const client = new pg.Pool({ connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', max: 3 }).on('error', () => {})
   const db = drizzle(client)
   const recipientId = crypto.randomUUID(), foreignId = crypto.randomUUID(), token = crypto.randomUUID()
   const secret = process.env.NUXT_AUTH_SECRET || 'e2e-secret-that-is-at-least-thirty-two-chars'

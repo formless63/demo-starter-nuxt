@@ -28,7 +28,7 @@ Installation is explicit and uses normal Nuxt module-builder packaging and gener
 
 ## Verification
 
-The diagnostic fixture uses native HTTP/auth.api dispatch, not raw endpoint functions. It creates and tears down one uniquely named loopback PostgreSQL 18 database; all identities, session credentials and tables are confined to that disposable fixture. Both `postgres-js` and `pg`, Bun and Node 24 are exercised. The crash probe confirms the upstream limitation; it is not an atomicity claim. The separate generic lifecycle builds a packed tarball, checks guarded native contracts, removes the package, rebuilds and verifies retained tables, indexes and baseline sessions.
+The diagnostic fixture uses native HTTP/auth.api dispatch, not raw endpoint functions. It creates and tears down one uniquely named loopback PostgreSQL 18 database; all identities, session credentials and tables are confined to that disposable fixture. `pg` (node-postgres) on Bun and Node 24 is exercised. The crash probe confirms the upstream limitation; it is not an atomicity claim. The separate generic lifecycle builds a packed tarball, checks guarded native contracts, removes the package, rebuilds and verifies retained tables, indexes and baseline sessions.
 
 ## Installation and public server APIs
 
