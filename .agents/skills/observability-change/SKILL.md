@@ -5,7 +5,7 @@ description: Changing server logs, request correlation, OpenTelemetry spans/metr
 
 # Observability change
 
-Read `capabilities/observability/CAPABILITY.md` and `OBSERVABILITY_MODULE_EVALUATION.md`; use `capability-change` for package-contract changes.
+Read `capabilities/observability/CAPABILITY.md` and `docs/evaluations/OBSERVABILITY_MODULE_EVALUATION.md`; use `capability-change` for package-contract changes.
 
 - Never send secrets to logs or telemetry. Raw headers, arbitrary query strings, request bodies, job payloads and Better Auth session/user objects are omitted by default. Extend `redactKeys` for application-specific sensitive fields. Free-text messages and manual attributes still require deliberate safe values.
 - Preserve guarded Pino child bindings and safe exception serialization; error text, causes and stacks may contain credentials or SQL. Test the actual emitted JSON and OTLP, not just sanitizer helpers.

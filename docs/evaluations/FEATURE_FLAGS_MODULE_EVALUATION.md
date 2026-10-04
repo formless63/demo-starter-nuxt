@@ -8,7 +8,7 @@ Status: in progress. Sources rechecked2026-10-01. The private Nuxt module uses b
 
 ## Cross-framework v1 contract
 
-The source of truth is the delegated v1 packet and [CAPABILITY.md](capabilities/feature-flags/CAPABILITY.md); no sibling implementation was consulted. Boolean-only definitions, exact user/tenant overrides, disabled kill switch, tenant-before-user precedence, SHA-256 compact JavaScript JSON cohort hashing, expected-revision management, static safe errors and opt-in/removal persistence are observable contracts. Nuxt transport/composition details are application-owned. No flag is an authentication, authorization or tenant-security boundary.
+The source of truth is the delegated v1 packet and [CAPABILITY.md](../../capabilities/feature-flags/CAPABILITY.md); no sibling implementation was consulted. Boolean-only definitions, exact user/tenant overrides, disabled kill switch, tenant-before-user precedence, SHA-256 compact JavaScript JSON cohort hashing, expected-revision management, static safe errors and opt-in/removal persistence are observable contracts. Nuxt transport/composition details are application-owned. No flag is an authentication, authorization or tenant-security boundary.
 
 ## Evidence
 

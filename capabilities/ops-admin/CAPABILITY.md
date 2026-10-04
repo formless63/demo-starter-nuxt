@@ -22,6 +22,6 @@ Remove the root dependency/module and `opsAdmin` option, `server/ops`, `server/p
 
 ## Verification
 
-See [evaluation](../../OPS_ADMIN_MODULE_EVALUATION.md), [roadmap](../../ROADMAP.md) and [capability tooling](../../docs/CAPABILITIES.md). The full dispatch verification gate passed; exact-head run evidence is retained in the draft PR pending parent integration.
+See [evaluation](../../docs/evaluations/OPS_ADMIN_MODULE_EVALUATION.md), [roadmap](../../ROADMAP.md) and [capability tooling](../../docs/CAPABILITIES.md). The full dispatch verification gate passed; exact-head run evidence is retained in the draft PR pending parent integration.
 
 Optional-provider removal also removes its Ops helper and shutdown hook: Storage removes its card/import, `server/ops/storage.ts` and `server/plugins/ops-admin-storage.ts`; removing Jobs (and its hard dependents, including Webhooks) removes the Jobs/Webhooks cards/imports, `server/ops/jobs.ts` and `server/plugins/ops-admin-jobs.ts`. Keeping Webhooks requires Jobs. Cache and Observability remove their direct application import/card; Audit removes its static card. Root provider removal separately follows each provider contract's normal application pruning recipe. Observability's count projects only the supported local `getObservabilityStatus().enabled` boolean and reflects disabled instrumentation without disclosing exporter configuration.

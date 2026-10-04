@@ -4,7 +4,7 @@ description: Changing organization admission, immutable-owner guards, Better Aut
 ---
 # Organizations maintenance
 
-Read `capabilities/organizations/CAPABILITY.md` and `ORGANIZATIONS_MODULE_EVALUATION.md`, then use capability-change and auth-change.
+Read `capabilities/organizations/CAPABILITY.md` and `docs/evaluations/ORGANIZATIONS_MODULE_EVALUATION.md`, then use capability-change and auth-change.
 
 - Keep the official matching-version Better Auth plugin and explicit @better-auth/core dependency. Preserve existing auth plugins/hooks and origin/session/CSRF dispatch. Never invoke raw endpoint functions or expose a generic endpoint proxy.
 - Global before guards and lifecycle guards complement each other: resend bypasses beforeCreateInvitation; acceptance does not call beforeAddMember; leave does not call beforeRemoveMember. Member hook `user` is the target, not the actor. Derive actor from supported endpoint context.

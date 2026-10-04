@@ -4,7 +4,7 @@ description: Changing SMTP configuration, transactional mail, safe message/error
 ---
 # Email change
 
-Read `capabilities/email/CAPABILITY.md` and `EMAIL_MODULE_EVALUATION.md`; use capability-change for package changes and auth-change for magic links.
+Read `capabilities/email/CAPABILITY.md` and `docs/evaluations/EMAIL_MODULE_EVALUATION.md`; use capability-change for package changes and auth-change for magic links.
 
 - Credentials stay server-only. Require explicit TLS/starttls/opportunistic; never bypass certificate verification.
 - Never log recipient, subject, body, Message-ID, magic-link URL/token, credentials or raw SMTP response. Telemetry has bounded operation/outcome/security only.

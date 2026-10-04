@@ -5,7 +5,7 @@ description: Changing webhook raw-body verification, signing, durable delivery, 
 
 # Webhooks change workflow
 
-Read the capability-change workflow, `capabilities/webhooks/CAPABILITY.md`, `WEBHOOKS_MODULE_EVALUATION.md` and Jobs contracts.
+Read the capability-change workflow, `capabilities/webhooks/CAPABILITY.md`, `docs/evaluations/WEBHOOKS_MODULE_EVALUATION.md` and Jobs contracts.
 
 1. Preserve explicit Nuxt opt-in and the hard Jobs edge in catalog/module/peer metadata. Compose definitions into the existing Jobs registry; never add another worker/router or implicit routes.
 2. Authenticate exact raw bytes before JSON parsing. Bound Content-Length, actual bytes and read duration. Use constant-time HMAC comparison, Standard Webhooks ID/timestamp/signature headers, strict timestamp syntax and bounded rotation secrets. Keep IDs and timestamps free of dots.

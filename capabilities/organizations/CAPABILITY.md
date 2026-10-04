@@ -10,7 +10,7 @@ The private opt-in package is `@repo/nuxt-organizations`, using the official Bet
 
 Native dispatch and lifecycle hooks remain authoritative. No outer dispatch transaction framework or copied upstream internals are installed. An accepted invitation without a membership never grants tenant access: `resolveTenantContext` ignores active selection and authoritatively requires the membership in the explicit organization.
 
-See [the evaluation and reproducible PostgreSQL probe](../../ORGANIZATIONS_MODULE_EVALUATION.md). The probe proves the crash window; its successful diagnostic exit is not an atomicity claim.
+See [the evaluation and reproducible PostgreSQL probe](../../docs/evaluations/ORGANIZATIONS_MODULE_EVALUATION.md). The probe proves the crash window; its successful diagnostic exit is not an atomicity claim.
 
 Organization name/slug updates require current authoritative owner membership in both native dispatch and lifecycle hooks. Upstream default admin update permission does not relax this v1 rule.
 

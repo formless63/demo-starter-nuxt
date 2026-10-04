@@ -91,7 +91,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Jobs, Observability
 - External: S3-compatible storage (required)
 - Preferred self-hosted options: RustFS; Garage with optional GarageUI. MinIO is not the default.
-- Current implementation (#4): private `@repo/nuxt-storage`, server-only S3 primitives, lazy configuration with explicit region, private streaming objects, signed GET/PUT, multipart and HEAD policy verification; generic external fixture tests real RustFS 1.0.0 and Garage 2.4.1, CORS and optional third-party Noooste Garage UI v0.13.0 (localhost/operator-only, not official or needed for S3). Shared AWS SDK 3.1143.0, TTL 600 seconds (30–3600), custom-endpoint path-style defaults and region/credentials follow the [synchronized baseline](OBJECT_STORAGE_MODULE_EVALUATION.md#shared-cross-framework-baseline). No files table, application UI, processing jobs or implicit bucket creation.
+- Current implementation (#4): private `@repo/nuxt-storage`, server-only S3 primitives, lazy configuration with explicit region, private streaming objects, signed GET/PUT, multipart and HEAD policy verification; generic external fixture tests real RustFS 1.0.0 and Garage 2.4.1, CORS and optional third-party Noooste Garage UI v0.13.0 (localhost/operator-only, not official or needed for S3). Shared AWS SDK 3.1143.0, TTL 600 seconds (30–3600), custom-endpoint path-style defaults and region/credentials follow the [synchronized baseline](docs/evaluations/OBJECT_STORAGE_MODULE_EVALUATION.md#shared-cross-framework-baseline). No files table, application UI, processing jobs or implicit bucket creation.
 - External storage is needed only when operations are used, not at install/build/startup. Default installed: no; reference application explicitly opts in.
 - Contract: [`capabilities/object-storage/CAPABILITY.md`](capabilities/object-storage/CAPABILITY.md)
 
@@ -184,7 +184,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 ### Organizations / Tenancy (`in-progress`)
 
-- Adopted compatibility revision: native Better Auth 1.7.7 acceptance uses a single-winner claim, transactional membership/session creation and best-effort compensation, without crash-atomicity; see the [reproducible evaluation](ORGANIZATIONS_MODULE_EVALUATION.md). Historical isolated lifecycle evidence predates the stronger fault gates; integrated lifecycle/root/release verification is pending and paused.
+- Adopted compatibility revision: native Better Auth 1.7.7 acceptance uses a single-winner claim, transactional membership/session creation and best-effort compensation, without crash-atomicity; see the [reproducible evaluation](docs/evaluations/ORGANIZATIONS_MODULE_EVALUATION.md). Historical isolated lifecycle evidence predates the stronger fault gates; integrated lifecycle/root/release verification is pending and paused.
 - Contract: [`capabilities/organizations/CAPABILITY.md`](capabilities/organizations/CAPABILITY.md)
 
 - Requires: starter authentication (baseline, not a capability edge)
@@ -193,7 +193,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 ### Authorization (`in-progress`)
 
-- Integrated verification pending and paused; [contract](capabilities/authorization/CAPABILITY.md) and [decision](AUTHORIZATION_MODULE_EVALUATION.md).
+- Integrated verification pending and paused; [contract](capabilities/authorization/CAPABILITY.md) and [decision](docs/evaluations/AUTHORIZATION_MODULE_EVALUATION.md).
 
 - Requires: starter authentication (baseline, not a capability edge)
 - Integrates with: Organizations, API Platform, Audit Log
@@ -201,7 +201,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 ### Feature Flags (`in-progress`)
 
-- Integrated verification pending and paused; [contract](capabilities/feature-flags/CAPABILITY.md) and [decision](FEATURE_FLAGS_MODULE_EVALUATION.md).
+- Integrated verification pending and paused; [contract](capabilities/feature-flags/CAPABILITY.md) and [decision](docs/evaluations/FEATURE_FLAGS_MODULE_EVALUATION.md).
 
 - Requires: none
 - Integrates with: Organizations, Authorization, Audit Log
