@@ -19,7 +19,11 @@ export async function verifyProductionBoot(databaseUrl: string, installed: boole
     }
     assert(ready,'Node production fixture must serve its base application')
     const response=await fetch(`http://127.0.0.1:${port}/api/health`,{signal:AbortSignal.timeout(1000)})
-    assert.equal(response.status,installed?200:404)
+    // The base application has no router, so it answers every path with 200. Removal is proven by the
+    // consumer health route's JSON payload disappearing, not by a 404 status.
+    assert.equal(response.status,200)
+    assert.equal((response.headers.get('content-type')??'').includes('application/json'),installed)
+    if(installed)assert.deepEqual(await response.json(),{status:'ok'})
     const assets=await readdir(resolve('.output/public/_nuxt'),{recursive:true})
     for(const asset of assets.filter(name=>name.endsWith('.js'))){const content=await readFile(resolve('.output/public/_nuxt',asset),'utf8');for(const secret of ['authorization_assignment','feature_flag_override','organization_member_owner_idx','fixture-operator'])assert(!content.includes(secret),'Server-only schema/policy must be excluded from browser output')}
   }
