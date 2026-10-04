@@ -1,6 +1,6 @@
 # Feature Flags
 
-Status: in-progress; defaultInstalled:false. `@repo/nuxt-feature-flags` is an independent private native Nuxt module with server-only boolean PostgreSQL evaluation. It imports no Organizations, Authorization, Audit or other capability. No environment variables beyond baseline DATABASE_URL, provider service, implicit client projection, management HTTP route, startup fetch/migration/cache/seed or cross-request context exists.
+Status: done; defaultInstalled:false. `@repo/nuxt-feature-flags` is an independent private native Nuxt module with server-only boolean PostgreSQL evaluation. It imports no Organizations, Authorization, Audit or other capability. No environment variables beyond baseline DATABASE_URL, provider service, implicit client projection, management HTTP route, startup fetch/migration/cache/seed or cross-request context exists.
 
 ## Public API and definitions
 
@@ -22,4 +22,8 @@ Canonical rollout bytes are UTF8 of JavaScript `JSON.stringify(['feature-flags-v
 
 Explicit Nuxt registration, `/schema` application composition and reviewed additive migrations are required; installation/startup does not touch the database. Root composition uses an authenticated fixed allowlist endpoint with private,no-store boolean values, re-resolves tenant membership and ignores/aborts stale identity-switch responses. The demonstration `beta.dashboard` is explicitly seeded disabled by a local operator command, never startup. An innocuous extra panel never bypasses normal server authorization.
 
-Remove package/module/schema/client allowlist integration and restore explicit product false defaults, retaining definitions/overrides/indexes/history and all authentication/authorization predicates. See [evaluation](../../docs/evaluations/FEATURE_FLAGS_MODULE_EVALUATION.md). Independent and root release checks are pending.
+Remove package/module/schema/client allowlist integration and restore explicit product false defaults, retaining definitions/overrides/indexes/history and all authentication/authorization predicates. See [evaluation](../../docs/evaluations/FEATURE_FLAGS_MODULE_EVALUATION.md). Independent and root release checks passed on the merged main recorded below.
+
+## Current roadmap acceptance
+
+Acceptance verified on 2026-10-04: merged main `237186860f0a079e8d01fb295023375a0e34ebd0` passed [all 31 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37181894995), including the three identity capability lifecycles and the root application checks. Organizations, Authorization and Feature Flags are done, reference-enabled and opt-in (`defaultInstalled: false`). This records the tested implementation baseline; later changes still require their applicable checks.

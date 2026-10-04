@@ -995,7 +995,7 @@
       "id": "organizations",
       "displayName": "Organizations / Tenancy",
       "kind": "identity-policy",
-      "status": "in-progress",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1043,7 +1043,7 @@
       "id": "authorization",
       "displayName": "Authorization",
       "kind": "identity-policy",
-      "status": "in-progress",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [
@@ -1091,7 +1091,7 @@
       "id": "feature-flags",
       "displayName": "Feature Flags",
       "kind": "identity-policy",
-      "status": "in-progress",
+      "status": "done",
       "defaultInstalled": false,
       "requires": [],
       "integratesWith": [

@@ -12,9 +12,13 @@ Actions/roles are bounded code-owned registries. Persisted roles are exact `(sco
 
 Management has no default authority and no self-grant/bootstrap administrator. Caller transactions remain caller-owned; convenience mutations own one explicit transaction, with no ambiguous-write retry. Protected domain writes must share locked facts/SQL predicates with authorization. No cross-request cache, registry/assignment browser dump, policy network call, startup query, migration or seeding.
 
-The package/consumer, safe reasons/error behavior, pagination, schema, removal and reference composition are defined in capabilities/authorization/CAPABILITY.md with passing independent Bun/Node24 node-postgres lifecycle evidence. Root and release checks remain pending. This evaluation does not mark the capability complete.
+The package/consumer, safe reasons/error behavior, pagination, schema, removal and reference composition are defined in capabilities/authorization/CAPABILITY.md with passing independent Bun/Node24 node-postgres lifecycle evidence. Root and release verification passed on the merged main recorded below.
 
 ## Connection-loss verification
 
 The disposable PostgreSQL18 fixture terminates its own backend during an explicit transaction and requires a safe unavailable result with no mutation replay. It runs on node-postgres (`pg`) on Bun and Node 24, with the standard connection-error listener registered on fixture-owned clients. postgres-js was removed from the repository because 3.4.9 can throw an asynchronous TypeError at `connection.js:255` after the socket is cleared; the investigation and rejected alternatives are recorded in [STACK_EVALUATION.md](STACK_EVALUATION.md#postgresql-driver-node-postgres-only-october-2026). No global exception suppression, driver fork, automatic replay or reduced outage gate is adopted.
 
+
+## Current roadmap acceptance
+
+Acceptance verified on 2026-10-04: merged main `237186860f0a079e8d01fb295023375a0e34ebd0` passed [all 31 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37181894995), including the three identity capability lifecycles and the root application checks. Organizations, Authorization and Feature Flags are done, reference-enabled and opt-in (`defaultInstalled: false`). This records the tested implementation baseline; later changes still require their applicable checks.
