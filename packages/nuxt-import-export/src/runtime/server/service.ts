@@ -266,7 +266,7 @@ export function createTransferService(options: TransferServiceOptions) {
         let normalized = 0, snapshotAt = new Date()
         await attemptTransaction(deadline, async (tx) => {
           await timeouts(tx, deadline)
-          const [clock] = await tx.execute(sql`select CURRENT_TIMESTAMP as snapshot_at`) as unknown as { snapshot_at: Date }[]
+          const { rows: [clock] } = await tx.execute(sql`select CURRENT_TIMESTAMP as snapshot_at`) as unknown as { rows: { snapshot_at: Date }[] }
           snapshotAt = new Date(clock!.snapshot_at)
           await authorize(context, original.definition, tx)
           for await (const row of definition.exportRows(tx, context, deadline.signal)) {

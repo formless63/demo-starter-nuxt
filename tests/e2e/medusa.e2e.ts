@@ -15,7 +15,7 @@ test('Medusa user isolation, local projections, repeated actions and queued canc
     await client.query(`INSERT INTO medusa_binding (id,scope_kind,scope_id,local_resource_id,connection_id,resource_kind,remote_id) VALUES ($1,'user',$2,$3,'default','product',$4)`, [binding, owner, crypto.randomUUID(), `prod_${binding}`])
     const projection = { bindingId: binding, remoteId: `prod_${binding}`, title: 'Scoped product fixture', handle: 'scoped', status: 'published', sourceUpdatedAt: null, syncedAt: new Date().toISOString(), deleted: false }
     await client.query(`INSERT INTO medusa_projection (binding_id,data,synced_at,revision) VALUES ($1,$2,now(),0)`, [binding, JSON.stringify(projection)])
-    await client.query(`INSERT INTO medusa_operation (id,actor_user_id,scope_kind,scope_id,connection_id,kind,status,binding_id,caller_key,digest,intent) VALUES ($1,$2,'user',$2,'default','reconcile_product','queued',$3,$1,$4,$5)`, [operation, owner, binding, 'a'.repeat(64), JSON.stringify({ kind: 'product' })])
+    await client.query(`INSERT INTO medusa_operation (id,actor_user_id,scope_kind,scope_id,connection_id,kind,status,binding_id,caller_key,digest,intent) VALUES ($1,$2,'user',$2,'default','reconcile_product','queued',$3,$6,$4,$5)`, [operation, owner, binding, 'a'.repeat(64), JSON.stringify({ kind: 'product' }), operation])
     const userCookie = `${cookieName}=${value(token)}`, foreignCookie = `${cookieName}=${value(other)}`
     expect((await request.get('/api/integrations/medusa/products')).status()).toBe(401)
     const foreign = await request.get('/api/integrations/medusa/product', { headers: { cookie: foreignCookie }, params: { bindingId: binding } }); expect(foreign.status()).toBe(404)
