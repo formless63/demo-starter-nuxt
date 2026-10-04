@@ -1,353 +1,70 @@
-# Reusable capability roadmap
+# Starter roadmap
 
-This roadmap separates the permanent starter baseline from optional reusable capabilities and from framework/library evaluations. The machine-readable source for capability status and relationships is [`capabilities/catalog.json`](capabilities/catalog.json); its contract is [`capabilities/catalog.schema.json`](capabilities/catalog.schema.json).
+## Current baseline: complete
 
-For user-facing enablement, removal, and pruning guidance, see [`docs/CAPABILITIES.md`](docs/CAPABILITIES.md) and [`docs/STARTING-A-PROJECT.md`](docs/STARTING-A-PROJECT.md).
+All **29 capability modules** are implemented as native Nuxt workspace packages, enabled in the full reference application and verified through the catalog-driven CI matrix. Every capability remains **opt-in for a clean consumer** (`defaultInstalled: false`).
 
-## Relationship vocabulary
+The [catalog](capabilities/catalog.json) is the machine-readable source of truth. Use the [capability guide](docs/CAPABILITIES.md) for behavior and the [project setup guide](docs/STARTING-A-PROJECT.md) for selection/removal. Individual contracts live under `capabilities/<id>/CAPABILITY.md`; decisions and historical verification live in [evaluations](docs/evaluations/).
 
-- **Requires** is a hard dependency on another reusable capability. Installation is incomplete without it.
-- **Integrates with** is an optional enhancement. The named capability remains useful when the integration is absent.
-- **External** is service or infrastructure outside this capability catalog. External entries say whether they are required or optional.
-- **Baseline requirements** are built into this starter and are not capability-module edges. They are tracked separately to avoid fake modules and accidental dependency cycles.
+Baseline framework, TypeScript, Bun tooling, Node production runtime, PostgreSQL/Drizzle, passwordless Better Auth, styling, Docker, tests and agent guidance are foundations, not optional modules.
 
-Hard dependency edges must stay sparse and acyclic. Future Nuxt modules should use Nuxt 4 `moduleDependencies` only for genuine Nuxt-module requirements and `optional: true` for optional Nuxt-module integrations. Ordinary npm packages and the starter's built-in Drizzle/auth layers are not fake Nuxt modules.
+### Completed modules and hard dependencies
 
-## Base starter contract — not modules
-
-The starter always supplies:
-
-- Nuxt 4/Vue/Nitro framework conventions and strict TypeScript
-- Bun package management and scripts, with portable Node production output
-- PostgreSQL 18, Drizzle ORM, and explicit committed migrations
-- Better Auth sessions with passwords disabled, GitHub OAuth, and generic OIDC
-- Pocket ID development provisioning and optional magic-link support
-- Tailwind CSS 4, the shadcn-style component system/Reka UI, and Tabler Icons
-- provider-neutral Docker/Compose orchestration
-- lint, typecheck, Vitest, Playwright, build, and production-container CI
-- layered agent context, prompts, and task-specific skills
-
-Capabilities may declare a baseline requirement such as authenticated identity, but that does not create a capability dependency.
-
-## Capability package convention
-
-Reusable Nuxt capabilities are developed as sibling workspace packages under `packages/nuxt-<id>/`, following Nuxt's normal module-author structure and build tooling. Each implemented package owns its runtime dependencies and public commands, has an explicit minimal consumer under `fixtures/`, and is activated only when an application installs it and lists it in `nuxt.config.ts`. Package source existing in this repository is never sufficient to enable a capability.
-
-`defaultInstalled` has one meaning: whether a clean consumer/base application receives a capability without explicitly selecting or enabling it. It does not describe the root reference application. All completed capabilities are `defaultInstalled: false`; the root deliberately installs and enables them for continuous integration testing, tracked separately in `referenceApplication.enabledCapabilities`.
-
-The root is a reference application that may opt into completed capabilities for integrated development and deployment. It is not the definition of the base generated starter. `capabilities/catalog.json` is the source of truth for completed package discovery and records the package name/path, consumer fixture, owned-dependency assertions, optional fixture runtime hook, and removal test contract. Each `CAPABILITY.md` owns installation/removal guidance. This metadata drives repository preparation and verification only; it is not an application installer or runtime capability loader. The private `@repo/*` scope identifies internal workspace packages only; a publication scope must be chosen deliberately before any npm release. Future packages should follow this convention only when implemented; empty packages are not created for roadmap entries.
-
-The generic `packages:*` commands build and exercise the catalog entries. Hard capability dependencies are resolved as an acyclic package closure and built first. External fixtures receive packed dependency tarballs, with workspace references replaced in staged manifests; removal retains required packages and their owned dependencies. Root postinstall prepares only catalog packages that are actual root dependencies. CI derives its package matrix from the catalog, performs the common tarball install/typecheck/build/removal lifecycle once per entry, and lets each capability fixture own any specialized runtime checks. Adding a completed package therefore changes metadata and its fixture, not the CI workflow.
-
-## Status summary
-
-| Status | Capability |
+| Capability | Requires |
 | --- | --- |
-| Done (29) | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI; Import / Export; Ops / Admin; Invoice Ninja; Stripe; Medusa; Data Table; Charts / Visualization; Command System; Markdown / Code Content; Rich Text / Tiptap; File UI; Flow / Canvas; Internationalization; PWA / Offline; Organizations / Tenancy; Authorization; Feature Flags |
-| Planned | None in the current 29-capability scope |
-
-Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All twenty-nine remain opt-in for clean consumers and explicitly enabled in the reference app.
-
-Charts source `7e8daa68c9862ef982c6dd0aa7e4269903eda9fd` passed [all 20 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37018899032). Command retains its separately verified implementation ([all 20 jobs at e0a01fa](https://github.com/formless63/demo-starter-nuxt/actions/runs/37012702417)). Markdown / Code Content implementation `e99539d90020a70028545ac4f252c55c16e3f432` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37029379598): all 21 generic packed package lifecycles, corrected real-browser payload/hydration/copy checks, full root checks, production browser/container/health, migrations and worker verification. This is source evidence; metadata promotion and later revisions require their own exact-head CI.
-
-The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused. Identity is appended as SQL0015–0017 / journal idx13–15; its lifecycle and integrated checks passed in the merged-main CI recorded below.
-
-API Platform is capability #2. Observability is capability #3: server-only logs, request correlation, explicit spans/metrics, optional OTLP export and a clean-consumer lifecycle. No new service is required.
-
-## Foundational / backend
-
-### Jobs — pg-boss (`done`)
-
-- Requires: none beyond baseline PostgreSQL/Drizzle/Node runtime
-- Integrates with: Observability, Ops / Admin
-- External: PostgreSQL (required)
-- Default installed: no; a clean consumer must explicitly select it. Enabled in reference app: yes.
-- Current implementation: `@repo/nuxt-jobs` private workspace package, typed registry, Zod execution validation, guarded same-database transactional Drizzle enqueue, concurrency `4` (decimal `1`–`100`), producer/reader and worker roles, native retry/cancellation context, explicit migrations/doctor, package-owned CLI, clean consumer fixture, standalone worker, smoke test, and shared production image
-- Contract: [`capabilities/jobs/CAPABILITY.md`](capabilities/jobs/CAPABILITY.md)
-
-### API Platform / Machine Auth / OpenAPI (`done`)
-
-- Requires: none beyond the starter baseline
-- Integrates with: Audit Log, Observability, Authorization, Organizations / Tenancy
-- External: none
-- Default installed: no; a clean consumer must explicitly select it. Enabled in reference app: yes.
-- Current implementation: `@repo/nuxt-api`, Better Auth user-owned hashed API keys, typed machine principals and permissions, native Nitro `/api/v1` routes, Zod-backed OpenAPI 3.1.1, Scalar docs, committed migration, credential management, and clean consumer fixture
-- Contract: [`capabilities/api-platform/CAPABILITY.md`](capabilities/api-platform/CAPABILITY.md)
-
-### Observability (`done`)
-
-- Requires: none
-- Integrates with: effectively every server/runtime capability
-- External: optional OTLP destination
-- Default installed: no; explicitly enabled in the reference app.
-- Current implementation: private `@repo/nuxt-observability`, safe Pino JSON logs, bounded request IDs/async context, OTel stable trace/metric SDKs, independently configurable optional HTTP/JSON exporters, safe build/health metadata, application-owned Jobs/API wrappers, bounded shutdown and external-style install/runtime/removal fixture
-- Contract: [`capabilities/observability/CAPABILITY.md`](capabilities/observability/CAPABILITY.md)
-- Browser telemetry/replay/analytics remain future extensions; no vendor backend or cross-process pg-boss propagation is claimed.
-
-### Object Storage (`done`)
-
-- Requires: none
-- Integrates with: Jobs, Observability
-- External: S3-compatible storage (required)
-- Preferred self-hosted options: RustFS; Garage with optional GarageUI. MinIO is not the default.
-- Current implementation (#4): private `@repo/nuxt-storage`, server-only S3 primitives, lazy configuration with explicit region, private streaming objects, signed GET/PUT, multipart and HEAD policy verification; generic external fixture tests real RustFS 1.0.0 and Garage 2.4.1, CORS and optional third-party Noooste Garage UI v0.13.0 (localhost/operator-only, not official or needed for S3). Shared AWS SDK 3.1143.0, TTL 600 seconds (30–3600), custom-endpoint path-style defaults and region/credentials follow the [synchronized baseline](docs/evaluations/OBJECT_STORAGE_MODULE_EVALUATION.md#shared-cross-framework-baseline). No files table, application UI, processing jobs or implicit bucket creation.
-- External storage is needed only when operations are used, not at install/build/startup. Default installed: no; reference application explicitly opts in.
-- Contract: [`capabilities/object-storage/CAPABILITY.md`](capabilities/object-storage/CAPABILITY.md)
-
-### Email (`done`)
-
-- Requires: none
-- Integrates with: Jobs, Observability; baseline Better Auth magic links
-- Baseline requirement: Node production runtime
-- External: SMTP required only on use; Mailpit 1.31.3 is an optional disposable development/test sink.
-- Implementation (#5): private `@repo/nuxt-email`, lazy Nodemailer 10.0.13 SMTP, explicit transport security, bounded text/HTML/addresses and safe single-attempt delivery/errors; root hashed-token magic links and optional application-owned telemetry. No durable queue, database dependency, attachments or provider SDK.
-- Default installed: no; the reference application explicitly opts in.
-- Contract: [`capabilities/email/CAPABILITY.md`](capabilities/email/CAPABILITY.md)
-- Base transport remains SMTP rather than a provider-specific SDK.
-
-### Webhooks (`done`)
-
-- Requires: Jobs (hard catalog/module/peer dependency)
-- Baseline requirement: Node production runtime; PostgreSQL is supplied through Jobs
-- Integrates with: Audit Log, Observability, API Platform
-- External: remote webhook endpoints only for outbound use; build/boot/health need none
-- Default installed: no; root explicitly opts in. `@repo/nuxt-webhooks` supplies Standard Webhooks HMAC signing, bounded raw-body verification, target policy, replay handoff and durable Jobs definitions with no second worker/routes/UI.
-- Contract: [`capabilities/webhooks/CAPABILITY.md`](capabilities/webhooks/CAPABILITY.md)
-
-### Audit Log (`done`)
-
-- Requires: none
-- Integrates with: API Platform, Organizations, Jobs, Invoice Ninja, Stripe, Medusa; optional baseline authentication
-- Baseline: PostgreSQL and Drizzle
-- External: PostgreSQL (required)
-- Implementation: `@repo/nuxt-audit-log`, application-owned schema/migrations, transactional append, bounded metadata and keyset queries; no UI or retention daemon.
-- Contract: [`capabilities/audit-log/CAPABILITY.md`](capabilities/audit-log/CAPABILITY.md)
-
-### AI (`done`)
-
-- Requires: none
-- Integrates with: Jobs, Object Storage, Observability, Audit Log
-- Baseline requirement: Node production runtime
-- External: configured model provider only when used; install/build/boot/health remain backendless
-- Default installed: no; root explicitly opts in.
-- Implementation: `@repo/nuxt-ai`, OpenAI-compatible text/streaming/Zod structured generation, bounded output, cancellation/deadline and safe errors. No UI/history/tools/RAG or generic queued AI.
-- Contract: [`capabilities/ai/CAPABILITY.md`](capabilities/ai/CAPABILITY.md)
-
-## Application infrastructure
-
-### Cache / Coordination (`done`)
-
-- Requires: none
-- Integrates with: Realtime, API Platform, Jobs, Observability
-- Baseline requirement: Node production runtime
-- External: Valkey/Redis-compatible service (required only on use)
-- Default installed: no; reference application explicitly opts in.
-- Implementation: `@repo/nuxt-cache`, ephemeral exact namespaced strings/bytes, TTL/NX, atomic counters, advisory token-safe single-backend leases (no fencing/Redlock), non-durable pub/sub and lazy lifecycle. Pinned Valkey 9.1.2 / node-redis 6.3.0; independent packed fixture. Optional application-owned Realtime fanout composes Cache pub/sub; no Cache-to-Realtime package dependency.
-- Contract: [`capabilities/cache-coordination/CAPABILITY.md`](capabilities/cache-coordination/CAPABILITY.md)
-
-### Search (`done`)
-
-- Requires: none; baseline PostgreSQL and Drizzle
-- Integrates with: Jobs, Object Storage, Organizations (future optional enhancements)
-- External: existing PostgreSQL only; no external index service
-- Default installed: no; reference application explicitly opts in.
-- Implementation: private `@repo/nuxt-search`, application-owned generated weighted `simple` vector/GIN migration, parameterized websearch and normalization-32 rank, canonical numeric-float4 UTF-8 keyset cursors (2048 ASCII bound) and owner-scoped Projects service/endpoint with explicit CRUD projections. Existing-row/hash upgrade, retained-DB removal/rebuild and authenticated production/privacy regressions. No automatic routes, connections or migrations.
-- Contract: [`capabilities/search/CAPABILITY.md`](capabilities/search/CAPABILITY.md)
-
-### Realtime (`done`)
-
-- Requires: none; baseline Node runtime, optional baseline authentication
-- Integrates with: Cache / Coordination, Notifications, Observability
-- External: none; optional Cache fanout remains non-durable
-- Implementation: both SSE/WebSocket server adapters, bounded events/queues, application-owned session/channel policy; no replay/RPC.
-- Contract: [`capabilities/realtime/CAPABILITY.md`](capabilities/realtime/CAPABILITY.md)
-
-### Notifications (`done`)
-
-- Requires: Jobs
-- Integrates with: Email, Realtime, Audit Log, Observability
-- Baseline: PostgreSQL/Drizzle; optional baseline authentication
-- External: ntfy optional
-- Implementation: application-included Drizzle records, recipient keyset/read state, transactional Jobs delivery, optional app Email/post-commit Realtime integrations.
-- Contract: [`capabilities/notifications/CAPABILITY.md`](capabilities/notifications/CAPABILITY.md)
-
-### Import / Export (`done`)
-
-- Requires: Jobs, Object Storage
-- Integrates with: Notifications, Audit Log
-- External: none additional; S3 supplied by Object Storage, on use
-- Private `@repo/nuxt-import-export`, transfer receipt schema, Jobs worker handler and personal Project CSV reference are implemented with packed consumer removal/rebuild verification.
-- Contract: [`capabilities/import-export/CAPABILITY.md`](capabilities/import-export/CAPABILITY.md)
-
-## Identity / policy
-
-### Organizations / Tenancy (`done`)
-
-- Adopted compatibility revision: native Better Auth 1.7.7 acceptance uses a single-winner claim, transactional membership/session creation and best-effort compensation, without crash-atomicity; see the [reproducible evaluation](docs/evaluations/ORGANIZATIONS_MODULE_EVALUATION.md). Historical isolated lifecycle evidence predates the stronger fault gates; integrated lifecycle/root/release verification passed on the merged main recorded below.
-- Contract: [`capabilities/organizations/CAPABILITY.md`](capabilities/organizations/CAPABILITY.md)
-
-- Requires: starter authentication (baseline, not a capability edge)
-- Integrates with: Audit Log, Notifications
-- External: PostgreSQL
-
-### Authorization (`done`)
-
-- Integrated verification passed; [contract](capabilities/authorization/CAPABILITY.md) and [decision](docs/evaluations/AUTHORIZATION_MODULE_EVALUATION.md).
-
-- Requires: starter authentication (baseline, not a capability edge)
-- Integrates with: Organizations, API Platform, Audit Log
-- External: PostgreSQL
-
-### Feature Flags (`done`)
-
-- Integrated verification passed; [contract](capabilities/feature-flags/CAPABILITY.md) and [decision](docs/evaluations/FEATURE_FLAGS_MODULE_EVALUATION.md).
-
-- Requires: none
-- Integrates with: Organizations, Authorization, Audit Log
-- External: PostgreSQL
-
-## Business integrations
-
-### Invoice Ninja (`done`)
-
-- Requires: Jobs, Webhooks
-- Integrates with: Organizations, Audit Log, Notifications
-- External: Invoice Ninja on use; no startup provider calls.
-- Private `@repo/nuxt-invoice-ninja`, independent packed consumer and authenticated reference integration; pinned disposable 5.13.43 numeric-string draft/GET and isolated unsent zero-tax/discount compatibility verified. Deployment-specific currency/company-hook policy remains application-owned and denies by default. [Contract](capabilities/invoice-ninja/CAPABILITY.md).
-
-### Stripe (`done`)
-
-- Requires: Jobs, Webhooks
-- Integrates with: Organizations, Authorization, Audit Log, Notifications
-- External: Stripe; optional configuration is lazy and no startup provider calls occur.
-- Implementation: private `@repo/nuxt-stripe`, independent consumer, native Checkout/payment-status routes, trusted scoped bindings, durable ledger/inbox and existing Jobs; [contract](capabilities/stripe/CAPABILITY.md). Packed lifecycle, local SDK/database and full reference/production acceptance passed; no remote Stripe request or financial certification.
-
-### Medusa (`done`)
-
-- Requires: Jobs, Webhooks
-- Integrates with: Object Storage, Organizations, Search
-- External: Medusa2.21.2 required only when refreshing; optional bridge installed by operator in separate provider project.
-- Private `@repo/nuxt-medusa` and independent packed consumer fixture; application-included scoped schemas, native Admin GETs, existing Jobs reconciliation, application-owned Standard Webhooks bridge and authenticated reference UI. Pinned disposable 2.21.2 backend/subscriber, local protocol/database, packed lifecycle and full reference/production acceptance passed; no payment workflow or production event-infrastructure certification.
-- Contract: [`capabilities/medusa/CAPABILITY.md`](capabilities/medusa/CAPABILITY.md)
-
-## Operations / UI infrastructure
-
-### Ops / Admin (`done`)
-
-- Requires: starter authentication (baseline, not a capability edge)
-- Integrates with: Observability, Jobs, Audit Log, Object Storage, Cache / Coordination, Webhooks
-- External: none
-
-### Command System (`done`)
-
-- Requires: none
-- Integrates with: Search, Authorization
-- External: none
-
-### Data Table (`done`)
-
-- Requires: none
-- Integrates with: Search, Organizations, Authorization
-- External: none
-- Current implementation: `@repo/nuxt-data-table` with TanStack Vue Table 9.2.4, semantic accessible rendering, typed columns, stable IDs, controlled state, and manual server modes. No virtualization or provider integration.
-- Contract: [`capabilities/data-table/CAPABILITY.md`](capabilities/data-table/CAPABILITY.md)
-
-### Markdown / Code Content (`done`)
-
-- Requires: none
-- Integrates with: Object Storage, AI
-- External: none
-- Current implementation: optional `@repo/nuxt-markdown-code`, bounded server-only markdown-it/Shiki, whitelisted native Vue SSR, accessible clipboard states, and packed independent consumer lifecycle.
-- Contract: [`capabilities/markdown-code/CAPABILITY.md`](capabilities/markdown-code/CAPABILITY.md)
-- Verified source: all 23 jobs in [full hosted CI](https://github.com/formless63/demo-starter-nuxt/actions/runs/37029379598), including corrected packed browser, removal/rebuild and root production checks; rerun exact-head CI after metadata promotion.
-
-### Charts / Visualization (`done`)
-
-- Requires: none
-- Integrates with: Data Table, Realtime
-- External: none
-- v1 Nuxt package: `@repo/nuxt-charts-visualization`; line/bar/area wrapper with ECharts 6.1.0 selective imports, semantic SSR table fallback, responsive disposal, and reduced-motion handling.
-
-### File UI (`done`)
-
-- Requires: Object Storage
-- Integrates with: Jobs, Search
-- External: none directly; Object Storage owns its S3 requirement
-
-### Rich Text / Tiptap (`done`)
-
-- Requires: none
-- Integrates with: Object Storage, Markdown / Code, Realtime, Organizations
-- External: none
-
-### Flow / Canvas (`done`)
-
-- Requires: none
-- Integrates with: Realtime, Object Storage, Audit Log
-- External: none
-
-## Client / platform
-
-### PWA / Offline (`done`)
-
-- Requires: none
-- Integrates with: Notifications, Realtime
-- External: none
-
-### Internationalization (`done`)
-
-- Requires: none
-- Integrates with: UI-facing capabilities
-- External: none
-
-## Framework and library evaluations — not automatically modules
-
-Evaluation status means “investigate when a real capability needs it,” not “install it.” No package below should be added merely to satisfy this roadmap.
-
-### TanStack-oriented repository evaluations
-
-- TanStack DB
-- TanStack AI
-- TanStack Hotkeys
-- TanStack Pacer
-- TanStack Virtual
-- TanStack Charts
-- TanStack Markdown / Highlight
-- TanStack Intent
-
-### Nuxt/Vue-oriented repository evaluations
-
-- appropriate Nuxt Modules ecosystem integrations for each capability
-- VueUse primitives already present in the baseline where they solve the actual need
-- Nuxt Content for content-heavy use cases
-- Vue-native equivalents when a TanStack-oriented capability relies on React-specific UI packages
-
-## Governance
-
-Every implemented capability gets `capabilities/<id>/CAPABILITY.md`. Changes to capability installation, removal, dependencies, optional integrations, external requirements, scripts, migrations, runtime services, or status update this roadmap, the JSON catalog, and the capability contract together. Run `bun run capabilities:check` before the ordinary repository verification.
-
-Rich Text is implemented as independent `@repo/nuxt-rich-text`; see [contract](capabilities/rich-text/CAPABILITY.md). The source and Markdown/Rich Text promotion passed all hosted gates; the File UI composition was awaiting exact-head CI at that historical checkpoint and is now included in accepted main `bf158308`.
-
-Rich Text source `1666bb6e252fbedbbe20b545de8117e8a246820f` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37031826840), including its real packed browser/removal lifecycle and full root production gates. The reviewed Markdown/Rich Text promotion `f1bbea44407704973dd2168cda3c23115028c487` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37037650525), recording 22 completed opt-in capabilities. That historical File UI composition is now included in accepted main; current evidence is linked in this document.
-
-File UI is completed as a private native Nuxt package. Only Object Storage is a hard dependency; trusted identity/policy and atomic durable metadata belong to the application. It remains opt-in; its reviewed source passed all exact-head hosted lifecycle, browser, provider and native HTTP gates. Later composition requires its own exact-head acceptance.
-
-File UI source `8063f37b71aa679ed6cacd80c68aa30720289c0a` passed [all 24 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040678932), including packed native/provider/browser/removal and root application/production gates. Historical Rich Text / File UI composition checkpoint: 23 completed opt-in, reference-enabled capabilities, with its own CI/review pending at that time. Accepted main `bf15830889757b76b44a71fac80461deaca22cd1` is now the baseline for the 24-capability Flow composition below.
-
-Flow / Canvas is `done` (`defaultInstalled:false`), based on accepted source gates. Native module, bounded portable graph helpers, semantic SSR and application-owned persistence; no hard dependencies or migrations. See [contract](capabilities/flow-canvas/CAPABILITY.md).
-
-Flow / Canvas source `1999dab23987aa90efa62411275b7075b974d593` passed [all 24 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37040851945), including the real native browser and independent packed install/runtime/removal/rebuild gates, and independent review. The 24-capability Flow composition and Rich Text focus fix are accepted in main `f1210c7c58dcebc24558042f34c39af9c03d1929`. That historical 25-capability composition subsequently passed full CI and was accepted as main `d8ca417919b5f9dd352fb7ba0b41d427da503e5a`.
-
-Internationalization is completed based on verified source gates: native Vue request-local engines, bounded plain-text catalogs, CLDR categories and canonical first-render formatting. Routing remains application-owned; packed/native-browser/removal gates passed on the source. The combined 25-capability tree subsequently passed full CI and was accepted as main `d8ca417919b5f9dd352fb7ba0b41d427da503e5a`.
-
-Internationalization source `96c24efcfc7e6fa31381dc4839be80ef75293a7b` passed [all 26 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37052330442), including root native browser/production and packed install/types/build/provider/browser/removal/rebuild gates. It is completed, default-off and explicitly reference-enabled. This 25-capability composition includes accepted Flow / Canvas and the Rich Text focus fix from main `f1210c7c58dcebc24558042f34c39af9c03d1929`; it subsequently passed [all 27 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37122326222) and was accepted as main `d8ca417919b5f9dd352fb7ba0b41d427da503e5a`.
-
-PWA / Offline source `5214f541fdbf6c3c8c7842a749d74ab437ad5a54` passed [all 28 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37132857767), including all 26 generic packed lifecycles and the root production authenticated-session/privacy/offline-fallback checks. Independent review is complete. At that historical checkpoint, all 26 implemented capabilities were done, explicitly reference-enabled and default-off. This historical promotion is now included in accepted main; current evidence is linked in this document. The intermittent anonymous Search timeout did not recur; diagnostic-only success does not establish its cause or a runtime fix.
-
-## Current roadmap acceptance
-
-Acceptance verified on 2026-10-04: merged main `237186860f0a079e8d01fb295023375a0e34ebd0` passed [all 31 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37181894995), including the three identity capability lifecycles and the root application checks. Organizations, Authorization and Feature Flags are done, reference-enabled and opt-in (`defaultInstalled: false`). This records the tested implementation baseline; later changes still require their applicable checks.
-
-## Scope completion
-
-All 29 capability modules in this roadmap are implemented, merged and verified in the reference application. Framework/library evaluation ideas remain optional research, not missing modules. Package publication, live provider accounts, deployment-specific policy and production operation remain separate application-owner responsibilities. All generated-consumer defaults remain false.
+| Jobs | Baseline only |
+| API Platform / Machine Auth / OpenAPI | Baseline only |
+| Observability | Baseline only |
+| Object Storage | Baseline only |
+| Email | Baseline only |
+| Webhooks | jobs |
+| Audit Log | Baseline only |
+| AI | Baseline only |
+| Cache / Coordination | Baseline only |
+| Search | Baseline only |
+| Realtime | Baseline only |
+| Notifications | jobs |
+| Import / Export | jobs, object-storage |
+| Organizations / Tenancy | Baseline only |
+| Authorization | Baseline only |
+| Feature Flags | Baseline only |
+| Invoice Ninja | jobs, webhooks |
+| Stripe | jobs, webhooks |
+| Medusa | jobs, webhooks |
+| Ops / Admin | Baseline only |
+| Command System | Baseline only |
+| Data Table | Baseline only |
+| Markdown / Code Content | Baseline only |
+| Charts / Visualization | Baseline only |
+| File UI | object-storage |
+| Rich Text / Tiptap | Baseline only |
+| Flow / Canvas | Baseline only |
+| PWA / Offline | Baseline only |
+| Internationalization | Baseline only |
+
+“Baseline only” means no other capability is required; a capability can still require baseline authentication/database support or external infrastructure. The catalog distinguishes hard `requires`, optional `integratesWith`, baseline requirements and external services. Hard capability dependencies must remain acyclic.
+
+## Next improvements
+
+1. **Easy visual preview — in progress:** publish the full reference app to GHCR and provide a pull-only Compose setup with PostgreSQL, migrations, worker and a local mail inbox. See [container preview](docs/CONTAINER-PREVIEW.md).
+2. **First real project — next:** use the existing setup/capability guidance, record setup friction and improve it from actual use. Do not build a second configuration framework.
+3. **Streamline project creation — follow-up:** reduce manual pruning and demo removal; consider a clean initial migration after choosing modules for a new, disposable database. Preserve applied history for databases with data to retain.
+4. **Releases and upgrades — follow-up:** stable tags, concise release notes and a reviewed downstream update process that preserves application customizations.
+5. **Operations and presentation — follow-up:** a tested backup/restore and upgrade guide, plus clearer navigation/configuration hints in the reference UI after preview feedback.
+
+These are improvements to using the completed starter, not additional promised capability modules. Prioritize preview feedback and a real project over expanding the module list.
+
+## Existing setup workflows
+
+Use `AGENTS.md`, the relevant `.agents/skills/` workflow and `docs/STARTING-A-PROJECT.md` before customization. Capability selection, hard-dependency review, configuration, removal and verification already have documented procedures. Nuxt uses its capability-change, feature-work and framework-specific skills; it does not currently have the TanStack `.project` onboarding/profile tooling.
+
+## Deliberately outside this scope
+
+- Optional library research (for example TanStack DB/AI/Pacer/Intent or Nuxt Content) needs a concrete application use case; it is not an unfinished module checklist.
+- Public npm/add-on distribution, hosted provider accounts and production deployment remain separate decisions.
+- Completed tests do not certify live payments, provider installations or application-specific access policy.
+- Native Better Auth invitation acceptance is not claim-plus-membership crash-atomic. Preserve authoritative membership checks and the documented operator recovery procedure.
+
+## Change procedure
+
+Keep roadmap, catalog, capability contracts and relevant agent context aligned. Separate generated-consumer defaults from reference enablement. Use framework-native packaging, retain migrations/data on removal, and require applicable independent lifecycle, root, browser and production checks before marking new work complete. Do not weaken gates to promote status.

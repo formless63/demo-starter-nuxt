@@ -131,3 +131,7 @@ The generic CI matrix includes done/in-progress package pairs with packageTest m
 ## Current roadmap acceptance
 
 Acceptance verified on 2026-10-04: merged main `237186860f0a079e8d01fb295023375a0e34ebd0` passed [all 31 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37181894995), including the three identity capability lifecycles and the root application checks. Organizations, Authorization and Feature Flags are done, reference-enabled and opt-in (`defaultInstalled: false`). This records the tested implementation baseline; later changes still require their applicable checks.
+
+## Published reference preview
+
+Use `docs/CONTAINER-PREVIEW.md` and `compose.preview.yaml` for pull-only private previews. `node scripts/preview-smoke.mjs` requires Docker and an explicitly supplied local `PREVIEW_IMAGE`; it verifies migrations, health, worker and Mailpit magic-link login against its own disposable Compose project, then removes only that project and its volumes. Never point it at an existing stack. CI runs it before main-only GHCR publication, which waits for every root and capability job.

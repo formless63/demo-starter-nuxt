@@ -1,0 +1,76 @@
+# Full reference app; external provider-backed modules stay lazy until configured.
+# Private preview only: anyone who can read Mailpit can use its sign-in links.
+name: nuxt-preview
+
+x-preview-environment: &preview-environment
+  NODE_ENV: production
+  DATABASE_URL: postgresql://preview:${PREVIEW_DB_PASSWORD:?Set PREVIEW_DB_PASSWORD in .env.preview}@postgres:5432/preview
+  NUXT_AUTH_SECRET: ${PREVIEW_AUTH_SECRET:?Set PREVIEW_AUTH_SECRET in .env.preview}
+  NUXT_PUBLIC_APP_BASE_URL: ${PREVIEW_BASE_URL:-http://127.0.0.1:3001}
+  NUXT_MAGIC_LINK_ENABLED: "true"
+  NUXT_PUBLIC_MAGIC_LINK_ENABLED: "true"
+  SMTP_HOST: mailpit
+  SMTP_PORT: "1025"
+  SMTP_SECURITY: opportunistic
+  EMAIL_FROM_ADDRESS: preview@example.test
+  EMAIL_FROM_NAME: Starter Preview
+  OTEL_SDK_DISABLED: "true"
+  REALTIME_TRANSPORTS: sse,websocket
+
+services:
+  postgres:
+    image: postgres:18.1-alpine
+    environment:
+      POSTGRES_DB: preview
+      POSTGRES_USER: preview
+      POSTGRES_PASSWORD: ${PREVIEW_DB_PASSWORD:?Set PREVIEW_DB_PASSWORD in .env.preview}
+    volumes: ["postgres-data:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U preview -d preview"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.31.3
+    ports: ["${PREVIEW_BIND:-127.0.0.1}:${PREVIEW_MAIL_PORT:-8026}:8025"]
+    restart: unless-stopped
+
+  migrate:
+    image: ${PREVIEW_IMAGE:-ghcr.io/formless63/demo-starter-nuxt:latest}
+    environment: *preview-environment
+    command: ["sh", "-c", "node .migration/migrate.mjs && node .jobs/migrate.mjs && node .jobs/doctor.mjs"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    image: ${PREVIEW_IMAGE:-ghcr.io/formless63/demo-starter-nuxt:latest}
+    environment: *preview-environment
+    ports: ["${PREVIEW_BIND:-127.0.0.1}:${PREVIEW_PORT:-3001}:3000"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+    restart: unless-stopped
+
+  worker:
+    image: ${PREVIEW_IMAGE:-ghcr.io/formless63/demo-starter-nuxt:latest}
+    environment: *preview-environment
+    command: ["node", ".jobs/worker.mjs"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

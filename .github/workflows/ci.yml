@@ -125,6 +125,10 @@ jobs:
         run: docker compose ps --status running worker | grep worker
       - name: Verify instrumented production job execution
         run: docker compose exec -T worker node .jobs/smoke.mjs
+      - name: Verify pull-only preview and local magic-link login
+        env:
+          PREVIEW_IMAGE: nuxt-starter:ci
+        run: node scripts/preview-smoke.mjs
       - name: Stop container smoke stack
         if: always()
         run: docker compose down --volumes --remove-orphans
@@ -141,3 +145,41 @@ jobs:
             test-results/**/error-context.md
           if-no-files-found: ignore
           retention-days: 3
+
+  publish-preview:
+    name: Publish GHCR preview
+    needs: [check, package-test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Derive lowercase image name
+        id: image
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: echo "name=ghcr.io/${REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ steps.image.outputs.name }}:latest
+            ${{ steps.image.outputs.name }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.title=demo-starter-nuxt full reference preview
+          cache-from: type=gha,scope=preview
+          cache-to: type=gha,mode=max,scope=preview

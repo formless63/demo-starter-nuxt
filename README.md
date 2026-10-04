@@ -1,5 +1,9 @@
 # Nuxt Full-Stack Starter
 
+## Container preview
+
+For a pull-only, private preview of the full 29-module reference application, use the [GHCR preview guide](docs/CONTAINER-PREVIEW.md). It includes PostgreSQL, explicit migrations, the worker and a local sign-in inbox; provider-backed features need their own configuration.
+
 A deployable, modular Nuxt 4 and Vue 3 starter using Bun, PostgreSQL with Drizzle, Better Auth, Tailwind CSS with shadcn-vue and Tabler Icons, Docker Compose, and a complete test/CI path. The repository includes a reference application plus optional Nuxt capability packages that can be kept or removed independently.
 
 ## Why this starter
