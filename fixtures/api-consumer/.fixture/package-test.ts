@@ -1,8 +1,8 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { and, eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import pg from 'pg'
 import { apiPlatformAuth } from '@repo/nuxt-api/server'
 import * as tables from '../server/database/schema'
 
@@ -74,7 +74,8 @@ const environment = {
 
 await run(['bun', 'run', 'db:migrate'], environment)
 
-const sql = postgres(databaseUrl, { max: 2, idle_timeout: 5 })
+const sql = new pg.Pool({ connectionString: databaseUrl, max: 2, idleTimeoutMillis: 5000 })
+sql.on('error', () => {})
 const db = drizzle(sql, { schema: tables })
 const auth = betterAuth({
   baseURL: baseUrl,

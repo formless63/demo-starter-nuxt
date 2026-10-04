@@ -23,3 +23,6 @@ fixtures/medusa-consumer/.fixture/medusa-retained.json
 fixtures/medusa-consumer/.fixture/compiled
 
 fixtures/file-ui-consumer/.fixture/retained-providers.json
+
+# Fixture-owned disposable retention witnesses (never application config).
+fixtures/*/.fixture/state.json

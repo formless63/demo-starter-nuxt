@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { describe, expect, it } from 'vitest'
-import postgres from 'postgres'
+import pg from 'pg'
 import { createJobsBoss, resolveJobsConfig } from '@repo/nuxt-jobs/server'
 
 const databaseUrl = process.env.DATABASE_URL
@@ -24,7 +24,7 @@ describeWithDatabase('optional telemetry in the real standalone Jobs worker', ()
     const config = { ...resolveJobsConfig(), databaseUrl: databaseUrl!, schema }
     const migrator = createJobsBoss(config, true)
     const producer = createJobsBoss(config)
-    const client = postgres(databaseUrl!, { max: 1 })
+    const client = new pg.Pool({ connectionString: databaseUrl!, max: 1 }).on('error', () => {})
     let worker: ReturnType<typeof spawn> | undefined
     let output = ''
     let errors = ''
@@ -77,7 +77,7 @@ describeWithDatabase('optional telemetry in the real standalone Jobs worker', ()
       if (worker && worker.exitCode === null) worker.kill('SIGKILL')
       await producer.stop({ graceful: false })
       await migrator.stop({ graceful: false })
-      await client`drop schema if exists ${client(schema)} cascade`
+      await client.query(`drop schema if exists "${schema}" cascade`)
       await client.end()
       await new Promise<void>((resolve, reject) => receiver.close(error => error ? reject(error) : resolve()))
     }

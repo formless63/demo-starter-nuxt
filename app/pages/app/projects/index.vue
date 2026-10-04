@@ -75,7 +75,8 @@ async function deleteProject(project: Project) {
     <ProjectTransfers />
     <div class="flex items-center justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-bold">Projects</h1>
+        <BetaDashboardPanel />
+      <h1 class="text-3xl font-bold">Projects</h1>
         <p class="text-muted-foreground">Your authenticated, owner-scoped workspace.</p>
       </div>
       <Button @click="resetForm()">

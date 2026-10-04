@@ -1,9 +1,9 @@
 import { createHmac, randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
-import postgres from 'postgres';
+import pg from 'pg';
 import { waitForHydration } from './hydration';
 test('File UI native session routes enforce owner scope and CSRF in dev and production', async ({ page, context, request, baseURL }) => {
- const sql = postgres(process.env.DATABASE_URL!, { max: 2 }); const pool = { query: (text: string, values?: string[] | string[][]) => sql.unsafe(text, values), end: () => sql.end() }; const owner = `file-ui-${randomUUID()}`; const foreign = `file-ui-${randomUUID()}`; const token = randomUUID(); const id = randomUUID(); const foreignId = randomUUID();
+ const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL!, max: 2 }).on('error', () => {}); const owner = `file-ui-${randomUUID()}`; const foreign = `file-ui-${randomUUID()}`; const token = randomUUID(); const id = randomUUID(); const foreignId = randomUUID();
  try {
   expect((await request.get('/api/files/list')).status()).toBe(401);
   for (const person of [owner, foreign]) await pool.query('insert into "user"(id,name,email) values($1,$1,$1||\'@example.test\')', [person]);

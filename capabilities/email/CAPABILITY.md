@@ -1,6 +1,6 @@
 # Email
 
-Private `@repo/nuxt-email` provides optional server-only transactional SMTP, with Nodemailer 10.0.13. Requires the Node production runtime, with no database or other capability dependency. Root authentication and telemetry are deliberate consumer integrations; clean consumers opt in. Evaluation: [EMAIL_MODULE_EVALUATION.md](../../EMAIL_MODULE_EVALUATION.md).
+Private `@repo/nuxt-email` provides optional server-only transactional SMTP, with Nodemailer 10.0.13. Requires the Node production runtime, with no database or other capability dependency. Root authentication and telemetry are deliberate consumer integrations; clean consumers opt in. Evaluation: [EMAIL_MODULE_EVALUATION.md](../../docs/evaluations/EMAIL_MODULE_EVALUATION.md).
 
 ## Install and configure
 

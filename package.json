@@ -55,7 +55,8 @@
     "transfers:reconcile": "bun scripts/transfers.ts reconcile",
     "transfers:purge": "bun scripts/transfers.ts purge",
     "test:ops-reference": "bun fixtures/ops-admin-consumer/.fixture/storage-retry.ts && bun fixtures/ops-admin-consumer/.fixture/reference-protocol.ts && bun fixtures/ops-admin-consumer/.fixture/reference-removal.ts",
-    "test:file-ui-reference": "bun scripts/file-ui-database.ts && bun scripts/file-ui-http.ts"
+    "test:file-ui-reference": "bun scripts/file-ui-database.ts && bun scripts/file-ui-http.ts",
+    "identity:fixture": "bun scripts/identity-fixture.ts"
   },
   "dependencies": {
     "@repo/nuxt-api": "workspace:*",
@@ -72,7 +73,7 @@
     "clsx": "2.1.1",
     "drizzle-orm": "0.45.3",
     "nuxt": "4.5.2",
-    "postgres": "3.4.9",
+    "pg": "8.23.0",
     "reka-ui": "2.10.5",
     "shadcn-nuxt": "2.8.2",
     "tailwind-merge": "3.7.0",
@@ -101,13 +102,17 @@
     "@repo/nuxt-file-ui": "workspace:*",
     "@repo/nuxt-flow-canvas": "workspace:*",
     "@repo/nuxt-internationalization": "workspace:*",
-    "@repo/nuxt-pwa-offline": "workspace:*"
+    "@repo/nuxt-pwa-offline": "workspace:*",
+    "@repo/nuxt-organizations": "workspace:*",
+    "@repo/nuxt-authorization": "workspace:*",
+    "@repo/nuxt-feature-flags": "workspace:*"
   },
   "devDependencies": {
     "@nuxt/eslint": "1.17.0",
     "@nuxt/test-utils": "4.3.2",
     "@playwright/test": "1.63.0",
     "@types/node": "24.10.1",
+    "@types/pg": "8.15.6",
     "ajv": "8.20.0",
     "drizzle-kit": "0.31.11",
     "eslint": "9.39.1",

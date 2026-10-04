@@ -3,14 +3,14 @@ import { createHmac } from 'node:crypto'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { eq, or } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import pg from 'pg'
 import { apiPlatformAuth } from '@repo/nuxt-api/server'
 import { queryAuditEvents } from '@repo/nuxt-audit-log/server'
 import * as tables from '../../server/database/schema'
 
 test('Project HTTP mutations audit session and verified machine actors without credentials or PII', async ({ request }) => {
-  const client = postgres(process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', { max: 2 })
+  const client = new pg.Pool({ connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/nuxt_starter', max: 2 }).on('error', () => {})
   const db = drizzle(client, { schema: tables })
   const ownerId = crypto.randomUUID()
   let keyId: string | undefined

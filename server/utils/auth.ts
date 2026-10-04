@@ -1,5 +1,6 @@
 import { betterAuth, type BetterAuthPlugin } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { organizationsAuth, organizationAuthErrorBoundary } from '@repo/nuxt-organizations/server'
 import { genericOAuth, magicLink } from 'better-auth/plugins'
 import { apiPlatformAuth } from '@repo/nuxt-api/server'
 import { EmailError, renderMagicLinkEmail, resolveEmailConfig } from '@repo/nuxt-email/server'
@@ -17,7 +18,8 @@ type AuthConfiguration = {
 }
 
 export function configuredAuthPlugins(config: AuthConfiguration) {
-  const plugins: [ReturnType<typeof apiPlatformAuth>, ...BetterAuthPlugin[]] = [apiPlatformAuth()]
+  const [organizations, guard] = organizationsAuth()
+  const plugins: [ReturnType<typeof apiPlatformAuth>, typeof organizations, ...BetterAuthPlugin[]] = [apiPlatformAuth(), organizations, guard]
 
   if (config.oidcIssuer && config.oidcClientId && config.oidcClientSecret) {
     plugins.push(genericOAuth({
@@ -65,8 +67,10 @@ function createServerAuth() {
   return betterAuth({
     baseURL: config.public.appBaseUrl,
     secret: config.authSecret,
-    database: drizzleAdapter(useDb(), { provider: 'pg', schema: authSchema }),
+    database: drizzleAdapter(useAuthDb(), { provider: 'pg', schema: authSchema, transaction: true }),
     emailAndPassword: { enabled: false },
+    user: { deleteUser: { enabled: false } },
+    onAPIError: organizationAuthErrorBoundary,
     socialProviders: configuredSocialProviders(config),
     plugins: configuredAuthPlugins(config),
     advanced: { useSecureCookies: process.env.NODE_ENV === 'production' },

@@ -1,0 +1,56 @@
+{
+  "name": "@repo/nuxt-feature-flags",
+  "version": "0.1.0",
+  "description": "Server-only local boolean controls with deterministic rollout and revision guards",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs",
+      "default": "./dist/module.mjs"
+    },
+    "./server": {
+      "types": "./dist/runtime/server/index.d.ts",
+      "import": "./dist/runtime/server/index.js",
+      "default": "./dist/runtime/server/index.js"
+    },
+    "./schema": {
+      "types": "./dist/runtime/server/schema.d.ts",
+      "import": "./dist/runtime/server/schema.js",
+      "default": "./dist/runtime/server/schema.js"
+    }
+  },
+  "main": "./dist/module.mjs",
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/types.d.mts"
+      ],
+      "server": [
+        "./dist/runtime/server/index.d.ts"
+      ],
+      "schema": [
+        "./dist/runtime/server/schema.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev:prepare": "nuxt-module-build prepare && nuxt-module-build build",
+    "prepack": "nuxt-module-build prepare && nuxt-module-build build"
+  },
+  "dependencies": {
+    "@nuxt/kit": "4.5.2",
+    "drizzle-orm": "0.45.3"
+  },
+  "peerDependencies": {
+    "nuxt": ">=4.0.0 <5"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "1.0.3",
+    "nuxt": "4.5.2"
+  }
+}

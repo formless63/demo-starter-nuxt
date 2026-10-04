@@ -2,6 +2,8 @@
 
 The repository is both a baseline starter and a reference application. Choose which of the twenty-six completed capabilities belong in the product before building domain features around them.
 
+Organizations, Authorization and Feature Flags have preserved independent packed-consumer fixtures and explicit root registrations. Their current integrated lifecycle and full release gates remain pending and paused. Follow each [capability contract](CAPABILITIES.md) for opt-in installation/schema composition; apply committed migrations explicitly. Personal Project ownership remains enforced, independent of active organization and feature controls.
+
 ## Full/reference setup
 
 The root application explicitly enables all twenty-six capabilities listed in the [capability table](CAPABILITIES.md). It includes:
@@ -14,11 +16,11 @@ The root application explicitly enables all twenty-six capabilities listed in th
 - transactionally appended audit history and notifications, plus ID-only post-commit hints over authenticated SSE/WebSocket transports;
 - all twenty-six catalog-driven package install/runtime/removal/rebuild checks in generic CI.
 
-The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused and Identity remains separately paused.
+The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused. Identity is appended as SQL0015–0017 / journal idx13–15; its runtime verification remains paused.
 
 Follow the [README quick start](../README.md#quick-start), then remove or rename the demonstration domain pieces as the real application takes shape.
 
-Storage stays unused/backendless until configured. Supply a region explicitly through `STORAGE_REGION`, `AWS_REGION` or `AWS_DEFAULT_REGION`; no implicit region is assumed. Local helpers supply RustFS `us-east-1` / Garage `garage`. Optional Noooste Garage UI v0.13.0 is third-party, not official Garage or required for S3, and stays localhost-bound. Its privileged admin-token login is operator-only; known dev tokens are local-only, never application browser configuration or normal S3 credentials. See the [Storage contract](../capabilities/object-storage/CAPABILITY.md) and [shared baseline](../OBJECT_STORAGE_MODULE_EVALUATION.md#shared-cross-framework-baseline).
+Storage stays unused/backendless until configured. Supply a region explicitly through `STORAGE_REGION`, `AWS_REGION` or `AWS_DEFAULT_REGION`; no implicit region is assumed. Local helpers supply RustFS `us-east-1` / Garage `garage`. Optional Noooste Garage UI v0.13.0 is third-party, not official Garage or required for S3, and stays localhost-bound. Its privileged admin-token login is operator-only; known dev tokens are local-only, never application browser configuration or normal S3 credentials. See the [Storage contract](../capabilities/object-storage/CAPABILITY.md) and [shared baseline](evaluations/OBJECT_STORAGE_MODULE_EVALUATION.md#shared-cross-framework-baseline).
 
 ## Choose realtime transports
 
@@ -46,7 +48,7 @@ Remove Notifications and Webhooks first because both hard-require Jobs. Retain i
 
 The pg-boss schema is external to Drizzle application migrations. Keep it by default for rollback and queued-work safety. For an already-deployed application, dropping it is a separate destructive database operation that requires explicit review. A fresh, never-deployed project can simply omit `jobs:migrate`; no pg-boss schema will be created.
 
-If a downstream fork will never reuse Jobs, follow the pruning metadata guidance in [Using capabilities](CAPABILITIES.md#prune-from-a-downstream-fork), then optionally delete `packages/nuxt-jobs/`, `fixtures/jobs-consumer/`, `capabilities/jobs/`, `JOBS_MODULE_EVALUATION.md`, and `.agents/skills/jobs-change/`. Do this only after the root no longer imports the package.
+If a downstream fork will never reuse Jobs, follow the pruning metadata guidance in [Using capabilities](CAPABILITIES.md#prune-from-a-downstream-fork), then optionally delete `packages/nuxt-jobs/`, `fixtures/jobs-consumer/`, `capabilities/jobs/`, `docs/evaluations/JOBS_MODULE_EVALUATION.md`, and `.agents/skills/jobs-change/`. Do this only after the root no longer imports the package.
 
 ## Remove API Platform
 
@@ -63,7 +65,7 @@ Keep `server/database/migrations/0001_api-platform.sql` and the migration journa
 
 For a truly fresh project where no local, shared, CI, staging, or production database has ever applied the API migration, you may remove the API table from the desired schema and regenerate a coherent migration history before the first deployment. Do not delete only the SQL file while leaving Drizzle journal/snapshot metadata inconsistent; verify the regenerated history against an empty database. Retaining the unused table migration is also safe and simpler.
 
-If a downstream fork will never reuse API Platform, follow the pruning metadata guidance in [Using capabilities](CAPABILITIES.md#prune-from-a-downstream-fork), then optionally delete `packages/nuxt-api/`, `fixtures/api-consumer/`, `capabilities/api-platform/`, `API_PLATFORM_MODULE_EVALUATION.md`, and `.agents/skills/api-contract-change/`. Do this only after auth, schema, routes, UI, and tests no longer import the package.
+If a downstream fork will never reuse API Platform, follow the pruning metadata guidance in [Using capabilities](CAPABILITIES.md#prune-from-a-downstream-fork), then optionally delete `packages/nuxt-api/`, `fixtures/api-consumer/`, `capabilities/api-platform/`, `docs/evaluations/API_PLATFORM_MODULE_EVALUATION.md`, and `.agents/skills/api-contract-change/`. Do this only after auth, schema, routes, UI, and tests no longer import the package.
 
 ## Remove Observability
 
@@ -86,7 +88,7 @@ First remove hard-dependent Import / Export using its recipe below, retaining al
 4. Remove `tests/unit/storage.test.ts` and `tests/unit/storage-observability.test.ts` (or adapt independent assertions). No SQL migration/schema change exists. Stop only the explicitly named local storage project if no longer used, retaining volumes by default.
 5. Clear `.nuxt`/`.output`, reinstall and run capability validation, typecheck/build and normal verification. The package fixture verifies owned AWS dependencies disappear when unused; a temporary reference copy verifies these broader integration steps.
 
-Do not delete remote buckets/objects, revoke remote access keys or delete named-volume data automatically. These resources are operator-controlled and may outlive the application code. For permanent pruning, update catalog/docs consistently before deleting `packages/nuxt-storage`, `fixtures/storage-consumer`, capability contract, `OBJECT_STORAGE_MODULE_EVALUATION.md` and `.agents/skills/storage-change`. Preserve the roadmap ID for File UI/Import/Export and other relationships.
+Do not delete remote buckets/objects, revoke remote access keys or delete named-volume data automatically. These resources are operator-controlled and may outlive the application code. For permanent pruning, update catalog/docs consistently before deleting `packages/nuxt-storage`, `fixtures/storage-consumer`, capability contract, `docs/evaluations/OBJECT_STORAGE_MODULE_EVALUATION.md` and `.agents/skills/storage-change`. Preserve the roadmap ID for File UI/Import/Export and other relationships.
 
 When removing **Observability but retaining Storage**, remove the optional imports/runner in `observed-storage.ts` and use plain `createStorage()`/`getStorage()`; remove initialization/shutdown instrumentation from `scripts/storage.ts`. Keep Storage commands/core API/provider configuration. This does not introduce a hard dependency.
 
@@ -96,7 +98,7 @@ When removing **Observability but retaining Storage**, remove the optional impor
 2. Remove `'@repo/nuxt-email'` from Nuxt modules, root workspace dependency, and `email` from `referenceApplication.enabledCapabilities`.
 3. If retaining Notifications, remove its optional Email adapter/import from `server/notifications/delivery.ts` and `server/notifications/email-adapter.ts`; leave in-app records/Jobs and other channels intact. Remove `server/utils/observed-email.ts`, `scripts/email.ts`, `compose.email.yaml`, root `email:*` aliases and matching catalog script declarations. Remove SMTP/EMAIL env entries and any consumer-owned mail callers. Delete/adapt Email-specific tests; retain unrelated auth/API coverage.
 4. Clear generated output, reinstall, run agents/capability checks and normal typecheck/build/tests/Playwright/container verification. No migration exists. Do not touch external SMTP accounts, DNS or remote credentials. The independent retained package/fixture remains available without activating infrastructure.
-5. For permanent pruning, update catalog/docs first, then optionally remove `packages/nuxt-email`, `fixtures/email-consumer`, capability contract, `EMAIL_MODULE_EVALUATION.md` and `.agents/skills/email-change`. Retain the roadmap ID where other capabilities reference it.
+5. For permanent pruning, update catalog/docs first, then optionally remove `packages/nuxt-email`, `fixtures/email-consumer`, capability contract, `docs/evaluations/EMAIL_MODULE_EVALUATION.md` and `.agents/skills/email-change`. Retain the roadmap ID where other capabilities reference it.
 
 When removing **Observability but retaining Email**, replace `sendObservedEmail` with package `sendEmail`, and command verification with `verifyEmailTransport`; remove only the telemetry wrapper. Keep SMTP/auth/canonical validation. Also retain plain Storage helpers as documented above.
 
@@ -238,3 +240,26 @@ The optional native `@repo/nuxt-pwa-offline` module is explicitly reference-enab
 Removal requires deploying `pwaOffline.retired: true` at the same worker URL/scope, allowing natural activation, and retaining that exact retirement script in `public/pwa-offline-sw.js` through all subsequent lean builds for returning clients. Only then remove the explicit module/dependency, page/imports and reference metadata. Never delete unrelated registrations/caches. Hosted exact-head acceptance and independent review remain required.
 
 PWA / Offline source `5214f541fdbf6c3c8c7842a749d74ab437ad5a54` passed [all 28 hosted CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37132857767), including all 26 generic packed lifecycles and the root production authenticated-session/privacy/offline-fallback checks. Independent review is complete. All 26 capabilities are done, explicitly reference-enabled and default-off. This metadata-only promotion requires its own exact-head full CI before acceptance. The intermittent anonymous Search timeout did not recur; diagnostic-only success does not establish its cause or a runtime fix.
+
+
+## Remove Organizations
+
+Remove the module/dependency, native client plugin, both native/guard auth plugins, direct organization error boundary, organization routes/pages/switcher, notes reference integration and four ORGANIZATIONS settings. Restore baseline auth options/hooks and keep password/account deletion disabled. Replace Authorization's optional tenant membership resolver with an application-owned authoritative resolver or deny tenant scopes; remove Flags' optional active-organization target resolver or replace it with a verified application source. Personal Projects never acquire tenant meaning.
+
+Remove package schema imports/composition, retaining equivalent local declarations as needed so later Drizzle generation cannot propose destructive SQL. Preserve organization/member/invitation/session active column/notes, applied0015_third_justice migration and history. The packed fixture proves package removal retains native tables/indexes and ordinary baseline sessions. Run remaining login/session/Projects and policy tests, normal checks and production explicit migration/worker/health verification. No operator data cleanup is implied.
+
+## Remove Authorization
+
+Remove module/dependency and application-policy imports/calls (including the Projects transfer adapter and shared transactional insertion), assignment management fixture paths and preview permission surface. Explicitly restore original owner SQL and owner checks in Projects and member-read/owner-admin-write checks for organization notes within their caller transactions. Retain machine API-key verification/grants/rate limits. Retained routes must never be left with an absent guard. Organizations native administration and boolean flags stay independent.
+
+Remove package schema imports while retaining assignment table declarations/history as needed; preserve0016_bored_shocker applied SQL/journal/snapshots and assignments. Generic fixture removal proves rows/indexes/migrations survive and remaining owner predicates still exclude foreign records. Reinstall/clear generated output and verify all remaining packages/routes/browser/production gates.
+
+## Remove Feature Flags
+
+Remove module/dependency, application-flags utility, fixed client endpoint, useFeatureFlags/BetaDashboardPanel projection and local flag-management fixture operations. Restore explicit false product defaults; retain every authentication/authorization/tenant predicate and any separately selected preview action. Remove schema imports/composition while preserving definitions/overrides/indexes and0017_mushy_cannonball applied migration/history using equivalent local declarations when needed. No startup or removal data deletion exists.
+
+The generic fixture proves retained data/index/migration history after clean removal/rebuild. Reinstall/clear generated output and run remaining normal/browser/production checks. Removing Organizations/Authorization/Audit does not require removing the independent provider: replace only application-owned identity/management/audit adapters.
+
+## Explicit local identity demonstration
+
+`bun run identity:fixture seed OPERATOR_ID SUBJECT_ID --local-fixture` creates disabled beta.dashboard in a disposable loopback database, without automatic startup seeding. `toggle OPERATOR_ID SUBJECT_ID EXPECTED_REVISION true|false` requires the current revision. `grant`/`revoke` manage only the code-owned dashboard-reader role in the exact subject user scope; identities must already exist and operator authority is explicitly supplied. These commands are development/test fixtures, never production provisioning or a public IAM console. They log a safe operation outcome only.

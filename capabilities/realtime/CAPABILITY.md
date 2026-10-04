@@ -1,6 +1,6 @@
 # Realtime
 
-Private `@repo/nuxt-realtime` provides authenticated server-to-browser events over **SSE, WebSocket, or both**. Node runtime is the baseline requirement; authentication is application-owned. No capability or external service is required. Optional Cache, Notifications and Observability integrations stay in the application. Clean consumers explicitly install and enable this module; the reference application enables it. Evaluation: [REALTIME_MODULE_EVALUATION.md](../../REALTIME_MODULE_EVALUATION.md).
+Private `@repo/nuxt-realtime` provides authenticated server-to-browser events over **SSE, WebSocket, or both**. Node runtime is the baseline requirement; authentication is application-owned. No capability or external service is required. Optional Cache, Notifications and Observability integrations stay in the application. Clean consumers explicitly install and enable this module; the reference application enables it. Evaluation: [REALTIME_MODULE_EVALUATION.md](../../docs/evaluations/REALTIME_MODULE_EVALUATION.md).
 
 ## Install and configuration
 

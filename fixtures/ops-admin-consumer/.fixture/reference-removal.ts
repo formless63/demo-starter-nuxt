@@ -8,7 +8,7 @@ import { createRequire } from 'node:module'
 import { createServer } from 'node:net'
 import { createServer as createHttpServer } from 'node:http'
 import { createHmac } from 'node:crypto'
-import postgres from 'postgres'
+import pg from 'pg'
 import { jobRegistry } from '../../../server/jobs/registry'
 import { webhookJobs } from '../../../server/webhooks/registry'
 
@@ -17,9 +17,10 @@ const fixture = join(root, 'fixtures/ops-admin-consumer')
 const original = await readFile(join(root, 'server/ops/application.ts'), 'utf8')
 const secret = 'ops-removal-disposable-auth-secret-32-characters'
 const user = `ops_removal_${crypto.randomUUID()}`, token = crypto.randomUUID()
-const sql = postgres(Bun.env.DATABASE_URL!, { max: 1 })
-await sql`INSERT INTO "user" (id,name,email) VALUES (${user},'Removal fixture',${user + '@example.test'})`
-await sql`INSERT INTO session (id,token,user_id,expires_at) VALUES (${crypto.randomUUID()},${token},${user},now()+interval '1 hour')`
+const sql = new pg.Pool({ connectionString: Bun.env.DATABASE_URL!, max: 1 })
+sql.on('error', () => {})
+await sql.query(`INSERT INTO "user" (id,name,email) VALUES ($1,'Removal fixture',$2)`, [user, user + '@example.test'])
+await sql.query(`INSERT INTO session (id,token,user_id,expires_at) VALUES ($1,$2,$3,now()+interval '1 hour')`, [crypto.randomUUID(), token, user])
 const signature = createHmac('sha256', secret).update(token).digest('base64')
 const headers = { cookie: `better-auth.session_token=${encodeURIComponent(`${token}.${signature}`)}` }
 const providers = {
@@ -136,5 +137,5 @@ try {
 }
 finally {
   await new Promise<void>(resolve => collector.close(() => resolve()))
-  await sql`DELETE FROM "user" WHERE id=${user}`; await sql.end()
+  await sql.query(`DELETE FROM "user" WHERE id=$1`, [user]); await sql.end()
 }

@@ -1,15 +1,15 @@
-import postgres from 'postgres'
-import { drizzle } from 'drizzle-orm/postgres-js'
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { and, eq, isNull } from 'drizzle-orm'
 import { createMedusaService, MedusaError } from '@repo/nuxt-medusa/server'
 import type { Binding, TrustedContext } from '@repo/nuxt-medusa/server'
 import { medusaBinding } from '@repo/nuxt-medusa/schema'
 import { createJobsClient, resolveJobsConfig } from '@repo/nuxt-jobs/server'
 import { user } from '../database/schema'
-let client: ReturnType<typeof postgres> | undefined
+let client: pg.Pool | undefined
 function database() {
   if (!process.env.DATABASE_URL) throw new MedusaError('unavailable')
-  client ??= postgres(process.env.DATABASE_URL, { max: 4, idle_timeout: 20 })
+  client ??= new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 4, idleTimeoutMillis: 20_000, connectionTimeoutMillis: 30_000 }).on('error', () => { /* idle-client errors surface on the next query */ })
   return drizzle(client)
 }
 async function existingOwner(id: string) {

@@ -44,13 +44,14 @@ The generic `packages:*` commands build and exercise the catalog entries. Hard c
 | Status | Capability |
 | --- | --- |
 | Done (26) | Jobs — pg-boss; API Platform / Machine Auth / OpenAPI; Observability; Object Storage; Email; Webhooks; Audit Log; Cache / Coordination; Realtime; Notifications; Search; AI; Import / Export; Ops / Admin; Invoice Ninja; Stripe; Medusa; Data Table; Charts / Visualization; Command System; Markdown / Code Content; Rich Text / Tiptap; File UI; Flow / Canvas; Internationalization; PWA / Offline |
+| In progress | Organizations / Tenancy; Authorization; Feature Flags |
 | Planned | All remaining capabilities below unless explicitly changed in the catalog |
 
 Data Table source-baseline evidence: the [combined CI run](https://github.com/formless63/demo-starter-nuxt/actions/runs/37008356538) passed all 20 jobs at `bfad9dce3ade72a42836d79103947de63a2a8279`, including all 18 generic package lifecycles and the full application check, browser suite, explicit migrations, production container/health and worker checks. All twenty-six remain opt-in for clean consumers and explicitly enabled in the reference app.
 
 Charts source `7e8daa68c9862ef982c6dd0aa7e4269903eda9fd` passed [all 20 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37018899032). Command retains its separately verified implementation ([all 20 jobs at e0a01fa](https://github.com/formless63/demo-starter-nuxt/actions/runs/37012702417)). Markdown / Code Content implementation `e99539d90020a70028545ac4f252c55c16e3f432` passed [all 23 CI jobs](https://github.com/formless63/demo-starter-nuxt/actions/runs/37029379598): all 21 generic packed package lifecycles, corrected real-browser payload/hydration/copy checks, full root checks, production browser/container/health, migrations and worker verification. This is source evidence; metadata promotion and later revisions require their own exact-head CI.
 
-The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused and Identity remains separately paused.
+The final cumulative journal appends idx8 `0009_invoice_ninja`, idx9 `0011_stripe_v1`, idx10 `0012_stripe_receipt_conflicts` and idx11 `0013_medusa`, with cumulative snapshots. The frozen original eight journal entries and authored SQL remain unchanged; SQL slot0008 stays unused. Identity is appended as SQL0015–0017 / journal idx13–15; its runtime verification remains paused.
 
 API Platform is capability #2. Observability is capability #3: server-only logs, request correlation, explicit spans/metrics, optional OTLP export and a clean-consumer lifecycle. No new service is required.
 
@@ -90,7 +91,7 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 - Integrates with: Jobs, Observability
 - External: S3-compatible storage (required)
 - Preferred self-hosted options: RustFS; Garage with optional GarageUI. MinIO is not the default.
-- Current implementation (#4): private `@repo/nuxt-storage`, server-only S3 primitives, lazy configuration with explicit region, private streaming objects, signed GET/PUT, multipart and HEAD policy verification; generic external fixture tests real RustFS 1.0.0 and Garage 2.4.1, CORS and optional third-party Noooste Garage UI v0.13.0 (localhost/operator-only, not official or needed for S3). Shared AWS SDK 3.1143.0, TTL 600 seconds (30–3600), custom-endpoint path-style defaults and region/credentials follow the [synchronized baseline](OBJECT_STORAGE_MODULE_EVALUATION.md#shared-cross-framework-baseline). No files table, application UI, processing jobs or implicit bucket creation.
+- Current implementation (#4): private `@repo/nuxt-storage`, server-only S3 primitives, lazy configuration with explicit region, private streaming objects, signed GET/PUT, multipart and HEAD policy verification; generic external fixture tests real RustFS 1.0.0 and Garage 2.4.1, CORS and optional third-party Noooste Garage UI v0.13.0 (localhost/operator-only, not official or needed for S3). Shared AWS SDK 3.1143.0, TTL 600 seconds (30–3600), custom-endpoint path-style defaults and region/credentials follow the [synchronized baseline](docs/evaluations/OBJECT_STORAGE_MODULE_EVALUATION.md#shared-cross-framework-baseline). No files table, application UI, processing jobs or implicit bucket creation.
 - External storage is needed only when operations are used, not at install/build/startup. Default installed: no; reference application explicitly opts in.
 - Contract: [`capabilities/object-storage/CAPABILITY.md`](capabilities/object-storage/CAPABILITY.md)
 
@@ -181,19 +182,26 @@ API Platform is capability #2. Observability is capability #3: server-only logs,
 
 ## Identity / policy
 
-### Organizations / Tenancy (`planned`)
+### Organizations / Tenancy (`in-progress`)
+
+- Adopted compatibility revision: native Better Auth 1.7.7 acceptance uses a single-winner claim, transactional membership/session creation and best-effort compensation, without crash-atomicity; see the [reproducible evaluation](docs/evaluations/ORGANIZATIONS_MODULE_EVALUATION.md). Historical isolated lifecycle evidence predates the stronger fault gates; integrated lifecycle/root/release verification is pending and paused.
+- Contract: [`capabilities/organizations/CAPABILITY.md`](capabilities/organizations/CAPABILITY.md)
 
 - Requires: starter authentication (baseline, not a capability edge)
 - Integrates with: Audit Log, Notifications
 - External: PostgreSQL
 
-### Authorization (`planned`)
+### Authorization (`in-progress`)
+
+- Integrated verification pending and paused; [contract](capabilities/authorization/CAPABILITY.md) and [decision](docs/evaluations/AUTHORIZATION_MODULE_EVALUATION.md).
 
 - Requires: starter authentication (baseline, not a capability edge)
 - Integrates with: Organizations, API Platform, Audit Log
 - External: PostgreSQL
 
-### Feature Flags (`planned`)
+### Feature Flags (`in-progress`)
+
+- Integrated verification pending and paused; [contract](capabilities/feature-flags/CAPABILITY.md) and [decision](docs/evaluations/FEATURE_FLAGS_MODULE_EVALUATION.md).
 
 - Requires: none
 - Integrates with: Organizations, Authorization, Audit Log

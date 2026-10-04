@@ -5,20 +5,22 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createServer } from 'node:http'
 import { eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import { migrate } from 'drizzle-orm/postgres-js/migrator'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { migrate } from 'drizzle-orm/node-postgres/migrator'
+import pg from 'pg'
 import { createInvoiceNinjaService } from '@repo/nuxt-invoice-ninja/server'
 import { invoiceNinjaBinding as bindings, invoiceNinjaOperation as operations, invoiceNinjaInbox as inbox } from '@repo/nuxt-invoice-ninja/schema'
 import { createJobsBoss, defineQueues, resolveJobsConfig } from '@repo/nuxt-jobs/server'
 import { runJobsMigration, runJobsDoctor } from '@repo/nuxt-jobs/cli'
 import { saveState, witness, details } from './lifecycle'
 const adminUrl = process.env.DATABASE_URL; assert(adminUrl)
-const admin = postgres(adminUrl, { max: 1 }), databaseName = `invoice_nuxt_fixture_${randomUUID().replaceAll('-', '')}`
-await admin.unsafe(`CREATE DATABASE "${databaseName}"`)
+const admin = new pg.Pool({ connectionString: adminUrl, max: 1 }), databaseName = `invoice_nuxt_fixture_${randomUUID().replaceAll('-', '')}`
+admin.on('error', () => {})
+await admin.query(`CREATE DATABASE "${databaseName}"`)
 const url = new URL(adminUrl); url.pathname = `/${databaseName}`
 await saveState({ databaseName, url: url.toString() })
-const client = postgres(url.toString(), { max: 5 }), db = drizzle(client)
+const client = new pg.Pool({ connectionString: url.toString(), max: 5 }), db = drizzle(client)
+client.on('error', () => {})
 process.env.DATABASE_URL = url.toString(); process.env.PGBOSS_DATABASE_URL = url.toString(); process.env.PGBOSS_SCHEMA = 'invoice_fixture_jobs'
 let posts = 0, gets = 0, amount = '25.1234', absent = false, disconnected = true, authorized = true
 const secret = 's'.repeat(32)
@@ -54,34 +56,44 @@ async function run(id: string) { return service.operationJob.handler({ operation
 // Pause the projection write after its fencing checks. A concurrent recovery or
 // binding change must wait for the complete projection/terminal-state commit.
 async function assertCommitFence(kind: 'operation' | 'receipt', id: string, bindingId: string, start: () => Promise<unknown>) {
-  const control = postgres(url.toString(), { max: 1 })
-  const contender = postgres(url.toString(), { max: 1 })
+  // The session-level advisory lock needs one dedicated connection that never idles out of a pool.
+  const control = new pg.Client({ connectionString: url.toString() })
+  const contender = new pg.Pool({ connectionString: url.toString(), max: 1 })
+  control.on('error', () => {}); contender.on('error', () => {})
+  await control.connect()
   let worker: Promise<unknown> | undefined
   try {
-    await client.unsafe(`CREATE FUNCTION invoice_fixture_pause_projection() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM pg_advisory_xact_lock(742129); RETURN NEW; END $$`)
-    await client.unsafe(`CREATE TRIGGER invoice_fixture_pause_projection BEFORE INSERT ON invoice_ninja_projection FOR EACH ROW EXECUTE FUNCTION invoice_fixture_pause_projection()`)
-    await control`SELECT pg_advisory_lock(742129)`
+    await client.query(`CREATE FUNCTION invoice_fixture_pause_projection() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM pg_advisory_xact_lock(742129); RETURN NEW; END $$`)
+    await client.query(`CREATE TRIGGER invoice_fixture_pause_projection BEFORE INSERT ON invoice_ninja_projection FOR EACH ROW EXECUTE FUNCTION invoice_fixture_pause_projection()`)
+    await control.query('SELECT pg_advisory_lock(742129)')
     worker = start()
     let waiting = false
     for (let attempt = 0; attempt < 100; attempt++) {
-      const rows = await client`SELECT pid FROM pg_stat_activity WHERE datname = ${databaseName} AND wait_event = 'advisory'`
+      const { rows } = await client.query("SELECT pid FROM pg_stat_activity WHERE datname = $1 AND wait_event = 'advisory'", [databaseName])
       if (rows.length) { waiting = true; break }
       await new Promise(resolve => setTimeout(resolve, 20))
     }
     assert(waiting, 'Worker reached the paused projection write')
     const table = kind === 'operation' ? 'invoice_ninja_operation' : 'invoice_ninja_inbox'
     for (const [target, rowId] of [[table, id], ['invoice_ninja_binding', bindingId]]) {
-      await assert.rejects(contender.begin(async tx => {
-        await tx`SET LOCAL lock_timeout = '100ms'`
-        await tx.unsafe(`UPDATE ${target} SET revision = revision + 1 WHERE id = $1`, [rowId!])
-      }), (error: unknown) => error instanceof Error && 'code' in error && error.code === '55P03', `${target} stays locked through projection commit`)
+      await assert.rejects((async () => {
+        const tx = await contender.connect()
+        try {
+          await tx.query('BEGIN')
+          await tx.query("SET LOCAL lock_timeout = '100ms'")
+          await tx.query(`UPDATE ${target} SET revision = revision + 1 WHERE id = $1`, [rowId!])
+          await tx.query('COMMIT')
+        }
+        catch (error) { await tx.query('ROLLBACK').catch(() => {}); throw error }
+        finally { tx.release() }
+      })(), (error: unknown) => error instanceof Error && 'code' in error && error.code === '55P03', `${target} stays locked through projection commit`)
     }
   }
   finally {
-    await control`SELECT pg_advisory_unlock(742129)`
+    await control.query('SELECT pg_advisory_unlock(742129)')
     await worker
-    await client.unsafe('DROP TRIGGER IF EXISTS invoice_fixture_pause_projection ON invoice_ninja_projection')
-    await client.unsafe('DROP FUNCTION IF EXISTS invoice_fixture_pause_projection()')
+    await client.query('DROP TRIGGER IF EXISTS invoice_fixture_pause_projection ON invoice_ninja_projection')
+    await client.query('DROP FUNCTION IF EXISTS invoice_fixture_pause_projection()')
     await control.end(); await contender.end()
   }
 }
@@ -94,15 +106,15 @@ try {
     await writeFile(join(upgrade, 'meta/_journal.json'), JSON.stringify(prior))
     for (const entry of prior.entries) await cp(`.fixture/migrations/${entry.tag}.sql`, join(upgrade, `${entry.tag}.sql`))
     await migrate(db, { migrationsFolder: upgrade })
-    await client`INSERT INTO "user" (id,name,email) VALUES ('retained-owner','Retained owner','retained@example.test')`
-    await client`INSERT INTO project (id,name,owner_id) VALUES ('retained-project','Retained project','retained-owner')`
-    const history = [...await client`SELECT hash,created_at FROM drizzle.__drizzle_migrations ORDER BY id`]
+    await client.query("INSERT INTO \"user\" (id,name,email) VALUES ('retained-owner','Retained owner','retained@example.test')")
+    await client.query("INSERT INTO project (id,name,owner_id) VALUES ('retained-project','Retained project','retained-owner')")
+    const history = [...(await client.query('SELECT hash,created_at FROM drizzle.__drizzle_migrations ORDER BY id')).rows]
     await migrate(db, { migrationsFolder: '.fixture/migrations' }); await migrate(db, { migrationsFolder: '.fixture/migrations' })
-    assert.deepEqual([...await client`SELECT hash,created_at FROM drizzle.__drizzle_migrations ORDER BY id`].slice(0, 6), history)
-    assert.equal((await client`SELECT name FROM project WHERE id='retained-project'`)[0]!.name, 'Retained project')
+    assert.deepEqual([...(await client.query('SELECT hash,created_at FROM drizzle.__drizzle_migrations ORDER BY id')).rows].slice(0, 6), history)
+    assert.equal((await client.query("SELECT name FROM project WHERE id='retained-project'")).rows[0]!.name, 'Retained project')
   }
   finally { await rm(upgrade, { recursive: true, force: true }) }
-  assert.equal((await client`SELECT * FROM drizzle.__drizzle_migrations`).length, 9)
+  assert.equal((await client.query('SELECT * FROM drizzle.__drizzle_migrations')).rows.length, 9)
   await runJobsMigration(); await runJobsDoctor(); await boss.start(); await defineQueues(boss, { op: service.operationJob, receipt: service.receiptJob })
   const ca = await db.transaction(tx => service.createBindingInTransaction(tx, a, { localResourceId: 'client-a', connectionId: 'default', resourceKind: 'client', remoteId: 'client-a' }))
   const cb = await db.transaction(tx => service.createBindingInTransaction(tx, b, { localResourceId: 'client-b', connectionId: 'default', resourceKind: 'client', remoteId: 'client-b' }))
@@ -159,7 +171,7 @@ try {
   assert(fencedReceipt)
   await assertCommitFence('receipt', fencedReceipt.id, ia.id, () => service.receiptJob.handler({ inboxId: fencedReceipt.id }, context()))
   assert.equal((await db.select().from(inbox).where(eq(inbox.id, fencedReceipt.id)))[0]!.status, 'processed')
-  const jobs = await client.unsafe('SELECT data FROM invoice_fixture_jobs.job')
+  const jobs = (await client.query('SELECT data FROM invoice_fixture_jobs.job')).rows
   for (const job of jobs) assert.ok(Object.keys(job.data).length === 1 && (job.data.operationId || job.data.inboxId))
   const publicData = JSON.stringify({ invoices: await service.listInvoices(a), op: await service.getOperation(a, { operationId: queued.operationId }), output: result })
   for (const forbidden of ['private@example.test', 'Private financial intent', 'private-api-fixture', 'contacts']) assert.ok(!publicData.includes(forbidden))

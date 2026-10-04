@@ -1,6 +1,6 @@
 # Notifications
 
-Private `@repo/nuxt-notifications` provides durable in-app notification records and optional external delivery. Hard dependency: **Jobs**, enforced by catalog, package peer and Nuxt moduleDependencies. PostgreSQL/Drizzle are baseline requirements; authentication is application-owned. Email, Realtime, Audit and Observability are optional integrations with no package dependencies. ntfy is optional. Clean consumers explicitly install/enable; the reference application enables it. Evaluation: [NOTIFICATIONS_MODULE_EVALUATION.md](../../NOTIFICATIONS_MODULE_EVALUATION.md).
+Private `@repo/nuxt-notifications` provides durable in-app notification records and optional external delivery. Hard dependency: **Jobs**, enforced by catalog, package peer and Nuxt moduleDependencies. PostgreSQL/Drizzle are baseline requirements; authentication is application-owned. Email, Realtime, Audit and Observability are optional integrations with no package dependencies. ntfy is optional. Clean consumers explicitly install/enable; the reference application enables it. Evaluation: [NOTIFICATIONS_MODULE_EVALUATION.md](../../docs/evaluations/NOTIFICATIONS_MODULE_EVALUATION.md).
 
 ## Install and schema
 
